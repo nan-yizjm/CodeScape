@@ -1,12 +1,12 @@
 import type { LearningState, Module, ProjectDetail, Projection, ProjectionNode, Relation } from './types';
 
 export const modulePalette = [
-  { background: '#edf2ff', border: '#cbd7f5', accent: '#5573c6' },
-  { background: '#f1edff', border: '#d9cff5', accent: '#8467bd' },
-  { background: '#fff4e6', border: '#efd8b6', accent: '#b78137' },
-  { background: '#eaf6f1', border: '#c7e4d7', accent: '#42886b' },
-  { background: '#fceef2', border: '#efcfd9', accent: '#b56982' },
-  { background: '#eaf5f8', border: '#c7e1e8', accent: '#478493' },
+  { background: '#edf2ff', border: '#cbd7f5', accent: '#405ea9' },
+  { background: '#f1edff', border: '#d9cff5', accent: '#6f519f' },
+  { background: '#fff4e6', border: '#efd8b6', accent: '#96621f' },
+  { background: '#eaf6f1', border: '#c7e4d7', accent: '#326a53' },
+  { background: '#fceef2', border: '#efcfd9', accent: '#944d66' },
+  { background: '#eaf5f8', border: '#c7e1e8', accent: '#356677' },
 ];
 
 export function nodePalette(node: ProjectionNode) {
@@ -33,12 +33,12 @@ export function projectGraph(project: ProjectDetail, focus: string | null): Proj
     id: entity.id, label: visible.filter(item => item.name === entity.name).length > 1 ? `${entity.signature} · L${entity.location.start_line}` : entity.name, description: '', kind: 'function', entity, count: 0,
     state: project.learning[entity.id]?.state || 'not_started', incomplete: entity.unresolved_count > 0,
     external: project.analysis.calls.some(call => call.caller_scope_id === entity.scope_id && call.resolution === 'confirmed'
-      && !active.entity_ids.includes(call.target_id || '')), tone: modules.indexOf(active), x: 0, y: 0, width: 248, height: 104,
+      && !active.entity_ids.includes(call.target_id || '')), tone: modules.indexOf(active), x: 0, y: 0, width: 248, height: 116,
   })) : children.map(module => {
     const entityIds = moduleEntities(module, modules);
     return { id: module.id, label: module.name, description: module.summary, kind: 'module', module,
       count: entityIds.length, state: aggregateState(entityIds.map(id => project.learning[id]?.state || 'not_started')),
-      incomplete: module.incomplete, external: false, tone: modules.indexOf(module), x: 0, y: 0, width: 300, height: 180 };
+      incomplete: module.incomplete, external: false, tone: modules.indexOf(module), x: 0, y: 0, width: 300, height: 204 };
   });
   const scopes = new Map(visible.map(entity => [entity.scope_id, entity.id]));
   const owner = new Map<string, string>();
@@ -98,7 +98,7 @@ export function exportSvg(projection: Projection, title: string): string {
     return `<g><rect x="${node.x}" y="${node.y}" width="${node.width}" height="${node.height}" rx="12" fill="${color}" stroke="${palette.border}"/>
       <rect x="${node.x + 20}" y="${node.y + 19}" width="18" height="3" rx="1.5" fill="${palette.accent}"/>
       <text x="${node.x + 20}" y="${node.y + 52}" font-size="16" font-weight="600" fill="#202020">${escapeXml(node.label)}</text>
-      <text x="${node.x + 20}" y="${node.y + 78}" font-size="12" fill="#666666">${description}</text>
+      <text x="${node.x + 20}" y="${node.y + 80}" font-size="13" fill="#666666">${description}</text>
       <text x="${node.x + node.width - 20}" y="${node.y + node.height - 15}" text-anchor="end" font-size="10" fill="#555555">${node.state === 'mastered' ? '已掌握' : node.state === 'in_progress' ? '学习中' : '未开始'}</text>
       ${node.incomplete ? `<text x="${node.x + node.width - 22}" y="${node.y + 24}" fill="#9c6b32">!</text>` : ''}</g>`;
   }).join('');

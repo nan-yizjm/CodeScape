@@ -19,8 +19,8 @@ export function SourceReader({ file, location }: { file: SourceFile; location: L
     const view = new EditorView({ parent: element.current, state: EditorState.create({ doc: file.text, extensions: [
       EditorState.readOnly.of(true), EditorView.editable.of(false), lineNumbers(), highlightActiveLineGutter(),
       syntaxHighlighting(defaultHighlightStyle), language, EditorView.decorations.of(decoration),
-      EditorView.theme({ '&': { height: '100%', fontSize: '12px' }, '.cm-scroller': { overflow: 'auto', fontFamily: 'Consolas, monospace' },
-        '.cm-content': { padding: '18px 0' }, '.cm-gutters': { background: '#f5f6f1', border: 'none', color: '#9aa299' },
+      EditorView.theme({ '&': { height: '100%', fontSize: '13px' }, '.cm-scroller': { overflow: 'auto', fontFamily: 'Consolas, monospace' },
+        '.cm-content': { padding: '18px 0' }, '.cm-gutters': { background: '#fafafa', border: 'none', color: '#777777' },
         '.cm-line': { paddingLeft: '12px' }, '&.cm-focused': { outline: 'none' } }),
     ] }) });
     view.dispatch({ effects: EditorView.scrollIntoView(start, { y: 'center' }) });

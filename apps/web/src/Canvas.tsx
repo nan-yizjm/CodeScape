@@ -6,7 +6,7 @@ import { Info, Check, Circle, ArrowUpRight, AlertTriangle, Boxes, Braces } from 
 import type { Projection, ProjectionNode, Relation } from './types';
 import { edgePath, nodePalette } from './graph';
 
-type Data = { node: ProjectionNode; onInfo: (node: ProjectionNode) => void } & Record<string, unknown>;
+type Data = { node: ProjectionNode; onInfo: (node: ProjectionNode) => void; onOpen: (node: ProjectionNode) => void } & Record<string, unknown>;
 const elk = new ELK({ workerFactory: () => new Worker(new URL('elkjs/lib/elk-worker.min.js', import.meta.url)) });
 
 function MapNode({ data }: NodeProps<Node<Data>>) {
@@ -15,13 +15,16 @@ function MapNode({ data }: NodeProps<Node<Data>>) {
   const palette = nodePalette(node);
   const stateLabel = { not_started: '未开始', in_progress: '学习中', mastered: '已掌握' }[node.state];
   return <div className={`map-node ${node.kind} state-${node.state}`} style={{ '--node-bg': palette.background, '--node-border': palette.border, '--node-accent': palette.accent } as CSSProperties}>
+    <button className="node-hit-area nodrag nopan" aria-label={node.kind === 'module' ? `进入模块 ${node.label}` : `阅读 ${node.label} 源码`}
+      onClick={event => { event.stopPropagation(); data.onOpen(node); }} />
     <Handle type="target" position={Position.Left} />
     <div className="node-top"><span className="node-symbol"><Icon size={16} /></span><span className="node-kind">{node.kind === 'module' ? '逻辑模块' : '函数'}</span>
       <button className="node-info nodrag nopan" aria-label={`查看 ${node.label} 详情`} onClick={event => { event.stopPropagation(); data.onInfo(node); }}><Info size={16} /></button></div>
     <div className="node-title" title={node.label}>{node.label}</div>
     {node.kind === 'module' && <p>{node.description}</p>}
-    <div className="node-footer"><span>{node.kind === 'module' ? `${node.count} 个函数` : node.external ? <><ArrowUpRight size={12} /> 跨模块</> : '真实源码实现'}</span>
+    <div className="node-footer"><span className="node-count">{node.kind === 'module' ? `${node.count} 个函数` : node.external ? <><ArrowUpRight size={12} /> 跨模块</> : '真实源码实现'}</span>
       <span className="node-state" title={stateLabel}>{node.incomplete && <AlertTriangle size={12} />}{node.state === 'mastered' ? <Check size={12} /> : node.state === 'in_progress' ? <span className="learning-dot" /> : <Circle size={10} />}<span>{stateLabel}</span></span></div>
+    <span className="node-action" aria-hidden="true">{node.kind === 'module' ? '进入模块' : '阅读源码'}<ArrowUpRight size={13} /></span>
     <Handle type="source" position={Position.Right} />
   </div>;
 }
@@ -71,7 +74,7 @@ export function Canvas({ projection, onNode, onInfo, onRelation, onLayout, onVie
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [structure]);
   const positioned = useMemo(() => (layout?.nodes || []).map(node => ({ ...node, ...projection.nodes.find(current => current.id === node.id), x: node.x, y: node.y })), [layout, projection]);
-  const nodes: Node<Data>[] = positioned.map(node => ({ id: node.id, type: 'map', position: { x: node.x, y: node.y }, data: { node, onInfo }, width: node.width, height: node.height }));
+  const nodes: Node<Data>[] = positioned.map(node => ({ id: node.id, type: 'map', position: { x: node.x, y: node.y }, data: { node, onInfo, onOpen: onNode }, width: node.width, height: node.height }));
   const edges = useMemo(() => {
     const byId = new Map(positioned.map(node => [node.id, node]));
     return projection.relations.map(relation => ({ id: relation.id, source: relation.from, target: relation.to,
@@ -81,8 +84,8 @@ export function Canvas({ projection, onNode, onInfo, onRelation, onLayout, onVie
   return <ReactFlowProvider><ReactFlow key={structure} nodes={nodes} edges={edges} nodeTypes={nodeTypes} edgeTypes={edgeTypes}
     onNodeClick={(_, node) => onNode(node.data.node)} onEdgeClick={(_, edge) => { const relation = projection.relations.find(item => item.id === edge.id); if (relation) onRelation(relation); }}
     fitView={!viewport} defaultViewport={viewport} fitViewOptions={{ padding: .27, maxZoom: 1.1 }}
-    nodesDraggable={false} nodesConnectable={false} elementsSelectable={false} minZoom={.2} maxZoom={1.8}
-    onMoveEnd={(_, value) => onViewport(value)} deleteKeyCode={null} colorMode="light">
+    nodesDraggable={false} nodesConnectable={false} nodesFocusable={false} elementsSelectable={false} minZoom={.2} maxZoom={1.8}
+    onMoveEnd={(_, value) => onViewport(value)} deleteKeyCode={null} colorMode="light" ariaLabelConfig={{ 'controls.ariaLabel': '画布控制', 'controls.zoomIn.ariaLabel': '放大', 'controls.zoomOut.ariaLabel': '缩小', 'controls.fitView.ariaLabel': '适应画布' }}>
     <Background color="#dedede" gap={22} size={.8} /><Controls showInteractive={false} />
     <div className="canvas-label"><span className="canvas-label-dot" />{projection.nodes[0]?.kind === 'function' ? '函数调用图' : '语义模块图'}</div>
     <div className="canvas-legend"><span><Circle size={9} />未开始</span><span><span className="learning-dot" />学习中</span><span><Check size={12} />已掌握</span></div>
