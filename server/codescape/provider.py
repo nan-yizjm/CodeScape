@@ -214,6 +214,41 @@ class Provider:
             batches.append((current_files, current_ranges))
         return batches
 
+    @staticmethod
+    def _split_batch(
+        batch_files: dict[str, str], batch_ranges: dict[str, tuple[int, int]]
+    ) -> list[tuple[dict[str, str], dict[str, tuple[int, int]]]]:
+        items = list(batch_files.items())
+        if len(items) > 1:
+            midpoint = max(1, len(items) // 2)
+            groups = [items[:midpoint], items[midpoint:]]
+            return [
+                (
+                    dict(group),
+                    {path: batch_ranges[path] for path, _ in group},
+                )
+                for group in groups
+                if group
+            ]
+        if not items:
+            return []
+        path, text = items[0]
+        lines = text.splitlines(keepends=True)
+        if len(lines) < 2:
+            return []
+        start, _ = batch_ranges[path]
+        midpoint = max(1, len(lines) // 2)
+        return [
+            (
+                {path: "".join(lines[:midpoint])},
+                {path: (start, start + midpoint - 1)},
+            ),
+            (
+                {path: "".join(lines[midpoint:])},
+                {path: (start + midpoint, start + len(lines) - 1)},
+            ),
+        ]
+
     async def _progress(self, callback: ProgressCallback | None, completed: int, total: int, detail: str) -> None:
         if callback:
             result = callback(completed, total, detail)
@@ -252,8 +287,11 @@ class Provider:
             "只输出符合以下 schema 的 json：" + json.dumps(schema, ensure_ascii=False)
         )
         usage_total: dict[str, int] = {}
-        for index, (batch_files, batch_ranges) in enumerate(batches, start=1):
+        index = 1
+        while index <= len(batches):
+            batch_files, batch_ranges = batches[index - 1]
             if index <= len(results):
+                index += 1
                 continue
             context, expected = self._context(analysis, batch_files, batch_ranges)
             if len(context) > MAX_CONTEXT_CHARS:
@@ -261,7 +299,21 @@ class Provider:
                 raise ProviderError(f"源码批次仍超过上下文保护上限：{paths}。请缩小该批次范围。")
             system = system_prefix + f"本次是第 {index}/{len(batches)} 批，只能为本批 entities 中的函数分配模块。"
             await self._progress(on_progress, index - 1, len(batches), f"正在分析第 {index}/{len(batches)} 批 · {len(batch_files)} 个文件")
-            document, usage = await self.request(system, context)
+            try:
+                document, usage = await self.request(system, context)
+            except ProviderError as error:
+                if "输出被截断" in str(error):
+                    smaller = self._split_batch(batch_files, batch_ranges)
+                    if smaller:
+                        batches[index - 1 : index] = smaller
+                        await self._progress(
+                            on_progress,
+                            index - 1,
+                            len(batches),
+                            f"第 {index} 批输出过长，已拆分为 {len(smaller)} 个子批次",
+                        )
+                        continue
+                raise
             architecture = Architecture.model_validate(document)
             repair_batch_architecture(architecture, analysis, expected, set(batch_files))
             validate_architecture(architecture, analysis, set(batch_files), expected_entity_ids=expected)
@@ -272,6 +324,7 @@ class Provider:
             if on_batch:
                 await on_batch(index, len(batches), architecture)
             await self._progress(on_progress, index, len(batches), f"第 {index}/{len(batches)} 批完成")
+            index += 1
         if len(results) == 1:
             return results[0], usage_total
         return merge_architectures(results, len(batches), analysis, set(files)), usage_total

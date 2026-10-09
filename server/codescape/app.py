@@ -504,16 +504,28 @@ def create_app(root: Path | None = None, nonce: str | None = None) -> FastAPI:
                 usage_path.write_text(json.dumps(usage), encoding="utf-8")
             except asyncio.CancelledError:
                 database.update(project_id, status="paused", error="分析已中断，请主动重新启动。")
+                previous = database.analysis_progress(project_id) or {}
                 database.analysis_progress(
                     project_id,
-                    {"phase": "paused", "completed": 0, "total": 0, "detail": "分析已中断，请主动重新启动"},
+                    {
+                        "phase": "paused",
+                        "completed": len(checkpoint),
+                        "total": previous.get("total", 0),
+                        "detail": "分析已中断，请主动重新启动",
+                    },
                 )
                 raise
             except Exception as error:
                 database.update(project_id, status="paused", error=str(error)[:300])
+                previous = database.analysis_progress(project_id) or {}
                 database.analysis_progress(
                     project_id,
-                    {"phase": "paused", "completed": 0, "total": 0, "detail": str(error)[:300]},
+                    {
+                        "phase": "paused",
+                        "completed": len(checkpoint),
+                        "total": previous.get("total", 0),
+                        "detail": str(error)[:300],
+                    },
                 )
             finally:
                 run_lock.release()

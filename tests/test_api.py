@@ -240,3 +240,33 @@ def test_architecture_rejects_duplicate_cycle_and_wrong_evidence():
     module.code_paths = ["other.py"]
     with pytest.raises(ValueError, match="覆盖"):
         validate_architecture(architecture, analysis, {"x.py", "other.py"})
+
+
+def test_architecture_replans_when_model_output_is_truncated(monkeypatch, tmp_path):
+    provider = Provider(tmp_path)
+    files = {"a.py": "def a(): pass\n", "b.py": "def b(): pass\n"}
+    analysis = python_analysis(files, "v")
+    calls = 0
+
+    async def fake_request(self, system, user, max_tokens=8000):
+        nonlocal calls
+        calls += 1
+        if calls == 1:
+            raise ProviderError("模型输出被截断，请缩小分析批次。")
+        payload = json.loads(user)
+        return {
+            "modules": [
+                {"id": entity["id"], "name": entity["name"], "summary": "职责",
+                 "entity_ids": [entity["id"]], "code_paths": [entity["location"]["path"]], "incomplete": False}
+                for entity in payload["entities"]
+            ],
+            "overview": {"introduction": "项目", "capabilities": ["能力"],
+                          "principle": "原理", "limitations": []},
+        }, {"total_tokens": 1}
+
+    monkeypatch.setattr(Provider, "request", fake_request)
+    architecture, _ = asyncio.run(provider.architecture(analysis, files))
+    assert calls == 3
+    assert {entity_id for module in architecture.modules for entity_id in module.entity_ids} == {
+        entity.id for entity in analysis.entities
+    }
