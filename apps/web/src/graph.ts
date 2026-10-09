@@ -108,12 +108,8 @@ export function projectGraph(project: ProjectDetail, focus: string | null, optio
     parentId: modules.find(module => module.entity_ids.includes(entity.id))?.id, x: 0, y: 0, width: 248, height: 116,
   })) : [];
   if (functions) {
-    const siblings = modules.filter(module => module.id !== active.id && module.parent_id === active.parent_id);
-    const isExpanded = options.expandedModuleId === active.id;
-    otherModuleCount = isExpanded ? siblings.length : 0;
-    hiddenModuleCount = isExpanded && options.showOtherModules === false ? siblings.length : 0;
     const related = modules.filter(module => module.id !== active.id && functionNodes.some(node => module.entity_ids.includes(node.id)));
-    displayed.push(active, ...[...new Map((options.showOtherModules === true || !isExpanded ? [...siblings, ...related] : related).map(module => [module.id, module])).values()]);
+    displayed.push(active, ...related);
   }
   const moduleNodes: ProjectionNode[] = displayed.map(module => {
     const entityIds = moduleEntities(module, modules);
