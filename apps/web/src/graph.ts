@@ -46,10 +46,17 @@ export function projectGraph(project: ProjectDetail, focus: string | null, optio
     }
   }
   let hiddenModuleCount = 0;
+  let otherModuleCount = 0;
   if (!functions) {
     if (focus) {
-      if (active) displayed.push(active);
-      descend(focus);
+      if (active) {
+        displayed.push(active);
+        const siblings = modules.filter(module => module.parent_id === active.parent_id && module.id !== active.id);
+        otherModuleCount = siblings.length;
+        hiddenModuleCount = options.showOtherModules ? 0 : siblings.length;
+        if (options.expandedModuleId === active.id) descend(active.id, 2);
+        if (options.showOtherModules) displayed.push(...siblings);
+      }
     } else {
       const roots = modules.filter(module => module.parent_id === null);
       const expandedId = options.expandedModuleId || null;
@@ -58,6 +65,7 @@ export function projectGraph(project: ProjectDetail, focus: string | null, optio
       while (anchorRoot?.parent_id) anchorRoot = modules.find(module => module.id === anchorRoot!.parent_id);
       const visibleRoots = expanded && !options.showOtherModules ? roots.filter(module => module.id === anchorRoot?.id) : roots;
       hiddenModuleCount = roots.length - visibleRoots.length;
+      otherModuleCount = expanded ? Math.max(0, roots.length - 1) : 0;
       for (const root of visibleRoots) {
         displayed.push(root);
         if (!expanded) continue;
@@ -89,14 +97,20 @@ export function projectGraph(project: ProjectDetail, focus: string | null, optio
       }
     }
   }
-  const functionNodes: ProjectionNode[] = functions ? visible.filter(entity => included.has(entity.id)).map(entity => ({
+  const functionExpanded = functions && (options.expandedModuleId === undefined || options.expandedModuleId === active.id);
+  const functionNodes: ProjectionNode[] = functionExpanded ? visible.filter(entity => included.has(entity.id) &&
+    (options.showOtherModules !== false || active.entity_ids.includes(entity.id))).map(entity => ({
     id: entity.id, label: visible.filter(item => item.name === entity.name).length > 1 ? `${entity.signature} · L${entity.location.start_line}` : entity.name, description: '', kind: 'function', entity, count: 0,
     state: project.learning[entity.id]?.state || 'not_started', incomplete: entity.unresolved_count > 0,
     external: !active.entity_ids.includes(entity.id), tone: modules.findIndex(module => module.entity_ids.includes(entity.id)),
     parentId: modules.find(module => module.entity_ids.includes(entity.id))?.id, x: 0, y: 0, width: 248, height: 116,
   })) : [];
-  if (functions && functionNodes.length) {
-    displayed.push(active, ...modules.filter(module => module.id !== active.id && functionNodes.some(node => module.entity_ids.includes(node.id))));
+  if (functions) {
+    const siblings = modules.filter(module => module.id !== active.id && module.parent_id === active.parent_id);
+    otherModuleCount = siblings.length;
+    hiddenModuleCount = options.showOtherModules === false ? siblings.length : 0;
+    const related = modules.filter(module => module.id !== active.id && functionNodes.some(node => module.entity_ids.includes(node.id)));
+    displayed.push(active, ...[...new Map((options.showOtherModules === true ? [...siblings, ...related] : related).map(module => [module.id, module])).values()]);
   }
   const moduleNodes: ProjectionNode[] = displayed.map(module => {
     const entityIds = moduleEntities(module, modules);
@@ -104,9 +118,9 @@ export function projectGraph(project: ProjectDetail, focus: string | null, optio
       count: entityIds.length, state: aggregateState(entityIds.map(id => project.learning[id]?.state || 'not_started')),
       incomplete: module.incomplete, external: functions && module.id !== active.id, tone: modules.indexOf(module),
       parentId: !functions && module.parent_id && displayed.some(item => item.id === module.parent_id) ? module.parent_id : undefined,
-      container: functions || displayed.some(item => item.parent_id === module.id),
-      canExpand: !functions && modules.some(item => item.parent_id === module.id),
-      expanded: !functions && options.expandedModuleId === module.id,
+      container: functionNodes.some(node => node.parentId === module.id) || displayed.some(item => item.parent_id === module.id),
+      canExpand: functions ? module.id === active.id : modules.some(item => item.parent_id === module.id),
+      expanded: functions ? module.id === active.id && functionExpanded : displayed.some(item => item.parent_id === module.id),
       shownCount: functions ? functionNodes.filter(node => node.parentId === module.id).length : undefined,
       x: 0, y: 0, width: 300, height: 204 };
   });
@@ -128,7 +142,7 @@ export function projectGraph(project: ProjectDetail, focus: string | null, optio
     if (!grouped.has(key)) grouped.set(key, { id: key, from, to, label, calls: [] });
     grouped.get(key)!.calls.push(call);
   }
-  return { nodes, relations: [...grouped.values()], hiddenModuleCount };
+  return { nodes, relations: [...grouped.values()], hiddenModuleCount, otherModuleCount };
 }
 
 export function escapeXml(value: string) {

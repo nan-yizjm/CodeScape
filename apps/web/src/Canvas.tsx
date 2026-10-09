@@ -20,7 +20,7 @@ function MapNode({ data }: NodeProps<Node<Data>>) {
       onClick={event => { event.stopPropagation(); data.onOpen(node); }} />
     <Handle type="target" position={Position.Top} />
     <div className="node-top"><span className="node-symbol"><Icon size={16} /></span><span className="node-kind">{node.kind === 'module' ? node.external ? '关联模块' : '逻辑模块' : '函数'}</span>
-      <button className="node-info nodrag nopan" aria-label={`查看 ${node.label} 详情`} onClick={event => { event.stopPropagation(); data.onInfo(node); }}><Info size={16} /></button></div>
+      <button className="node-info nodrag nopan" aria-label={`查看 ${node.label} 详情`} onPointerDown={event => event.stopPropagation()} onClick={event => { event.stopPropagation(); event.nativeEvent.stopImmediatePropagation?.(); data.onInfo(node); }}><Info size={16} /></button></div>
     <div className="node-title" title={node.label}>{node.label}</div>
     {node.kind === 'module' && <p>{node.description}</p>}
     <div className="node-footer"><span className="node-count">{node.kind === 'module' ? node.shownCount !== undefined && node.shownCount < node.count ? `显示 ${node.shownCount} / ${node.count} 个函数` : `${node.count} 个函数` : node.external ? <><ArrowUpRight size={12} /> 跨模块</> : '真实源码实现'}</span>

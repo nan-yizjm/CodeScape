@@ -86,7 +86,7 @@ describe('基于证据生成图形', () => {
       expect(node.x + node.width).toBeLessThan(parent.x + parent.width);
       expect(node.y + node.height).toBeLessThan(parent.y + parent.height);
     }
-    expect(projectGraph(project, 'middle').nodes.map(node => node.id)).toEqual(['middle', 'm']);
+    expect(projectGraph(project, 'middle', { expandedModuleId: 'middle' }).nodes.map(node => node.id)).toEqual(['middle', 'm']);
     const childView = projectGraph(project, null, { expandedModuleId: 'middle' });
     expect(childView.nodes.map(node => node.id)).toEqual(['root', 'middle', 'm']);
     const svg = exportSvg(view, '嵌套');
@@ -105,8 +105,27 @@ describe('基于证据生成图形', () => {
     const expanded = projectGraph(project, null, { expandedModuleId: 'root' });
     expect(expanded.nodes.map(node => node.id)).toEqual(['root', 'middle', 'm']);
     expect(expanded.hiddenModuleCount).toBe(1);
+    expect(expanded.otherModuleCount).toBe(1);
     expect(projectGraph(project, null, { expandedModuleId: 'root', showOtherModules: true }).nodes.map(node => node.id))
       .toEqual(['root', 'middle', 'm', 'sibling']);
+  });
+  it('函数视图父模块可独立收起，其他模块开关始终保留可切换数量', () => {
+    const project = fixture();
+    project.architecture!.modules[0].entity_ids = ['f'];
+    project.architecture!.modules.push({ ...project.architecture!.modules[0], id: 'other', name: '同层模块', entity_ids: ['g'] });
+    const options = { expandedModuleId: 'm', showOtherModules: false };
+    const expanded = projectGraph(project, 'm', options);
+    expect(expanded.nodes.map(node => node.id)).toEqual(['m', 'f']);
+    expect(expanded.nodes[0].expanded).toBe(true);
+    expect(expanded.otherModuleCount).toBe(1);
+    const all = projectGraph(project, 'm', { ...options, showOtherModules: true });
+    expect(all.nodes.map(node => node.id)).toEqual(['m', 'other', 'f', 'g']);
+    expect(all.otherModuleCount).toBe(1);
+    expect(all.hiddenModuleCount).toBe(0);
+    const collapsed = projectGraph(project, 'm', { ...options, expandedModuleId: null });
+    expect(collapsed.nodes.map(node => node.id)).toEqual(['m']);
+    expect(collapsed.nodes[0].container).toBe(false);
+    expect(collapsed.nodes[0].canExpand).toBe(true);
   });
   it('聚合状态涵盖空模块和混合掌握情况', () => {
     expect(aggregateState([])).toBe('not_started');
