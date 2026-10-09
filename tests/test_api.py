@@ -273,3 +273,32 @@ def test_architecture_replans_when_model_output_is_truncated(monkeypatch, tmp_pa
     assert {entity_id for module in architecture.modules for entity_id in module.entity_ids} == {
         entity.id for entity in analysis.entities
     }
+
+
+def test_checkpoint_alignment_merges_dynamic_subbatches(tmp_path):
+    provider = Provider(tmp_path)
+    files = {"a.py": "def a(): pass\ndef aa(): pass\n", "b.py": "def b(): pass\n"}
+    analysis = python_analysis(files, "v")
+    by_path = {path: [entity for entity in analysis.entities if entity.location.path == path] for path in files}
+    overview = Overview(introduction="项目", capabilities=["能力"], principle="原理", limitations=[])
+
+    def result(name, entities, path):
+        return Architecture(
+            modules=[Module(id=name, name=name, summary="职责", entity_ids=[entity.id for entity in entities], code_paths=[path])],
+            overview=overview,
+        )
+
+    batches = [
+        ({"a.py": files["a.py"]}, {"a.py": (1, 2)}),
+        ({"b.py": files["b.py"]}, {"b.py": (1, 1)}),
+    ]
+    aligned = provider._align_completed_batches(
+        [result("b", by_path["b.py"], "b.py"), result("a1", by_path["a.py"][:1], "a.py"),
+         result("a2", by_path["a.py"][1:], "a.py")],
+        batches,
+        analysis,
+    )
+    assert len(aligned) == 2
+    assert {entity_id for module in aligned[0].modules for entity_id in module.entity_ids} == {
+        entity.id for entity in by_path["a.py"]
+    }

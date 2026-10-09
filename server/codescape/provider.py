@@ -255,6 +255,47 @@ class Provider:
             if inspect.isawaitable(result):
                 await result
 
+    def _align_completed_batches(
+        self,
+        completed_batches: list[Architecture],
+        batches: list[tuple[dict[str, str], dict[str, tuple[int, int]]]],
+        analysis: Analysis,
+    ) -> list[Architecture]:
+        """按实体集合恢复检查点，避免动态拆批后仅按数量造成错位。"""
+        assigned_sets = [
+            {entity_id for module in result.modules for entity_id in module.entity_ids}
+            for result in completed_batches
+        ]
+        candidates: list[list[int]] = [[] for _ in batches]
+        for result_index, entity_ids in enumerate(assigned_sets):
+            if not entity_ids:
+                continue
+            ranked: list[tuple[int, int]] = []
+            for batch_index, (batch_files, batch_ranges) in enumerate(batches):
+                _, expected = self._context(analysis, batch_files, batch_ranges)
+                overlap = len(entity_ids & expected)
+                if overlap and entity_ids.issubset(expected):
+                    ranked.append((overlap, batch_index))
+            if ranked:
+                _, batch_index = max(ranked)
+                candidates[batch_index].append(result_index)
+        aligned: list[Architecture] = []
+        for batch_index, result_indices in enumerate(candidates):
+            batch_files, batch_ranges = batches[batch_index]
+            _, expected = self._context(analysis, batch_files, batch_ranges)
+            if not result_indices:
+                break
+            group = [completed_batches[index] for index in result_indices]
+            union = {entity_id for result in group for module in result.modules for entity_id in module.entity_ids}
+            if union != expected:
+                break
+            aligned.append(
+                group[0]
+                if len(group) == 1
+                else merge_architectures(group, len(group), analysis, set(batch_files), expected)
+            )
+        return aligned
+
     async def architecture(
         self,
         analysis: Analysis,
@@ -266,9 +307,7 @@ class Provider:
         batches = self._plan_batches(analysis, files)
         if not batches:
             raise ProviderError("当前源码范围没有可发送的内容。")
-        results: list[Architecture] = list(completed_batches or [])
-        if len(results) > len(batches):
-            results = []
+        results = self._align_completed_batches(list(completed_batches or []), batches, analysis)
         await self._progress(
             on_progress,
             len(results),
@@ -333,7 +372,11 @@ class Provider:
 
 
 def merge_architectures(
-    results: list[Architecture], batch_count: int, analysis: Analysis, paths: set[str]
+    results: list[Architecture],
+    batch_count: int,
+    analysis: Analysis,
+    paths: set[str],
+    expected_entity_ids: set[str] | None = None,
 ) -> Architecture:
     merged: dict[tuple[str, tuple[str, ...]], Module] = {}
     local_keys: list[dict[str, tuple[str, tuple[str, ...]]]] = []
@@ -368,7 +411,7 @@ def merge_architectures(
             limitations=limitations,
         ),
     )
-    validate_architecture(architecture, analysis, paths)
+    validate_architecture(architecture, analysis, paths, expected_entity_ids=expected_entity_ids)
     return architecture
 
 
