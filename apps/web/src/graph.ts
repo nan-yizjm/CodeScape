@@ -98,7 +98,8 @@ export function projectGraph(project: ProjectDetail, focus: string | null, optio
       }
     }
   }
-  const functionExpanded = functions && (options.expandedModuleId === undefined || options.expandedModuleId === active.id);
+  const functionExpanded = functions && options.expandedModuleId !== null &&
+    (options.expandedModuleId === undefined || options.expandedModuleId === active.id);
   const functionNodes: ProjectionNode[] = functionExpanded ? visible.filter(entity => included.has(entity.id) &&
     (options.showOtherModules !== false || active.entity_ids.includes(entity.id))).map(entity => ({
     id: entity.id, label: visible.filter(item => item.name === entity.name).length > 1 ? `${entity.signature} · L${entity.location.start_line}` : entity.name, description: '', kind: 'function', entity, count: 0,

@@ -148,8 +148,9 @@ export default function App() {
     try {
       const detail = await api<ProjectDetail>(`/projects/${id}`);
       const saved = await api<{ focus_id: string | null; viewport: Record<string, Viewport> | null } | null>(`/projects/${id}/session`);
+      const savedFocus = saved?.focus_id && detail.architecture?.modules.some(module => module.id === saved.focus_id) ? saved.focus_id : null;
       setProject(detail);
-      setFocus(saved?.focus_id && detail.architecture?.modules.some(module => module.id === saved.focus_id) ? saved.focus_id : null);
+      setFocus(savedFocus); setExpandedModule(savedFocus);
       setViewports(saved?.viewport || {});
     } catch (problem) { setError((problem as Error).message); }
   }

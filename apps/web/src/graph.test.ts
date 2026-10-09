@@ -68,6 +68,15 @@ describe('基于证据生成图形', () => {
     expect(incoming.relations).toHaveLength(1);
     expect(incoming.relations[0].calls).toHaveLength(2);
   });
+  it('函数视图默认保留函数节点和调用连线，显式收起才隐藏函数', () => {
+    const project = fixture();
+    const expanded = projectGraph(project, 'm');
+    expect(expanded.nodes.filter(node => node.kind === 'function').map(node => node.id)).toEqual(['f', 'g']);
+    expect(expanded.relations).toHaveLength(2);
+    const collapsed = projectGraph(project, 'm', { expandedModuleId: null });
+    expect(collapsed.nodes.filter(node => node.kind === 'function')).toHaveLength(0);
+    expect(collapsed.relations).toHaveLength(0);
+  });
   it('多层模块完整显示，纵向降级布局仍把每层子模块包在父容器内', async () => {
     const project = fixture();
     const leaf = project.architecture!.modules[0];
