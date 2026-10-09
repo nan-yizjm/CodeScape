@@ -63,6 +63,8 @@ class Database:
             Column("value", JSON, nullable=False),
         )
         metadata.create_all(self.engine)
+
+    def recover_interrupted(self) -> None:
         # A crashed preview never silently resumes paid analysis.
         with self.engine.begin() as connection:
             connection.execute(

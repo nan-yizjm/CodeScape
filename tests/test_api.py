@@ -6,7 +6,7 @@ import pytest
 from codescape.analyzers import python_analysis
 from codescape.app import create_app
 from codescape.models import Analysis, Architecture, Entity, Location, Module, Overview, Scope
-from codescape.provider import Provider, ProviderError, validate_architecture
+from codescape.provider import Provider, ProviderError, normalize_module_paths, validate_architecture
 from fastapi.testclient import TestClient
 
 
@@ -212,6 +212,9 @@ def test_architecture_rejects_duplicate_cycle_and_wrong_evidence():
     overview = Overview(introduction="项目", capabilities=["能力"], principle="原理", limitations=[])
     module = Module(id="m", name="模块", summary="职责", code_paths=["x.py"], entity_ids=[entity.id])
     architecture = Architecture(modules=[module], overview=overview)
+    module.code_paths = []
+    normalize_module_paths(architecture, analysis)
+    assert module.code_paths == ["x.py"]
     validate_architecture(architecture, analysis, {"x.py", "other.py"})
     module.entity_ids.append(entity.id)
     with pytest.raises(ValueError, match="归属"):

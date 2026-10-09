@@ -44,6 +44,20 @@ def test_learning_concurrent_revision_and_persistence(tmp_path):
     restarted.engine.dispose()
 
 
+def test_readonly_database_open_does_not_pause_running_task(tmp_path):
+    database = Database(tmp_path)
+    database.insert({
+        "id": "p", "name": "项目", "source": "source", "created_at": "now",
+        "status": "analyzing", "snapshot": {"files": {}}, "version_id": "v", "demo": 0,
+    })
+    inspector = Database(tmp_path)
+    assert inspector.get("p")["status"] == "analyzing"
+    inspector.recover_interrupted()
+    assert inspector.get("p")["status"] == "paused"
+    inspector.engine.dispose()
+    database.engine.dispose()
+
+
 def test_dpapi_does_not_save_plaintext(tmp_path):
     store = CredentialStore(tmp_path)
     value = "仅用于本地单元测试的假密钥"

@@ -34,6 +34,7 @@ from .snapshots import create_snapshot, read_snapshot
 def create_app(root: Path | None = None, nonce: str | None = None) -> FastAPI:
     root = root or data_root()
     database = Database(root)
+    database.recover_interrupted()
     provider = Provider(root)
     bootstrap_nonce = nonce or secrets.token_urlsafe(32)
     session_token = secrets.token_urlsafe(32)

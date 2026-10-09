@@ -263,6 +263,7 @@ class Provider:
             await self._progress(on_progress, index - 1, len(batches), f"正在分析第 {index}/{len(batches)} 批 · {len(batch_files)} 个文件")
             document, usage = await self.request(system, context)
             architecture = Architecture.model_validate(document)
+            normalize_module_paths(architecture, analysis)
             validate_architecture(architecture, analysis, set(batch_files), expected_entity_ids=expected)
             results.append(architecture)
             for key, value in usage.items():
@@ -314,6 +315,18 @@ def merge_architectures(
     )
     validate_architecture(architecture, analysis, paths)
     return architecture
+
+
+def normalize_module_paths(architecture: Architecture, analysis: Analysis) -> None:
+    """补齐模型漏写但静态实体已确定的源码路径，不改变模块或函数归属。"""
+    entity_paths = {entity.id: entity.location.path for entity in analysis.entities if entity.visible}
+    for module in architecture.modules:
+        paths = list(module.code_paths)
+        for entity_id in module.entity_ids:
+            path = entity_paths.get(entity_id)
+            if path and path not in paths:
+                paths.append(path)
+        module.code_paths = paths
 
 
 def validate_architecture(
