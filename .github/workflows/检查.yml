@@ -1,0 +1,31 @@
+name: 开发检查
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  verify:
+    name: Windows 静态解析与前端检查
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+      - uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
+        with:
+          enable-cache: true
+          version: '0.12.24'
+      - name: 准备 Python 和依赖
+        run: uv sync --frozen --python 3.12
+      - name: 准备前端与 TypeScript 解析器
+        run: npm ci
+      - name: 检查 Python 与解析边界
+        run: |
+          uv run ruff check server scripts tests
+          uv run pytest -q
+      - name: 检查前端
+        run: |
+          npm run typecheck
+          npm test
+          npm run build

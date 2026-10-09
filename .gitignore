@@ -10,3 +10,4 @@ output/
 .playwright-cli/
 *.egg-info/
 .env
+*.tsbuildinfo

@@ -1,0 +1,30 @@
+export type LearningState = 'not_started' | 'in_progress' | 'mastered';
+export type Location = { path: string; start_line: number; end_line: number; start_byte: number; end_byte: number };
+export type Entity = { id: string; name: string; qualified_name: string; signature: string; language: string;
+  location: Location; scope_id: string; visible: boolean; hidden_reason: string | null; explanation: string | null;
+  condition: string | null; unresolved_count: number };
+export type Call = { id: string; caller_scope_id: string; target_id: string | null; expression: string;
+  location: Location; resolution: string; origin: string; reason: string; target_name: string | null };
+export type Module = { id: string; parent_id: string | null; name: string; summary: string; entity_ids: string[];
+  code_paths: string[]; incomplete: boolean };
+export type Overview = { introduction: string; capabilities: string[]; principle: string; limitations: string[] };
+export type Project = { id: string; name: string; source: string; created_at: string; status: string;
+  version_id: string; demo: boolean; error: string | null; function_count: number; file_count: number;
+  progress: { mastered: number; total: number }; languages: string[]; diagnostic_count: number;
+  has_architecture: boolean };
+export type ProjectDetail = Project & { file_ids: Record<string, string>; analysis: { entities: Entity[]; calls: Call[];
+  scopes: { id: string; kind: string; name: string; location: Location }[];
+  diagnostics: { category: string; message: string; path: string | null; line: number | null }[];
+  tools: Record<string, string> };
+  architecture: { modules: Module[]; overview: Overview } | null;
+  learning: Record<string, { state: LearningState; revision: number }>;
+  scope: { excluded: { path: string; reason: string }[]; snapshot_id: string } };
+export type SourceFile = { path: string; text: string; version_id: string; hash: string };
+export type Relation = { id: string; from: string; to: string; label: string; calls: Call[] };
+export type Panel = { kind: 'overview' } | { kind: 'module'; module: Module } | { kind: 'function'; entity: Entity }
+  | { kind: 'relation'; relation: Relation } | { kind: 'source'; entity: Entity; location: Location }
+  | { kind: 'diagnostics' };
+export type ProjectionNode = { id: string; label: string; description: string; kind: 'module' | 'function';
+  entity?: Entity; module?: Module; count: number; state: LearningState; incomplete: boolean; external: boolean;
+  x: number; y: number; width: number; height: number };
+export type Projection = { nodes: ProjectionNode[]; relations: Relation[] };

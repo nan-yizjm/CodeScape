@@ -1,0 +1,14 @@
+{
+  "name": "codescape-workspace",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "workspaces": ["apps/web", "analyzers/typescript"],
+  "scripts": {
+    "dev": "npm run dev --workspace @codescape/web",
+    "build": "npm run build --workspace @codescape/web",
+    "typecheck": "npm run typecheck --workspace @codescape/web",
+    "test": "npm run test --workspace @codescape/web",
+    "analyze:ts": "node analyzers/typescript/analyze.mjs"
+  }
+}

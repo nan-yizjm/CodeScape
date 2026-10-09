@@ -1,0 +1,35 @@
+{
+  "schema": "codescape-runtime-validation/1",
+  "validated_on": "2026-10-09",
+  "scope": "仅当前 Windows 主机开发运行，未验证安装包或完整 Windows 10/11 矩阵",
+  "os": "Windows-11-10.0.26200-SP0",
+  "python": "3.12.14",
+  "node": "v24.16.0",
+  "packages": {
+    "fastapi": "0.143.0",
+    "uvicorn": "0.54.0",
+    "pydantic": "2.14.0",
+    "httpx": "0.28.1",
+    "sqlalchemy": "2.1.4",
+    "tree-sitter": "0.26.0",
+    "tree-sitter-c": "0.24.2",
+    "tree-sitter-cpp": "0.23.4",
+    "libclang": "18.1.1",
+    "pytest": "9.1.1",
+    "ruff": "0.16.10"
+  },
+  "binaries": [
+    {
+      "runtime": "Python",
+      "filename": "python.exe",
+      "size": 106448,
+      "sha256": "10d845f50a2af64e3500bb2fcb348b5bc98a75d8ddada63e45ba1da6a1fc79d1"
+    },
+    {
+      "runtime": "Node.js",
+      "filename": "node.exe",
+      "size": 92279112,
+      "sha256": "b3094d0b49f9ad602262a9921551737bb97637c05dd357a06ae98188d7290aa3"
+    }
+  ]
+}

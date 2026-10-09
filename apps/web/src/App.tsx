@@ -1,0 +1,246 @@
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { ArrowLeft, ArrowRight, BookOpen, Boxes, ChevronRight, Code2, Download, FolderOpen, GitBranch,
+  Info, Layers3, Plus, Settings2, ShieldCheck, Sparkles, X, Check, AlertTriangle, Circle, FileCode2,
+  Activity, RefreshCw, Braces, ExternalLink } from 'lucide-react';
+import type { Viewport } from '@xyflow/react';
+import { api, bootstrap } from './api';
+import { Canvas } from './Canvas';
+import { SourceReader } from './SourceReader';
+import { aggregateState, exportSvg, moduleEntities, projectGraph } from './graph';
+import type { Entity, LearningState, Panel, Project, ProjectDetail, Projection, ProjectionNode, SourceFile } from './types';
+
+const statuses: Record<string, string> = { ready: '可以探索', indexed: '静态索引就绪', indexing: '正在解析',
+  queued: '等待解析', analyzing: 'AI 分析中', paused: '分析已暂停', failed: '解析失败' };
+const stateLabels = { not_started: '未开始', in_progress: '学习中', mastered: '已掌握' };
+
+export default function App() {
+  const [authorized, setAuthorized] = useState(false);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [project, setProject] = useState<ProjectDetail | null>(null);
+  const [focus, setFocus] = useState<string | null>(null);
+  const [panels, setPanels] = useState<Panel[]>([]);
+  const [source, setSource] = useState<SourceFile | null>(null);
+  const [viewports, setViewports] = useState<Record<string, Viewport>>({});
+  const [modal, setModal] = useState<'import' | 'settings' | 'consent' | null>(null);
+  const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [importPath, setImportPath] = useState('');
+  const [excludeText, setExcludeText] = useState('');
+  const [settings, setSettings] = useState({ base_url: 'https://api.deepseek.com', model: 'deepseek-flash', has_key: false });
+  const [key, setKey] = useState('');
+  const [testMessage, setTestMessage] = useState('');
+  const [width, setWidth] = useState(420);
+  const layout = useRef<Projection | null>(null);
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const panel = panels.at(-1);
+  const modules = project?.architecture?.modules || [];
+  const activeModule = modules.find(module => module.id === focus);
+  const projection = useMemo(() => project ? projectGraph(project, focus) : { nodes: [], relations: [] }, [project, focus]);
+  const isFunctions = !!activeModule && !modules.some(module => module.parent_id === focus);
+  const confirmedCount = project?.analysis.calls.filter(call => call.resolution === 'confirmed').length || 0;
+
+  async function refresh() { setProjects(await api<Project[]>('/projects')); }
+  useEffect(() => {
+    bootstrap().then(async () => { setAuthorized(true); await refresh(); setSettings(await api('/settings/ai')); })
+      .catch(problem => setError(problem.message));
+  }, []);
+  useEffect(() => {
+    if (!authorized) return;
+    const timer = setInterval(() => {
+      api<Project[]>('/projects').then(setProjects).catch(() => {});
+      if (project && ['indexing', 'analyzing', 'queued'].includes(project.status)) {
+        api<ProjectDetail>(`/projects/${project.id}`).then(next => {
+          setProject(next);
+          if (next.status === 'ready' && project.status !== 'ready') {
+            setFocus(null); setPanels([{ kind: 'overview' }]); setNotice('架构分析已完成，可以开始探索。');
+          }
+        }).catch(problem => setError(problem.message));
+      }
+    }, 2000);
+    return () => clearInterval(timer);
+  }, [authorized, project?.id, project?.status]);
+  useEffect(() => {
+    if (!notice) return;
+    const timer = setTimeout(() => setNotice(''), 6000);
+    return () => clearTimeout(timer);
+  }, [notice]);
+  useEffect(() => {
+    if (!project || panel?.kind !== 'source') return;
+    let active = true;
+    setSource(null);
+    const fileId = project.file_ids[panel.location.path];
+    if (!fileId) { setError(`找不到快照文件：${panel.location.path}`); return; }
+    api<SourceFile>(`/projects/${project.id}/files/${fileId}?version_id=${project.version_id}`)
+      .then(value => { if (active) setSource(value); })
+      .catch(problem => { if (active) setError(problem.message); });
+    return () => { active = false; };
+  }, [project?.id, project?.version_id, panel]);
+
+  async function openProject(id: string) {
+    setError(''); setSource(null); setPanels([]); setViewports({}); layout.current = null;
+    try {
+      const detail = await api<ProjectDetail>(`/projects/${id}`);
+      const saved = await api<{ focus_id: string | null; viewport: Record<string, Viewport> | null } | null>(`/projects/${id}/session`);
+      setProject(detail);
+      setFocus(saved?.focus_id && detail.architecture?.modules.some(module => module.id === saved.focus_id) ? saved.focus_id : null);
+      setViewports(saved?.viewport || {});
+    } catch (problem) { setError((problem as Error).message); }
+  }
+
+  function saveSession(nextFocus: string | null, nextViewports = viewports) {
+    if (!project) return;
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    const projectId = project.id, versionId = project.version_id;
+    saveTimer.current = setTimeout(() => {
+      api(`/projects/${projectId}/session`, { version_id: versionId, focus_id: nextFocus,
+        viewport: nextViewports, panel: null }, 'PUT').catch(problem => setError(problem.message));
+    }, 500);
+  }
+
+  function changeFocus(next: string | null) { setFocus(next); layout.current = null; saveSession(next); }
+  function pushPanel(next: Panel) { setPanels(current => [...current.slice(-19), next]); }
+  async function sourcePanel(entity: Entity, location = entity.location) {
+    if (!project) return;
+    setSource(null); pushPanel({ kind: 'source', entity, location });
+  }
+
+  function onNode(node: ProjectionNode) {
+    if (node.kind === 'module') changeFocus(node.id);
+    else if (node.entity) void sourcePanel(node.entity);
+  }
+
+  async function learning(entity: Entity, state: LearningState) {
+    if (!project) return;
+    try {
+      const value = await api<{ state: LearningState; revision: number }>(`/projects/${project.id}/learning/${entity.id}`,
+        { version_id: project.version_id, state, expected_revision: project.learning[entity.id]?.revision || 0 }, 'PUT');
+      setProject(current => current ? { ...current, learning: { ...current.learning, [entity.id]: value },
+        progress: { ...current.progress, mastered: current.analysis.entities.filter(item => item.visible &&
+          (item.id === entity.id ? state : current.learning[item.id]?.state) === 'mastered').length } } : current);
+      setNotice('学习状态已保存到本地。'); await refresh();
+    } catch (problem) { setError((problem as Error).message); }
+  }
+
+  async function importProject() {
+    setBusy(true); setError('');
+    try {
+      const created = await api<Project>('/imports', { path: importPath, excludes: excludeText.split('\n').map(value => value.trim()).filter(Boolean) });
+      setModal(null); setImportPath(''); await refresh(); await openProject(created.id);
+      setNotice('源码快照已创建，正在进行静态解析。');
+    } catch (problem) { setError((problem as Error).message); }
+    finally { setBusy(false); }
+  }
+
+  async function saveSettings(test = false) {
+    setBusy(true); setTestMessage('');
+    try {
+      const configured = await api<typeof settings>('/settings/ai', { base_url: settings.base_url, model: settings.model, key: key || null }, 'PUT');
+      setSettings(configured); setKey('');
+      if (test) {
+        const result = await api<{ model: string; usage: { total_tokens?: number } }>('/settings/ai/test', {});
+        setTestMessage(`连接成功 · ${result.model} · ${result.usage.total_tokens ?? '未知'} Tokens · 未发送源码`);
+      } else setTestMessage('设置已保存，密钥使用 Windows DPAPI 加密。');
+    } catch (problem) { setTestMessage((problem as Error).message); }
+    finally { setBusy(false); }
+  }
+
+  async function startAI() {
+    if (!project) return;
+    setBusy(true);
+    try {
+      await api(`/projects/${project.id}/consent`, { accepted: true });
+      await api(`/projects/${project.id}/analyze`, {});
+      setProject(await api(`/projects/${project.id}`)); setModal(null);
+      setNotice('AI 分析已开始；已有样例架构保持可读。');
+    } catch (problem) { setError((problem as Error).message); }
+    finally { setBusy(false); }
+  }
+
+  function download() {
+    if (!layout.current || !project) return;
+    const contents = exportSvg({ ...layout.current, nodes: layout.current.nodes.map(node => ({ ...node,
+      state: projection.nodes.find(current => current.id === node.id)?.state || node.state })) }, project.name);
+    const url = URL.createObjectURL(new Blob([contents], { type: 'image/svg+xml;charset=utf-8' }));
+    const link = document.createElement('a'); link.href = url; link.download = `${project.name}-${activeModule?.name || '项目架构'}.svg`;
+    link.click(); setTimeout(() => URL.revokeObjectURL(url), 1000); setNotice('当前层级完整图形已导出为 SVG。');
+  }
+
+  const breadcrumb = (() => {
+    const chain = [];
+    let current = activeModule;
+    while (current) { chain.unshift(current); current = modules.find(module => module.id === current!.parent_id); }
+    return chain;
+  })();
+
+  return <div className="app-shell">
+    <header className="app-header">
+      <button className="brand" onClick={() => { setProject(null); setPanels([]); }} aria-label="返回项目学习库"><span className="brand-symbol"><Layers3 size={22} /></span><span>CodeScape<span className="brand-cn">源境</span></span></button>
+      <div className="header-center"><span className="status-dot" />本地工作空间<span className="header-divider" />M0 开发预览</div>
+      <div className="header-actions"><span className="local-badge"><ShieldCheck size={13} /> 数据本地保存</span><button className="icon-button" aria-label="AI 服务设置" onClick={() => { setModal('settings'); setTestMessage(''); }}><Settings2 size={19} /></button></div>
+    </header>
+    <div className="app-body">
+      <aside className="sidebar">
+        <div className="sidebar-heading"><span>学习空间</span><span className="mini-label">WORKSPACE</span></div>
+        <button className={`sidebar-nav ${!project ? 'active' : ''}`} onClick={() => { setProject(null); setPanels([]); }}><BookOpen size={18} />项目学习库<span className="nav-count">{projects.length}</span></button>
+        <div className="project-list-label">最近的项目<button className="tiny-icon" aria-label="导入项目" onClick={() => setModal('import')}><Plus size={15} /></button></div>
+        <div className="sidebar-projects">{projects.map(item => <button key={item.id} className={`sidebar-project ${project?.id === item.id ? 'selected' : ''}`} onClick={() => void openProject(item.id)}><span className="small-project-icon"><Code2 size={15} /></span><span><strong>{item.name}</strong><small>{item.demo ? '预置验证样例' : item.languages.join(' / ') || statuses[item.status]}</small></span>{item.status === 'analyzing' || item.status === 'indexing' ? <span className="spinner small" /> : <ChevronRight size={13} />}</button>)}</div>
+        <div className="sidebar-bottom"><div className="quiet-note"><Braces size={16} /><strong>从全景，深入源码</strong><p>每条关系都有出处。每次探索都能继续。</p></div><div className="connection"><span className="status-dot" />{settings.has_key ? 'DeepSeek 已配置' : 'AI 服务待配置'}<span>v0.1.0</span></div></div>
+      </aside>
+      <main className={`main ${project ? 'workspace-main' : ''}`}>
+        {error && <div className="error-banner" role="alert"><AlertTriangle size={16} />{error}<button aria-label="关闭错误" onClick={() => setError('')}><X size={14} /></button></div>}
+        {!project ? <div className="library">
+          <div className="library-heading"><div><div className="eyebrow">YOUR CODE, IN CONTEXT</div><h1>从这里，理解一个项目。</h1><p>先建立全局认知，再循着关系走进真实源码。</p></div><button className="primary-button" onClick={() => setModal('import')} disabled={!authorized}><Plus size={17} />导入项目</button></div>
+          <div className="library-summary"><span><Boxes size={16} /><strong>{projects.length}</strong> 个学习项目</span><span><ShieldCheck size={15} />源码快照 · 独立学习记录</span><span className="summary-end">自由探索，无须固定顺序</span></div>
+          <div className="section-heading"><h2>我的项目</h2><span>按导入时间排列</span></div>
+          <div className="project-grid">{projects.map(item => <button className="project-card" key={item.id} onClick={() => void openProject(item.id)}><div className="card-top"><span className="project-icon"><GitBranch size={22} /></span><span className={`pill ${item.status === 'ready' ? 'green' : ''}`}>{statuses[item.status] || item.status}</span></div><h3>{item.name}</h3><p className="card-source">{item.source}</p><div className="language-chips">{item.languages.map(language => <span key={language}>{language === 'python' ? 'Python' : language === 'typescript' ? 'TypeScript' : language === 'cpp' ? 'C++' : 'C'}</span>)}{item.demo && <span className="sample-chip">预置样例</span>}</div><div className="card-stats"><span><FileCode2 size={13} />{item.file_count} 个文件</span><span><Braces size={13} />{item.function_count} 个函数</span></div><div className="learning-progress"><span style={{ width: `${item.progress.total ? item.progress.mastered / item.progress.total * 100 : 0}%` }} /></div><div className="card-footer"><span>{item.progress.total ? `${item.progress.mastered} / ${item.progress.total} 已掌握` : '暂无可统计学习内容'}</span><ArrowRight size={17} /></div></button>)}
+            <button className="add-project-card" onClick={() => setModal('import')}><span><Plus size={24} /></span><strong>开始新的探索</strong><p>导入本地源码目录，建立独立学习空间</p></button>
+          </div>
+          <div className="prototype-note"><Info size={18} /><div><strong>第一阶段 · 验证代码与架构之间的连接</strong><p>当前已接入本地导入、三类语言解析、架构画布、源码证据和 DeepSeek 联调。Git 导入、任务检查点与安装包将在后续阶段接入。预置模块与 AI 生成结果会明确区分。</p></div></div>
+        </div> : <>
+          <div className="workspace-toolbar"><div className="breadcrumbs"><button onClick={() => { setProject(null); setPanels([]); }}>学习库</button><ChevronRight size={14} /><button className={!focus ? 'current' : ''} onClick={() => changeFocus(null)}>{project.name}</button>{breadcrumb.map(module => <span className="breadcrumb-item" key={module.id}><ChevronRight size={14} /><button className={focus === module.id ? 'current' : ''} onClick={() => changeFocus(module.id)}>{module.name}</button></span>)}</div><div className="toolbar-actions"><button onClick={() => pushPanel({ kind: 'overview' })} disabled={!project.architecture}><BookOpen size={15} />项目概览</button><button onClick={download} disabled={!project.architecture}><Download size={15} />导出 SVG</button><button className="ai-button" onClick={() => setModal('consent')} disabled={!project.analysis.entities.length || project.status === 'analyzing'}><Sparkles size={14} />{project.status === 'analyzing' ? 'AI 分析中' : 'AI 架构分析'}</button></div></div>
+          <div className="workspace-heading"><div><div className="eyebrow">{isFunctions ? 'FUNCTION LANDSCAPE' : 'SEMANTIC ARCHITECTURE'}</div><h1>{activeModule?.name || '项目全景'}<span className="view-tag">{isFunctions ? '函数视图' : '模块视图'}</span></h1><p>{activeModule?.summary || '理解主要模块的分工，以及它们如何协作。'}</p></div><div className="workspace-stats"><span><strong>{project.function_count}</strong>函数</span><span><strong>{confirmedCount}</strong>已识别调用</span><span><strong>{project.progress.mastered}<small> / {project.progress.total}</small></strong>已掌握</span></div></div>
+          <div className="graph-meta"><div>{project.demo && <span className="sample-label"><Circle size={9} />预置验证样例</span>}<span><ShieldCheck size={12} />绑定只读源码快照</span><span>{project.status === 'analyzing' ? <><span className="spinner small" />正在生成语义架构，当前图仍可阅读</> : project.demo && project.architecture?.overview.limitations.some(value => value.includes('人工预置')) ? '模块人工预置 · 调用静态提取' : statuses[project.status]}</span></div><button onClick={() => pushPanel({ kind: 'diagnostics' })}><AlertTriangle size={12} />范围与局限{project.diagnostic_count > 0 && <b>{project.diagnostic_count}</b>}</button></div>
+          <div className="exploration">
+            <div className="graph-container">
+              {project.architecture ? projection.nodes.length ? <Canvas projection={projection} onNode={onNode}
+                onInfo={node => pushPanel(node.kind === 'module' ? { kind: 'module', module: node.module! } : { kind: 'function', entity: node.entity! })}
+                onRelation={relation => pushPanel({ kind: 'relation', relation })} onLayout={value => { layout.current = value; }}
+                viewport={viewports[focus || 'root']} onViewport={value => { const next = { ...viewports, [focus || 'root']: value }; setViewports(next); saveSession(focus, next); }} />
+                : <div className="empty-state"><Boxes size={32} /><h3>此模块没有可展示函数</h3><p>实现可能位于顶层代码或其他隐藏作用域，详情中保留源码依据。</p><button className="secondary-button" onClick={() => activeModule && pushPanel({ kind: 'module', module: activeModule })}>查看模块详情</button></div>
+                : <div className="empty-state"><span className="large-empty-icon"><Sparkles size={30} /></span><h3>{['indexing', 'queued'].includes(project.status) ? '正在建立静态源码索引' : '源码已就绪，下一步理解架构'}</h3><p>静态索引不会被当作语义架构。授权后，AI 将基于当前快照归纳模块职责与整体工作原理。</p>{project.status === 'indexed' && <button className="primary-button" onClick={() => setModal('consent')}><Sparkles size={15} />开始 AI 架构分析</button>}{project.error && <p className="inline-error">{project.error}</p>}</div>}
+              <div className="canvas-caption"><span>{isFunctions ? '点击函数阅读源码 · 点击连线查看证据' : '点击模块深入 · 信息按钮查看职责'}</span><span>{projection.nodes.length} 节点 <span className="caption-dot">·</span> {projection.relations.length} 连线</span></div>
+            </div>
+            {panel && <><div className="panel-resizer" onPointerDown={event => {
+              event.currentTarget.setPointerCapture(event.pointerId);
+              const begin = event.clientX, initial = width;
+              const move = (next: PointerEvent) => setWidth(Math.max(320, Math.min(650, initial + begin - next.clientX)));
+              const finish = () => { document.removeEventListener('pointermove', move); document.removeEventListener('pointerup', finish); };
+              document.addEventListener('pointermove', move); document.addEventListener('pointerup', finish);
+            }} /><aside className="detail-panel" style={{ width }}>
+              <div className="panel-header"><div>{panel.kind === 'source' ? <FileCode2 size={17} /> : panel.kind === 'relation' ? <GitBranch size={17} /> : <Info size={17} />}<strong>{{ overview: '项目概览', module: '模块详情', function: '函数详情', relation: '关系证据', source: '源码阅读', diagnostics: '范围与局限' }[panel.kind]}</strong></div><div>{panels.length > 1 && <button className="tiny-icon" aria-label="返回之前的面板" onClick={() => setPanels(current => current.slice(0, -1))}><ArrowLeft size={16} /></button>}<button className="tiny-icon" aria-label="关闭辅助面板" onClick={() => setPanels(current => current.slice(0, -1))}><X size={17} /></button></div></div>
+              {panel.kind === 'source' ? <><div className="source-file-heading"><span>{panel.location.path}</span><small>L{panel.location.start_line}–{panel.location.end_line} · 只读快照</small></div>{source ? <SourceReader file={source} location={panel.location} /> : <div className="canvas-loading">正在读取匹配版本的源码…</div>}<div className="source-bottom"><ShieldCheck size={12} />原始仓库不会被修改</div></> : <div className="panel-content">
+                {panel.kind === 'overview' && project.architecture && <><div className="panel-kicker">PROJECT OVERVIEW</div><h2>{project.name}</h2><p className="lead">{project.architecture.overview.introduction}</p><h3>核心能力</h3><ul className="capability-list">{project.architecture.overview.capabilities.map(value => <li key={value}><Check size={14} />{value}</li>)}</ul><h3>整体工作原理</h3><p>{project.architecture.overview.principle}</p><h3>主要模块职责</h3>{modules.filter(module => !module.parent_id).map(module => <div className="module-summary" key={module.id}><strong>{module.name}</strong><p>{module.summary}</p></div>)}<h3>分析范围与局限</h3>{project.architecture.overview.limitations.map(value => <p className="limitation" key={value}><Info size={13} />{value}</p>)}</>}
+                {panel.kind === 'module' && <><div className="panel-kicker">LOGICAL MODULE</div><h2>{panel.module.name}</h2><p className="lead">{panel.module.summary}</p><div className="detail-stat-row"><span>{moduleEntities(panel.module, modules).length} 个函数</span><span>{stateLabels[aggregateState(moduleEntities(panel.module, modules).map(id => project.learning[id]?.state || 'not_started'))]}</span></div><h3>真实代码范围</h3>{panel.module.code_paths.map(path => <div className="file-reference" key={path}><FileCode2 size={14} /><span>{path}</span></div>)}<h3>模块中的函数</h3>{project.analysis.entities.filter(entity => moduleEntities(panel.module, modules).includes(entity.id)).map(entity => <button className="entity-row" key={entity.id} onClick={() => void sourcePanel(entity)}><Braces size={14} /><span>{entity.name}</span><ExternalLink size={12} /></button>)}<button className="secondary-button wide" onClick={() => changeFocus(panel.module.id)}>进入模块<ArrowRight size={15} /></button></>}
+                {panel.kind === 'function' && <><div className="panel-kicker">SOURCE ENTITY</div><h2 className="code-title">{panel.entity.name}</h2><pre className="signature">{panel.entity.signature}</pre><h3>源码位置</h3><button className="source-reference" onClick={() => void sourcePanel(panel.entity)}><FileCode2 size={15} /><span>{panel.entity.location.path}<small>第 {panel.entity.location.start_line}–{panel.entity.location.end_line} 行</small></span><ExternalLink size={14} /></button><h3>学习状态</h3><div className="learning-buttons">{(['not_started', 'in_progress', 'mastered'] as const).map(state => <button key={state} className={project.learning[panel.entity.id]?.state === state || !project.learning[panel.entity.id] && state === 'not_started' ? 'selected' : ''} onClick={() => void learning(panel.entity, state)}>{stateLabels[state]}</button>)}</div>{panel.entity.unresolved_count > 0 && <div className="diagnostic-box"><AlertTriangle size={16} /><p>此函数有 {panel.entity.unresolved_count} 处未解析或间接调用；画布没有绘制猜测边。</p></div>}<h3>相关解析信息</h3><p>语言：{panel.entity.language}</p><p>限定名：<code>{panel.entity.qualified_name}</code></p>{panel.entity.condition && <p>条件：{panel.entity.condition}</p>}</>}
+                {panel.kind === 'relation' && <><div className="panel-kicker">TRACEABLE RELATION</div><h2>源码中的直接协作</h2><p className="lead">该关系由 {panel.relation.calls.length} 处已识别调用聚合。每条证据都与当前只读快照绑定。</p><div className="evidence-list">{panel.relation.calls.map((call, index) => {
+                  const caller = project.analysis.entities.find(entity => entity.scope_id === call.caller_scope_id);
+                  return <div className="evidence-card" key={call.id}><div className="evidence-card-top"><span>证据 {String(index + 1).padStart(2, '0')}</span><span className="origin-badge">{call.origin === 'static' ? '静态分析确认' : 'AI 基于源码判断'}</span></div><code>{caller?.name || '真实作用域'} → {call.target_name}</code><p>{call.reason}</p><button onClick={() => caller && void sourcePanel(caller, call.location)}><FileCode2 size={13} />{call.location.path}:{call.location.start_line}<ArrowUpRightIcon /></button></div>;
+                })}</div></>}
+                {panel.kind === 'diagnostics' && <><div className="panel-kicker">SCOPE & LIMITATIONS</div><h2>认识分析的边界</h2><p className="lead">图中没有连线，只表示当前没有确认或显示该关系。</p><div className="detail-stat-row"><span>{project.file_count} 个纳入文件</span><span>{project.scope.excluded.length} 个排除项</span></div><h3>当前能力</h3><p>Python 名称绑定、TypeScript Compiler API、Tree-sitter 与 libclang 静态解析已接入；复杂宏配置、动态分派和跨语言接口仍需完善。</p><h3>解析诊断</h3>{project.analysis.diagnostics.length ? project.analysis.diagnostics.map((item, index) => <div className="diagnostic-entry" key={index}><strong>{item.category}</strong><p>{item.message}</p><small>{item.path}{item.line ? `:${item.line}` : ''}</small></div>) : <p>没有记录到解析器诊断，不代表覆盖所有运行时行为。</p>}<h3>未解析调用</h3>{project.analysis.calls.filter(call => ['unresolved', 'excluded_indirect'].includes(call.resolution)).map(call => <div className="diagnostic-entry" key={call.id}><code>{call.expression}</code><p>{call.reason}</p><small>{call.location.path}:{call.location.start_line}</small></div>)}<h3>排除项</h3>{project.scope.excluded.slice(0, 30).map((item, index) => <p className="excluded-entry" key={index}>{item.path}<small>{item.reason}</small></p>)}</>}
+              </div>}
+            </aside></>}
+          </div>
+        </>}
+      </main>
+    </div>
+    {notice && <div className="toast" role="status"><Check size={16} />{notice}</div>}
+    {modal && <div className="modal-backdrop" onClick={event => { if (event.target === event.currentTarget && !busy) setModal(null); }}><section className="modal" role="dialog" aria-modal="true" aria-label={{ import: '导入项目', settings: 'AI 服务设置', consent: '源码上传授权' }[modal]}><div className="modal-heading"><span className="modal-icon">{modal === 'import' ? <FolderOpen size={22} /> : modal === 'settings' ? <Settings2 size={22} /> : <ShieldCheck size={22} />}</span><button className="tiny-icon" aria-label="关闭对话框" onClick={() => !busy && setModal(null)}><X size={19} /></button></div>
+      {modal === 'import' && <><h2>开始新的代码探索</h2><p>第一阶段支持本地 UTF-8 源码目录。系统创建独立快照，保留原始项目。</p><label>本地源码目录<input autoFocus value={importPath} onChange={event => setImportPath(event.target.value)} placeholder="C:\Projects\my-project" /></label><label>额外排除规则<span>每行一条，可使用 * 通配符</span><textarea rows={3} value={excludeText} onChange={event => setExcludeText(event.target.value)} placeholder={'tests/*\nthird_party/*'} /></label><div className="privacy-note"><ShieldCheck size={15} />导入先进行本地解析；AI 上传需单独授权。</div><button className="primary-button wide" disabled={busy || !importPath.trim()} onClick={() => void importProject()}>{busy ? <span className="spinner" /> : <FolderOpen size={16} />}{busy ? '正在创建源码快照…' : '导入并建立静态索引'}</button></>}
+      {modal === 'settings' && <><h2>连接你的 AI 服务</h2><p>以 DeepSeek 为主要适配服务，支持兼容接口。密钥只在本机加密保存。</p><label>服务地址<input value={settings.base_url} onChange={event => setSettings({ ...settings, base_url: event.target.value })} /></label><label>模型名称<input value={settings.model} onChange={event => setSettings({ ...settings, model: event.target.value })} placeholder="deepseek-flash" /></label><label>API Key<span>{settings.has_key ? '已加密保存 · 留空保留现有密钥' : '尚未配置'}</span><input type="password" autoComplete="off" value={key} onChange={event => setKey(event.target.value)} placeholder={settings.has_key ? '••••••••••••••••' : '输入 API Key'} /></label>{testMessage && <div className="test-message" role="status">{testMessage}</div>}<div className="modal-actions"><button className="secondary-button" disabled={busy} onClick={() => void saveSettings(true)}>{busy ? <span className="spinner" /> : <Activity size={15} />}测试连接</button><button className="primary-button" disabled={busy} onClick={() => void saveSettings()}>保存设置<Check size={15} /></button></div><div className="privacy-note"><ShieldCheck size={14} />连接测试不发送源码，可能产生少量 Token 用量。</div></>}
+      {modal === 'consent' && project && <><h2>让 AI 理解这个项目</h2><p>将当前快照范围内的源码、实体索引与已识别调用发送到你配置的服务，生成中文项目概览和语义模块架构。</p><div className="consent-summary"><span>项目<strong>{project.name}</strong></span><span>接收端<strong>{settings.base_url}</strong></span><span>模型<strong>{settings.model || '尚未配置'}</strong></span><span>范围<strong>{project.file_count} 个源码文件 · {project.function_count} 个函数</strong></span></div><div className="privacy-note"><Info size={15} />只使用所选模型。已有结果保持可读，费用按实际用量记录。当前原型支持有限单批分析。</div><button className="primary-button wide" disabled={busy || !settings.has_key || !settings.model} onClick={() => void startAI()}>{busy ? <span className="spinner" /> : <Sparkles size={16} />}同意上传当前源码并开始分析</button>{!settings.has_key && <button className="text-button" onClick={() => setModal('settings')}>先配置 AI 服务</button>}</>}
+    </section></div>}
+  </div>;
+}
+
+function ArrowUpRightIcon() { return <ExternalLink size={12} />; }
