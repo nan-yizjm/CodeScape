@@ -6,7 +6,7 @@ import pytest
 from codescape.analyzers import python_analysis
 from codescape.app import create_app
 from codescape.models import Analysis, Architecture, Entity, Location, Module, Overview, Scope
-from codescape.provider import Provider, validate_architecture
+from codescape.provider import Provider, ProviderError, validate_architecture
 from fastapi.testclient import TestClient
 
 
@@ -125,8 +125,11 @@ def test_architecture_splits_large_context_and_merges_checked_batches(tmp_path, 
         ],
     )
     progress = []
+    batches = []
+    requests = []
 
     async def fake_request(self, system, user, max_tokens=8000):
+        requests.append(user)
         payload = json.loads(user)
         modules = [
             {"id": f"local-{entity['id']}", "name": entity["name"], "summary": "批次职责",
@@ -144,11 +147,63 @@ def test_architecture_splits_large_context_and_merges_checked_batches(tmp_path, 
     async def on_progress(completed, total, detail):
         progress.append((completed, total, detail))
 
-    architecture, usage = asyncio.run(provider.architecture(analysis, files, on_progress=on_progress))
+    async def on_batch(completed, total, architecture):
+        batches.append(architecture)
+
+    architecture, usage = asyncio.run(
+        provider.architecture(analysis, files, on_progress=on_progress, on_batch=on_batch)
+    )
     assert len(architecture.modules) == 2
     assert {entity_id for module in architecture.modules for entity_id in module.entity_ids} == {"one-f", "two-f"}
     assert usage["total_tokens"] == 20
     assert progress[0][0] == 0 and progress[-1][0] == progress[-1][1] == 2
+    assert len(requests) == len(batches) == 2
+    requests.clear()
+    resumed, resumed_usage = asyncio.run(
+        provider.architecture(analysis, files, completed_batches=batches[:1], on_batch=on_batch)
+    )
+    assert len(resumed.modules) == 2
+    assert len(requests) == 1 and resumed_usage["total_tokens"] == 10
+
+
+def test_ai_analysis_resumes_from_last_checkpoint(client, monkeypatch):
+    project = client.get("/api/v1/projects").json()["data"][0]
+    url = f"/api/v1/projects/{project['id']}"
+    assert client.post(url + "/consent", json={"accepted": True}).status_code == 200
+    architecture = Architecture.model_validate(client.get(url).json()["data"]["architecture"])
+    calls = []
+
+    async def fake_architecture(self, analysis, files, on_progress=None, on_batch=None, completed_batches=None):
+        resumed_count = len(completed_batches or [])
+        calls.append(resumed_count)
+        if not resumed_count:
+            await on_batch(1, 2, architecture)
+            raise ProviderError("模拟第 1 批中断")
+        await on_batch(2, 2, architecture)
+        return architecture, {"total_tokens": 2}
+
+    monkeypatch.setattr(Provider, "architecture", fake_architecture)
+    assert client.post(url + "/analyze", json={}).status_code == 200
+    deadline = time.monotonic() + 5
+    while time.monotonic() < deadline:
+        current = client.get(url).json()["data"]
+        if current["status"] == "paused":
+            break
+        time.sleep(0.05)
+    assert current["status"] == "paused"
+    checkpoint = client.app.state.root / "projects" / project["id"] / "architecture-checkpoint.json"
+    assert checkpoint.exists()
+    assert client.post(url + "/analyze", json={}).status_code == 200
+    deadline = time.monotonic() + 5
+    while time.monotonic() < deadline:
+        current = client.get(url).json()["data"]
+        if current["status"] == "ready":
+            break
+        time.sleep(0.05)
+    assert current["status"] == "ready"
+    assert current["analysis_progress"]["phase"] == "completed"
+    assert calls == [0, 1]
+    assert not checkpoint.exists()
 
 
 def test_architecture_rejects_duplicate_cycle_and_wrong_evidence():

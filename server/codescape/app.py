@@ -425,8 +425,30 @@ def create_app(root: Path | None = None, nonce: str | None = None) -> FastAPI:
         )
 
         async def work():
+            checkpoint_path = root / "projects" / project_id / "architecture-checkpoint.json"
             try:
                 snapshot_root = root / "projects" / project_id / "snapshots" / project["snapshot"]["id"]
+                checkpoint: list[Architecture] = []
+                if checkpoint_path.exists():
+                    try:
+                        saved = json.loads(checkpoint_path.read_text(encoding="utf-8"))
+                        if (
+                            saved.get("version_id") == project["version_id"]
+                            and saved.get("snapshot_hash") == project["snapshot"]["hash"]
+                        ):
+                            checkpoint = [Architecture.model_validate(item) for item in saved.get("batches", [])]
+                    except (OSError, ValueError, TypeError):
+                        checkpoint = []
+                if checkpoint:
+                    database.analysis_progress(
+                        project_id,
+                        {
+                            "phase": "planning",
+                            "completed": len(checkpoint),
+                            "total": 0,
+                            "detail": f"发现 {len(checkpoint)} 批检查点，准备继续",
+                        },
+                    )
 
                 async def progress(completed: int, total: int, detail: str):
                     database.analysis_progress(
@@ -439,10 +461,30 @@ def create_app(root: Path | None = None, nonce: str | None = None) -> FastAPI:
                         },
                     )
 
+                async def save_batch(completed: int, total: int, architecture: Architecture):
+                    saved_batches = checkpoint + [architecture]
+                    temporary = checkpoint_path.with_suffix(".tmp")
+                    temporary.write_text(
+                        json.dumps(
+                            {
+                                "version_id": project["version_id"],
+                                "snapshot_hash": project["snapshot"]["hash"],
+                                "batches": [item.model_dump() for item in saved_batches],
+                            },
+                            ensure_ascii=False,
+                        ),
+                        encoding="utf-8",
+                    )
+                    temporary.replace(checkpoint_path)
+                    checkpoint.clear()
+                    checkpoint.extend(saved_batches)
+
                 architecture, usage = await provider.architecture(
                     Analysis.model_validate(project["result"]),
                     read_snapshot(snapshot_root, project["snapshot"]),
                     on_progress=progress,
+                    on_batch=save_batch,
+                    completed_batches=checkpoint,
                 )
                 database.update(
                     project_id, architecture=architecture.model_dump(), status="ready", error=None
@@ -456,6 +498,7 @@ def create_app(root: Path | None = None, nonce: str | None = None) -> FastAPI:
                         "detail": "分批分析完成",
                     },
                 )
+                checkpoint_path.unlink(missing_ok=True)
                 usage_path = root / "projects" / project_id / "usage.json"
                 usage_path.write_text(json.dumps(usage), encoding="utf-8")
             except asyncio.CancelledError:
