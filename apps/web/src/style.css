@@ -309,12 +309,72 @@ h1 { font-size: 29px; font-weight: 650; line-height: 1.25; letter-spacing: -1px;
 .test-message { font-size: 12px; color: #666; padding: 12px; border: 1px solid #e3e3e3; background: #f7f7f7; border-radius: 6px; line-height: 1.8; overflow-wrap: anywhere; }
 .modal-error { display: flex; align-items: flex-start; gap: 8px; color: #8d604b; background: #fbf5f2; border: 1px solid #eaded6; border-radius: 6px; padding: 11px 12px; font-size: 11px; line-height: 1.7; overflow-wrap: anywhere; }
 .modal-error svg { flex-shrink: 0; margin-top: 2px; }
+.modal-error { margin-bottom: 18px; }
 .consent-summary { border: 1px solid #e4e4e4; background: #fafafa; border-radius: 7px; padding: 14px 17px; }
 .consent-summary > span { display: flex; justify-content: space-between; gap: 20px; font-size: 11px; color: #999; padding: 9px 0; }
 .consent-summary strong { font-size: 12px; color: #656565; font-weight: 500; overflow-wrap: anywhere; text-align: right; }
 .text-button { display: block; color: #777; font-size: 12px; padding: 13px; margin: auto; }
 .text-button:hover { color: #222; }
 .inline-error { color: #b1856c !important; }
+
+/* 透光工作空间：中性框架、模块色彩与纵向层级 */
+.app-shell { background: #f5f6f8; }
+.app-header, .sidebar { background: #ffffffd9; backdrop-filter: blur(24px); }
+.workspace-main { background: linear-gradient(145deg, #ffffff, #f8f9fc); }
+.workspace-toolbar { background: #ffffffb8; backdrop-filter: blur(20px); height: auto; min-height: 57px; flex-wrap: wrap; padding-top: 10px; padding-bottom: 10px; }
+.toolbar-actions { flex-wrap: wrap; }
+.module-navigation { display: flex; align-items: center; gap: 16px; padding: 12px 28px; border-bottom: 1px solid #e8eaf0; background: #f7f8fb99; flex-shrink: 0; }
+.module-selector { display: flex; align-items: center; gap: 9px; min-width: 0; color: #555d6b; }
+.module-selector label { font-size: 11px; white-space: nowrap; }
+.module-selector select { max-width: 260px; min-width: 0; width: 220px; font-family: inherit; font-size: 12px; padding: 8px 28px 8px 10px; border: 1px solid #dfe3eb; border-radius: 10px; color: #333b49; background: #ffffffc9; cursor: pointer; }
+.module-selector select:focus-visible { outline: 2px solid #292929; outline-offset: 3px; }
+.architecture-hint { font-size: 11px; color: #737a87; }
+.fullscreen-button { margin-left: auto; display: flex; align-items: center; gap: 7px; border: 1px solid #dfe3eb; padding: 8px 11px; border-radius: 10px; background: #ffffffc9; font-size: 12px; white-space: nowrap; }
+.fullscreen-button:hover { background: #fff; box-shadow: 0 3px 12px #1118270a; }
+.fullscreen-button kbd { color: #8a909b; font: 10px Consolas, monospace; margin-left: 4px; }
+.workspace-heading { animation: workspace-reveal .34s var(--ease-out); padding-top: 21px; padding-bottom: 18px; }
+@keyframes workspace-reveal { from { opacity: 0; transform: translateY(7px); } to { opacity: 1; transform: translateY(0); } }
+.graph-container { background: radial-gradient(ellipse at 20% 10%, #ecedff66, transparent 48%), radial-gradient(ellipse at 80% 80%, #e5f1ff66, transparent 45%), #f8f9fc; }
+.map-node { border-radius: 24px; background: linear-gradient(145deg, #ffffff80, transparent), var(--node-bg); box-shadow: inset 0 1px 0 #ffffffda, 0 6px 22px #17243b08; transition: box-shadow .28s var(--ease-out), border-color .28s; }
+.map-node:hover { box-shadow: inset 0 1px 0 #fff, 0 12px 32px #17243b12; }
+.map-node.function { border-radius: 17px; background: linear-gradient(135deg, #fff, #ffffffcc); box-shadow: 0 6px 20px #18243b08; }
+.map-node.external-node { border: 1px dashed var(--node-accent); background: var(--node-bg); }
+.module-container { background: linear-gradient(145deg, #ffffffb3, #ffffff35), var(--node-bg); border-style: solid; border-width: 1.5px; padding: 22px 25px; }
+.module-container .node-hit-area { height: 140px; bottom: auto; }
+.module-container > p { max-width: 460px; height: 26px; -webkit-line-clamp: 1; }
+.module-container .node-footer { justify-content: flex-start; gap: 16px; margin-top: 8px; }
+.module-container .node-action { top: 111px; right: 25px; left: auto; bottom: auto; }
+.canvas-label, .canvas-legend { border-radius: 12px; padding: 10px 13px; background: #ffffffb8; border: 1px solid #ffffffed; backdrop-filter: blur(12px); box-shadow: 0 3px 16px #17243b06; }
+.canvas-label { top: 14px; left: 16px; }
+.detail-panel { background: #ffffffd9; backdrop-filter: blur(24px); border-left: 1px solid #fff; box-shadow: -8px 0 32px #17243b06; }
+.panel-header { background: #ffffff99; }
+.modal { border-radius: 24px; background: #fffffff5; border-color: #fff; }
+.primary-button, .secondary-button { border-radius: 11px; }
+.project-card, .add-project-card { border-radius: 22px; }
+.source-reference, .file-reference, .entity-row, .evidence-card, .module-summary { border-radius: 12px; }
+.is-fullscreen { position: fixed; inset: 0; z-index: 2000; width: 100%; height: 100dvh; }
+.is-fullscreen > .app-header, .is-fullscreen .sidebar { display: none; }
+.is-fullscreen .app-body { height: 100%; }
+.is-fullscreen .main { width: 100%; }
+.app-shell:fullscreen { width: 100vw; height: 100dvh; }
+.is-fullscreen .workspace-heading { padding: 12px 32px; }
+.is-fullscreen .workspace-heading .eyebrow, .is-fullscreen .workspace-heading p { display: none; }
+.is-fullscreen .workspace-heading h1 { font-size: 22px; }
+.is-fullscreen .workspace-stats strong { font-size: 20px; }
+.is-fullscreen .workspace-stats > span { gap: 3px; }
+.is-fullscreen .graph-meta { margin-bottom: 10px; }
+.reading-scale { display: flex; align-items: center; gap: 6px; padding: 9px 12px; border: 1px solid #ffffffd9; border-radius: 12px; background: #ffffffc9; backdrop-filter: blur(12px); box-shadow: 0 3px 14px #17243b08; font-size: 11px; color: #535b69; }
+.reading-scale:hover { background: #fff; color: #181d26; }
+@media (max-width: 1000px) { .architecture-hint { display: none; } }
+@media (max-width: 600px) {
+  .module-navigation { padding: 10px 14px; gap: 8px; flex-wrap: wrap; }
+  .module-selector { flex: 1; }
+  .module-selector label, .module-selector > svg { display: none; }
+  .module-selector select { width: 100%; max-width: none; }
+  .fullscreen-button { font-size: 11px; padding: 8px; }
+  .fullscreen-button kbd { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { .workspace-heading { animation: none; } }
 
 @media (min-width: 1650px) {
   .library { padding-top: 52px; padding-left: 64px; padding-right: 64px; }
