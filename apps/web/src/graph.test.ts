@@ -23,13 +23,36 @@ function fixture(): ProjectDetail {
 describe('基于证据生成图形', () => {
   it('合并多条同向调用，保留自递归，隐藏作用域不提升到外层', () => {
     const view = projectGraph(fixture(), 'm');
-    expect(view.nodes.map(node => node.id)).toEqual(['f', 'g']);
+    expect(view.nodes.filter(node => node.kind === 'function').map(node => node.id)).toEqual(['f', 'g']);
     expect(view.relations).toHaveLength(2);
     expect(view.relations.find(edge => edge.to === 'g')?.calls).toHaveLength(2);
     expect(view.relations.some(edge => edge.from === 'f' && edge.to === 'f')).toBe(true);
   });
   it('模块内部调用不伪装为模块间关系', () => {
     expect(projectGraph(fixture(), null).relations).toHaveLength(0);
+  });
+  it('函数视图保留所属模块容器，跨模块函数只嵌入真实所属模块，导出与画布一致', async () => {
+    const project = fixture();
+    project.architecture!.modules[0].entity_ids = ['f'];
+    project.architecture!.modules.push({ ...project.architecture!.modules[0], id: 'other', name: '关联模块', entity_ids: ['g'] });
+    const view = await layoutHierarchy(projectGraph(project, 'm'), verticalFallback);
+    expect(view.nodes.map(node => node.id)).toEqual(['m', 'other', 'f', 'g']);
+    for (const [id, parentId] of [['f', 'm'], ['g', 'other']]) {
+      const node = view.nodes.find(item => item.id === id)!;
+      const parent = view.nodes.find(item => item.id === parentId)!;
+      expect(node.parentId).toBe(parentId);
+      expect(parent.container).toBe(true);
+      expect(node.x).toBeGreaterThan(parent.x);
+      expect(node.y).toBeGreaterThan(parent.y + 140);
+      expect(node.x + node.width).toBeLessThan(parent.x + parent.width);
+      expect(node.y + node.height).toBeLessThan(parent.y + parent.height);
+    }
+    expect(view.nodes.find(node => node.id === 'm')?.external).toBe(false);
+    expect(view.nodes.find(node => node.id === 'other')?.external).toBe(true);
+    expect(view.relations.find(edge => edge.from === 'f' && edge.to === 'g')?.calls).toHaveLength(2);
+    const svg = exportSvg(view, '函数与所属模块');
+    expect(svg).toContain('关联模块');
+    expect(svg.indexOf('>模块</text>')).toBeLessThan(svg.indexOf('>f</text>'));
   });
   it('跨模块调用显示直接关联函数，仍保留多条证据和真实归属', () => {
     const project = fixture();

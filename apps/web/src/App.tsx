@@ -174,7 +174,10 @@ export default function App() {
   }
 
   function onNode(node: ProjectionNode) {
-    if (node.kind === 'module') changeFocus(node.id);
+    if (node.kind === 'module') {
+      if (node.id === focus) pushPanel({ kind: 'module', module: node.module! });
+      else changeFocus(node.id);
+    }
     else if (node.entity) void sourcePanel(node.entity);
   }
 
@@ -285,7 +288,7 @@ export default function App() {
               {project.architecture ? projection.nodes.length ? <Suspense fallback={<div className="canvas-loading"><span className="spinner" />正在准备探索画布…</div>}><Canvas key={`${project.id}:${focus || 'root'}`} projection={projection} onNode={onNode}
                 onInfo={node => pushPanel(node.kind === 'module' ? { kind: 'module', module: node.module! } : { kind: 'function', entity: node.entity! })}
                 onRelation={relation => pushPanel({ kind: 'relation', relation })} onLayout={value => { layout.current = value; }}
-                viewport={viewports[`vertical:${focus || 'root'}`]} onViewport={value => { const next = { ...viewports, [`vertical:${focus || 'root'}`]: value }; setViewports(next); saveSession(focus, next); }} /></Suspense>
+                viewport={viewports[`${isFunctions ? 'grouped-functions' : 'vertical'}:${focus || 'root'}`]} onViewport={value => { const next = { ...viewports, [`${isFunctions ? 'grouped-functions' : 'vertical'}:${focus || 'root'}`]: value }; setViewports(next); saveSession(focus, next); }} /></Suspense>
                 : <div className="empty-state"><Boxes size={32} /><h3>此模块没有可展示函数</h3><p>实现可能位于顶层代码或其他隐藏作用域，详情中保留源码依据。</p><button className="secondary-button" onClick={() => activeModule && pushPanel({ kind: 'module', module: activeModule })}>查看模块详情</button></div>
                 : <div className="empty-state"><span className="large-empty-icon"><Sparkles size={30} /></span><h3>{['indexing', 'queued'].includes(project.status) ? '正在建立静态源码索引' : '源码已就绪，下一步理解架构'}</h3><p>静态索引不会被当作语义架构。授权后，AI 将基于当前快照归纳模块职责与整体工作原理。</p>{project.status === 'indexed' && <button className="primary-button" onClick={() => { setError(''); setModal('consent'); }}><Sparkles size={15} />开始 AI 架构分析</button>}{project.error && <p className="inline-error">{project.error}</p>}</div>}
               <div className="canvas-caption"><span>{isFunctions ? '点击函数阅读源码 · 点击连线查看证据' : '点击模块深入 · 信息按钮查看职责'}</span><span>{projection.nodes.length} 节点 <span className="caption-dot">·</span> {projection.relations.length} 连线</span></div>

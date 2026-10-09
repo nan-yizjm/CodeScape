@@ -19,11 +19,11 @@ function MapNode({ data }: NodeProps<Node<Data>>) {
     <button className="node-hit-area nodrag nopan" aria-label={node.kind === 'module' ? `进入模块 ${node.label}` : `阅读 ${node.label} 源码`}
       onClick={event => { event.stopPropagation(); data.onOpen(node); }} />
     <Handle type="target" position={Position.Top} />
-    <div className="node-top"><span className="node-symbol"><Icon size={16} /></span><span className="node-kind">{node.kind === 'module' ? '逻辑模块' : '函数'}</span>
+    <div className="node-top"><span className="node-symbol"><Icon size={16} /></span><span className="node-kind">{node.kind === 'module' ? node.external ? '关联模块' : '逻辑模块' : '函数'}</span>
       <button className="node-info nodrag nopan" aria-label={`查看 ${node.label} 详情`} onClick={event => { event.stopPropagation(); data.onInfo(node); }}><Info size={16} /></button></div>
     <div className="node-title" title={node.label}>{node.label}</div>
     {node.kind === 'module' && <p>{node.description}</p>}
-    <div className="node-footer"><span className="node-count">{node.kind === 'module' ? `${node.count} 个函数` : node.external ? <><ArrowUpRight size={12} /> 跨模块</> : '真实源码实现'}</span>
+    <div className="node-footer"><span className="node-count">{node.kind === 'module' ? node.shownCount !== undefined && node.shownCount < node.count ? `显示 ${node.shownCount} / ${node.count} 个函数` : `${node.count} 个函数` : node.external ? <><ArrowUpRight size={12} /> 跨模块</> : '真实源码实现'}</span>
       <span className="node-state" title={stateLabel}>{node.incomplete && <AlertTriangle size={12} />}{node.state === 'mastered' ? <Check size={12} /> : node.state === 'in_progress' ? <span className="learning-dot" /> : <Circle size={10} />}<span>{stateLabel}</span></span></div>
     <span className="node-action" aria-hidden="true">{node.kind === 'module' ? '进入模块' : '阅读源码'}<ArrowUpRight size={13} /></span>
     <Handle type="source" position={Position.Bottom} />
@@ -144,7 +144,7 @@ export function Canvas({ projection, onNode, onInfo, onRelation, onLayout, onVie
     onMoveEnd={(_, value) => onViewport(value)} deleteKeyCode={null} colorMode="light" ariaLabelConfig={{ 'controls.ariaLabel': '画布控制', 'controls.zoomIn.ariaLabel': '放大', 'controls.zoomOut.ariaLabel': '缩小', 'controls.fitView.ariaLabel': '适应画布' }}>
     <Background color="#dedede" gap={22} size={.8} /><Controls showInteractive={false} />
     <ReadingScale nodes={positioned} />
-    <div className="canvas-label"><span className="canvas-label-dot" />{projection.nodes[0]?.kind === 'function' ? '函数调用图' : '语义模块图'}</div>
+    <div className="canvas-label"><span className="canvas-label-dot" />{projection.nodes.some(node => node.kind === 'function') ? '函数调用图' : '语义模块图'}</div>
     <div className="canvas-legend"><span><Circle size={9} />未开始</span><span><span className="learning-dot" />学习中</span><span><Check size={12} />已掌握</span></div>
     {warning && <div className="layout-warning">{warning}</div>}
   </ReactFlow></ReactFlowProvider>;

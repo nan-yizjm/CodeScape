@@ -42,20 +42,29 @@ export function projectGraph(project: ProjectDetail, focus: string | null): Proj
     for (const module of modules.filter(item => item.parent_id === parentId)) { displayed.push(module); descend(module.id); }
   }
   if (!functions) { if (active) displayed.push(active); descend(focus); }
-  const nodes: ProjectionNode[] = functions ? visible.filter(entity => included.has(entity.id)).map(entity => ({
+  const functionNodes: ProjectionNode[] = functions ? visible.filter(entity => included.has(entity.id)).map(entity => ({
     id: entity.id, label: visible.filter(item => item.name === entity.name).length > 1 ? `${entity.signature} · L${entity.location.start_line}` : entity.name, description: '', kind: 'function', entity, count: 0,
     state: project.learning[entity.id]?.state || 'not_started', incomplete: entity.unresolved_count > 0,
-    external: !active.entity_ids.includes(entity.id), tone: modules.findIndex(module => module.entity_ids.includes(entity.id)), x: 0, y: 0, width: 248, height: 116,
-  })) : displayed.map(module => {
+    external: !active.entity_ids.includes(entity.id), tone: modules.findIndex(module => module.entity_ids.includes(entity.id)),
+    parentId: modules.find(module => module.entity_ids.includes(entity.id))?.id, x: 0, y: 0, width: 248, height: 116,
+  })) : [];
+  if (functions && functionNodes.length) {
+    displayed.push(active, ...modules.filter(module => module.id !== active.id && functionNodes.some(node => module.entity_ids.includes(node.id))));
+  }
+  const moduleNodes: ProjectionNode[] = displayed.map(module => {
     const entityIds = moduleEntities(module, modules);
     return { id: module.id, label: module.name, description: module.summary, kind: 'module', module,
       count: entityIds.length, state: aggregateState(entityIds.map(id => project.learning[id]?.state || 'not_started')),
-      incomplete: module.incomplete, external: false, tone: modules.indexOf(module),
-      parentId: module.parent_id && displayed.some(item => item.id === module.parent_id) ? module.parent_id : undefined,
-      container: modules.some(item => item.parent_id === module.id), x: 0, y: 0, width: 300, height: 204 };
+      incomplete: module.incomplete, external: functions && module.id !== active.id, tone: modules.indexOf(module),
+      parentId: !functions && module.parent_id && displayed.some(item => item.id === module.parent_id) ? module.parent_id : undefined,
+      container: functions || modules.some(item => item.parent_id === module.id),
+      shownCount: functions ? functionNodes.filter(node => node.parentId === module.id).length : undefined,
+      x: 0, y: 0, width: 300, height: 204 };
   });
+  const nodes = [...moduleNodes, ...functionNodes];
   const owner = new Map<string, string>();
   for (const node of nodes) {
+    if (functions && node.kind !== 'function') continue;
     for (const id of node.kind === 'function' ? [node.id] : node.module!.entity_ids) owner.set(id, node.id);
   }
   const grouped = new Map<string, Relation>();
