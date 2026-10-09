@@ -74,7 +74,10 @@ describe('基于证据生成图形', () => {
     leaf.parent_id = 'middle';
     project.architecture!.modules.unshift({ ...leaf, id: 'root', parent_id: null, name: '父模块', entity_ids: [] },
       { ...leaf, id: 'middle', parent_id: 'root', name: '子模块', entity_ids: [] });
-    const view = await layoutHierarchy(projectGraph(project, null), verticalFallback);
+    const collapsed = projectGraph(project, null);
+    expect(collapsed.nodes.map(node => node.id)).toEqual(['root']);
+    expect(collapsed.hiddenModuleCount).toBe(0);
+    const view = await layoutHierarchy(projectGraph(project, null, { expandedModuleId: 'root' }), verticalFallback);
     expect(view.nodes.map(node => node.id)).toEqual(['root', 'middle', 'm']);
     for (const node of view.nodes.filter(node => node.parentId)) {
       const parent = view.nodes.find(item => item.id === node.parentId)!;
@@ -84,8 +87,26 @@ describe('基于证据生成图形', () => {
       expect(node.y + node.height).toBeLessThan(parent.y + parent.height);
     }
     expect(projectGraph(project, 'middle').nodes.map(node => node.id)).toEqual(['middle', 'm']);
+    const childView = projectGraph(project, null, { expandedModuleId: 'middle' });
+    expect(childView.nodes.map(node => node.id)).toEqual(['root', 'middle', 'm']);
     const svg = exportSvg(view, '嵌套');
     expect(svg.indexOf('父模块')).toBeLessThan(svg.indexOf('子模块'));
+  });
+  it('父模块默认收起并隐藏同层模块，展开后最多显示两层且可恢复同层模块', () => {
+    const project = fixture();
+    const leaf = project.architecture!.modules[0];
+    leaf.parent_id = 'middle';
+    project.architecture!.modules.unshift(
+      { ...leaf, id: 'root', parent_id: null, name: '父模块', entity_ids: [] },
+      { ...leaf, id: 'middle', parent_id: 'root', name: '子模块', entity_ids: [] },
+      { ...leaf, id: 'sibling', parent_id: null, name: '同层模块', entity_ids: [] },
+    );
+    expect(projectGraph(project, null).nodes.map(node => node.id)).toEqual(['root', 'sibling']);
+    const expanded = projectGraph(project, null, { expandedModuleId: 'root' });
+    expect(expanded.nodes.map(node => node.id)).toEqual(['root', 'middle', 'm']);
+    expect(expanded.hiddenModuleCount).toBe(1);
+    expect(projectGraph(project, null, { expandedModuleId: 'root', showOtherModules: true }).nodes.map(node => node.id))
+      .toEqual(['root', 'middle', 'm', 'sibling']);
   });
   it('聚合状态涵盖空模块和混合掌握情况', () => {
     expect(aggregateState([])).toBe('not_started');

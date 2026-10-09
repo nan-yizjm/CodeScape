@@ -15,8 +15,8 @@ function MapNode({ data }: NodeProps<Node<Data>>) {
   const Icon = node.kind === 'module' ? Boxes : Braces;
   const palette = nodePalette(node);
   const stateLabel = { not_started: '未开始', in_progress: '学习中', mastered: '已掌握' }[node.state];
-  return <div className={`map-node ${node.kind} ${node.container ? 'module-container' : ''} ${node.external ? 'external-node' : ''} state-${node.state}`} style={{ width: node.width, height: node.height, '--node-bg': palette.background, '--node-border': palette.border, '--node-accent': palette.accent } as CSSProperties}>
-    <button className="node-hit-area nodrag nopan" aria-label={node.kind === 'module' ? `进入模块 ${node.label}` : `阅读 ${node.label} 源码`}
+  return <div className={`map-node ${node.kind} ${node.container ? 'module-container' : ''} ${node.expanded ? 'is-expanded' : ''} ${node.external ? 'external-node' : ''} state-${node.state}`} style={{ width: node.width, height: node.height, '--node-bg': palette.background, '--node-border': palette.border, '--node-accent': palette.accent } as CSSProperties}>
+    <button className="node-hit-area nodrag nopan" aria-label={node.kind === 'module' ? (node.canExpand ? `${node.expanded ? '收起' : '展开'}模块 ${node.label}` : `进入模块 ${node.label}`) : `阅读 ${node.label} 源码`} aria-expanded={node.canExpand ? node.expanded : undefined}
       onClick={event => { event.stopPropagation(); data.onOpen(node); }} />
     <Handle type="target" position={Position.Top} />
     <div className="node-top"><span className="node-symbol"><Icon size={16} /></span><span className="node-kind">{node.kind === 'module' ? node.external ? '关联模块' : '逻辑模块' : '函数'}</span>
@@ -25,7 +25,7 @@ function MapNode({ data }: NodeProps<Node<Data>>) {
     {node.kind === 'module' && <p>{node.description}</p>}
     <div className="node-footer"><span className="node-count">{node.kind === 'module' ? node.shownCount !== undefined && node.shownCount < node.count ? `显示 ${node.shownCount} / ${node.count} 个函数` : `${node.count} 个函数` : node.external ? <><ArrowUpRight size={12} /> 跨模块</> : '真实源码实现'}</span>
       <span className="node-state" title={stateLabel}>{node.incomplete && <AlertTriangle size={12} />}{node.state === 'mastered' ? <Check size={12} /> : node.state === 'in_progress' ? <span className="learning-dot" /> : <Circle size={10} />}<span>{stateLabel}</span></span></div>
-    <span className="node-action" aria-hidden="true">{node.kind === 'module' ? '进入模块' : '阅读源码'}<ArrowUpRight size={13} /></span>
+    <span className="node-action" aria-hidden="true">{node.kind === 'module' ? node.canExpand ? (node.expanded ? '收起子模块' : '展开子模块') : '进入模块' : '阅读源码'}<ArrowUpRight size={13} /></span>
     <Handle type="source" position={Position.Bottom} />
   </div>;
 }

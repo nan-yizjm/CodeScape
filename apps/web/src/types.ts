@@ -26,5 +26,5 @@ export type Panel = { kind: 'overview' } | { kind: 'module'; module: Module } | 
   | { kind: 'diagnostics' };
 export type ProjectionNode = { id: string; label: string; description: string; kind: 'module' | 'function';
   entity?: Entity; module?: Module; count: number; state: LearningState; incomplete: boolean; external: boolean;
-  tone?: number; parentId?: string; container?: boolean; shownCount?: number; x: number; y: number; width: number; height: number };
-export type Projection = { nodes: ProjectionNode[]; relations: Relation[] };
+  tone?: number; parentId?: string; container?: boolean; canExpand?: boolean; expanded?: boolean; shownCount?: number; x: number; y: number; width: number; height: number };
+export type Projection = { nodes: ProjectionNode[]; relations: Relation[]; hiddenModuleCount?: number };

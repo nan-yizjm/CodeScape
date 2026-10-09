@@ -33,6 +33,8 @@ export default function App() {
   const [testMessage, setTestMessage] = useState('');
   const [width, setWidth] = useState(420);
   const [fullscreen, setFullscreen] = useState(false);
+  const [expandedModule, setExpandedModule] = useState<string | null>(null);
+  const [showOtherModules, setShowOtherModules] = useState(false);
   const shellRef = useRef<HTMLDivElement>(null);
   const modalRef = useRef<HTMLElement>(null);
   const modalBusy = useRef(false);
@@ -42,7 +44,7 @@ export default function App() {
   const panel = panels.at(-1);
   const modules = project?.architecture?.modules || [];
   const activeModule = modules.find(module => module.id === focus);
-  const projection = useMemo(() => project ? projectGraph(project, focus) : { nodes: [], relations: [] }, [project, focus]);
+  const projection = useMemo(() => project ? projectGraph(project, focus, { expandedModuleId: expandedModule, showOtherModules }) : { nodes: [], relations: [] }, [project, focus, expandedModule, showOtherModules]);
   const isFunctions = !!activeModule && !modules.some(module => module.parent_id === focus);
   const confirmedCount = project?.analysis.calls.filter(call => call.resolution === 'confirmed').length || 0;
 
@@ -142,7 +144,7 @@ export default function App() {
   }, [project?.id, project?.version_id, panel]);
 
   async function openProject(id: string) {
-    setError(''); setSource(null); setPanels([]); setViewports({}); layout.current = null;
+    setError(''); setSource(null); setPanels([]); setViewports({}); setExpandedModule(null); setShowOtherModules(false); layout.current = null;
     try {
       const detail = await api<ProjectDetail>(`/projects/${id}`);
       const saved = await api<{ focus_id: string | null; viewport: Record<string, Viewport> | null } | null>(`/projects/${id}/session`);
@@ -164,6 +166,7 @@ export default function App() {
 
   function changeFocus(next: string | null) {
     setPanels([]);
+    setExpandedModule(null); setShowOtherModules(false);
     if (next === focus) return;
     setFocus(next); layout.current = null; saveSession(next);
   }
@@ -175,7 +178,11 @@ export default function App() {
 
   function onNode(node: ProjectionNode) {
     if (node.kind === 'module') {
-      if (node.id === focus) pushPanel({ kind: 'module', module: node.module! });
+      if (!focus && node.canExpand) {
+        setExpandedModule(current => current === node.id ? null : node.id);
+        setShowOtherModules(false);
+        setPanels([]);
+      } else if (node.id === focus) pushPanel({ kind: 'module', module: node.module! });
       else changeFocus(node.id);
     }
     else if (node.entity) void sourcePanel(node.entity);
@@ -280,18 +287,18 @@ export default function App() {
           <div className="prototype-note"><Info size={17} /><div><strong>关于这个开发预览</strong><p>预置模块由人工划分，调用来自静态解析。导入自己的项目后，可授权 AI 生成架构。</p></div><span>M0 开发预览</span></div><div className="library-footer"><span>复杂的代码，也可以有清晰的轮廓。</span><span>CODESCAPE / 源境</span></div>
         </div> : <>
           <div className="workspace-toolbar"><div className="breadcrumbs"><button onClick={() => { setProject(null); setPanels([]); }}>学习库</button><ChevronRight size={14} /><button className={!focus ? 'current' : ''} onClick={() => changeFocus(null)}>{project.name}</button>{breadcrumb.map(module => <span className="breadcrumb-item" key={module.id}><ChevronRight size={14} /><button className={focus === module.id ? 'current' : ''} onClick={() => changeFocus(module.id)}>{module.name}</button></span>)}</div><div className="toolbar-actions"><button onClick={() => pushPanel({ kind: 'overview' })} disabled={!project.architecture}><BookOpen size={15} />项目概览</button><button onClick={download} disabled={!project.architecture}><Download size={15} />导出 SVG</button><button className="ai-button" onClick={() => { setError(''); setModal('consent'); }} disabled={!project.analysis.entities.length || project.status === 'analyzing'}><Sparkles size={14} />{project.status === 'analyzing' ? 'AI 分析中' : 'AI 架构分析'}</button></div></div>
-          <div className="module-navigation"><div className="module-selector"><Layers3 size={15} /><label htmlFor="module-switch">切换模块</label><select id="module-switch" value={focus || ''} onChange={event => changeFocus(event.target.value || null)} disabled={!modules.length}><option value="">全部模块 · 架构全景</option>{moduleOrder.map(module => <option key={module.id} value={module.id}>{'　'.repeat(module.depth)}{module.depth ? '↳ ' : ''}{module.name}</option>)}</select></div><span className="architecture-hint">{isFunctions ? '包含直接关联的跨模块函数' : '纵向架构 · 子模块嵌套展示'}</span><button className="fullscreen-button" onClick={() => void toggleFullscreen()} aria-label={fullscreen ? '退出全屏' : '全屏查看架构'}>{fullscreen ? <Minimize2 size={15} /> : <Maximize2 size={15} />}{fullscreen ? '退出全屏' : '全屏查看'}<kbd>{fullscreen ? 'Esc' : '↗'}</kbd></button></div>
+          <div className="module-navigation"><div className="module-selector"><Layers3 size={15} /><label htmlFor="module-switch">切换模块</label><select id="module-switch" value={focus || ''} onChange={event => changeFocus(event.target.value || null)} disabled={!modules.length}><option value="">全部模块 · 架构全景</option>{moduleOrder.map(module => <option key={module.id} value={module.id}>{'　'.repeat(module.depth)}{module.depth ? '↳ ' : ''}{module.name}</option>)}</select></div><span className="architecture-hint">{isFunctions ? '包含直接关联的跨模块函数' : expandedModule ? '父模块已展开 · 再次点击即可收起' : '点击父模块展开子模块 · 最多展示两层'}</span>{!isFunctions && projection.hiddenModuleCount ? <button className="secondary-button compact-button" onClick={() => setShowOtherModules(true)}>{showOtherModules ? '已显示同层模块' : `显示其他模块（${projection.hiddenModuleCount}）`}</button> : null}<button className="fullscreen-button" onClick={() => void toggleFullscreen()} aria-label={fullscreen ? '退出全屏' : '全屏查看架构'}>{fullscreen ? <Minimize2 size={15} /> : <Maximize2 size={15} />}{fullscreen ? '退出全屏' : '全屏查看'}<kbd>{fullscreen ? 'Esc' : '↗'}</kbd></button></div>
           <div className="workspace-heading" key={focus || 'root'}><div><div className="eyebrow">{isFunctions ? '函数结构 · 深入源码' : '语义架构 · 全景探索'}</div><h1>{activeModule?.name || '项目全景'}<span className="view-tag">{isFunctions ? '函数视图' : '模块视图'}</span></h1><p>{activeModule?.summary || '理解主要模块的分工，以及它们如何协作。'}</p></div><div className="workspace-stats"><span><strong>{project.function_count}</strong>函数</span><span><strong>{confirmedCount}</strong>已识别调用</span><span><strong>{project.progress.mastered}<small> / {project.progress.total}</small></strong>已掌握</span></div></div>
           <div className="graph-meta"><div>{project.demo && <span className="sample-label"><Circle size={9} />预置验证样例</span>}<span><ShieldCheck size={12} />绑定只读源码快照</span><span>{project.status === 'analyzing' ? <><span className="spinner small" />正在生成语义架构，当前图仍可阅读</> : project.demo && project.architecture?.overview.limitations.some(value => value.includes('人工预置')) ? '模块人工预置 · 调用静态提取' : statuses[project.status]}</span></div><button onClick={() => pushPanel({ kind: 'diagnostics' })}><AlertTriangle size={12} />范围与局限{project.diagnostic_count > 0 && <b>{project.diagnostic_count}</b>}</button></div>
           <div className="exploration">
             <div className="graph-container">
-              {project.architecture ? projection.nodes.length ? <Suspense fallback={<div className="canvas-loading"><span className="spinner" />正在准备探索画布…</div>}><Canvas key={`${project.id}:${focus || 'root'}`} projection={projection} onNode={onNode}
+              {project.architecture ? projection.nodes.length ? <Suspense fallback={<div className="canvas-loading"><span className="spinner" />正在准备探索画布…</div>}><Canvas key={`${project.id}:${focus || 'root'}:${expandedModule || 'collapsed'}:${showOtherModules ? 'all' : 'focused'}`} projection={projection} onNode={onNode}
                 onInfo={node => pushPanel(node.kind === 'module' ? { kind: 'module', module: node.module! } : { kind: 'function', entity: node.entity! })}
                 onRelation={relation => pushPanel({ kind: 'relation', relation })} onLayout={value => { layout.current = value; }}
                 viewport={viewports[`${isFunctions ? 'grouped-functions' : 'vertical'}:${focus || 'root'}`]} onViewport={value => { const next = { ...viewports, [`${isFunctions ? 'grouped-functions' : 'vertical'}:${focus || 'root'}`]: value }; setViewports(next); saveSession(focus, next); }} /></Suspense>
                 : <div className="empty-state"><Boxes size={32} /><h3>此模块没有可展示函数</h3><p>实现可能位于顶层代码或其他隐藏作用域，详情中保留源码依据。</p><button className="secondary-button" onClick={() => activeModule && pushPanel({ kind: 'module', module: activeModule })}>查看模块详情</button></div>
                 : <div className="empty-state"><span className="large-empty-icon"><Sparkles size={30} /></span><h3>{['indexing', 'queued'].includes(project.status) ? '正在建立静态源码索引' : '源码已就绪，下一步理解架构'}</h3><p>静态索引不会被当作语义架构。授权后，AI 将基于当前快照归纳模块职责与整体工作原理。</p>{project.status === 'indexed' && <button className="primary-button" onClick={() => { setError(''); setModal('consent'); }}><Sparkles size={15} />开始 AI 架构分析</button>}{project.error && <p className="inline-error">{project.error}</p>}</div>}
-              <div className="canvas-caption"><span>{isFunctions ? '点击函数阅读源码 · 点击连线查看证据' : '点击模块深入 · 信息按钮查看职责'}</span><span>{projection.nodes.length} 节点 <span className="caption-dot">·</span> {projection.relations.length} 连线</span></div>
+              <div className="canvas-caption"><span>{isFunctions ? '点击函数阅读源码 · 点击连线查看证据' : '点击父模块展开 · 再次点击收起 · 信息按钮查看职责'}</span><span>{projection.nodes.length} 节点 <span className="caption-dot">·</span> {projection.relations.length} 连线</span></div>
             </div>
             {panel && <><div className="panel-resizer" onPointerDown={event => {
               event.currentTarget.setPointerCapture(event.pointerId);

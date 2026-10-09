@@ -23,7 +23,7 @@ export function aggregateState(states: LearningState[]): LearningState {
   return 'in_progress';
 }
 
-export function projectGraph(project: ProjectDetail, focus: string | null): Projection {
+export function projectGraph(project: ProjectDetail, focus: string | null, options: { expandedModuleId?: string | null; showOtherModules?: boolean } = {}): Projection {
   const modules = project.architecture?.modules || [];
   const active = modules.find(module => module.id === focus);
   const children = modules.filter(module => module.parent_id === (focus || null));
@@ -38,10 +38,57 @@ export function projectGraph(project: ProjectDetail, focus: string | null): Proj
     if (active.entity_ids.includes(call.target_id)) included.add(caller);
   }
   const displayed: Module[] = [];
-  function descend(parentId: string | null) {
-    for (const module of modules.filter(item => item.parent_id === parentId)) { displayed.push(module); descend(module.id); }
+  function descend(parentId: string | null, maxDepth = Infinity, depth = 0) {
+    if (depth >= maxDepth) return;
+    for (const module of modules.filter(item => item.parent_id === parentId)) {
+      displayed.push(module);
+      descend(module.id, maxDepth, depth + 1);
+    }
   }
-  if (!functions) { if (active) displayed.push(active); descend(focus); }
+  let hiddenModuleCount = 0;
+  if (!functions) {
+    if (focus) {
+      if (active) displayed.push(active);
+      descend(focus);
+    } else {
+      const roots = modules.filter(module => module.parent_id === null);
+      const expandedId = options.expandedModuleId || null;
+      const expanded = modules.find(module => module.id === expandedId);
+      let anchorRoot = expanded;
+      while (anchorRoot?.parent_id) anchorRoot = modules.find(module => module.id === anchorRoot!.parent_id);
+      const visibleRoots = expanded && !options.showOtherModules ? roots.filter(module => module.id === anchorRoot?.id) : roots;
+      hiddenModuleCount = roots.length - visibleRoots.length;
+      for (const root of visibleRoots) {
+        displayed.push(root);
+        if (!expanded) continue;
+        let onPath = root.id === anchorRoot?.id;
+        let cursor: Module | undefined = expanded;
+        while (cursor?.parent_id && !onPath) {
+          onPath = cursor.parent_id === root.id;
+          cursor = modules.find(module => module.id === cursor!.parent_id);
+        }
+        if (onPath) {
+          const addExpanded = (parentId: string, depth: number) => {
+            if (depth > 2) return;
+            for (const child of modules.filter(item => item.parent_id === parentId)) {
+              displayed.push(child);
+              addExpanded(child.id, depth + 1);
+            }
+          };
+          if (expanded.id === root.id) addExpanded(root.id, 1);
+          else {
+            const ancestors: Module[] = [];
+            let current: Module | undefined = expanded;
+            while (current && current.id !== root.id) { ancestors.unshift(current); current = current.parent_id ? modules.find(item => item.id === current!.parent_id) : undefined; }
+            for (const ancestor of ancestors) {
+              if (!displayed.some(item => item.id === ancestor.id)) displayed.push(ancestor);
+            }
+            addExpanded(expanded.id, 1);
+          }
+        }
+      }
+    }
+  }
   const functionNodes: ProjectionNode[] = functions ? visible.filter(entity => included.has(entity.id)).map(entity => ({
     id: entity.id, label: visible.filter(item => item.name === entity.name).length > 1 ? `${entity.signature} · L${entity.location.start_line}` : entity.name, description: '', kind: 'function', entity, count: 0,
     state: project.learning[entity.id]?.state || 'not_started', incomplete: entity.unresolved_count > 0,
@@ -57,7 +104,9 @@ export function projectGraph(project: ProjectDetail, focus: string | null): Proj
       count: entityIds.length, state: aggregateState(entityIds.map(id => project.learning[id]?.state || 'not_started')),
       incomplete: module.incomplete, external: functions && module.id !== active.id, tone: modules.indexOf(module),
       parentId: !functions && module.parent_id && displayed.some(item => item.id === module.parent_id) ? module.parent_id : undefined,
-      container: functions || modules.some(item => item.parent_id === module.id),
+      container: functions || displayed.some(item => item.parent_id === module.id),
+      canExpand: !functions && modules.some(item => item.parent_id === module.id),
+      expanded: !functions && options.expandedModuleId === module.id,
       shownCount: functions ? functionNodes.filter(node => node.parentId === module.id).length : undefined,
       x: 0, y: 0, width: 300, height: 204 };
   });
@@ -65,7 +114,7 @@ export function projectGraph(project: ProjectDetail, focus: string | null): Proj
   const owner = new Map<string, string>();
   for (const node of nodes) {
     if (functions && node.kind !== 'function') continue;
-    for (const id of node.kind === 'function' ? [node.id] : node.module!.entity_ids) owner.set(id, node.id);
+    for (const id of node.kind === 'function' ? [node.id] : moduleEntities(node.module!, modules)) owner.set(id, node.id);
   }
   const grouped = new Map<string, Relation>();
   for (const call of project.analysis.calls) {
@@ -79,7 +128,7 @@ export function projectGraph(project: ProjectDetail, focus: string | null): Proj
     if (!grouped.has(key)) grouped.set(key, { id: key, from, to, label, calls: [] });
     grouped.get(key)!.calls.push(call);
   }
-  return { nodes, relations: [...grouped.values()] };
+  return { nodes, relations: [...grouped.values()], hiddenModuleCount };
 }
 
 export function escapeXml(value: string) {
