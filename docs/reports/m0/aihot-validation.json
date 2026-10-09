@@ -1,0 +1,29 @@
+{
+  "verified_at": "2026-10-10T01:14:14+08:00",
+  "project": "AIHOT",
+  "recipient": "https://api.deepseek.com",
+  "model": "deepseek-flash",
+  "source_scope": "用户已授权的 AIHOT 固定快照",
+  "status": "已完成",
+  "batches": 64,
+  "modules": 525,
+  "parent_modules": 147,
+  "incomplete_modules": 28,
+  "visible_functions": 1512,
+  "assigned_functions": 1512,
+  "confirmed_calls": 4073,
+  "usage": {
+    "prompt_tokens": 188653,
+    "completion_tokens": 9250,
+    "total_tokens": 197903,
+    "prompt_cache_hit_tokens": 132992,
+    "prompt_cache_miss_tokens": 55661
+  },
+  "validation": [
+    "JSON 契约校验通过",
+    "实体归属唯一性校验通过",
+    "源码路径证据校验通过",
+    "动态拆分检查点恢复通过"
+  ],
+  "api_key_recorded": false
+}

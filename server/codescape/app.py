@@ -428,6 +428,7 @@ def create_app(root: Path | None = None, nonce: str | None = None) -> FastAPI:
         async def work():
             checkpoint_path = root / "projects" / project_id / "architecture-checkpoint.json"
             try:
+                await asyncio.sleep(0)
                 snapshot_root = root / "projects" / project_id / "snapshots" / project["snapshot"]["id"]
                 checkpoint: list[Architecture] = []
                 if checkpoint_path.exists():
