@@ -180,6 +180,10 @@ export default function App() {
   function onNode(node: ProjectionNode) {
     if (node.kind === 'module') {
       if (node.canExpand) {
+        if (node.expanded && focus && isFunctions) {
+          changeFocus(null);
+          return;
+        }
         setExpandedModule(node.expanded ? null : node.id);
         setShowOtherModules(false);
         setPanels([]);
