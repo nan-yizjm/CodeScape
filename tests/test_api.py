@@ -1,10 +1,11 @@
 import asyncio
+import json
 import time
 
 import pytest
 from codescape.analyzers import python_analysis
 from codescape.app import create_app
-from codescape.models import Architecture, Module, Overview
+from codescape.models import Analysis, Architecture, Entity, Location, Module, Overview, Scope
 from codescape.provider import Provider, validate_architecture
 from fastapi.testclient import TestClient
 
@@ -99,6 +100,55 @@ def test_connection_test_contains_no_source(tmp_path, monkeypatch):
     response = asyncio.run(Provider(tmp_path).test())
     assert response["source_sent"] is False
     assert "files" not in recorded[0][1] and recorded[0][2] == 256
+
+
+def test_architecture_splits_large_context_and_merges_checked_batches(tmp_path, monkeypatch):
+    provider = Provider(tmp_path)
+    files = {"one.py": "# one\n" + "x" * 90_000, "two.py": "# two\n" + "y" * 90_000}
+    entities = [
+        Entity(
+            id="one-f", name="one", qualified_name="one", signature="def one()", language="python",
+            location=Location(path="one.py", start_line=1, end_line=1, start_byte=0, end_byte=1),
+            scope_id="one-s", implementation_hash="h1",
+        ),
+        Entity(
+            id="two-f", name="two", qualified_name="two", signature="def two()", language="python",
+            location=Location(path="two.py", start_line=1, end_line=1, start_byte=0, end_byte=1),
+            scope_id="two-s", implementation_hash="h2",
+        ),
+    ]
+    analysis = Analysis(
+        entities=entities,
+        scopes=[
+            Scope(id="one-s", kind="function", name="one", location=entities[0].location),
+            Scope(id="two-s", kind="function", name="two", location=entities[1].location),
+        ],
+    )
+    progress = []
+
+    async def fake_request(self, system, user, max_tokens=8000):
+        payload = json.loads(user)
+        modules = [
+            {"id": f"local-{entity['id']}", "name": entity["name"], "summary": "批次职责",
+             "entity_ids": [entity["id"]], "code_paths": [entity["location"]["path"]], "incomplete": False}
+            for entity in payload["entities"]
+        ]
+        return {
+            "modules": modules,
+            "overview": {"introduction": "批次项目", "capabilities": ["批次能力"],
+                          "principle": "批次原理", "limitations": []},
+        }, {"total_tokens": 10}
+
+    monkeypatch.setattr(Provider, "request", fake_request)
+
+    async def on_progress(completed, total, detail):
+        progress.append((completed, total, detail))
+
+    architecture, usage = asyncio.run(provider.architecture(analysis, files, on_progress=on_progress))
+    assert len(architecture.modules) == 2
+    assert {entity_id for module in architecture.modules for entity_id in module.entity_ids} == {"one-f", "two-f"}
+    assert usage["total_tokens"] == 20
+    assert progress[0][0] == 0 and progress[-1][0] == progress[-1][1] == 2
 
 
 def test_architecture_rejects_duplicate_cycle_and_wrong_evidence():

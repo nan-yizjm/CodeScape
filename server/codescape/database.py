@@ -56,6 +56,12 @@ class Database:
             Column("project_id", String, primary_key=True),
             Column("value", JSON, nullable=False),
         )
+        self.analysis_tasks = Table(
+            "prototype_analysis_tasks",
+            metadata,
+            Column("project_id", String, primary_key=True),
+            Column("value", JSON, nullable=False),
+        )
         metadata.create_all(self.engine)
         # A crashed preview never silently resumes paid analysis.
         with self.engine.begin() as connection:
@@ -147,5 +153,21 @@ class Database:
                     )
                 else:
                     connection.execute(self.sessions.insert().values(project_id=project_id, value=value))
+                return value
+            return json.loads(json.dumps(old["value"])) if old else None
+
+    def analysis_progress(self, project_id: str, value: dict | None = None) -> dict | None:
+        with self.engine.begin() as connection:
+            query = select(self.analysis_tasks).where(self.analysis_tasks.c.project_id == project_id)
+            old = connection.execute(query).mappings().first()
+            if value is not None:
+                if old:
+                    connection.execute(
+                        self.analysis_tasks.update()
+                        .where(self.analysis_tasks.c.project_id == project_id)
+                        .values(value=value)
+                    )
+                else:
+                    connection.execute(self.analysis_tasks.insert().values(project_id=project_id, value=value))
                 return value
             return json.loads(json.dumps(old["value"])) if old else None

@@ -75,6 +75,7 @@ def create_app(root: Path | None = None, nonce: str | None = None) -> FastAPI:
             "languages": sorted({entity.language for entity in visible}),
             "diagnostic_count": len(analysis.diagnostics),
             "has_architecture": bool(project["architecture"]),
+            "analysis_progress": database.analysis_progress(project["id"]),
         }
         if full:
             response.update(
@@ -418,24 +419,58 @@ def create_app(root: Path | None = None, nonce: str | None = None) -> FastAPI:
             raise HTTPException(409, "已有任务运行，请等待后主动启动。")
         await run_lock.acquire()
         database.update(project_id, status="analyzing", error=None)
+        database.analysis_progress(
+            project_id,
+            {"phase": "planning", "completed": 0, "total": 0, "detail": "正在估算源码批次"},
+        )
 
         async def work():
             try:
                 snapshot_root = root / "projects" / project_id / "snapshots" / project["snapshot"]["id"]
+
+                async def progress(completed: int, total: int, detail: str):
+                    database.analysis_progress(
+                        project_id,
+                        {
+                            "phase": "batching",
+                            "completed": completed,
+                            "total": total,
+                            "detail": detail,
+                        },
+                    )
+
                 architecture, usage = await provider.architecture(
                     Analysis.model_validate(project["result"]),
                     read_snapshot(snapshot_root, project["snapshot"]),
+                    on_progress=progress,
                 )
                 database.update(
                     project_id, architecture=architecture.model_dump(), status="ready", error=None
+                )
+                database.analysis_progress(
+                    project_id,
+                    {
+                        "phase": "completed",
+                        "completed": 1,
+                        "total": 1,
+                        "detail": "分批分析完成",
+                    },
                 )
                 usage_path = root / "projects" / project_id / "usage.json"
                 usage_path.write_text(json.dumps(usage), encoding="utf-8")
             except asyncio.CancelledError:
                 database.update(project_id, status="paused", error="分析已中断，请主动重新启动。")
+                database.analysis_progress(
+                    project_id,
+                    {"phase": "paused", "completed": 0, "total": 0, "detail": "分析已中断，请主动重新启动"},
+                )
                 raise
             except Exception as error:
                 database.update(project_id, status="paused", error=str(error)[:300])
+                database.analysis_progress(
+                    project_id,
+                    {"phase": "paused", "completed": 0, "total": 0, "detail": str(error)[:300]},
+                )
             finally:
                 run_lock.release()
 

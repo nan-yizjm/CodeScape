@@ -234,7 +234,7 @@ ProviderAdapter 定义 test_connection、generate_structured、normalize_usage�
 
 固定使用用户指定模型，不自动分配其他模型。能力配置记录上下文、输出限制、JSON 模式、推理参数和用量字段；未知能力用无源码请求探测或明确配置。连接测试与结构化能力分别验证，允许手动输入模型，不依赖模型发现接口。
 
-上下文预留输出及 15% 安全余量；长度错误时缩小批次，原任务总范围不变。不支持 JSON 模式可用普通 JSON 提示加校验；仍失败则暂停，不换模型。DeepSeek JSON 输出可能为空或截断，必须检查结束原因及业务引用。[DeepSeek JSON 文档](https://api-docs.deepseek.com/guides/json_mode/)
+上下文预留输出及 15% 安全余量；源码总上下文接近保护上限时，按文件和必要时的行范围拆分为受控批次，原任务总范围不变。每批只要求归属本批可见实体，保留关联调用的轻量目标信息；所有批次通过实体归属和源码路径校验后再合并。合并结果明确记录批次数，并提示跨批次模块边界需要人工复核。单个行范围仍无法放入保护上限时暂停并提示缩小范围。不支持 JSON 模式可用普通 JSON 提示加校验；仍失败则暂停，不换模型。DeepSeek JSON 输出可能为空或截断，必须检查结束原因及业务引用。[DeepSeek JSON 文档](https://api-docs.deepseek.com/guides/json_mode/)
 
 请求状态：prepared → sent → succeeded / failed / outcome_unknown。发送前登记 ID、输入哈希和配置版本；响应先落盘再提交阶段。超时可能已在远端计费，不承诺 exactly-once。缺用量记 null 而非 0；价格配置带币种、来源和日期，缓存用量不重复计算，价格未知显示未知，不写死当前价格。
 

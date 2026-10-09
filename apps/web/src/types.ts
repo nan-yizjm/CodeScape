@@ -11,7 +11,7 @@ export type Overview = { introduction: string; capabilities: string[]; principle
 export type Project = { id: string; name: string; source: string; created_at: string; status: string;
   version_id: string; demo: boolean; error: string | null; function_count: number; file_count: number;
   progress: { mastered: number; total: number }; languages: string[]; diagnostic_count: number;
-  has_architecture: boolean };
+  has_architecture: boolean; analysis_progress?: { phase: string; completed: number; total: number; detail: string } | null };
 export type ProjectDetail = Project & { file_ids: Record<string, string>; analysis: { entities: Entity[]; calls: Call[];
   scopes: { id: string; kind: string; name: string; location: Location }[];
   diagnostics: { category: string; message: string; path: string | null; line: number | null }[];
