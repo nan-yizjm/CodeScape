@@ -6,7 +6,13 @@ import pytest
 from codescape.analyzers import python_analysis
 from codescape.app import create_app
 from codescape.models import Analysis, Architecture, Entity, Location, Module, Overview, Scope
-from codescape.provider import Provider, ProviderError, normalize_module_paths, validate_architecture
+from codescape.provider import (
+    Provider,
+    ProviderError,
+    normalize_module_paths,
+    repair_batch_architecture,
+    validate_architecture,
+)
 from fastapi.testclient import TestClient
 
 
@@ -216,6 +222,13 @@ def test_architecture_rejects_duplicate_cycle_and_wrong_evidence():
     normalize_module_paths(architecture, analysis)
     assert module.code_paths == ["x.py"]
     validate_architecture(architecture, analysis, {"x.py", "other.py"})
+    repaired = Architecture(
+        modules=[Module(id="bad", name="错误归属", summary="职责", code_paths=["other.py"], entity_ids=["missing"])],
+        overview=overview,
+    )
+    repair_batch_architecture(repaired, analysis, {entity.id}, {"x.py"})
+    validate_architecture(repaired, analysis, {"x.py"}, expected_entity_ids={entity.id})
+    assert any(module.incomplete and entity.id in module.entity_ids for module in repaired.modules)
     module.entity_ids.append(entity.id)
     with pytest.raises(ValueError, match="归属"):
         validate_architecture(architecture, analysis, {"x.py"})

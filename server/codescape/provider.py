@@ -263,7 +263,7 @@ class Provider:
             await self._progress(on_progress, index - 1, len(batches), f"正在分析第 {index}/{len(batches)} 批 · {len(batch_files)} 个文件")
             document, usage = await self.request(system, context)
             architecture = Architecture.model_validate(document)
-            normalize_module_paths(architecture, analysis)
+            repair_batch_architecture(architecture, analysis, expected, set(batch_files))
             validate_architecture(architecture, analysis, set(batch_files), expected_entity_ids=expected)
             results.append(architecture)
             for key, value in usage.items():
@@ -327,6 +327,71 @@ def normalize_module_paths(architecture: Architecture, analysis: Analysis) -> No
             if path and path not in paths:
                 paths.append(path)
         module.code_paths = paths
+
+
+def repair_batch_architecture(
+    architecture: Architecture, analysis: Analysis, expected: set[str], paths: set[str]
+) -> None:
+    """限制模型输出到本批证据，并把可恢复的归属缺口显式降级。"""
+    entity_paths = {entity.id: entity.location.path for entity in analysis.entities if entity.visible}
+    seen_ids: set[str] = set()
+    duplicate_count = 0
+    discarded_count = 0
+    used_module_ids: set[str] = set()
+    for index, module in enumerate(architecture.modules, start=1):
+        original_id = module.id.strip() or f"m{index}"
+        module.id = original_id
+        if module.id in used_module_ids:
+            module.id = f"{original_id}-repair-{index}"
+        used_module_ids.add(module.id)
+        original_paths = list(module.code_paths)
+        module.code_paths = [path for path in original_paths if path in paths]
+        if len(module.code_paths) != len(original_paths):
+            module.incomplete = True
+            discarded_count += len(original_paths) - len(module.code_paths)
+        clean_ids: list[str] = []
+        for entity_id in module.entity_ids:
+            if entity_id not in expected:
+                discarded_count += 1
+                module.incomplete = True
+                continue
+            if entity_id in seen_ids:
+                duplicate_count += 1
+                module.incomplete = True
+                continue
+            seen_ids.add(entity_id)
+            clean_ids.append(entity_id)
+        module.entity_ids = clean_ids
+        for entity_id in module.entity_ids:
+            path = entity_paths.get(entity_id)
+            if path and path not in module.code_paths:
+                module.code_paths.append(path)
+    empty_modules = [module for module in architecture.modules if not module.code_paths and not module.entity_ids]
+    if empty_modules:
+        architecture.modules = [module for module in architecture.modules if module not in empty_modules]
+        discarded_count += len(empty_modules)
+    missing = expected - seen_ids
+    if missing:
+        missing_paths = list(dict.fromkeys(entity_paths[entity_id] for entity_id in missing))
+        architecture.modules.append(
+            Module(
+                id=f"m-unassigned-{len(architecture.modules) + 1}",
+                name="待复核模块",
+                summary="本批模型未明确归属的函数，已保留真实源码范围，等待后续人工复核。",
+                entity_ids=sorted(missing),
+                code_paths=[path for path in missing_paths if path in paths],
+                incomplete=True,
+            )
+        )
+        architecture.overview.limitations.append(f"本批有 {len(missing)} 个函数未被模型明确归类，已放入待复核模块。")
+    if duplicate_count:
+        architecture.overview.limitations.append(f"本批发现 {duplicate_count} 个重复函数归属，已保留首次归属。")
+    if discarded_count:
+        architecture.overview.limitations.append(f"本批过滤了 {discarded_count} 项无效模块证据引用。")
+    module_ids = {module.id for module in architecture.modules}
+    for module in architecture.modules:
+        if module.parent_id not in module_ids:
+            module.parent_id = None
 
 
 def validate_architecture(
