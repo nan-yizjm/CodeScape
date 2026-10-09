@@ -254,7 +254,7 @@ def test_architecture_replans_when_model_output_is_truncated(monkeypatch, tmp_pa
         if calls == 1:
             raise ProviderError("模型输出被截断，请缩小分析批次。")
         payload = json.loads(user)
-        return {
+        response = {
             "modules": [
                 {"id": entity["id"], "name": entity["name"], "summary": "职责",
                  "entity_ids": [entity["id"]], "code_paths": [entity["location"]["path"]], "incomplete": False}
@@ -263,6 +263,9 @@ def test_architecture_replans_when_model_output_is_truncated(monkeypatch, tmp_pa
             "overview": {"introduction": "项目", "capabilities": ["能力"],
                           "principle": "原理", "limitations": []},
         }, {"total_tokens": 1}
+        if calls == 3:
+            response[0]["type"] = "json_object"
+        return response
 
     monkeypatch.setattr(Provider, "request", fake_request)
     architecture, _ = asyncio.run(provider.architecture(analysis, files))

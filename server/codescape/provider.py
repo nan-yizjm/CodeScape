@@ -314,6 +314,8 @@ class Provider:
                         )
                         continue
                 raise
+            if isinstance(document, dict) and document.get("type") == "json_object":
+                document = {key: value for key, value in document.items() if key != "type"}
             architecture = Architecture.model_validate(document)
             repair_batch_architecture(architecture, analysis, expected, set(batch_files))
             validate_architecture(architecture, analysis, set(batch_files), expected_entity_ids=expected)
