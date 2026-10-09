@@ -52,10 +52,11 @@ export function projectGraph(project: ProjectDetail, focus: string | null, optio
       if (active) {
         displayed.push(active);
         const siblings = modules.filter(module => module.parent_id === active.parent_id && module.id !== active.id);
-        otherModuleCount = siblings.length;
-        hiddenModuleCount = options.showOtherModules ? 0 : siblings.length;
+        const isExpanded = options.expandedModuleId === active.id;
+        otherModuleCount = isExpanded ? siblings.length : 0;
+        hiddenModuleCount = isExpanded && !options.showOtherModules ? siblings.length : 0;
         if (options.expandedModuleId === active.id) descend(active.id, 2);
-        if (options.showOtherModules) displayed.push(...siblings);
+        if (options.showOtherModules || !isExpanded) displayed.push(...siblings);
       }
     } else {
       const roots = modules.filter(module => module.parent_id === null);
@@ -107,10 +108,11 @@ export function projectGraph(project: ProjectDetail, focus: string | null, optio
   })) : [];
   if (functions) {
     const siblings = modules.filter(module => module.id !== active.id && module.parent_id === active.parent_id);
-    otherModuleCount = siblings.length;
-    hiddenModuleCount = options.showOtherModules === false ? siblings.length : 0;
+    const isExpanded = options.expandedModuleId === active.id;
+    otherModuleCount = isExpanded ? siblings.length : 0;
+    hiddenModuleCount = isExpanded && options.showOtherModules === false ? siblings.length : 0;
     const related = modules.filter(module => module.id !== active.id && functionNodes.some(node => module.entity_ids.includes(node.id)));
-    displayed.push(active, ...[...new Map((options.showOtherModules === true ? [...siblings, ...related] : related).map(module => [module.id, module])).values()]);
+    displayed.push(active, ...[...new Map((options.showOtherModules === true || !isExpanded ? [...siblings, ...related] : related).map(module => [module.id, module])).values()]);
   }
   const moduleNodes: ProjectionNode[] = displayed.map(module => {
     const entityIds = moduleEntities(module, modules);

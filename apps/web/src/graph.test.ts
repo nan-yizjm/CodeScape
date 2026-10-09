@@ -123,7 +123,8 @@ describe('基于证据生成图形', () => {
     expect(all.otherModuleCount).toBe(1);
     expect(all.hiddenModuleCount).toBe(0);
     const collapsed = projectGraph(project, 'm', { ...options, expandedModuleId: null });
-    expect(collapsed.nodes.map(node => node.id)).toEqual(['m']);
+    expect(collapsed.nodes.map(node => node.id)).toEqual(['m', 'other']);
+    expect(collapsed.otherModuleCount).toBe(0);
     expect(collapsed.nodes[0].container).toBe(false);
     expect(collapsed.nodes[0].canExpand).toBe(true);
   });
