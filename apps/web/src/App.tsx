@@ -8,6 +8,7 @@ import { OverviewPanel } from './OverviewPanel';
 import { RequestUsage } from './RequestUsage';
 import {panelKey, restorePanels, serializePanels, type SessionValue} from './exploration';
 import {useSessionSaver} from './useSessionSaver';
+import {LearningWrites,withLearning,type LearningValue} from './learningWrites';
 import { abstractModules, exportSvg, moduleEntities, moduleLearningState, projectGraph } from './graph';
 import type { AnalysisTask, Entity, ImportPreview, LearningState, Panel, Project, ProjectDetail, Projection, ProjectionNode, SourceFile, ScrollPosition } from './types';
 
@@ -27,6 +28,20 @@ export default function App() {
   const [project, setProject] = useState<ProjectDetail | null>(null);
   const projectRef = useRef<ProjectDetail | null>(null);
   projectRef.current = project;
+  const learningWrites = useRef<LearningWrites | null>(null);
+  if (!learningWrites.current) learningWrites.current = new LearningWrites(
+    (scope,id,state,revision)=>api<LearningValue>(`/projects/${scope.id}/learning/${id}`,
+      {version_id:scope.version,state,expected_revision:revision},'PUT'),
+    async(scope,id)=>(await api<{states:Record<string,LearningValue>}>(`/projects/${scope.id}/learning?version_id=${scope.version}`)).states[id] || {state:'not_started',revision:0},
+    (scope,id,value)=>setProject(current=>current?.id === scope.id && current.version_id === scope.version
+      ? withLearning(current,{...current.learning,[id]:value}) : current),
+    (scope,message,error)=>{
+      if (projectRef.current?.id !== scope.id || projectRef.current.version_id !== scope.version) return;
+      if (error instanceof ApiError && error.code === 'VERSION_CHANGED') {void openProject(scope.id);setNotice('版本已更新，请在当前架构重新选择学习状态。');}
+      else if (error) setError(error instanceof ApiError && error.code === 'LEARNING_CONFLICT'
+        ? '另一页面更新了这项学习状态，已载入最新记录；请检查后重新选择。' : message);
+      else {setNotice(message);void refresh();}
+    });
   const [focus, setFocus] = useState<string | null>(null);
   const [panels, setPanels] = useState<Panel[]>([]);
   const [source, setSource] = useState<SourceFile | null>(null);
@@ -229,9 +244,16 @@ export default function App() {
         }
       }).catch(() => {});
       api<AnalysisTask[]>('/tasks').then(setAnalysisTasks).catch(() => {});
+      if (project?.status === 'ready') {
+        const scope = {id:project.id,version:project.version_id};
+        api<{version_id:string;states:Record<string,LearningValue>}>(`/projects/${scope.id}/learning?version_id=${scope.version}`)
+          .then(next=>setProject(current=>current?.id === scope.id && current.version_id === next.version_id
+            ? withLearning(current,learningWrites.current!.overlay(scope,next.states)) : current)).catch(()=>{});
+      }
       if (project && ['indexing', 'analyzing', 'queued', 'waiting'].includes(project.status)) {
         api<ProjectDetail>(`/projects/${project.id}`).then(next => {
-          setProject(next);
+          setProject(current=>current?.id === next.id && current.version_id === project.version_id
+            ? withLearning(next,learningWrites.current!.overlay({id:next.id,version:next.version_id},next.learning)) : current);
           if (next.status === 'ready' && project.status !== 'ready') {
             if (next.version_id !== project.version_id) void openProject(next.id);
             else { setFocus(null); setPanels([{ kind: 'overview' }]); }
@@ -306,14 +328,18 @@ export default function App() {
       functionOrigin.current = origin ? {focus:valid(origin.focus), expanded:valid(origin.expanded), siblings:origin.siblings} : null;
       session.initialize(id, detail.version_id, saved?.revision || 0);
       setSource(null); layout.current = null;
-      setProject(detail);
+      setProject(withLearning(detail,learningWrites.current!.overlay({id,version:detail.version_id},detail.learning)));
       setFocus(savedFocus); setExpandedModule(valid(saved?.expanded_id) || savedFocus);
       setShowOtherModules(saved?.show_other_modules || false);
       setViewports(saved?.viewport || {});
       setPanels(restorePanels(saved?.panels || [],detail)); setExpandedEvidence(saved?.expanded_evidence || {});
       setWidth(saved?.panel_width || 420);
       sessionStorage.setItem('codescape-active-project',id);
-    } catch (problem) { setError((problem as Error).message); }
+    } catch (problem) {
+      if (ticket !== opening.current) return;
+      if (problem instanceof ApiError && [404,410].includes(problem.status)) sessionStorage.removeItem('codescape-active-project');
+      setError((problem as Error).message);
+    }
   }
 
   function changeFocus(next: string | null) {
@@ -372,16 +398,10 @@ export default function App() {
     else if (node.entity) void sourcePanel(node.entity);
   }
 
-  async function learning(entity: Pick<Entity, 'id'>, state: LearningState) {
+  function learning(entity: Pick<Entity, 'id'>, state: LearningState) {
     if (!project) return;
-    try {
-      const value = await api<{ state: LearningState; revision: number }>(`/projects/${project.id}/learning/${entity.id}`,
-        { version_id: project.version_id, state, expected_revision: project.learning[entity.id]?.revision || 0 }, 'PUT');
-      setProject(current => current ? { ...current, learning: { ...current.learning, [entity.id]: value },
-        progress: { ...current.progress, mastered: (current.learning_entities || current.analysis.entities.filter(item => item.visible))
-          .filter(item => (item.id === entity.id ? state : current.learning[item.id]?.state) === 'mastered').length } } : current);
-      setNotice('学习状态已保存到本地。'); await refresh();
-    } catch (problem) { setError((problem as Error).message); }
+    setError('');setNotice('正在保存学习状态…');
+    learningWrites.current!.choose({id:project.id,version:project.version_id},entity.id,state,project.learning[entity.id]);
   }
 
   async function importProject() {

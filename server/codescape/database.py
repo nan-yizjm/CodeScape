@@ -372,11 +372,26 @@ class Database:
                 ).mappings()
             }
 
+    def learning_snapshot(self, project_id: str) -> dict | None:
+        with self.engine.begin() as connection:
+            connection.exec_driver_sql("BEGIN")
+            project = connection.execute(select(self.projects.c.version_id, self.projects.c.lifecycle)
+                                         .where(self.projects.c.id == project_id)).mappings().first()
+            if not project or project["lifecycle"] != "active":
+                return None
+            states = {row["entity_id"]: {"state": row["state"], "revision": row["revision"]}
+                      for row in connection.execute(select(self.learning)
+                          .where(self.learning.c.project_id == project_id)).mappings()}
+            return {"version_id": project["version_id"], "states": states}
+
     def set_learning(self, project_id: str, entity_id: str, version: str, state: str, revision: int) -> dict:
         with self.engine.begin() as connection:
             connection.exec_driver_sql("BEGIN IMMEDIATE")
-            current = connection.execute(select(self.projects.c.version_id).where(self.projects.c.id == project_id)).scalar()
-            if current is not None and current != version:
+            project = connection.execute(select(self.projects.c.version_id, self.projects.c.lifecycle)
+                                         .where(self.projects.c.id == project_id)).mappings().first()
+            if not project or project["lifecycle"] != "active":
+                raise ValueError("项目已经删除或正在清理。")
+            if project["version_id"] != version:
                 raise ValueError("学习状态版本已经改变，请刷新后重试。")
             query = select(self.learning).where(
                 self.learning.c.project_id == project_id, self.learning.c.entity_id == entity_id

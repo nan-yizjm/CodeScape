@@ -66,7 +66,11 @@ def test_module_learning_api_denominator_revision_and_readable_source(tmp_path):
         assert detail["function_count"] == 0 and detail["progress"] == {"mastered": 0, "total": 1}
         payload = {"version_id": project["version_id"], "state": "mastered", "expected_revision": 0}
         assert client.put(url + "/learning/module:configuration", json=payload).status_code == 200
-        assert client.put(url + "/learning/module:configuration", json=payload).status_code == 409
+        conflict = client.put(url + "/learning/module:configuration", json=payload)
+        assert conflict.status_code == 409 and conflict.json()["error"]["code"] == "LEARNING_CONFLICT"
+        states = client.get(url + "/learning", params={"version_id": project["version_id"]}).json()["data"]
+        assert states == {"version_id": project["version_id"], "states": {"module:configuration": {"state": "mastered", "revision": 1}}}
+        assert client.get(url + "/learning", params={"version_id": "old"}).json()["error"]["code"] == "VERSION_CHANGED"
         assert client.put(url + "/learning/module:parent", json=payload).status_code == 422
         assert client.put(url + "/learning/module:unknown", json=payload).status_code == 422
         assert client.get(url).json()["data"]["progress"] == {"mastered": 1, "total": 1}

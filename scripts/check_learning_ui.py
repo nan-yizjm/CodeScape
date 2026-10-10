@@ -1,4 +1,6 @@
 """无函数模块学习状态浏览器验收；人工预置架构，无模型请求。"""
+import argparse
+import asyncio
 import uuid
 from pathlib import Path
 
@@ -32,4 +34,14 @@ database.insert({"id": project_id, "name": "模块学习人工验证样例", "so
     "status": "ready", "snapshot": manifest, "version_id": version, "result": analysis.model_dump(),
     "architecture": architecture.model_dump(), "demo": 1})
 database.engine.dispose()
-uvicorn.run(create_app(root, "learning-ui-test"), host="127.0.0.1", port=8126, log_level="warning")
+parser = argparse.ArgumentParser(description="人工学习状态浏览器验证，不发送模型请求")
+parser.add_argument("--write-delay", type=float, default=0)
+args = parser.parse_args()
+app = create_app(root, "learning-ui-test")
+if args.write_delay:
+    @app.middleware("http")
+    async def delayed_learning(request, call_next):
+        if request.method == "PUT" and "/learning/" in request.url.path:
+            await asyncio.sleep(min(5, max(0, args.write_delay)))
+        return await call_next(request)
+uvicorn.run(app, host="127.0.0.1", port=8126, log_level="warning")

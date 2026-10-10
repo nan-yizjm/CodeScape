@@ -27,6 +27,8 @@ def test_snapshot_filters_and_integrity_without_source_execution(tmp_path):
 
 def test_learning_concurrent_revision_and_persistence(tmp_path):
     database = Database(tmp_path)
+    database.insert({"id": "p", "name": "并发学习样例", "source": "人工验证", "created_at": "now",
+                     "status": "ready", "snapshot": {"files": {}}, "version_id": "v", "demo": 1})
 
     def write():
         try:
@@ -42,6 +44,19 @@ def test_learning_concurrent_revision_and_persistence(tmp_path):
     restarted = Database(tmp_path)
     assert restarted.states("p")["f"] == {"state": "mastered", "revision": 1}
     restarted.engine.dispose()
+
+
+def test_learning_rejects_missing_or_deleting_project(tmp_path):
+    database = Database(tmp_path)
+    with pytest.raises(ValueError, match="删除"):
+        database.set_learning("missing", "f", "v", "mastered", 0)
+    database.insert({"id": "p", "name": "删除期间学习样例", "source": "人工验证", "created_at": "now",
+                     "status": "ready", "snapshot": {"files": {}}, "version_id": "v", "demo": 1})
+    database.update("p", lifecycle="deleting")
+    with pytest.raises(ValueError, match="清理"):
+        database.set_learning("p", "f", "v", "mastered", 0)
+    assert not database.states("p") and database.learning_snapshot("p") is None
+    database.engine.dispose()
 
 
 def test_readonly_database_open_does_not_pause_running_task(tmp_path):

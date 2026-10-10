@@ -590,6 +590,17 @@ def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=
             return envelope({"path": path, "text": files[path], "version_id": version_id,
                 "hash": project["snapshot"]["files"][path]["hash"]})
 
+    @app.get("/api/v1/projects/{project_id}/learning")
+    async def learning_states(project_id: str, version_id: str):
+        project = get_project(project_id)
+        snapshot = database.learning_snapshot(project_id)
+        if snapshot is None:
+            get_project(project_id)
+            raise HTTPException(410, "项目已失效，请刷新项目列表。")
+        if version_id != snapshot["version_id"]:
+            raise version_error({**project, "version_id": snapshot["version_id"]}, "学习记录版本已更新，请查看当前架构。")
+        return envelope(snapshot)
+
     @app.put("/api/v1/projects/{project_id}/learning/{entity_id}")
     async def learning(project_id: str, entity_id: str, body: LearningRequest):
         project = get_project(project_id)
@@ -607,7 +618,7 @@ def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=
             latest = get_project(project_id)
             if latest["version_id"] != body.version_id:
                 raise version_error(latest, "学习状态版本已经改变，请刷新后重试本次操作。") from None
-            raise HTTPException(409, str(error)) from None
+            raise HTTPException(409, {"code": "LEARNING_CONFLICT", "message": str(error)}) from None
         return envelope(state)
 
     @app.get("/api/v1/projects/{project_id}/session")
