@@ -1,11 +1,13 @@
 """生成固定依赖的 Windows x64 预发布安装包、便携包和 SHA-256 清单。"""
 from __future__ import annotations
 
+import gc
 import hashlib
 import json
 import platform
 import subprocess
 import sys
+import tempfile
 import tomllib
 import zipfile
 from datetime import UTC, datetime
@@ -34,6 +36,8 @@ def main():
     if sys.platform != "win32" or platform.machine().upper() not in {"AMD64", "X86_64"}:
         raise RuntimeError("当前构建仅适用于 Windows x64。")
     stage.mkdir(parents=True, exist_ok=True)
+    from codescape.database import Database
+    from codescape.storage_schema import KNOWN_REVISIONS, SCHEMA_VERSION
     run([sys.executable, repository / "scripts/prepare_windows_runtime.py"], "prepare-runtime")
     version = tomllib.loads((repository / "pyproject.toml").read_text(encoding="utf-8"))["project"]["version"]
     build_id = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
@@ -42,9 +46,18 @@ def main():
         sources[path.relative_to(repository).as_posix()] = sha256(path)
     metadata = {"version": version, "build_id": build_id, "platform": "Windows x64", "signed": False,
         "status": "P0 预发布验证，尚未通过全部验收", "source_locks_sha256": sources,
-        "data_schema": 3, "python": sys.version.split()[0],
+        "data_schema": SCHEMA_VERSION, "python": sys.version.split()[0],
         "validation_boundary": "构建成功不等于干净 Windows 10/11 安装、升级与卸载验收通过。"}
     (stage / "resources/build-info.json").write_text(json.dumps(metadata, ensure_ascii=False, indent=2), encoding="utf-8")
+    with tempfile.TemporaryDirectory(dir=stage, prefix="schema-contract-") as temporary:
+        database = Database(Path(temporary))
+        contract = {"version": SCHEMA_VERSION, "revisions": KNOWN_REVISIONS,
+            "columns": {name: [column.name for column in table.columns] for name, table in database.projects.metadata.tables.items()}}
+        database.engine.dispose()
+        gc.collect()
+    (stage / "resources/schema-support.json").write_text(json.dumps(contract, ensure_ascii=False, indent=2), encoding="utf-8")
+    run([sys.executable, "-m", "PyInstaller", "packaging/Preflight.spec", "--distpath", stage / "preflight",
+        "--workpath", stage / "preflight-work", "--noconfirm"], "freeze-preflight")
     run([sys.executable, "-m", "PyInstaller", "packaging/CodeScape.spec", "--distpath", stage / "dist",
         "--workpath", stage / "work", "--noconfirm"], "freeze")
     bundle = stage / "dist/CodeScape"
@@ -56,6 +69,7 @@ def main():
     if not compiler.is_file():
         raise RuntimeError("未找到已经验证来源并按用户安装的 Inno Setup 7.1.0 编译器。")
     run([compiler, "/Q", f"/DBuildVersion={version}", f"/DBundleDir={bundle}", f"/DOutputDir={releases}",
+        f"/DPreflightExe={stage / 'preflight/CodeScapeDataCheck.exe'}",
         "packaging/CodeScape.iss"], "installer")
     portable = releases / f"CodeScape-{version}-Windows-x64-Portable.zip"
     with zipfile.ZipFile(portable, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=6) as archive:

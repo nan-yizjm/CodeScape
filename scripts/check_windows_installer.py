@@ -102,6 +102,25 @@ def main():
             assert connection.execute("PRAGMA quick_check").fetchone()[0] == "ok"
             assert connection.execute("SELECT state FROM prototype_learning WHERE entity_id=?", (entity["id"],)).fetchone()[0] == "mastered"
             assert connection.execute("SELECT count(*) FROM ai_requests").fetchone()[0] == 0
+        # The installed application's old check only knows its own revision. The new
+        # installer must independently reject malformed data before replacing files.
+        database_path = data / "app.db"
+        backup_path = root / "owned-before-corruption.sqlite"
+        with sqlite3.connect(database_path) as connection, sqlite3.connect(backup_path) as backup:
+            connection.backup(backup)
+            connection.execute("ALTER TABLE prototype_sessions DROP COLUMN value")
+        program_before = hashlib.sha256(executable.read_bytes()).hexdigest()
+        corrupt_before = hashlib.sha256(database_path.read_bytes()).hexdigest()
+        with (root / "incompatible-data.log").open("wb") as output:
+            rejected = subprocess.run([str(setup), "/VERYSILENT", "/SUPPRESSMSGBOXES", "/CURRENTUSER", "/NORESTART",
+                "/NOICONS", f"/DIR={installed}", f"/LOG={root / 'incompatible-setup.log'}"], env=environment,
+                cwd=root, stdout=output, stderr=output, timeout=120, creationflags=subprocess.CREATE_NO_WINDOW)
+        assert rejected.returncode != 0, "不兼容数据没有阻止替换程序"
+        assert hashlib.sha256(executable.read_bytes()).hexdigest() == program_before
+        assert hashlib.sha256(database_path.read_bytes()).hexdigest() == corrupt_before
+        with sqlite3.connect(backup_path) as backup, sqlite3.connect(database_path) as connection:
+            backup.backup(connection)
+        print("新安装包独立拒绝不兼容数据，程序和数据未被替换", flush=True)
         run([str(installed / "unins000.exe"), "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART",
             f"/LOG={root / 'uninstall.log'}"], "卸载")
         assert not executable.exists() and not registered()
@@ -113,6 +132,7 @@ def main():
             "setup_sha256": build["artifacts"][setup.name]["sha256"], "validation_root": str(root),
             "first_install": "通过", "installed_files_match_manifest": True,
             "upgrade_while_running": "通过；应用先正常退出，返回码 0", "learning_retained": True,
+            "new_installer_data_preflight": "通过；字段损坏时安装返回失败，原程序与数据库哈希保持一致",
             "uninstall": "通过；程序和本次安装记录移除", "data_and_snapshot_retained": True,
             "developer_path_removed": True, "model_requests": 0, "signed": False,
             "boundary": "开发机 Windows 11 x64 验证，同版本覆盖升级；不代替干净 Windows 10/11 与跨版本升级验收。"}

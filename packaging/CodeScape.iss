@@ -1,6 +1,9 @@
 #ifndef BuildVersion
   #define BuildVersion "0.1.0"
 #endif
+#ifndef PreflightExe
+  #define PreflightExe "..\.runtime\packaging\preflight\CodeScapeDataCheck.exe"
+#endif
 #ifndef BundleDir
   #define BundleDir "..\.runtime\packaging\dist\CodeScape"
 #endif
@@ -33,6 +36,7 @@ UninstallDisplayIcon={app}\CodeScape.exe
 Name: "chinesesimplified"; MessagesFile: "compiler:Languages\ChineseSimplified.isl"
 
 [Files]
+Source: "{#PreflightExe}"; Flags: dontcopy
 Source: "{#BundleDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Tasks]
@@ -62,10 +66,19 @@ begin
 end;
 
 function PrepareToInstall(var NeedsRestart: Boolean): String;
+var
+  ResultCode: Integer;
 begin
   Result := '';
   if not StopAndCheckApplication() then
+  begin
     Result := '应用尚未完成安全保存或数据校验。安装已停止，现有程序和学习数据保持不变。';
+    exit;
+  end;
+  ExtractTemporaryFile('CodeScapeDataCheck.exe');
+  if not Exec(ExpandConstant('{tmp}\CodeScapeDataCheck.exe'), '', '', SW_HIDE,
+      ewWaitUntilTerminated, ResultCode) or (ResultCode <> 0) then
+    Result := '本安装包的数据兼容检查未通过。没有替换现有程序；请保留学习数据，使用匹配版本并检查文件权限。';
 end;
 
 function InitializeUninstall(): Boolean;

@@ -3,8 +3,8 @@
   "platform": "Windows-11-10.0.26200-SP0",
   "architecture": "AMD64",
   "executable": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\.runtime\\packaging\\dist\\CodeScape\\CodeScape.exe",
-  "executable_sha256": "d085422e9f344e39d7d4378bd13271e4e85779a88e38b21997c2d62553971e26",
-  "data_root": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\output\\windows-bundle-validation\\9188cca4-f298-4f16-8859-b5b98f88ddb2",
+  "executable_sha256": "652dc4464f5c8cc7f6ee1cd95dcfec08cbe57807b4e142a6beda8bab9ab9c3fc",
+  "data_root": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\output\\windows-bundle-validation\\b1bcdd2c-20c6-4e11-aaa0-79e5471e0212",
   "developer_path_removed": true,
   "duplicate_launch_reused": true,
   "static_sample_functions": 8,
@@ -35,7 +35,7 @@
         }
       ]
     },
-    "file_count": 36,
+    "file_count": 38,
     "function_count": 573,
     "diagnostic_count": 254,
     "ai_analysis": false
