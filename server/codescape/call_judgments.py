@@ -28,6 +28,8 @@ def validate_judgments(architecture, analysis, allowed_calls, files, supplied):
         seen.add(call.id)
         if call.resolution not in {"confirmed", "unresolved"}:
             raise ValueError("间接调用或范围外目标不能升级为直接调用")
+        if call.expansion_location and not call.spelling_location:
+            raise ValueError("宏调用缺少唯一拼写位置，不能升级为直接调用")
         if call.resolution == "unresolved" and any(word in call.reason for word in ("动态分派", "装饰器", "虚调用")):
             raise ValueError("静态已知的动态语义不能升级为直接调用")
         if callable_name(call.expression) != re.split(r"\.|::", target.name)[-1]:

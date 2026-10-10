@@ -1,0 +1,17 @@
+{
+  "date": "2026-10-11",
+  "fixture": "scripts/check_macro_ui.py",
+  "boundary": "应用自有人工预置架构，调用由静态解析确认；非真实模型分析。",
+  "source_format": "UTF-8、CRLF、中文、emoji、制表符",
+  "confirmed_calls": 1,
+  "relation_evidence": "caller → target，静态确认 1，AI 源码判断 0",
+  "macro_spelling": {"path": "owned.c", "line": 2, "highlight": "#define CALL(v) target(v)"},
+  "macro_expansion": {"path": "owned.c", "line": 5, "highlight": "\treturn CALL(2);"},
+  "implementation": {"path": "owned.c", "line": 3},
+  "complete_snapshot_file_readable": true,
+  "returned_to_relation": true,
+  "console_errors_or_warnings": [],
+  "model_requests": 0,
+  "target_code_executed": false,
+  "screenshot": "output/playwright/P0宏定义与展开证据.jpg"
+}

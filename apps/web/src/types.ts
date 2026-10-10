@@ -13,6 +13,7 @@ export type Entity = { id: string; name: string; qualified_name: string; signatu
   condition: string | null; unresolved_count: number };
 export type Call = { id: string; caller_scope_id: string; target_id: string | null; expression: string;
   location: Location; resolution: string; origin: string; reason: string; target_name: string | null;
+  spelling_location?: Location | null; expansion_location?: Location | null;
   judgment_evidence?: {call_id:string; target_id:string; reason:string; evidence:{path:string;start_line:number;end_line:number}[]}[] };
 export type Module = { id: string; parent_id: string | null; name: string; summary: string; entity_ids: string[];
   code_paths: string[]; incomplete: boolean };

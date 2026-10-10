@@ -18,21 +18,23 @@
   "previous_confirmed_calls": 0,
   "files": 36,
   "visible_functions": 573,
-  "confirmed_calls": 544,
+  "confirmed_calls": 529,
   "call_resolution": {
-    "excluded_indirect": 61,
-    "unresolved": 241,
-    "confirmed": 544,
-    "external": 256
+    "excluded_indirect": 62,
+    "unresolved": 2403,
+    "confirmed": 529,
+    "external": 160
   },
   "diagnostics": {
-    "condition_unknown": 175,
+    "condition_unknown": 170,
     "parse_failed": 15,
-    "missing_dependency": 50
+    "macro_location": 159,
+    "missing_dependency": 50,
+    "unresolved_call": 2052
   },
-  "elapsed_seconds": 9.602,
+  "elapsed_seconds": 11.153,
   "tools": {
-    "cpp": "tree-sitter/0.25.2 + libclang/18.1.1 + snapshot-config/3"
+    "cpp": "tree-sitter/0.25.2 + libclang/18.1.1 + snapshot-config/4"
   },
   "snapshot_bytes_unchanged": true,
   "target_code_executed": false,

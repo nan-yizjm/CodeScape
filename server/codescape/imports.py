@@ -94,7 +94,16 @@ def export_git(url: str, staging: Path) -> tuple[Path, dict]:
     repository, source = staging / "objects.git", staging / "source"
     run_git("clone", "--bare", "--template=", "--depth=1", "--single-branch", "--branch", branch, "--", url, str(repository))
     commit = run_git("--git-dir", str(repository), "rev-parse", "HEAD").decode().strip()
-    entries = run_git("--git-dir", str(repository), "ls-tree", "-r", "-z", "HEAD").split(b"\0")
+    excluded = export_git_objects(repository, source)
+    return source, {"kind": "git", "url": url, "default_branch": branch, "commit": commit,
+                    "excluded": excluded}
+
+
+def export_git_objects(repository: Path, source: Path, revision: str = "HEAD") -> list[dict]:
+    """只复制普通源码 blob；固定 Commit 验证也复用相同读取边界。"""
+    if revision != "HEAD" and not re.fullmatch(r"[0-9a-f]{40}", revision):
+        raise ValueError("Git 验证版本必须是完整 Commit ID。")
+    entries = run_git("--git-dir", str(repository), "ls-tree", "-r", "-z", revision).split(b"\0")
     excluded = []
     source.mkdir()
     total = 0
@@ -153,8 +162,7 @@ def export_git(url: str, staging: Path) -> tuple[Path, dict]:
         if process.poll() is None:
             process.kill()
             process.wait()
-    return source, {"kind": "git", "url": url, "default_branch": branch, "commit": commit,
-                    "excluded": excluded}
+    return excluded
 
 
 class ImportService:

@@ -1,0 +1,36 @@
+{
+  "date": "2026-10-11",
+  "id": "spdlog-cpp",
+  "root": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\output\\representative-index\\1df0548a-1a09-40e5-ae40-3013692e8701",
+  "origin": {
+    "kind": "git",
+    "url": "https://github.com/gabime/spdlog.git",
+    "commit": "d6c93f38a08b4ea0f8ffcfd7f7857307d5d5c3fa",
+    "default_branch_at_selection": "v1.x",
+    "excluded": []
+  },
+  "files": 102,
+  "snapshot_hash": "d4586f715383197a4fccb3ccc33326112d0d5f8441eb5d02fbb79ab7ea70245d",
+  "scope_hash": "9ed8dd29b290cfc834a98a84420f66a87357b5a90e78c3f4c96ce84022ffc64b",
+  "visible_functions": 665,
+  "hidden_functions": 144,
+  "call_resolution": {
+    "unresolved": 2286,
+    "excluded_indirect": 10
+  },
+  "diagnostics": {
+    "parse_failed": 85,
+    "condition_unknown": 234,
+    "missing_dependency": 109,
+    "unresolved_call": 2296
+  },
+  "elapsed_seconds": 36.145,
+  "tools": {
+    "python": "ast/3.12; conservative-bindings/1",
+    "cpp": "tree-sitter/0.25.2 + libclang/18.1.1 + snapshot-config/4"
+  },
+  "model_requests": 0,
+  "target_code_executed": false,
+  "snapshot_and_source_unchanged": true,
+  "boundary": "仅静态测量，第三方依赖未安装；未生成 AI 架构，不是逐条人工正确性核对。"
+}

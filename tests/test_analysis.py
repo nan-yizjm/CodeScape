@@ -135,3 +135,70 @@ def test_typescript_reassignment_and_overload(tmp_path):
     result = typescript_analysis(tmp_path, {"x.ts": text}, "v")
     assert next(call for call in result.calls if call.expression == "mutable").resolution != "confirmed"
     assert next(call for call in result.calls if call.expression == "overloaded").resolution == "confirmed"
+
+
+def test_cpp_missing_dependency_retains_calls_in_real_hidden_scopes(tmp_path):
+    text = '#include "not_available.h"\nvoid target(){}\nvoid caller(){ target(); auto callback=[](){target();}; callback(); }\n'
+    (tmp_path / 'owned.cpp').write_text(text,encoding='utf-8')
+    result = cpp_analysis(tmp_path, {'owned.cpp':text}, 'v')
+    assert len(result.calls) == 3
+    caller = next(entity for entity in result.entities if entity.name == 'caller')
+    calls = [call for call in result.calls if call.expression == 'target']
+    assert len(calls) == 2 and sum(call.caller_scope_id == caller.scope_id for call in calls) == 1
+    scopes = {scope.id:scope for scope in result.scopes}
+    assert any(scopes[call.caller_scope_id].kind == 'lambda' for call in calls)
+    assert all(call.resolution != 'confirmed' and call.target_id is None for call in result.calls)
+    assert all(text.encode()[call.location.start_byte:call.location.end_byte].endswith(b'()') for call in result.calls)
+
+
+def test_cpp_explicitly_qualified_virtual_call_is_static_binding(tmp_path):
+    text = 'struct Base {virtual int value(){return 1;}};\nint caller(Base& item){ return item.Base::value()+item.value(); }\n'
+    (tmp_path / 'owned.cpp').write_text(text,encoding='utf-8')
+    result = cpp_analysis(tmp_path, {'owned.cpp':text}, 'v')
+    qualified = next(call for call in result.calls if call.expression == 'item.Base::value')
+    dynamic = next(call for call in result.calls if call.expression == 'item.value')
+    assert qualified.resolution == 'confirmed' and qualified.target_name == 'Base::value'
+    assert dynamic.resolution == 'excluded_indirect' and dynamic.target_id is None
+
+
+def test_cpp_unique_operator_call_and_ambiguous_overload(tmp_path):
+    text = 'struct Value { int operator+(int n){return n;} };\nint caller(Value& item){return item+1;}\nint choose(int n){return n;} int choose(long n){return (int)n;}\nint ambiguous(){return choose(1.2);}\n'
+    (tmp_path / 'owned.cpp').write_text(text,encoding='utf-8')
+    result = cpp_analysis(tmp_path, {'owned.cpp':text}, 'v')
+    # An ill-formed translation unit cannot prove even the otherwise valid operator.
+    assert any(entity.name == 'operator+' and entity.visible for entity in result.entities)
+    assert all(call.resolution != 'confirmed' for call in result.calls)
+    good = text[:text.index('int choose')]
+    (tmp_path / 'owned.cpp').write_text(good,encoding='utf-8')
+    parsed = cpp_analysis(tmp_path, {'owned.cpp':good}, 'v')
+    assert any(call.target_name == 'Value::operator+' and call.resolution == 'confirmed' for call in parsed.calls)
+
+
+def test_cpp_macro_keeps_physical_spelling_and_expansion_bytes(tmp_path):
+    text = '// 中文 😀\r\n#define CALL(v) target(v)\r\nint target(int v){return v;}\r\nint caller(){\r\n\treturn CALL(2);\r\n}\r\n'
+    (tmp_path / 'owned.c').write_bytes(text.encode())
+    result = cpp_analysis(tmp_path, {'owned.c':text}, 'v')
+    call = next(call for call in result.calls if call.expression == 'CALL')
+    assert call.resolution == 'confirmed' and call.target_name == 'target'
+    assert call.spelling_location.start_line == 2 and call.expansion_location.start_line == 5
+    spelling, expansion = call.spelling_location, call.expansion_location
+    assert text.encode()[spelling.start_byte:spelling.end_byte] == b'target(v)'
+    assert text.encode()[expansion.start_byte:expansion.end_byte] == b'CALL(2)'
+
+
+def test_cpp_macro_multiple_expanded_calls_do_not_fabricate_single_evidence(tmp_path):
+    text = '#define BOTH() target()+target()\nint target(){return 1;}\nint caller(){return BOTH();}\n'
+    (tmp_path / 'owned.c').write_bytes(text.encode())
+    result = cpp_analysis(tmp_path, {'owned.c':text}, 'v')
+    macro = next(call for call in result.calls if call.expression == 'BOTH')
+    assert macro.resolution == 'unresolved' and macro.target_id is None
+    assert macro.expansion_location and not macro.spelling_location
+    assert any(item.category == 'macro_location' for item in result.diagnostics)
+
+
+def test_cpp_fallback_callback_shadow_does_not_allow_same_name_target(tmp_path):
+    text = '#include "unavailable.h"\nvoid target(){}\nvoid caller(void(*target)()){target(); auto alias=target;alias();}\n'
+    (tmp_path / 'owned.cpp').write_bytes(text.encode())
+    result = cpp_analysis(tmp_path, {'owned.cpp':text}, 'v')
+    assert {call.expression for call in result.calls} == {'target','alias'}
+    assert all(call.resolution == 'excluded_indirect' and call.target_id is None for call in result.calls)

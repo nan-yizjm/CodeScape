@@ -51,6 +51,8 @@ class Call(Contract):
     expression: str
     location: Location
     resolution: Literal["confirmed", "unresolved", "excluded_indirect", "external"] = "unresolved"
+    spelling_location: Location | None = None
+    expansion_location: Location | None = None
     origin: Literal["static", "ai_source_judgment"] = "static"
     reason: str = ""
     target_name: str | None = None

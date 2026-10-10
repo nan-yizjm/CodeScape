@@ -302,7 +302,7 @@ def _cpp_analysis(root, files, version, source_root, header_directories, header_
     from clang import cindex
     from tree_sitter import Language, Parser
 
-    result = Analysis(tools={"cpp": "tree-sitter/0.25.2 + libclang/18.1.1 + snapshot-config/3"})
+    result = Analysis(tools={"cpp": "tree-sitter/0.25.2 + libclang/18.1.1 + snapshot-config/4"})
     if not any(Path(path).suffix in {".c", ".h", ".cc", ".cpp", ".cxx", ".hpp", ".hh"} for path in files):
         return result
     configurations, notes = compiler_configurations(root, files, source_root)
@@ -314,6 +314,8 @@ def _cpp_analysis(root, files, version, source_root, header_directories, header_
     failed_config_paths: set[str] = set(configurations.incomplete)
     pending: list[tuple[Call, str, bool, str | None, bool]] = []
     calls_by_id: dict[str, Call] = {}
+    unsafe_macro_calls: set[str] = set()
+    syntactic_bindings: dict[str, set[str]] = {}
     by_location: dict[tuple[str, int], Entity] = {}
     function_kinds = {
         cindex.CursorKind.FUNCTION_DECL,
@@ -329,6 +331,10 @@ def _cpp_analysis(root, files, version, source_root, header_directories, header_
         parser = Parser(Language(tree_sitter_c.language() if language == "c" else tree_sitter_cpp.language()))
         source_bytes = text.encode()
         parsed = parser.parse(source_bytes)
+        module_scope = stable_id(version, path, "module")
+        result.scopes.append(Scope(id=module_scope, kind="module", name=path,
+            location=Location(path=path,start_line=1,end_line=max(1,len(text.splitlines())),
+                start_byte=0,end_byte=len(source_bytes))))
         guard_range = None
         meaningful = [child for child in parsed.root_node.named_children if child.type != 'comment']
         if Path(path).suffix in {'.h','.hh','.hpp'} and len(meaningful) == 1:
@@ -343,6 +349,20 @@ def _cpp_analysis(root, files, version, source_root, header_directories, header_
 
         def node_bytes(node) -> bytes:
             return source_bytes[node.start_byte : node.end_byte]
+
+        def declared_identifier(node):
+            while node and node.type not in {'identifier','field_identifier'}:
+                node = node.child_by_field_name('declarator') or next(
+                    (child for child in node.named_children if 'declarator' in child.type),None)
+            return node_bytes(node).decode() if node else None
+
+        def parameters(node, scope):
+            if node.type == 'parameter_declaration':
+                name = declared_identifier(node.child_by_field_name('declarator'))
+                if name:
+                    syntactic_bindings.setdefault(scope,set()).add(name)
+            for child in node.named_children:
+                parameters(child,scope)
 
         def semantic_tree(node):
             if node.type == "comment":
@@ -363,7 +383,7 @@ def _cpp_analysis(root, files, version, source_root, header_directories, header_
         def combined(outer, inner):
             return f'({outer}) && ({inner})' if outer else inner
 
-        def alternative(node, parents, outer, previous):
+        def alternative(node, parents, outer, previous, scope):
             excluded = ' && '.join(f'!({value})' for value in previous)
             expression_node = node.child_by_field_name('condition')
             expression = node_bytes(expression_node).decode() if expression_node else None
@@ -371,11 +391,11 @@ def _cpp_analysis(root, files, version, source_root, header_directories, header_
             following = node.child_by_field_name('alternative')
             for child in node.children:
                 if following and child == following:
-                    alternative(child, parents, outer, previous + ([expression] if expression else []))
+                    alternative(child, parents, outer, previous + ([expression] if expression else []), scope)
                 else:
-                    syntax(child, parents, current)
+                    syntax(child, parents, current, scope)
 
-        def syntax(node, parents: list[str], condition: str | None = None):
+        def syntax(node, parents: list[str], condition: str | None = None, scope: str = module_scope):
             if node.type in ("preproc_if", "preproc_ifdef"):
                 condition_node = node.child_by_field_name("condition") or node.child_by_field_name("name")
                 expression = node_bytes(condition_node).decode() if condition_node else "未知条件"
@@ -397,9 +417,9 @@ def _cpp_analysis(root, files, version, source_root, header_directories, header_
                 following = node.child_by_field_name('alternative')
                 for child in node.children:
                     if following and child == following:
-                        alternative(child, parents, condition, [expression])
+                        alternative(child, parents, condition, [expression], scope)
                     else:
-                        syntax(child, parents, active)
+                        syntax(child, parents, active, scope)
                 return
             if node.type in ("class_specifier", "struct_specifier", "namespace_definition"):
                 named = node.child_by_field_name("name")
@@ -455,8 +475,32 @@ def _cpp_analysis(root, files, version, source_root, header_directories, header_
                         )
                     )
                     by_location[(path, node.start_byte)] = entity
+                body = node.child_by_field_name('body')
+                if declarator:
+                    parameters(declarator,entity.scope_id)
+                for child in node.children:
+                    syntax(child, parents, condition, entity.scope_id if child == body or child.type == 'field_initializer_list' else scope)
+                return
+            if node.type == 'lambda_expression':
+                scope = stable_id(version, path, "lambda", node.start_point.row + 1, node.start_point.column + 1)
+                result.scopes.append(Scope(id=scope, kind='lambda', name='<lambda>',
+                    location=Location(path=path,start_line=node.start_point.row+1,end_line=node.end_point.row+1,
+                        start_byte=node.start_byte,end_byte=node.end_byte)))
+                parameters(node.child_by_field_name('declarator') or node,scope)
+            if node.type == 'init_declarator':
+                name = declared_identifier(node.child_by_field_name('declarator'))
+                if name:
+                    syntactic_bindings.setdefault(scope,set()).add(name)
+            if node.type == 'call_expression':
+                function = node.child_by_field_name('function')
+                call = Call(id=stable_id(version,path,'call',node.start_byte), caller_scope_id=scope,
+                    expression=node_bytes(function).decode() if function else '<unresolved>',
+                    location=Location(path=path,start_line=node.start_point.row+1,end_line=node.end_point.row+1,
+                        start_byte=node.start_byte,end_byte=node.end_byte))
+                result.calls.append(call)
+                calls_by_id[call.id] = call
             for child in node.children:
-                syntax(child, parents, condition)
+                syntax(child, parents, condition, scope)
 
         syntax(parsed.root_node, [])
     entities_by_path = {}
@@ -537,6 +581,30 @@ def _cpp_analysis(root, files, version, source_root, header_directories, header_
             filename = cursor.location.file
             return relative_native_path(filename.name) if filename else None
 
+        macros = {(local_path(cursor), cursor.extent.start.offset):cursor
+            for cursor in unit.cursor.get_children()
+            if cursor.kind == cindex.CursorKind.MACRO_INSTANTIATION and local_path(cursor) in files}
+
+        def macro_spelling(macro, target_name):
+            definition = macro.referenced
+            definition_path = local_path(definition) if definition else None
+            if definition_path not in files:
+                return None
+            tokens = list(definition.get_tokens())
+            matches = [index for index,token in enumerate(tokens[:-1])
+                if token.spelling == target_name and tokens[index+1].spelling == '(']
+            if len(matches) != 1:
+                return None
+            start = matches[0]
+            depth = 0
+            for token in tokens[start+1:]:
+                depth += int(token.spelling == '(') - int(token.spelling == ')')
+                if depth == 0:
+                    return Location(path=definition_path,start_line=tokens[start].extent.start.line,
+                        end_line=token.extent.end.line,start_byte=tokens[start].extent.start.offset,
+                        end_byte=token.extent.end.offset)
+            return None
+
         def entity_for_cursor(cursor):
             cursor_path = local_path(cursor)
             if not cursor_path:
@@ -597,7 +665,8 @@ def _cpp_analysis(root, files, version, source_root, header_directories, header_
                         usr = template.get_usr()
                 indirect = not target or target.kind not in function_kinds
                 if target and target.kind == cindex.CursorKind.CXX_METHOD and target.is_virtual_method():
-                    indirect = True
+                    callee = files[cursor_path].encode()[cursor.extent.start.offset:cursor.extent.end.offset].decode().split('(',1)[0]
+                    indirect = not bool(re.search(r'::\s*'+re.escape(target.spelling)+r'\s*$',callee))
                 call = Call(
                     id=stable_id(version, cursor_path, "call", cursor.extent.start.offset),
                     caller_scope_id=active_scope,
@@ -618,6 +687,14 @@ def _cpp_analysis(root, files, version, source_root, header_directories, header_
                     if existing.caller_scope_id != call.caller_scope_id:
                         indirect = True
                     call = existing
+                macro = macros.get((cursor_path,cursor.extent.start.offset))
+                if macro:
+                    call.expansion_location = call.location.model_copy()
+                    call.spelling_location = macro_spelling(macro,cursor.spelling)
+                    if call.spelling_location is None:
+                        unsafe_macro_calls.add(call.id)
+                        result.diagnostics.append(Diagnostic(category='macro_location',path=cursor_path,
+                            line=call.location.start_line,message='宏展开中的调用拼写不能唯一定位，不确认调用目标。'))
                 pending.append((call, usr, indirect, defined_entity.id if defined_entity else None, path in configurations))
             for child in cursor.get_children():
                 native(child, active_scope)
@@ -667,6 +744,18 @@ def _cpp_analysis(root, files, version, source_root, header_directories, header_
         outcomes.setdefault(call.id,set()).add(outcome)
     for call in result.calls:
         choices = outcomes.get(call.id,set())
+        if not choices:
+            if call.expression in syntactic_bindings.get(call.caller_scope_id,set()):
+                call.resolution = 'excluded_indirect'
+                call.reason = '参数或变量遮蔽了调用名称；语义缺口下不将间接调用归到同名函数。'
+            else:
+                call.reason = "语义解析未覆盖此调用位置；保留真实语法作用域和位置，不按名称猜测目标。"
+            result.diagnostics.append(Diagnostic(category='unresolved_call',path=call.location.path,
+                line=call.location.start_line,message=call.reason))
+            continue
+        if call.id in unsafe_macro_calls:
+            call.reason = '宏展开调用的源码拼写不能唯一定位；保留未解析，不绘制确定边。'
+            continue
         if len(choices) != 1 or call.location.path in failed_config_paths:
             call.reason = ("编译配置未覆盖或解析失败，不能确认该位置在全部配置中的目标。"
                 if call.location.path in failed_config_paths else "不同编译配置或同位置宏展开存在目标冲突，不生成确定调用。")
