@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { abstractModules, aggregateState, dependencyProjection, edgePath, exportSvg, moduleLearningState, projectGraph, relationLabelPoint } from './graph';
-import { layoutCompound, layoutHierarchy, verticalFallback } from './layout';
+import { layoutCompound, layoutHierarchy, readingViewport, verticalFallback } from './layout';
 import ELK from 'elkjs/lib/elk.bundled.js';
 import type { ProjectDetail, ProjectionNode } from './types';
 
@@ -22,6 +22,16 @@ function fixture(): ProjectDetail {
 }
 
 describe('基于证据生成图形', () => {
+  it('大图阅读尺寸定位真实入口，远端孤立节点不把视口带到空白区域', () => {
+    const entry:ProjectionNode={id:'entry',label:'入口',description:'',kind:'function',count:0,state:'not_started',incomplete:false,external:false,x:20,y:164,width:300,height:126};
+    const container={...entry,id:'container',container:true,kind:'module' as const,x:0,y:0,width:60000,height:220000};
+    const far={...entry,id:'far',x:58000,y:200000};
+    const viewport=readingViewport([container,far,entry],800)!;
+    expect(entry.x*viewport.zoom+viewport.x).toBeGreaterThan(0);
+    expect((entry.x+entry.width)*viewport.zoom+viewport.x).toBeLessThan(800);
+    expect(entry.y*viewport.zoom+viewport.y).toBe(64);
+    expect(readingViewport([],800)).toBeUndefined();
+  });
   it('主要依赖保留全部节点与聚合证据，高频辅助调用不挤掉核心协作', () => {
     const project = fixture();
     project.analysis.entities[2].visible = true;
@@ -37,7 +47,7 @@ describe('基于证据生成图形', () => {
     expect(main.relations[0].calls.map(call=>call.id)).toEqual(['c0','c1']);
     expect(main.relations[0].primaryReasons).toEqual(['实现核心结果']);
     expect(dependencyProjection(all, 'all').relations).toHaveLength(2);
-    expect(exportSvg(main, '主要依赖')).toContain('>hidden</text>');
+    expect(exportSvg(main, '主要依赖')).toContain('<title>hidden</title>');
   });
   it('旧结果或当前投影没有主要筛选时显示全部，函数图始终保留所有确认调用', () => {
     const project = fixture();
@@ -77,7 +87,7 @@ describe('基于证据生成图形', () => {
     const svg = exportSvg(view, '函数与所属模块');
     expect(svg).toContain('同级模块');
     expect(svg).toContain('跨模块');
-    expect(svg.indexOf('>模块</text>')).toBeLessThan(svg.indexOf('>f</text>'));
+    expect(svg.indexOf('data-node-id="m"')).toBeLessThan(svg.indexOf('data-node-id="f"'));
     const isolated = projectGraph(project, 'm');
     expect(isolated.nodes.map(item => item.id)).toEqual(['m', 'f']);
     expect(isolated.relations.every(edge => edge.from === 'f' && edge.to === 'f')).toBe(true);

@@ -9,6 +9,13 @@ export const orthogonalOptions = {
   'elk.layered.mergeHierarchyEdges': 'false',
 };
 
+export function readingViewport(nodes: ProjectionNode[], width: number) {
+  const readable = nodes.filter(node => !node.container);
+  const first = (readable.length ? readable : nodes).reduce<ProjectionNode | undefined>((best, node) =>
+    !best || node.y < best.y || (node.y === best.y && node.x < best.x) ? node : best, undefined);
+  return first ? {x:width/2-(first.x+first.width/2)*.85,y:64-first.y*.85,zoom:.85} : undefined;
+}
+
 /** Route cross-container edges with their real endpoints in one compound graph. */
 export async function layoutCompound(projection: Projection, arrange: (graph: ElkNode) => Promise<ElkNode>): Promise<Projection> {
   const byId = new Map(projection.nodes.map(node => [node.id, node]));

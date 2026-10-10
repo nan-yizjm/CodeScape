@@ -459,20 +459,32 @@ export function exportSvg(projection: Projection, title: string): string {
     const from = byId.get(relation.from)!, to = byId.get(relation.to)!;
     const path = edgePath(from, to, relation.points);
     const label = from.kind === 'module' && to.kind === 'module' ? relationLabelPoint(relation.points) : undefined;
-    return `<path d="${path}" fill="none" stroke="#f8f9fd" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/><path d="${path}" fill="none" stroke="#929292" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow)"/>${label ? `<rect x="${label.x - 27}" y="${label.y - 10}" width="54" height="20" rx="7" fill="#f8f9fd" stroke="#dfe3eb"/><text x="${label.x}" y="${label.y + 4}" text-anchor="middle" font-size="10" fill="#626b78">调用协作</text>` : ''}`;
+    return `<path d="${path}" fill="none" stroke="#f8f9fd" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/><path data-relation-id="${escapeXml(relation.id)}" d="${path}" fill="none" stroke="#929292" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow)"/>${label ? `<rect x="${label.x - 27}" y="${label.y - 10}" width="54" height="20" rx="7" fill="#f8f9fd" stroke="#dfe3eb"/><text x="${label.x}" y="${label.y + 4}" text-anchor="middle" font-size="10" fill="#626b78">调用协作</text>` : ''}`;
   }).join('');
-  const shapes = nodes.map(node => {
+  const textLines = (text: string, width: number, fontSize: number, limit: number): string[] => {
+    const lines: string[] = []; let line = '', used = 0;
+    for (const character of text.replace(/\s+/g, ' ').trim()) {
+      const advance = /[^\u0000-\u00ff]/.test(character) ? fontSize : fontSize * .62;
+      if (line && used + advance > width) { lines.push(line); line = ''; used = 0; }
+      line += character; used += advance;
+    }
+    if (line) lines.push(line);
+    if (lines.length > limit) lines[limit - 1] = [...lines[limit - 1]].slice(0, -1).join('') + '…';
+    return lines.slice(0, limit);
+  };
+  const shapes = nodes.map((node, index) => {
     const palette = nodePalette(node);
     const color = node.kind === 'module' ? palette.background : '#ffffff';
-    const description = [...node.description].reduce<string[]>((lines, character) => {
-      if (!lines.length || lines[lines.length - 1].length >= 19) lines.push('');
-      lines[lines.length - 1] += character;
-      return lines;
-    }, []).slice(0, 3).map((line, index) => `<tspan x="${node.x + 20}" dy="${index ? 20 : 0}">${escapeXml(line)}</tspan>`).join('');
-    return `<g><rect x="${node.x}" y="${node.y}" width="${node.width}" height="${node.height}" rx="24" fill="${color}" stroke="${palette.border}"/>
+    const labelLines = textLines(node.label, node.width - 40, 16, 2);
+    const descriptionY = 80 + Math.max(0, labelLines.length - 1) * 20;
+    const textBottom = node.container ? 105 : node.height - 35;
+    const description = textLines(node.description, node.width - 40, 13, Math.max(1, Math.floor((textBottom - descriptionY) / 20) + 1))
+      .map((line, lineIndex) => `<tspan x="${node.x + 20}" dy="${lineIndex ? 20 : 0}">${escapeXml(line)}</tspan>`).join('');
+    const label = labelLines.map((line, lineIndex) => `<tspan x="${node.x + 20}" dy="${lineIndex ? 20 : 0}">${escapeXml(line)}</tspan>`).join('');
+    return `<g data-node-id="${escapeXml(node.id)}"><title>${escapeXml(node.label)}</title><desc>${escapeXml(node.description)}</desc><defs><clipPath id="node-text-${index}"><rect x="${node.x + 20}" y="${node.y + 30}" width="${node.width - 40}" height="${textBottom - 25}"/></clipPath></defs><rect x="${node.x}" y="${node.y}" width="${node.width}" height="${node.height}" rx="24" fill="${color}" stroke="${palette.border}"/>
       <rect x="${node.x + 20}" y="${node.y + 19}" width="18" height="3" rx="1.5" fill="${palette.accent}"/>
-      <text x="${node.x + 20}" y="${node.y + 52}" font-size="16" font-weight="600" fill="#202020">${escapeXml(node.label)}</text>
-      <text x="${node.x + 20}" y="${node.y + 80}" font-size="13" fill="#666666">${description}</text>
+      <text x="${node.x + 20}" y="${node.y + 52}" clip-path="url(#node-text-${index})" font-size="16" font-weight="600" fill="#202020">${label}</text>
+      <text x="${node.x + 20}" y="${node.y + descriptionY}" clip-path="url(#node-text-${index})" font-size="13" fill="#666666">${description}</text>
       ${node.kind === 'module' && node.internalRelationCount ? `<text x="${node.x + 20}" y="${node.y + 132}" font-size="10" fill="${palette.accent}">内部依赖 ${node.internalRelationCount}</text>` : ''}
       ${node.kind === 'function' && node.external ? `<text x="${node.x + 20}" y="${node.y + node.height - 15}" font-size="10" fill="#626b78">↗ 跨模块</text>` : ''}
       <text x="${node.x + node.width - 20}" y="${node.y + (node.container ? 115 : node.height - 15)}" text-anchor="end" font-size="10" fill="#555555">${node.state === 'mastered' ? '已掌握' : node.state === 'in_progress' ? '学习中' : node.state === 'not_applicable' ? '不适用' : '未开始'}</text>
