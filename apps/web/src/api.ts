@@ -1,14 +1,19 @@
 let csrf = '';
+export const pageClientId = crypto.randomUUID();
+
+export class ApiError extends Error {
+  constructor(message: string, public code: string, public status: number) { super(message); }
+}
 
 export async function api<T>(path: string, body?: unknown, method?: string): Promise<T> {
   const response = await fetch(`/api/v1${path}`, {
     method: method || (body === undefined ? 'GET' : 'POST'),
-    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrf },
+    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrf, 'X-Client-Id': pageClientId },
     body: body === undefined ? undefined : JSON.stringify(body),
     credentials: 'same-origin',
   });
   const result = await response.json();
-  if (!response.ok) throw new Error(result.error?.message || result.detail?.[0]?.msg || `请求失败 (${response.status})`);
+  if (!response.ok) throw new ApiError(result.error?.message || result.detail?.[0]?.msg || `请求失败 (${response.status})`, result.error?.code || '', response.status);
   return result.data as T;
 }
 

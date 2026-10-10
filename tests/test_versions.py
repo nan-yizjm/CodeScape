@@ -1,6 +1,7 @@
 import asyncio
 import threading
 import time
+import uuid
 
 from codescape.analyzers import cpp_analysis, python_analysis, typescript_analysis
 from codescape.app import create_app
@@ -84,7 +85,8 @@ def test_publish_latest_learning_old_source_and_reclaim(tmp_path, monkeypatch):
             await asyncio.sleep(.01)
         return architecture(analysis), {"total_tokens": 8}
     monkeypatch.setattr(Provider, "architecture", fixed)
-    with TestClient(create_app(root, "test")) as client:
+    app = create_app(root, "test")
+    with TestClient(app) as client:
         login(client, "test")
         imported = client.post("/api/v1/imports", json={"path": str(source)}).json()["data"]
         url = f"/api/v1/projects/{imported['id']}"
@@ -103,6 +105,10 @@ def test_publish_latest_learning_old_source_and_reclaim(tmp_path, monkeypatch):
         keep = next(entity for entity in old["analysis"]["entities"] if entity["name"] == "keep")
         state = {"version_id": old["version_id"], "state": "mastered", "expected_revision": 0}
         assert client.put(url + "/learning/" + keep["id"], json=state).status_code == 200
+        identity = str(uuid.uuid4())
+        client.headers["x-client-id"] = identity
+        client.post("/api/v1/clients/heartbeat", json={"client_id": identity,
+            "version_leases": [{"project_id": old["id"], "version_id": old["version_id"]}]})
         release.set()
         new = wait_status(client, url, "ready")
         assert new["version_id"] == task["version_id"]
@@ -110,13 +116,25 @@ def test_publish_latest_learning_old_source_and_reclaim(tmp_path, monkeypatch):
         assert new["learning"][entity["id"]]["state"] == "mastered"
         report = new["migration_report"]
         assert [report[key] for key in ["kept_count", "reset_count", "added_count", "removed_count"]] == [1, 1, 1, 1]
-        assert client.put(url + "/learning/" + keep["id"], json=state).status_code == 409
+        conflict = client.put(url + "/learning/" + keep["id"], json=state)
+        assert conflict.status_code == 409
+        assert conflict.json()["error"]["code"] == "VERSION_CHANGED"
         old_file_url = f"{url}/files/{old['file_ids']['a.py']}?version_id={old['version_id']}"
         assert client.get(old_file_url).json()["data"]["text"] == text
+        app.state.cleanup_versions()
+        assert db.version(old["id"], old["version_id"])["status"] == "retired"
+        assert client.get(old_file_url, headers={"x-client-id": str(uuid.uuid4())}).status_code == 410
+        renew = client.post("/api/v1/clients/heartbeat", json={"client_id": identity,
+            "version_leases": [{"project_id": old["id"], "version_id": old["version_id"]}]})
+        assert renew.json()["data"]["version_changes"] == [{"project_id": old["id"], "version_id": new["version_id"]}]
         with db.engine.begin() as connection:
             connection.execute(db.versions.update().where(db.versions.c.id == old["version_id"])
                                .values(created_at="2020-01-01T00:00:00+00:00"))
         assert client.get(old_file_url).status_code == 410
+        client.post("/api/v1/clients/heartbeat", json={"client_id": identity,
+            "version_leases": [{"project_id": new["id"], "version_id": new["version_id"]}]})
+        app.state.cleanup_versions()
+        assert db.version(old["id"], old["version_id"])["status"] == "purged"
         db.engine.dispose()
     with TestClient(create_app(root, "again")):
         pass

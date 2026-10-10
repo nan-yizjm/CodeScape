@@ -3,7 +3,7 @@ import { ArrowLeft, ArrowRight, BookOpen, Boxes, ChevronRight, Code2, Download, 
   Info, Layers3, Plus, Settings2, ShieldCheck, Sparkles, X, Check, AlertTriangle, Circle, FileCode2,
   Activity, Braces, ExternalLink, ArrowUpRight, Maximize2, Minimize2, ListOrdered, Pause, Play, Square, ArrowUp, ArrowDown } from 'lucide-react';
 import type { Viewport } from '@xyflow/react';
-import { api, bootstrap, keepalive } from './api';
+import { api, ApiError, bootstrap, keepalive, pageClientId } from './api';
 import { OverviewPanel } from './OverviewPanel';
 import { abstractModules, exportSvg, moduleEntities, moduleLearningState, projectGraph } from './graph';
 import type { AnalysisTask, Entity, ImportPreview, LearningState, Panel, Project, ProjectDetail, Projection, ProjectionNode, SourceFile } from './types';
@@ -22,6 +22,8 @@ export default function App() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [analysisTasks, setAnalysisTasks] = useState<AnalysisTask[]>([]);
   const [project, setProject] = useState<ProjectDetail | null>(null);
+  const projectRef = useRef<ProjectDetail | null>(null);
+  projectRef.current = project;
   const [focus, setFocus] = useState<string | null>(null);
   const [panels, setPanels] = useState<Panel[]>([]);
   const [source, setSource] = useState<SourceFile | null>(null);
@@ -135,10 +137,14 @@ export default function App() {
   }, []);
   useEffect(() => {
     if (!authorized) return;
-    const clientId = crypto.randomUUID();
+    const clientId = pageClientId;
     let connection: EventSource | undefined;
     let stopped = false;
-    const heartbeat = () => api('/clients/heartbeat', { client_id: clientId }).catch(() => {});
+    const heartbeat = () => {
+      const current = projectRef.current;
+      return api('/clients/heartbeat', { client_id: clientId,
+        version_leases: current ? [{project_id: current.id, version_id: current.version_id}] : [] }).catch(() => {});
+    };
     void heartbeat().then(() => {
       if (!stopped) connection = new EventSource(`/api/v1/clients/${clientId}/events`);
     });
@@ -152,6 +158,11 @@ export default function App() {
       window.removeEventListener('pagehide', disconnect); window.removeEventListener('pageshow', restore);
     };
   }, [authorized]);
+  useEffect(() => {
+    if (!authorized) return;
+    void api('/clients/heartbeat', {client_id: pageClientId,
+      version_leases: project ? [{project_id: project.id, version_id: project.version_id}] : []}).catch(() => {});
+  }, [authorized, project?.id, project?.version_id]);
   useEffect(() => {
     if (!authorized) return;
     const timer = setInterval(() => {
@@ -215,7 +226,12 @@ export default function App() {
     if (!fileId) { setError(`找不到快照文件：${panel.location.path}`); return; }
     api<SourceFile>(`/projects/${project.id}/files/${fileId}?version_id=${project.version_id}`)
       .then(value => { if (active) setSource(value); })
-      .catch(problem => { if (active) setError(problem.message); });
+      .catch(problem => {
+        if (!active) return;
+        if (problem instanceof ApiError && ['VERSION_CHANGED', 'VERSION_RETIRED'].includes(problem.code)) {
+          void openProject(project.id); setNotice('读取版本已更新，已返回当前架构。');
+        } else setError(problem.message);
+      });
     return () => { active = false; };
   }, [project?.id, project?.version_id, panel]);
 
@@ -239,7 +255,12 @@ export default function App() {
     const projectId = project.id, versionId = project.version_id;
     saveTimer.current = setTimeout(() => {
       api(`/projects/${projectId}/session`, { version_id: versionId, focus_id: nextFocus,
-        viewport: nextViewports, panel: null }, 'PUT').catch(problem => setError(problem.message));
+        viewport: nextViewports, panel: null }, 'PUT').catch(problem => {
+          if (projectRef.current?.id !== projectId || projectRef.current.version_id !== versionId) return;
+          if (problem instanceof ApiError && problem.code === 'VERSION_CHANGED') {
+            void openProject(projectId); setNotice('新版本已发布，已恢复当前架构。');
+          } else setError(problem.message);
+        });
     }, 500);
   }
 

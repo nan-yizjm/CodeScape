@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime
 from pathlib import Path
 
 from sqlalchemy import JSON, Column, Integer, MetaData, String, Table, create_engine, event, select
@@ -98,11 +98,9 @@ class Database:
             return dict(row) if row else None
 
     def reclaimable_versions(self) -> list[dict]:
-        cutoff = (datetime.now(UTC) - timedelta(seconds=120)).isoformat()
         with self.engine.connect() as connection:
             return [dict(row) for row in connection.execute(select(self.versions).where(
                 self.versions.c.status.in_(["retired", "cancelled"]),
-                self.versions.c.created_at < cutoff
             )).mappings()]
 
     def mark_purged(self, version_id: str, value: dict) -> None:

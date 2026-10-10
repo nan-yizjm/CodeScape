@@ -33,6 +33,7 @@ from .models import (
     SessionRequest,
 )
 from .provider import Provider, ProviderError, validate_architecture
+from .reads import VersionReads
 from .security import data_root
 from .snapshots import create_snapshot, read_snapshot
 from .tasks import TaskQueue
@@ -52,6 +53,7 @@ def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=
     nonces = {bootstrap_nonce: time.monotonic() + 300}
     nonce_lock = threading.Lock()
     lifetime = ClientLifetime()
+    reads = VersionReads()
     closing = False
     run_lock = asyncio.Lock()
     queue = TaskQueue(database, run_lock)
@@ -215,30 +217,38 @@ def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=
 
     def cleanup_versions():
         for version in database.reclaimable_versions():
-            project = database.get(version["project_id"])
-            if not project or project["version_id"] == version["id"]:
-                continue
-            manifest = version["value"].get("snapshot")
-            if not manifest or project["snapshot"]["id"] == manifest["id"]:
-                continue
-            try:
-                project_id, snapshot_id = str(uuid.UUID(project["id"])), str(uuid.UUID(manifest["id"]))
-                boundary = root / "projects" / project_id
-                target = boundary / "snapshots" / snapshot_id
-                if target.is_dir():
-                    remove_staging(target, boundary)
-                for name in [f"version-{version['id']}.json", f"checkpoint-{version['id']}.json"]:
-                    (boundary / name).unlink(missing_ok=True)
-                database.mark_purged(version["id"], {"snapshot_id": snapshot_id, "snapshot_hash": manifest["hash"]})
-            except (OSError, ValueError):
-                # Occupied files are retained and retried on the next cleanup pass.
-                continue
+            with reads.reclaim(version["project_id"], version["id"]) as available:
+                if available:
+                    reclaim_version(version)
+
+    def reclaim_version(version):
+        project = database.get(version["project_id"])
+        if not project or project["version_id"] == version["id"]:
+            return
+        manifest = version["value"].get("snapshot")
+        if not manifest or project["snapshot"]["id"] == manifest["id"]:
+            return
+        try:
+            project_id, snapshot_id = str(uuid.UUID(project["id"])), str(uuid.UUID(manifest["id"]))
+            boundary = root / "projects" / project_id
+            target = boundary / "snapshots" / snapshot_id
+            if target.is_dir():
+                remove_staging(target, boundary)
+            for name in [f"version-{version['id']}.json", f"checkpoint-{version['id']}.json"]:
+                (boundary / name).unlink(missing_ok=True)
+            database.mark_purged(version["id"], {"snapshot_id": snapshot_id, "snapshot_hash": manifest["hash"]})
+        except (OSError, ValueError):
+            # Occupied files are retained and retried on the next cleanup pass.
+            return
+
 
     app = FastAPI(
         title="CodeScape 本地服务", version="0.1.0", lifespan=lifespan, docs_url=None, redoc_url=None
     )
     app.state.nonce = bootstrap_nonce
     app.state.root = root
+    app.state.reads = reads
+    app.state.cleanup_versions = cleanup_versions
     app.state.issue_nonce = issue_nonce
     app.state.ready_event = threading.Event()
     app.state.lifetime = lifetime
@@ -292,7 +302,7 @@ def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=
     @app.exception_handler(HTTPException)
     async def http_error(_, error: HTTPException):
         return JSONResponse(
-            {"error": {"code": str(error.status_code), "message": error.detail}},
+            {"error": error.detail if isinstance(error.detail, dict) else {"code": str(error.status_code), "message": error.detail}},
             status_code=error.status_code,
         )
 
@@ -317,14 +327,36 @@ def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=
 
     @app.post("/api/v1/clients/heartbeat")
     async def client_heartbeat(request: Request):
-        identity = client_identity((await request.json()).get("client_id"))
+        body = await request.json()
+        identity = client_identity(body.get("client_id"))
+        supplied = body.get("version_leases", [])
+        if not isinstance(supplied, list) or len(supplied) > 4:
+            raise HTTPException(422, "读取租约范围不合法。")
+        accepted, changed = [], []
+        for item in supplied:
+            if not isinstance(item, dict):
+                raise HTTPException(422, "读取租约不合法。")
+            project_id, version_id = item.get("project_id"), item.get("version_id")
+            project = database.get(project_id) if isinstance(project_id, str) else None
+            if not project:
+                continue
+            if version_id == project["version_id"]:
+                accepted.append((project_id, version_id, 60))
+            else:
+                changed.append({"project_id": project_id, "version_id": project["version_id"]})
+                old = database.version(project_id, version_id) if isinstance(version_id, str) else None
+                if old and old["status"] == "retired" and reads.held(identity, project_id, version_id):
+                    remaining = 120 - (datetime.now(UTC) - datetime.fromisoformat(old["created_at"])).total_seconds()
+                    accepted.append((project_id, version_id, remaining))
+        reads.renew(identity, accepted)
         lifetime.heartbeat(identity)
-        return envelope({"connected": True})
+        return envelope({"connected": True, "version_changes": changed})
 
     @app.post("/api/v1/clients/disconnect")
     async def client_disconnect(request: Request):
         identity = client_identity((await request.json()).get("client_id"))
         lifetime.disconnect(identity)
+        reads.disconnect(identity)
         return envelope({"connected": False})
 
     @app.get("/api/v1/clients/{client_id}/events")
@@ -493,38 +525,39 @@ def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=
             await queue.start(job["id"], lambda: index_project(project_id))
         return envelope(public(get_project(project_id)))
 
+    def version_error(project, message: str, retired: bool = False):
+        return HTTPException(410 if retired else 409, {"code": "VERSION_RETIRED" if retired else "VERSION_CHANGED",
+            "message": message, "project_id": project["id"], "current_version_id": project["version_id"]})
+
     @app.get("/api/v1/projects/{project_id}/files/{file_id}")
-    async def file(project_id: str, file_id: str, version_id: str):
-        project = get_project(project_id)
-        if version_id != project["version_id"]:
-            retired = database.version(project_id, version_id)
-            if not retired:
-                raise HTTPException(409, "源码版本已经改变，请刷新。")
-            if retired["status"] != "retired":
-                raise HTTPException(410, "该源码版本已失效，请刷新。")
-            if (datetime.now(UTC) - datetime.fromisoformat(retired["created_at"])).total_seconds() >= 120:
-                raise HTTPException(410, "旧源码读取宽限已结束，请刷新到新版本。")
-            project = retired["value"]
-        paths = {stable_id(version_id, path): path for path in project["snapshot"]["files"]}
-        if file_id not in paths:
-            raise HTTPException(404, "源码文件不存在。")
-        path = paths[file_id]
-        snapshot_root = root / "projects" / project_id / "snapshots" / project["snapshot"]["id"]
-        files = read_snapshot(snapshot_root, project["snapshot"])
-        return envelope(
-            {
-                "path": path,
-                "text": files[path],
-                "version_id": version_id,
-                "hash": project["snapshot"]["files"][path]["hash"],
-            }
-        )
+    async def file(project_id: str, file_id: str, version_id: str, request: Request):
+        with reads.read(project_id, version_id):
+            project = get_project(project_id)
+            if version_id != project["version_id"]:
+                retired = database.version(project_id, version_id)
+                if not retired:
+                    raise version_error(project, "源码版本已经改变，请刷新。")
+                if retired["status"] != "retired":
+                    raise version_error(project, "该源码版本已失效，请刷新。", retired=True)
+                identity = client_identity(request.headers.get("x-client-id")) if request.headers.get("x-client-id") else ""
+                if not reads.held(identity, project_id, version_id) or (
+                    datetime.now(UTC) - datetime.fromisoformat(retired["created_at"])).total_seconds() >= 120:
+                    raise version_error(project, "旧源码读取租约已结束，请刷新到新版本。", retired=True)
+                project = retired["value"]
+            paths = {stable_id(version_id, path): path for path in project["snapshot"]["files"]}
+            if file_id not in paths:
+                raise HTTPException(404, "源码文件不存在。")
+            path = paths[file_id]
+            snapshot_root = root / "projects" / project_id / "snapshots" / project["snapshot"]["id"]
+            files = await asyncio.to_thread(read_snapshot, snapshot_root, project["snapshot"])
+            return envelope({"path": path, "text": files[path], "version_id": version_id,
+                "hash": project["snapshot"]["files"][path]["hash"]})
 
     @app.put("/api/v1/projects/{project_id}/learning/{entity_id}")
     async def learning(project_id: str, entity_id: str, body: LearningRequest):
         project = get_project(project_id)
         if body.version_id != project["version_id"]:
-            raise HTTPException(409, "学习状态版本已经改变，请刷新。")
+            raise version_error(project, "学习状态版本已经改变，请刷新后重试本次操作。")
         result = Analysis.model_validate(project["result"] or {})
         architecture = Architecture.model_validate(project["architecture"]) if project["architecture"] else None
         if not any(unit["id"] == entity_id for unit in learning_units(result, architecture, project["snapshot"]["files"])):
@@ -534,6 +567,9 @@ def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=
                 project_id, entity_id, body.version_id, body.state, body.expected_revision
             )
         except ValueError as error:
+            latest = get_project(project_id)
+            if latest["version_id"] != body.version_id:
+                raise version_error(latest, "学习状态版本已经改变，请刷新后重试本次操作。") from None
             raise HTTPException(409, str(error)) from None
         return envelope(state)
 
@@ -546,7 +582,7 @@ def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=
     async def put_session(project_id: str, body: SessionRequest):
         project = get_project(project_id)
         if body.version_id != project["version_id"]:
-            raise HTTPException(409, "探索版本已失效。")
+            raise version_error(project, "探索版本已失效，请刷新到当前架构。")
         return envelope(database.session(project_id, body.model_dump()))
 
     @app.get("/api/v1/settings/ai")
