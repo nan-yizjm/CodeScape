@@ -118,6 +118,34 @@ describe('基于证据生成图形', () => {
     expect(projectGraph(project, null, { expandedModuleId: 'root', showOtherModules: true }).nodes.map(node => node.id))
       .toEqual(['root', 'middle', 'm', 'sibling']);
   });
+  it('大型项目概览先展示源码域，再逐层进入逻辑模块', () => {
+    const project = fixture();
+    const base = project.architecture!.modules[0];
+    project.architecture!.modules = Array.from({ length: 30 }, (_, index) => ({
+      ...base, id: `large-${index}`, name: `模块 ${index}`, entity_ids: [],
+      code_paths: [index < 15 ? `apps/web/features/feature-${index}.tsx` : `packages/backend/src/publication/file-${index}.ts`],
+    }));
+    const overview = projectGraph(project, null);
+    expect(overview.nodes.map(node => node.id)).toEqual(['__abstract__:apps', '__abstract__:packages']);
+    const apps = projectGraph(project, null, { expandedModuleId: '__abstract__:apps' });
+    expect(apps.nodes[0].id).toBe('__abstract__:apps');
+    const featureGroup = apps.nodes.find(node => node.id === '__abstract__:apps/web/features/feature-0.tsx');
+    expect(featureGroup).toBeDefined();
+    expect(apps.nodes.some(node => node.id === 'large-0')).toBe(false);
+    const feature = projectGraph(project, null, { expandedModuleId: featureGroup!.id });
+    expect(feature.nodes.some(node => node.id === 'large-0')).toBe(true);
+  });
+  it('抽象总览仍聚合跨代码域依赖', () => {
+    const project = fixture();
+    const base = project.architecture!.modules[0];
+    project.architecture!.modules = Array.from({ length: 13 }, (_, index) => ({
+      ...base, id: `domain-${index}`, name: `域模块 ${index}`, entity_ids: index === 0 ? ['f'] : index === 1 ? ['g'] : [],
+      code_paths: [index === 0 ? 'apps/api/src/entry.ts' : `packages/backend/src/core-${index}.ts`],
+    }));
+    const overview = projectGraph(project, null);
+    expect(overview.relations).toHaveLength(1);
+    expect(new Set(overview.relations[0].calls.map(call => call.target_id))).toEqual(new Set(['g']));
+  });
   it('函数视图只保留真实关联模块，模块视图才提供同层模块开关', () => {
     const project = fixture();
     project.architecture!.modules[0].entity_ids = ['f'];

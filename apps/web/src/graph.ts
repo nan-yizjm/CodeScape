@@ -14,7 +14,83 @@ export function nodePalette(node: ProjectionNode) {
 }
 
 export function moduleEntities(module: Module, modules: Module[]): string[] {
-  return [...module.entity_ids, ...modules.filter(child => child.parent_id === module.id).flatMap(child => moduleEntities(child, modules))];
+  return [...new Set([...module.entity_ids, ...modules.filter(child => child.parent_id === module.id).flatMap(child => moduleEntities(child, modules))])];
+}
+
+const ABSTRACT_PREFIX = '__abstract__:';
+const ABSTRACT_THRESHOLD = 12;
+const IGNORED_PATH_PARTS = new Set(['src', 'app', 'server']);
+const ABSTRACT_LABELS: Record<string, string> = {
+  apps: '应用服务', packages: '核心包', tests: '测试验证', scripts: '工具脚本', site: '站点基础',
+  api: 'API 服务', web: 'Web 前端', worker: '后台任务', backend: '后端核心', contracts: '契约定义',
+  publication: '内容发布', sources: '信源采集', events: '事件归并', editorial: '编辑分析', media: '媒体处理',
+  providers: '模型与外部服务', admin: '管理后台', content: '内容处理', reports: '报告编排', jobs: '作业调度',
+  operations: '运营工具', notify: '通知服务', lib: '基础库', routes: '路由集合',
+  features: '功能域', components: '组件库', config: '配置',
+};
+
+function pathParts(module: Module): string[] {
+  const path = module.code_paths[0] || '';
+  return path.split('/').filter(Boolean).filter(part => !IGNORED_PATH_PARTS.has(part));
+}
+
+function abstractLabel(part: string, depth: number): string {
+  if (ABSTRACT_LABELS[part]) return ABSTRACT_LABELS[part];
+  const clean = part.replace(/\.(tsx?|jsx?|py|cpp|h)$/, '').replace(/[-_]+/g, ' ');
+  return depth > 1 ? clean : `代码域 · ${clean}`;
+}
+
+function abstractId(parts: string[]): string { return `${ABSTRACT_PREFIX}${parts.join('/')}`; }
+
+/**
+ * Large repositories often have hundreds of model modules at the same level.
+ * Build a deterministic path-based navigation tree for the overview only;
+ * the original modules and their evidence remain unchanged underneath it.
+ */
+function abstractModules(modules: Module[]): Module[] {
+  const roots = modules.filter(module => module.parent_id === null);
+  if (roots.length <= ABSTRACT_THRESHOLD) return modules;
+  const paths = new Map(roots.map(module => [module.id, pathParts(module)]));
+  const result: Module[] = [];
+  const add = (bucket: Module[], prefix: string[], parentId: string | null) => {
+    const next = new Map<string, Module[]>();
+    for (const module of bucket) {
+      const parts = paths.get(module.id) || [];
+      const part = parts[prefix.length] || '';
+      if (!part) continue;
+      if (!next.has(part)) next.set(part, []);
+      next.get(part)!.push(module);
+    }
+    // Skip path segments with a single branch (for example packages/backend/src)
+    // so that the extra layer communicates a real subsystem boundary.
+    if (next.size === 1 && bucket.length > ABSTRACT_THRESHOLD) {
+      const [part, branch] = [...next.entries()][0];
+      add(branch, [...prefix, part], parentId);
+      return;
+    }
+    for (const [part, branch] of next) {
+      const current = [...prefix, part];
+      const canGroup = branch.length > ABSTRACT_THRESHOLD || next.size > 1;
+      if (!canGroup) {
+        for (const module of branch) result.push({ ...module, parent_id: parentId });
+        continue;
+      }
+      const group: Module = {
+        id: abstractId(current), parent_id: parentId, name: abstractLabel(part, current.length),
+        summary: `按源码路径归纳的高层代码域，包含 ${branch.length} 个逻辑模块。点击继续展开下一层。`,
+        entity_ids: [], code_paths: [`${current.join('/')}/`], incomplete: branch.some(module => module.incomplete),
+      };
+      result.push(group);
+      if (branch.length <= ABSTRACT_THRESHOLD) {
+        for (const module of branch) result.push({ ...module, parent_id: group.id });
+      } else add(branch, current, group.id);
+    }
+  };
+  add(roots, [], null);
+  // Preserve nested model modules and make them children of their original roots.
+  const rootIds = new Set(roots.map(module => module.id));
+  result.push(...modules.filter(module => !rootIds.has(module.id)));
+  return result;
 }
 
 export function aggregateState(states: LearningState[]): LearningState {
@@ -24,7 +100,9 @@ export function aggregateState(states: LearningState[]): LearningState {
 }
 
 export function projectGraph(project: ProjectDetail, focus: string | null, options: { expandedModuleId?: string | null; showOtherModules?: boolean } = {}): Projection {
-  const modules = project.architecture?.modules || [];
+  const sourceModules = project.architecture?.modules || [];
+  const modules = focus ? sourceModules : abstractModules(sourceModules);
+  const abstracted = modules !== sourceModules;
   const active = modules.find(module => module.id === focus);
   const children = modules.filter(module => module.parent_id === (focus || null));
   const functions = !!active && children.length === 0;
@@ -77,14 +155,14 @@ export function projectGraph(project: ProjectDetail, focus: string | null, optio
           cursor = modules.find(module => module.id === cursor!.parent_id);
         }
         if (onPath) {
-          const addExpanded = (parentId: string, depth: number) => {
-            if (depth > 2) return;
+          const addExpanded = (parentId: string, depth: number, maxDepth: number) => {
+            if (depth > maxDepth) return;
             for (const child of modules.filter(item => item.parent_id === parentId)) {
               displayed.push(child);
-              addExpanded(child.id, depth + 1);
+              addExpanded(child.id, depth + 1, maxDepth);
             }
           };
-          if (expanded.id === root.id) addExpanded(root.id, 1);
+          if (expanded.id === root.id) addExpanded(root.id, 1, abstracted ? 1 : 2);
           else {
             const ancestors: Module[] = [];
             let current: Module | undefined = expanded;
@@ -92,7 +170,7 @@ export function projectGraph(project: ProjectDetail, focus: string | null, optio
             for (const ancestor of ancestors) {
               if (!displayed.some(item => item.id === ancestor.id)) displayed.push(ancestor);
             }
-            addExpanded(expanded.id, 1);
+            addExpanded(expanded.id, 1, abstracted ? 1 : 2);
           }
         }
       }
@@ -141,7 +219,7 @@ export function projectGraph(project: ProjectDetail, focus: string | null, optio
     if (!grouped.has(key)) grouped.set(key, { id: key, from, to, label, calls: [] });
     grouped.get(key)!.calls.push(call);
   }
-  return { nodes, relations: [...grouped.values()], hiddenModuleCount, otherModuleCount };
+  return { nodes, relations: [...grouped.values()], hiddenModuleCount, otherModuleCount, abstraction: abstracted };
 }
 
 export function escapeXml(value: string) {
