@@ -33,6 +33,7 @@ export default function App() {
   const [importPath, setImportPath] = useState('');
   const [importKind, setImportKind] = useState<'local' | 'git'>('local');
   const [importPreview, setImportPreview] = useState<ImportPreview | null>(null);
+  const [reanalysisProject, setReanalysisProject] = useState<string | null>(null);
   const [includeText, setIncludeText] = useState('');
   const [excludeText, setExcludeText] = useState('');
   const [settings, setSettings] = useState({ base_url: 'https://api.deepseek.com', model: 'deepseek-flash', has_key: false });
@@ -68,7 +69,12 @@ export default function App() {
       await refresh();
       if (project?.id === task.project_id) setProject(await api<ProjectDetail>(`/projects/${project.id}`));
       setNotice(action === 'start' ? '任务已启动，完成后不会自动启动下一项。' : action === 'pause' ? '任务已暂停，有效检查点已保留。' : '任务已取消，已有成功结果保持可读。');
-    } catch (problem) { setError((problem as Error).message); }
+    } catch (problem) {
+      const message = (problem as Error).message;
+      if (action === 'start' && message.includes('授权')) {
+        await openProject(task.project_id); setModal('consent');
+      } else setError(message);
+    }
     finally { setBusy(false); }
   }
   async function moveTask(task: AnalysisTask, direction: number) {
@@ -148,19 +154,26 @@ export default function App() {
   useEffect(() => {
     if (!authorized) return;
     const timer = setInterval(() => {
-      api<Project[]>('/projects').then(setProjects).catch(() => {});
+      api<Project[]>('/projects').then(next => {
+        setProjects(next);
+        if (project && next.some(item => item.id === project.id && item.version_id !== project.version_id)) {
+          void openProject(project.id); setNotice('新版本已发布，已切换到对应图与源码。');
+        }
+      }).catch(() => {});
       api<AnalysisTask[]>('/tasks').then(setAnalysisTasks).catch(() => {});
       if (project && ['indexing', 'analyzing', 'queued', 'waiting'].includes(project.status)) {
         api<ProjectDetail>(`/projects/${project.id}`).then(next => {
           setProject(next);
           if (next.status === 'ready' && project.status !== 'ready') {
-            setFocus(null); setPanels([{ kind: 'overview' }]); setNotice('架构分析已完成，可以开始探索。');
+            if (next.version_id !== project.version_id) void openProject(next.id);
+            else { setFocus(null); setPanels([{ kind: 'overview' }]); }
+            setNotice('架构分析已完成，可以开始探索。');
           }
         }).catch(problem => setError(problem.message));
       }
     }, 2000);
     return () => clearInterval(timer);
-  }, [authorized, project?.id, project?.status]);
+  }, [authorized, project?.id, project?.status, project?.version_id]);
   useEffect(() => {
     if (!notice) return;
     const timer = setTimeout(() => setNotice(''), 6000);
@@ -206,6 +219,7 @@ export default function App() {
   }, [project?.id, project?.version_id, panel]);
 
   async function openProject(id: string) {
+    if (saveTimer.current) clearTimeout(saveTimer.current);
     functionOrigin.current = null;
     setError(''); setSource(null); setPanels([]); setViewports({}); setExpandedModule(null); setShowOtherModules(false); layout.current = null;
     try {
@@ -295,10 +309,16 @@ export default function App() {
     try {
       const rules = (text: string) => text.split('\n').map(value => value.trim()).filter(Boolean);
       if (!importPreview) {
-        setImportPreview(await api<ImportPreview>('/imports/preview', {
-          ...(importKind === 'git' ? { url: importPath } : { path: importPath }),
+        setImportPreview(await api<ImportPreview>(reanalysisProject ? `/projects/${reanalysisProject}/reanalysis/preview` : '/imports/preview', {
+          ...(!reanalysisProject ? (importKind === 'git' ? { url: importPath } : { path: importPath }) : {}),
           excludes: rules(excludeText), includes: rules(includeText),
         }));
+        return;
+      }
+      if (reanalysisProject) {
+        await api(`/projects/${reanalysisProject}/reanalysis`, { preview_id: importPreview.preview_id });
+        setProject(await api<ProjectDetail>(`/projects/${reanalysisProject}`));
+        setReanalysisProject(null); setImportPreview(null); setModal('consent'); await refresh();
         return;
       }
       const created = await api<Project>('/imports', { preview_id: importPreview.preview_id });
@@ -306,6 +326,14 @@ export default function App() {
       setNotice(created.status === 'queued' ? '源码快照已创建，解析任务等待主动启动。' : '源码快照已创建，正在进行静态解析。');
     } catch (problem) { setError((problem as Error).message); }
     finally { setBusy(false); }
+  }
+
+  function beginImport(reanalyze = false) {
+    setReanalysisProject(reanalyze && project ? project.id : null);
+    setImportPreview(null); setError('');
+    setIncludeText(reanalyze ? project?.scope.includes?.join('\n') || '' : '');
+    setExcludeText(reanalyze ? project?.scope.excludes?.join('\n') || '' : '');
+    setModal('import');
   }
 
   async function saveSettings(test = false) {
@@ -325,7 +353,7 @@ export default function App() {
     if (!project) return;
     setBusy(true);
     try {
-      await api(`/projects/${project.id}/consent`, { accepted: true });
+      await api(`/projects/${project.id}/consent`, { accepted: true, version_id: project.candidate?.version_id || project.version_id });
       const started = await api<{status: string}>(`/projects/${project.id}/analyze`, {});
       setProject(await api(`/projects/${project.id}`)); setModal(null);
       await refresh();
@@ -391,24 +419,25 @@ export default function App() {
       <aside className="sidebar">
         <div className="sidebar-heading"><span>学习空间</span><span className="mini-label">工作空间</span></div>
         <button aria-label="项目学习库" title="项目学习库" className={`sidebar-nav ${!project ? 'active' : ''}`} onClick={() => { setProject(null); setPanels([]); }}><BookOpen size={18} />项目学习库<span className="nav-count">{projects.length}</span></button>
-        <div className="project-list-label">最近的项目<button className="tiny-icon" aria-label="导入项目" onClick={() => { setError(''); setModal('import'); }}><Plus size={15} /></button></div>
+        <div className="project-list-label">最近的项目<button className="tiny-icon" aria-label="导入项目" onClick={() => beginImport()}><Plus size={15} /></button></div>
         <div className="sidebar-projects">{projects.map(item => <button key={item.id} aria-label={`打开项目 ${item.name}`} title={item.name} className={`sidebar-project ${project?.id === item.id ? 'selected' : ''}`} onClick={() => void openProject(item.id)}><span className="small-project-icon"><Code2 size={15} /></span><span><strong>{item.name}</strong><small>{item.status === 'analyzing' && item.analysis_progress?.total ? `AI 分析 ${item.analysis_progress.completed}/${item.analysis_progress.total} 批` : item.demo ? '预置验证样例' : item.languages.join(' / ') || statuses[item.status]}</small></span>{item.status === 'analyzing' || item.status === 'indexing' ? <span className="spinner small" /> : <ChevronRight size={13} />}</button>)}</div>
         <div className="sidebar-bottom"><div className="quiet-note"><Braces size={16} /><strong>从全景，深入源码</strong><p>每条关系都有出处。每次探索都能继续。</p></div><div className="connection"><span className="status-dot" />{settings.has_key ? 'DeepSeek 已配置' : 'AI 服务待配置'}<span>v0.1.0</span></div></div>
       </aside>
       <main className={`main ${project ? 'workspace-main' : ''}`}>
         {error && !modal && <div className="error-banner" role="alert"><AlertTriangle size={16} />{error}<button aria-label="关闭错误" onClick={() => setError('')}><X size={14} /></button></div>}
         {!project ? <div className="library">
-          <div className="library-heading"><div className="library-intro"><div className="eyebrow"><span className="eyebrow-dot" />你的代码学习空间</div><h1>看见结构，<br />读懂代码<span className="heading-period">。</span></h1><p>从项目全景到一行源码，让每一次探索都有迹可循。</p><div className="hero-actions"><button className="primary-button" onClick={() => { setError(''); setModal('import'); }} disabled={!authorized}><Plus size={17} />导入项目<ArrowUpRight size={17} /></button><span>本地优先 · 自由探索</span></div></div><LibraryArtwork /></div>
+          <div className="library-heading"><div className="library-intro"><div className="eyebrow"><span className="eyebrow-dot" />你的代码学习空间</div><h1>看见结构，<br />读懂代码<span className="heading-period">。</span></h1><p>从项目全景到一行源码，让每一次探索都有迹可循。</p><div className="hero-actions"><button className="primary-button" onClick={() => beginImport()} disabled={!authorized}><Plus size={17} />导入项目<ArrowUpRight size={17} /></button><span>本地优先 · 自由探索</span></div></div><LibraryArtwork /></div>
           <div className="library-summary"><div className="summary-metric"><strong>{String(projects.length).padStart(2, '0')}</strong><span>学习项目<small>本地项目</small></span></div><div className="summary-metric"><strong>{projects.reduce((sum, item) => sum + item.file_count, 0)}</strong><span>源码文件<small>静态快照</small></span></div><div className="summary-metric"><strong>{projects.reduce((sum, item) => sum + item.function_count, 0)}</strong><span>已识别函数<small>可探索实体</small></span></div><span className="summary-end"><ShieldCheck size={15} />数据在本机，关系有出处</span></div>
           <div className="section-heading"><div><h2>你的项目</h2><span className="section-count">{String(projects.length).padStart(2, '0')}</span></div><span>按最近导入排序</span></div>
           <div className="project-grid">{projects.map((item, index) => <button className="project-card" key={item.id} onClick={() => void openProject(item.id)}><div className="card-top"><span className="card-number">{String(index + 1).padStart(2, '0')}<span> / 项目</span></span><span className={`pill ${item.status === 'ready' ? 'ready' : ''}`}><span />{statuses[item.status] || item.status}</span></div><span className="project-icon"><GitBranch size={24} /></span><h3>{item.name}</h3><p className="card-source" title={item.source}>{item.source}</p><div className="language-chips">{item.languages.map(language => <span key={language}>{language === 'python' ? 'Python' : language === 'typescript' ? 'TypeScript' : language === 'cpp' ? 'C++' : 'C'}</span>)}{item.demo && <span className="sample-chip">预置样例</span>}</div><div className="card-stats"><span><FileCode2 size={14} />{item.file_count} 个文件</span><span><Braces size={14} />{item.function_count} 个函数</span></div><div className="learning-progress"><span style={{ width: `${item.progress.total ? item.progress.mastered / item.progress.total * 100 : 0}%` }} /></div><div className="card-footer"><span>{item.progress.total ? <><strong>{item.progress.mastered}</strong> / {item.progress.total} 已掌握</> : '暂无可统计学习内容'}</span><span className="card-open"><ArrowUpRight size={17} /></span></div></button>)}
-            <button aria-label="添加项目" className="add-project-card" onClick={() => { setError(''); setModal('import'); }}><span><Plus size={24} /></span><strong>下一个项目，<br />新的视野。</strong><p>导入本地源码，开始你的探索</p><span className="add-project-action">添加项目<ArrowUpRight size={15} /></span></button>
+            <button aria-label="添加项目" className="add-project-card" onClick={() => beginImport()}><span><Plus size={24} /></span><strong>下一个项目，<br />新的视野。</strong><p>导入本地源码，开始你的探索</p><span className="add-project-action">添加项目<ArrowUpRight size={15} /></span></button>
           </div>
           <div className="prototype-note"><Info size={17} /><div><strong>关于这个开发预览</strong><p>预置模块由人工划分，调用来自静态解析。导入自己的项目后，可授权 AI 生成架构。</p></div><span>M0 开发预览</span></div><div className="library-footer"><span>复杂的代码，也可以有清晰的轮廓。</span><span>CODESCAPE / 源境</span></div>
         </div> : <>
-          <div className="workspace-toolbar"><div className="breadcrumbs"><button onClick={() => { setProject(null); setPanels([]); }}>学习库</button><ChevronRight size={14} /><button className={!focus ? 'current' : ''} onClick={() => changeFocus(null)}>{project.name}</button>{breadcrumb.map(module => <span className="breadcrumb-item" key={module.id}><ChevronRight size={14} /><button className={focus === module.id ? 'current' : ''} onClick={() => changeFocus(module.id)}>{module.name}</button></span>)}</div><div className="toolbar-actions"><button onClick={() => pushPanel({ kind: 'overview' })} disabled={!project.architecture}><BookOpen size={15} />项目概览</button><button onClick={download} disabled={!project.architecture}><Download size={15} />导出 SVG</button>{project.status === 'paused' && project.error && <button className="secondary-button" onClick={() => void retryAI()} disabled={busy}><Sparkles size={14} />重新开始分批分析</button>}<button className="ai-button" onClick={() => { setError(''); setModal('consent'); }} disabled={!project.analysis.entities.length || project.status === 'analyzing'}><Sparkles size={14} />{project.status === 'analyzing' ? 'AI 分析中' : 'AI 架构分析'}</button></div></div>
+          <div className="workspace-toolbar"><div className="breadcrumbs"><button onClick={() => { setProject(null); setPanels([]); }}>学习库</button><ChevronRight size={14} /><button className={!focus ? 'current' : ''} onClick={() => changeFocus(null)}>{project.name}</button>{breadcrumb.map(module => <span className="breadcrumb-item" key={module.id}><ChevronRight size={14} /><button className={focus === module.id ? 'current' : ''} onClick={() => changeFocus(module.id)}>{module.name}</button></span>)}</div><div className="toolbar-actions"><button onClick={() => pushPanel({ kind: 'overview' })} disabled={!project.architecture}><BookOpen size={15} />项目概览</button><button onClick={download} disabled={!project.architecture}><Download size={15} />导出 SVG</button>{project.status === 'paused' && project.error && <button className="secondary-button" onClick={() => void retryAI()} disabled={busy}><Sparkles size={14} />重新开始分批分析</button>}<button className="ai-button" onClick={() => { if (project.architecture && !project.candidate) beginImport(true); else { setError(''); setModal('consent'); } }} disabled={!project.analysis.entities.length || project.status === 'analyzing'}><Sparkles size={14} />{project.status === 'analyzing' ? 'AI 分析中' : 'AI 架构分析'}</button></div></div>
           <div className="module-navigation"><div className="module-selector"><Layers3 size={15} /><label htmlFor="module-switch">切换模块</label><select id="module-switch" value={focus || ''} onChange={event => changeFocus(event.target.value || null)} disabled={!modules.length}><option value="">全部模块 · 架构全景</option>{moduleOrder.map(module => <option key={module.id} value={module.id}>{'　'.repeat(module.depth)}{module.depth ? '↳ ' : ''}{module.name}</option>)}</select></div><span className="architecture-hint">{isFunctions ? '当前模块展开函数 · 可显示同级模块' : expandedModule ? '当前层级已展开 · 再次点击即可收起' : projection.abstraction ? '点击代码域逐层展开 · 信息按钮查看职责' : '点击模块展开子模块 · 信息按钮查看职责'}</span>{projection.otherModuleCount ? <button className="secondary-button compact-button" onClick={() => setShowOtherModules(current => !current)}>{showOtherModules ? '隐藏同层模块' : `显示其他模块（${projection.otherModuleCount}）`}</button> : null}<button className="fullscreen-button" onClick={() => void toggleFullscreen()} aria-label={fullscreen ? '退出全屏' : '全屏查看架构'}>{fullscreen ? <Minimize2 size={15} /> : <Maximize2 size={15} />}{fullscreen ? '退出全屏' : '全屏查看'}<kbd>{fullscreen ? 'Esc' : '↗'}</kbd></button></div>
           <div className="workspace-heading" key={focus || 'root'}><div><div className="eyebrow">{isFunctions ? '函数结构 · 深入源码' : '语义架构 · 全景探索'}</div><h1>{activeModule?.name || '项目全景'}<span className="view-tag">{isFunctions ? '函数视图' : '模块视图'}</span></h1><p>{activeModule?.summary || '理解主要模块的分工，以及它们如何协作。'}</p></div><div className="workspace-stats"><span><strong>{project.function_count}</strong>函数</span><span><strong>{confirmedCount}</strong>已识别调用</span><span><strong>{project.progress.mastered}<small> / {project.progress.total}</small></strong>已掌握</span></div></div>
+          <div className="version-controls"><button className="text-button" disabled={busy || analysisTasks.some(task => task.project_id === project.id && ['running', 'waiting', 'paused'].includes(task.status))} onClick={() => beginImport(true)}>重新扫描并分析</button>{project.candidate && <span>独立候选已就绪 · 旧结果保持可读</span>}{project.migration_report && <span>学习迁移：保留 {project.migration_report.kept_count} · 重置 {project.migration_report.reset_count} · 新增 {project.migration_report.added_count} · 移除 {project.migration_report.removed_count}</span>}</div>
           <div className="graph-meta"><div>{project.demo && <span className="sample-label"><Circle size={9} />预置验证样例</span>}<span><ShieldCheck size={12} />绑定只读源码快照</span><span>{project.status === 'analyzing' ? <><span className="spinner small" />{analysisHint}{batchProgress?.total ? `（${batchProgress.completed}/${batchProgress.total} 批）` : ''}</> : project.demo && project.architecture?.overview.limitations.some(value => value.includes('人工预置')) ? '模块人工预置 · 调用静态提取' : statuses[project.status]}</span></div><button onClick={() => pushPanel({ kind: 'diagnostics' })}><AlertTriangle size={12} />范围与局限{project.diagnostic_count > 0 && <b>{project.diagnostic_count}</b>}</button></div>
           <div className="exploration">
             <div className="graph-container">
@@ -461,17 +490,17 @@ export default function App() {
           </article>;
         })}</div>
         {!analysisTasks.some(task => ['waiting', 'running', 'paused'].includes(task.status)) && <div className="task-empty"><Check size={22} /><strong>当前没有待执行任务</strong><span>从项目中启动分析，任务会出现在这里。</span></div>}
-        {analysisTasks.some(task => !['waiting', 'running', 'paused'].includes(task.status)) && <details className="task-history"><summary>已结束任务</summary>{analysisTasks.filter(task => !['waiting', 'running', 'paused'].includes(task.status)).map(task => <div key={task.id}><span>{task.project_name}<small>{task.kind === 'index' ? '静态索引' : 'AI 架构'}</small></span><span>{taskLabels[task.status]}</span></div>)}</details>}
+        {analysisTasks.some(task => !['waiting', 'running', 'paused'].includes(task.status)) && <details className="task-history"><summary>已结束任务</summary>{analysisTasks.filter(task => !['waiting', 'running', 'paused'].includes(task.status)).map(task => <div key={task.id}><span>{task.project_name}<small>{task.kind === 'index' ? '静态索引' : task.kind === 'reanalysis' ? '重新分析' : 'AI 架构'}</small></span><span>{taskLabels[task.status]}</span></div>)}</details>}
         <div className="privacy-note"><Info size={15} />暂停保留有效检查点；取消结束本轮任务。已发送的云端请求仍可能产生用量。</div>
       </>}
       {modal === 'import' && <form onSubmit={event => { event.preventDefault(); void importProject(); }}>
-        <h2>开始新的代码探索</h2><p>读取源码并创建独立快照。确认范围后建立静态索引，AI 分析需单独授权。</p>
-        <div className="import-source-options" role="group" aria-label="源码来源">
+        <h2>{reanalysisProject ? '重新扫描项目' : '开始新的代码探索'}</h2><p>{reanalysisProject ? '从原来源读取最新源码，预览新的范围。旧结果保持可读；创建候选后再次确认上传，新结果成功才发布。' : '读取源码并创建独立快照。确认范围后建立静态索引，AI 分析需单独授权。'}</p>
+        {!reanalysisProject && <div className="import-source-options" role="group" aria-label="源码来源">
           <button type="button" className={`secondary-button ${importKind === 'local' ? 'selected' : ''}`} aria-pressed={importKind === 'local'} disabled={busy} onClick={() => { setImportKind('local'); setImportPreview(null); setImportPath(''); }}>本地目录</button>
           <button type="button" className={`secondary-button ${importKind === 'git' ? 'selected' : ''}`} aria-pressed={importKind === 'git'} disabled={busy} onClick={() => { setImportKind('git'); setImportPreview(null); setImportPath(''); }}>公开 Git 仓库</button>
-        </div>
-        <label>{importKind === 'git' ? '公开 Git URL' : '本地源码目录'}<input autoFocus disabled={busy} value={importPath} onChange={event => { setImportPath(event.target.value); setImportPreview(null); }} placeholder={importKind === 'git' ? 'https://github.com/owner/repository' : 'C:/Projects/my-project'} /></label>
-        {importKind === 'git' && <p className="import-hint">读取默认分支，保存实际 Commit；不运行仓库脚本，不拉取子模块或 LFS 对象。</p>}
+        </div>}
+        {!reanalysisProject && <label>{importKind === 'git' ? '公开 Git URL' : '本地源码目录'}<input autoFocus disabled={busy} value={importPath} onChange={event => { setImportPath(event.target.value); setImportPreview(null); }} placeholder={importKind === 'git' ? 'https://github.com/owner/repository' : 'C:/Projects/my-project'} /></label>}
+        {!reanalysisProject && importKind === 'git' && <p className="import-hint">读取默认分支，保存实际 Commit；不运行仓库脚本，不拉取子模块或 LFS 对象。</p>}
         <label>额外排除规则<span>每行一条；* 匹配一层，** 匹配任意层</span><textarea disabled={busy} rows={2} value={excludeText} onChange={event => { setExcludeText(event.target.value); setImportPreview(null); }} placeholder={'generated/**\n**/legacy/**'} /></label>
         <label>明确包含规则<span>测试、示例和第三方源码默认排除；可在此包含</span><textarea disabled={busy} rows={2} value={includeText} onChange={event => { setIncludeText(event.target.value); setImportPreview(null); }} placeholder={'tests/**\nexamples/**'} /></label>
         {importPreview && <section className="import-preview" aria-label="扫描范围预览"><div className="import-preview-summary"><strong>{importPreview.name}</strong><span>{importPreview.file_count} 个源码文件 · {(importPreview.size / 1024).toFixed(1)} KB</span></div>
@@ -482,10 +511,10 @@ export default function App() {
           <p className="import-hint">导入使用本次扫描的快照。原目录之后发生变化不会替换它；改变范围后请重新扫描。</p>
         </section>}
         <div className="privacy-note"><ShieldCheck size={15} />只读取源码，不执行原项目。云端上传需确认接收端和范围。</div>
-        <button type="submit" className="primary-button wide" disabled={busy || !importPath.trim()}>{busy ? <span className="spinner" /> : <FolderOpen size={16} />}{busy ? '正在处理源码…' : importPreview ? '确认导入并建立静态索引' : '扫描并预览范围'}</button>
+        <button type="submit" className="primary-button wide" disabled={busy || (!reanalysisProject && !importPath.trim())}>{busy ? <span className="spinner" /> : <FolderOpen size={16} />}{busy ? '正在处理源码…' : importPreview ? reanalysisProject ? '确认候选范围，继续上传授权' : '确认导入并建立静态索引' : '扫描并预览范围'}</button>
       </form>}
       {modal === 'settings' && <form onSubmit={event => event.preventDefault()}><h2>连接你的 AI 服务</h2><p>以 DeepSeek 为主要适配服务，支持兼容接口。密钥只在本机加密保存。</p><label>服务地址<input value={settings.base_url} onChange={event => setSettings({ ...settings, base_url: event.target.value })} /></label><label>模型名称<input value={settings.model} onChange={event => setSettings({ ...settings, model: event.target.value })} placeholder="deepseek-flash" /></label><label>API Key<span>{settings.has_key ? '已加密保存 · 留空保留现有密钥' : '尚未配置'}</span><input type="password" autoComplete="off" value={key} onChange={event => setKey(event.target.value)} placeholder={settings.has_key ? '••••••••••••••••' : '输入 API Key'} /></label>{testMessage && <div className="test-message" role="status">{testMessage}</div>}<div className="modal-actions"><button type="button" className="secondary-button" disabled={busy} onClick={() => void saveSettings(true)}>{busy ? <span className="spinner" /> : <Activity size={15} />}测试连接</button><button type="button" className="primary-button" disabled={busy} onClick={() => void saveSettings()}>保存设置<Check size={15} /></button></div><div className="privacy-note"><ShieldCheck size={14} />连接测试不发送源码，可能产生少量 Token 用量。</div></form>}
-      {modal === 'consent' && project && <><h2>让 AI 理解这个项目</h2><p>将当前快照范围内的源码、实体索引与已识别调用发送到你配置的服务，生成中文项目概览和语义模块架构。</p><div className="consent-summary"><span>项目<strong>{project.name}</strong></span><span>接收端<strong>{settings.base_url}</strong></span><span>模型<strong>{settings.model || '尚未配置'}</strong></span><span>范围<strong>{project.file_count} 个源码文件 · {project.function_count} 个函数</strong></span></div><div className="privacy-note"><Info size={15} />只使用所选模型。已有结果保持可读，费用按实际用量记录。超出单批上下文时会自动拆分为受控批次，并逐批校验函数归属。</div><button className="primary-button wide" disabled={busy || !settings.has_key || !settings.model} onClick={() => void startAI()}>{busy ? <span className="spinner" /> : <Sparkles size={16} />}同意上传当前源码并开始分批分析</button>{!settings.has_key && <button className="text-button" onClick={() => void openSettings()}>先配置 AI 服务</button>}</>}
+      {modal === 'consent' && project && <><h2>让 AI 理解这个项目</h2><p>将当前快照范围内的源码、实体索引与已识别调用发送到你配置的服务，生成中文项目概览和语义模块架构。</p><div className="consent-summary"><span>项目<strong>{project.name}</strong></span><span>接收端<strong>{settings.base_url}</strong></span><span>模型<strong>{settings.model || '尚未配置'}</strong></span><span>范围<strong>{project.candidate ? `${project.candidate.file_count} 个候选源码文件 · 新快照静态索引将在授权后建立` : `${project.file_count} 个源码文件 · ${project.function_count} 个函数`}</strong></span></div><div className="privacy-note"><Info size={15} />只使用所选模型。已有结果保持可读，费用按实际用量记录。超出单批上下文时会自动拆分为受控批次，并逐批校验函数归属。</div><button className="primary-button wide" disabled={busy || !settings.has_key || !settings.model} onClick={() => void startAI()}>{busy ? <span className="spinner" /> : <Sparkles size={16} />}同意上传当前源码并开始分批分析</button>{!settings.has_key && <button className="text-button" onClick={() => void openSettings()}>先配置 AI 服务</button>}</>}
     </section></div>}
   </div>;
 }

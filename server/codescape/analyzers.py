@@ -146,6 +146,10 @@ def python_analysis(files: dict[str, str], version: str) -> Analysis:
                     name=name,
                     qualified_name=qualified,
                     signature=f"{name}({arguments})",
+                    signature_key=digest(ast.dump(node.args, include_attributes=False) +
+                                         ast.dump(node.returns, include_attributes=False)
+                                         if getattr(node, "returns", None) else
+                                         ast.dump(node.args, include_attributes=False)),
                     language="python",
                     location=position(path, text, node),
                     scope_id=child_scope,
@@ -334,6 +338,15 @@ def cpp_analysis(root: Path, files: dict[str, str], version: str) -> Analysis:
 
         def node_bytes(node) -> bytes:
             return source_bytes[node.start_byte : node.end_byte]
+
+        def semantic_tree(node):
+            if node.type == "comment":
+                return None
+            if node.type.startswith("preproc_"):
+                # Directive line breaks and continuations can alter preprocessing.
+                return [node.type, node_bytes(node).decode()]
+            children = [value for child in node.children if (value := semantic_tree(child)) is not None]
+            return [node.type, children if children else node_bytes(node).decode()]
         if parsed.root_node.has_error:
             result.diagnostics.append(
                 Diagnostic(category="parse_failed", path=path, message="部分语法无法识别。")
@@ -393,12 +406,13 @@ def cpp_analysis(root: Path, files: dict[str, str], version: str) -> Analysis:
                     name=name,
                     qualified_name="::".join(parents + [name]),
                     signature=signature,
+                    signature_key=json.dumps(semantic_tree(declarator)) if declarator else signature,
                     language=language,
                     location=location,
                     scope_id=stable_id(entity_id, "scope"),
                     visible=not hidden,
                     hidden_reason="构造或析构" if hidden else None,
-                    implementation_hash=digest(node_bytes(node)),
+                    implementation_hash=digest(json.dumps(semantic_tree(node))),
                     condition=condition,
                 )
                 if (path, node.start_byte) not in by_location:

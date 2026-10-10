@@ -234,7 +234,7 @@ class ImportService:
             remove_staging(directory, self.staging)
             raise
 
-    def consume(self, preview_id: str, project_id: str) -> dict:
+    def consume(self, preview_id: str, project_id: str, existing: bool = False) -> dict:
         directory = self._directory(preview_id)
         try:
             value = json.loads((directory / "preview.json").read_text(encoding="utf-8"))
@@ -245,6 +245,12 @@ class ImportService:
         read_snapshot(directory / "snapshots" / value["manifest"]["id"], value["manifest"])
         target = self.root / "projects" / str(uuid.UUID(project_id))
         target.parent.mkdir(parents=True, exist_ok=True)
-        directory.replace(target)
-        (target / "preview.json").unlink()
+        if existing:
+            destination = target / "snapshots" / value["manifest"]["id"]
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            (directory / "snapshots" / value["manifest"]["id"]).replace(destination)
+            remove_staging(directory, self.staging)
+        else:
+            directory.replace(target)
+            (target / "preview.json").unlink()
         return value

@@ -22,6 +22,7 @@ class Entity(Contract):
     name: str
     qualified_name: str
     signature: str
+    signature_key: str | None = None
     language: str
     location: Location
     scope_id: str

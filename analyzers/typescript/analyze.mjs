@@ -52,6 +52,16 @@ function location(node, source) {
 }
 const isFunction = node => ts.isFunctionDeclaration(node) || ts.isMethodDeclaration(node) || ts.isConstructorDeclaration(node)
   || ts.isArrowFunction(node) || ts.isFunctionExpression(node) || ts.isGetAccessorDeclaration(node) || ts.isSetAccessorDeclaration(node);
+// AST structure preserves ASI, literals, JSX text and semantic line breaks;
+// whitespace and ordinary comments are not part of the implementation identity.
+function semanticTree(node, source, signatureOnly = false) {
+  const children = [];
+  ts.forEachChild(node, child => {
+    if (!signatureOnly || child !== node.body) children.push(semanticTree(child, source));
+  });
+  return [node.kind, children.length ? children : node.getText(source),
+    (node.jsDoc || []).map(doc => doc.getText(source))];
+}
 for (const source of program.getSourceFiles()) {
   if (!inside(root, source.fileName) || source.isDeclarationFile) continue;
   const relative = path.relative(root, source.fileName).replaceAll('\\', '/');
@@ -69,9 +79,10 @@ for (const source of program.getSourceFiles()) {
       const hidden = anonymous || nested || ts.isConstructorDeclaration(node);
       const signature = node.getText(source).slice(0, node.body.getStart(source) - node.getStart(source)).trim();
       const entity = {id: entityId, name, qualified_name: [...names, name].join('.'), signature,
+        signature_key: JSON.stringify(semanticTree(node, source, true)),
         language: 'typescript', location: location(node, source), scope_id: childScope, visible: !hidden,
         hidden_reason: anonymous ? '匿名函数' : nested ? '嵌套局部函数' : hidden ? '构造函数' : null,
-        implementation_hash: crypto.createHash('sha256').update(node.getText(source)).digest('hex'),
+        implementation_hash: crypto.createHash('sha256').update(JSON.stringify(semanticTree(node, source))).digest('hex'),
         unresolved_count: 0};
       ids.set(node, entity);
       result.entities.push(entity);

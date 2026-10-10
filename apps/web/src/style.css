@@ -589,3 +589,5 @@ button:active:not(:disabled) { transform: translateY(1px); }
 .task-empty { padding: 30px 10px; display: grid; justify-items: center; gap: 12px; color: var(--muted); }
 .task-empty strong { color: #333; font-size: 14px; }
 .task-empty span { font-size: 12px; }
+.version-controls { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 8px 24px; color: var(--muted); font-size: 11px; border-bottom: 1px solid rgba(120, 132, 157, .1); }
+.version-controls .text-button { font-size: 11px; padding: 4px 0; }

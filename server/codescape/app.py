@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import os
 import secrets
 import shutil
 import subprocess
@@ -10,6 +11,7 @@ import threading
 import time
 import uuid
 from contextlib import asynccontextmanager
+from datetime import UTC, datetime
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Request
@@ -17,7 +19,7 @@ from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 
 from .analyzers import REPOSITORY, analyze, stable_id
 from .database import Database, now
-from .imports import ImportService
+from .imports import ImportService, remove_staging
 from .lifecycle import ClientLifetime
 from .models import (
     AISettings,
@@ -29,7 +31,7 @@ from .models import (
     Overview,
     SessionRequest,
 )
-from .provider import Provider, ProviderError
+from .provider import Provider, ProviderError, validate_architecture
 from .security import data_root
 from .snapshots import create_snapshot, read_snapshot
 from .tasks import TaskQueue
@@ -101,6 +103,8 @@ def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=
             "origin": project["snapshot"].get("origin", {"kind": "local"}),
         }
         if full:
+            candidate = database.candidate(project["id"])
+            published = database.version(project["id"], project["version_id"])
             response.update(
                 {
                     "analysis": analysis.model_dump(),
@@ -109,9 +113,15 @@ def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=
                         path: stable_id(project["version_id"], path) for path in project["snapshot"]["files"]
                     },
                     "learning": states,
+                    "candidate": {"version_id": candidate["id"], "status": candidate["status"],
+                                  "file_count": len(candidate["value"]["snapshot"]["files"]),
+                                  "origin": candidate["value"]["snapshot"].get("origin", {}),
+                                  "excluded": candidate["value"]["snapshot"]["excluded"]} if candidate else None,
+                    "migration_report": published["value"].get("migration_report") if published else None,
                     "scope": {
                         "excluded": project["snapshot"]["excluded"],
                         "snapshot_id": project["snapshot"]["id"],
+                        **project["snapshot"].get("scope", {}),
                     },
                 }
             )
@@ -179,18 +189,18 @@ def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=
         imports.cleanup()
         seed()
         app.state.ready_event.set()
-        monitor = None
-        if on_idle_exit:
-            async def watch_clients():
-                nonlocal closing
-                while True:
-                    await asyncio.sleep(5)
-                    if lifetime.should_exit():
-                        closing = True
-                        await queue.shutdown()
-                        await on_idle_exit()
-                        return
-            monitor = asyncio.create_task(watch_clients())
+        async def watch_clients():
+            nonlocal closing
+            while True:
+                await asyncio.sleep(5)
+                cleanup_versions()
+                if on_idle_exit and lifetime.should_exit():
+                    closing = True
+                    await queue.shutdown()
+                    await on_idle_exit()
+                    return
+        cleanup_versions()
+        monitor = asyncio.create_task(watch_clients())
         yield
         closing = True
         if monitor:
@@ -198,6 +208,27 @@ def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=
             await asyncio.gather(monitor, return_exceptions=True)
         await queue.shutdown()
         database.engine.dispose()
+
+    def cleanup_versions():
+        for version in database.reclaimable_versions():
+            project = database.get(version["project_id"])
+            if not project or project["version_id"] == version["id"]:
+                continue
+            manifest = version["value"].get("snapshot")
+            if not manifest or project["snapshot"]["id"] == manifest["id"]:
+                continue
+            try:
+                project_id, snapshot_id = str(uuid.UUID(project["id"])), str(uuid.UUID(manifest["id"]))
+                boundary = root / "projects" / project_id
+                target = boundary / "snapshots" / snapshot_id
+                if target.is_dir():
+                    remove_staging(target, boundary)
+                for name in [f"version-{version['id']}.json", f"checkpoint-{version['id']}.json"]:
+                    (boundary / name).unlink(missing_ok=True)
+                database.mark_purged(version["id"], {"snapshot_id": snapshot_id, "snapshot_hash": manifest["hash"]})
+            except (OSError, ValueError):
+                # Occupied files are retained and retried on the next cleanup pass.
+                continue
 
     app = FastAPI(
         title="CodeScape 本地服务", version="0.1.0", lifespan=lifespan, docs_url=None, redoc_url=None
@@ -320,8 +351,11 @@ def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=
     async def project(project_id: str):
         return envelope(public(get_project(project_id), True))
 
-    async def index_project(project_id: str):
+    async def index_project(project_id: str, candidate_id: str | None = None):
         project = get_project(project_id)
+        if candidate_id:
+            candidate = database.version(project_id, candidate_id)
+            project = {**project, **candidate["value"], "version_id": candidate_id}
         snapshot_root = root / "projects" / project_id / "snapshots" / project["snapshot"]["id"]
         database.update(project_id, status="indexing", error=None)
         process = None
@@ -343,12 +377,18 @@ def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=
             if process.returncode:
                 raise ValueError("静态解析进程失败，原始源码与旧结果未被修改。")
             result = Analysis.model_validate_json(output)
-            database.update(project_id, result=result.model_dump(), status="indexed")
+            if candidate_id:
+                candidate["value"]["result"] = result.model_dump()
+                database.update_candidate(candidate_id, candidate["value"])
+            else:
+                database.update(project_id, result=result.model_dump(), status="indexed")
         except asyncio.CancelledError:
             database.update(project_id, status="paused", error="静态索引已暂停，可复用当前快照恢复。")
             raise
         except Exception as error:
             database.update(project_id, status="failed", error=str(error)[:300])
+            if candidate_id:
+                raise
         finally:
             if worker_job:
                 worker_job.close()
@@ -365,6 +405,36 @@ def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=
             return envelope(await asyncio.to_thread(imports.preview, body))
         except (OSError, ValueError) as error:
             raise HTTPException(400, str(error)) from None
+
+    @app.post("/api/v1/projects/{project_id}/reanalysis/preview")
+    async def preview_reanalysis(project_id: str, body: ImportRequest):
+        project = get_project(project_id)
+        if any(job["project_id"] == project_id and job["status"] in {"running", "waiting", "paused"}
+               for job in database.list_jobs()):
+            raise HTTPException(409, "项目已有未结束任务，请先完成或取消。")
+        origin = project["snapshot"].get("origin", {"kind": "local", "path": project["source"]})
+        if not body.path and not body.url:
+            body.path = origin.get("path") if origin["kind"] == "local" else None
+            body.url = origin.get("url") if origin["kind"] == "git" else None
+        return await preview_import(body)
+
+    @app.post("/api/v1/projects/{project_id}/reanalysis")
+    async def prepare_reanalysis(project_id: str, body: ImportRequest):
+        project = get_project(project_id)
+        if not body.preview_id or body.path or body.url or body.includes or body.excludes:
+            raise HTTPException(422, "请先扫描并确认新范围。")
+        if database.candidate(project_id) or any(job["project_id"] == project_id and
+                job["status"] in {"running", "waiting", "paused"} for job in database.list_jobs()):
+            raise HTTPException(409, "项目已有未结束候选或任务，请先完成或取消。")
+        try:
+            imported = await asyncio.to_thread(imports.consume, body.preview_id, project_id, True)
+            version_id = str(uuid.uuid4())
+            database.insert_candidate(project_id, version_id, project["version_id"],
+                                      {"snapshot": imported["manifest"], "result": None})
+            job = queue.create(project, "reanalysis")
+        except (OSError, ValueError) as error:
+            raise HTTPException(409, str(error)) from None
+        return envelope({"version_id": version_id, "task_id": job["id"]})
 
     @app.post("/api/v1/projects/{project_id}/index")
     async def retry_index(project_id: str):
@@ -423,7 +493,14 @@ def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=
     async def file(project_id: str, file_id: str, version_id: str):
         project = get_project(project_id)
         if version_id != project["version_id"]:
-            raise HTTPException(409, "源码版本已经改变，请刷新。")
+            retired = database.version(project_id, version_id)
+            if not retired:
+                raise HTTPException(409, "源码版本已经改变，请刷新。")
+            if retired["status"] != "retired":
+                raise HTTPException(410, "该源码版本已失效，请刷新。")
+            if (datetime.now(UTC) - datetime.fromisoformat(retired["created_at"])).total_seconds() >= 120:
+                raise HTTPException(410, "旧源码读取宽限已结束，请刷新到新版本。")
+            project = retired["value"]
         paths = {stable_id(version_id, path): path for path in project["snapshot"]["files"]}
         if file_id not in paths:
             raise HTTPException(404, "源码文件不存在。")
@@ -497,9 +574,14 @@ def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=
         if body.get("accepted") is not True:
             raise HTTPException(400, "需要明确同意上传当前范围源码。")
         document = json.loads(consents_path.read_text()) if consents_path.exists() else {}
-        document[project_id] = {
+        version_id = body.get("version_id", project["version_id"])
+        candidate = database.candidate(project_id)
+        if version_id != project["version_id"] and (not candidate or version_id != candidate["id"]):
+            raise HTTPException(409, "授权版本已改变，请重新确认。")
+        manifest = candidate["value"]["snapshot"] if candidate and version_id == candidate["id"] else project["snapshot"]
+        document[project_id + ":" + version_id] = {
             "base_url": provider.settings()["base_url"],
-            "snapshot_hash": project["snapshot"]["hash"],
+            "snapshot_hash": manifest["hash"],
             "granted_at": now(),
         }
         consents_path.write_text(json.dumps(document), encoding="utf-8")
@@ -508,17 +590,26 @@ def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=
     @app.post("/api/v1/projects/{project_id}/analyze")
     async def ai_analysis(project_id: str):
         project = get_project(project_id)
+        candidate = database.candidate(project_id)
+        base_project = project
+        if (not candidate and project["architecture"] and not any(
+                "人工预置" in item for item in project["architecture"]["overview"]["limitations"])):
+            raise HTTPException(409, "已有成功版本，请先重新扫描并创建候选，旧结果将保持可读。")
+        if candidate:
+            if candidate["base_version_id"] != project["version_id"]:
+                raise HTTPException(409, "候选基线已失效，请取消并重新扫描。")
+            project = {**project, **candidate["value"], "version_id": candidate["id"]}
         consents = json.loads(consents_path.read_text()) if consents_path.exists() else {}
-        granted = consents.get(project_id, {})
+        granted = consents.get(project_id + ":" + project["version_id"], {} if candidate else consents.get(project_id, {}))
         if (
             granted.get("base_url") != provider.settings()["base_url"]
             or granted.get("snapshot_hash") != project["snapshot"]["hash"]
         ):
             raise HTTPException(403, "请先授权将当前范围源码发送到所选 AI 接收端。")
-        if not project["result"]:
+        if not project["result"] and not candidate:
             raise HTTPException(409, "请等待静态索引完成。")
         try:
-            job = queue.create(project, "architecture")
+            job = queue.create(base_project, "reanalysis" if candidate else "architecture")
         except ValueError as error:
             raise HTTPException(409, str(error)) from None
         if job["status"] == "running":
@@ -528,7 +619,7 @@ def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=
             return envelope({"status": "waiting", "task_id": job["id"]})
 
         async def work():
-            checkpoint_path = root / "projects" / project_id / "architecture-checkpoint.json"
+            checkpoint_path = root / "projects" / project_id / (f"checkpoint-{project['version_id']}.json" if candidate else "architecture-checkpoint.json")
             checkpoint: list[Architecture] = []
             database.update(project_id, status="analyzing", error=None)
             database.analysis_progress(
@@ -537,6 +628,10 @@ def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=
             )
             try:
                 await asyncio.sleep(0)
+                if candidate and not project["result"]:
+                    await index_project(project_id, candidate["id"])
+                    project["result"] = database.version(project_id, candidate["id"])["value"]["result"]
+                    database.update(project_id, status="analyzing", error=None)
                 snapshot_root = root / "projects" / project_id / "snapshots" / project["snapshot"]["id"]
                 if checkpoint_path.exists():
                     try:
@@ -595,9 +690,20 @@ def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=
                     on_batch=save_batch,
                     completed_batches=checkpoint,
                 )
-                database.update(
-                    project_id, architecture=architecture.model_dump(), status="ready", error=None
-                )
+                validate_architecture(architecture, Analysis.model_validate(project["result"]), set(project["snapshot"]["files"]))
+                if candidate:
+                    read_snapshot(snapshot_root, project["snapshot"])
+                    # Durable artifact precedes the short publication transaction.
+                    artifact = root / "projects" / project_id / f"version-{project['version_id']}.json"
+                    temporary = artifact.with_suffix(".tmp")
+                    with temporary.open("w", encoding="utf-8") as handle:
+                        json.dump({"result": project["result"], "architecture": architecture.model_dump()}, handle, ensure_ascii=False)
+                        handle.flush()
+                        os.fsync(handle.fileno())
+                    temporary.replace(artifact)
+                    database.publish_candidate(project_id, candidate["id"], job["id"], architecture.model_dump())
+                else:
+                    database.update(project_id, architecture=architecture.model_dump(), status="ready", error=None)
                 database.analysis_progress(
                     project_id,
                     {
@@ -696,6 +802,11 @@ def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=
                         error=None)
         if job["kind"] == "architecture":
             (root / "projects" / job["project_id"] / "architecture-checkpoint.json").unlink(missing_ok=True)
+        if job["kind"] == "reanalysis":
+            candidate = database.candidate(job["project_id"])
+            if candidate:
+                database.update_candidate(candidate["id"], candidate["value"], "cancelled")
+                (root / "projects" / job["project_id"] / f"checkpoint-{candidate['id']}.json").unlink(missing_ok=True)
         return envelope(job)
 
     @app.post("/api/v1/projects/{project_id}/overview")
@@ -704,7 +815,7 @@ def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=
         if not project["architecture"] or project["status"] != "ready":
             raise HTTPException(409, "请先完成架构分析，再归纳项目概览。")
         consents = json.loads(consents_path.read_text()) if consents_path.exists() else {}
-        granted = consents.get(project_id, {})
+        granted = consents.get(project_id + ":" + project["version_id"], consents.get(project_id, {}))
         if (
             granted.get("base_url") != provider.settings()["base_url"]
             or granted.get("snapshot_hash") != project["snapshot"]["hash"]
