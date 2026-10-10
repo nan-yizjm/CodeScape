@@ -245,3 +245,26 @@ def test_relative_include_can_return_to_another_snapshot_directory(tmp_path):
     write(tmp_path, files)
     result = cpp_analysis(tmp_path, files, "v1")
     assert any(call.resolution == "confirmed" and call.target_name == "target" for call in result.calls)
+
+
+def test_macro_qualified_return_type_does_not_become_function_name(tmp_path):
+    files = {'owned.cpp':'#include <vector>\n#define API inline\nnamespace app {\n'
+        'namespace level { enum E {off}; }\n'
+        'struct Logger { level::E flush_level()const; const std::vector<int>& sinks()const; std::vector<int> data; };\n'
+        'API level::E Logger::flush_level() const {return level::off;}\n'
+        'API const std::vector<int>& Logger::sinks() const {return data;}\n'
+        'int caller(const Logger& item){return item.flush_level();}\n}\n'}
+    write(tmp_path,files)
+    result = cpp_analysis(tmp_path,files,'v1')
+    recovered = [entity for entity in result.entities if entity.location.start_line in {6,7}]
+    assert {entity.qualified_name for entity in recovered} == {'app::Logger::flush_level','app::Logger::sinks'}
+    assert all('level::E' not in entity.name and 'vector' not in entity.name for entity in recovered)
+    assert not any(item.category == 'symbol_name_unresolved' for item in result.diagnostics)
+    assert any(call.resolution == 'confirmed' and call.target_name == 'app::Logger::flush_level' for call in result.calls)
+    scopes = {scope.id:scope for scope in result.scopes}
+    assert all(scopes[entity.scope_id].name == entity.qualified_name for entity in recovered)
+    fallback = cpp_analysis(tmp_path,files,'v1',syntax_only=True)
+    assert len(fallback.entities) == len(result.entities)
+    assert any(item.category == 'symbol_name_unresolved' for item in fallback.diagnostics)
+    assert any('<声明名称待确认>' in entity.qualified_name for entity in fallback.entities)
+    assert all(call.resolution != 'confirmed' for call in fallback.calls)

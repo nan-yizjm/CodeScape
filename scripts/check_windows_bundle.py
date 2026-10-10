@@ -30,7 +30,7 @@ def main():
         "owned.py": 'raise RuntimeError("仅用于静态读取，不得执行")\ndef target(): return 1\ndef caller(): return target()\n',
         "owned.ts": 'throw new Error("仅用于静态读取，不得执行");\nexport function tsTarget(){return 1;}\nexport function tsCaller(){return tsTarget();}\n',
         "owned.c": '#include <stddef.h>\nint cTarget(void){return 1;}\nint cCaller(void){return cTarget();}\n',
-        "owned.cpp": '#include <vector>\nint cppTarget(){return 1;}\nint cppCaller(){std::vector<int> v{1};return cppTarget()+v[0];}\n',
+        "owned.cpp": '#include <vector>\n#define API inline\nnamespace owned { namespace kind { enum Value { one=1 }; } struct Reader { static kind::Value cppTarget(); }; API kind::Value Reader::cppTarget(){return kind::one;} int cppCaller(){std::vector<int> v{1};return Reader::cppTarget()+v[0];} }\n',
     }
     for path, text in files.items():
         (source / path).write_text(text, encoding="utf-8", newline="")
@@ -87,6 +87,9 @@ def main():
         by_language = {entity["id"]: entity["language"] for entity in project["analysis"]["entities"]}
         confirmed_languages = {by_language[call["target_id"]] for call in confirmed}
         assert confirmed_languages == {"python", "typescript", "c", "cpp"}, confirmed_languages
+        cpp_target = next(entity for entity in project["analysis"]["entities"] if entity["qualified_name"] == "owned::Reader::cppTarget")
+        assert "kind::Value" not in cpp_target["name"]
+        assert any(call["target_id"] == cpp_target["id"] for call in confirmed)
         original = files["owned.py"]
         (source / "owned.py").write_text("已修改的原目录，不应该影响快照", encoding="utf-8")
         text = client.get(f"{url}/files/{project['file_ids']['owned.py']}?version_id={project['version_id']}").json()["data"]
@@ -131,6 +134,7 @@ def main():
             "executable": str(executable), "executable_sha256": hashlib.sha256(executable.read_bytes()).hexdigest(),
             "data_root": str(root), "developer_path_removed": True, "duplicate_launch_reused": True,
             "static_sample_functions": 8, "confirmed_call_languages": sorted(confirmed_languages),
+            "macro_qualified_return_name": "owned::Reader::cppTarget；确认调用仍定位该唯一实现",
             "original_modification_does_not_change_snapshot": True, "ai_worker_protocol": "受控错误响应",
             "runtime_versions": versions, "model_requests": 0,
             "public_git_import": ({"repository": "https://github.com/redis/hiredis.git", "origin": remote["origin"],

@@ -3,8 +3,8 @@
   "platform": "Windows-11-10.0.26200-SP0",
   "architecture": "AMD64",
   "executable": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\.runtime\\packaging\\dist\\CodeScape\\CodeScape.exe",
-  "executable_sha256": "e127fc5288b5ecffdbf730efa9dbe120f018a41c2e512cc3c3358a4a6b8c3a79",
-  "data_root": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\output\\windows-bundle-validation\\242c6812-ffe1-4183-a96c-747545e44ef8",
+  "executable_sha256": "169106c6d2c0c8b075244ba18dcc746240cde1ba2b40ea62ca1923907d17f77d",
+  "data_root": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\output\\windows-bundle-validation\\6a5e28cb-29ef-4754-8dba-1debcc10e8a7",
   "developer_path_removed": true,
   "duplicate_launch_reused": true,
   "static_sample_functions": 8,
@@ -14,6 +14,7 @@
     "python",
     "typescript"
   ],
+  "macro_qualified_return_name": "owned::Reader::cppTarget；确认调用仍定位该唯一实现",
   "original_modification_does_not_change_snapshot": true,
   "ai_worker_protocol": "受控错误响应",
   "runtime_versions": {

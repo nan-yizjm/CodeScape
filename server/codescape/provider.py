@@ -24,7 +24,7 @@ from .semantic_facts import recursive_fold_facts, validate_fold_wording
 
 MAX_CONTEXT_CHARS = 180_000
 BATCH_TARGET_CHARS = 150_000
-PIPELINE_VERSION = "architecture/2-explanations/1-reads/1-judgments/1-dependencies/1-cpp-config/5-interfaces/1-facts/1-index/2"
+PIPELINE_VERSION = "architecture/2-explanations/1-reads/1-judgments/1-dependencies/1-cpp-config/6-interfaces/1-facts/1-index/2"
 ProgressCallback = Callable[[int, int, str], Awaitable[None]]
 BatchCallback = Callable[[int, int, Architecture], Awaitable[None]]
 

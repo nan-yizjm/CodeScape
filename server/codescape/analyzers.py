@@ -302,7 +302,7 @@ def _cpp_analysis(root, files, version, source_root, header_directories, header_
     from clang import cindex
     from tree_sitter import Language, Parser
 
-    result = Analysis(tools={"cpp": "tree-sitter/0.25.2 + libclang/18.1.1 + snapshot-config/5"})
+    result = Analysis(tools={"cpp": "tree-sitter/0.25.2 + libclang/18.1.1 + snapshot-config/6"})
     if syntax_only:
         result.tools['cpp'] += ' + syntax-fallback/1'
     if not any(Path(path).suffix in {".c", ".h", ".cc", ".cpp", ".cxx", ".hpp", ".hh"} for path in files):
@@ -317,6 +317,8 @@ def _cpp_analysis(root, files, version, source_root, header_directories, header_
     pending: list[tuple[Call, str, bool, str | None, bool]] = []
     calls_by_id: dict[str, Call] = {}
     unsafe_macro_calls: set[str] = set()
+    ambiguous_names: dict[str, Diagnostic] = {}
+    native_names: dict[str, set[str]] = {}
     syntactic_bindings: dict[str, set[str]] = {}
     by_location: dict[tuple[str, int], Entity] = {}
     function_kinds = {
@@ -448,6 +450,16 @@ def _cpp_analysis(root, files, version, source_root, header_directories, header_
                     end_byte=node.end_byte,
                 )
                 entity_id = stable_id(version, path, "fn", node.start_byte)
+                ambiguous_name = bool(current and current.has_error)
+                if ambiguous_name:
+                    leaf = current
+                    while leaf and leaf.type == 'qualified_identifier':
+                        leaf = leaf.child_by_field_name('name')
+                    name = node_bytes(leaf).decode() if leaf and not leaf.has_error else '<unresolved>'
+                    note = Diagnostic(category='symbol_name_unresolved',path=path,line=location.start_line,
+                        message='声明含宏或语法歧义，暂仅展示末级名称；限定名称待可靠原生定义确认，源码签名保持原样。')
+                    ambiguous_names[entity_id] = note
+                    result.diagnostics.append(note)
                 parts = name.split("::")
                 hidden = (
                     parts[-1].startswith("~")
@@ -459,7 +471,7 @@ def _cpp_analysis(root, files, version, source_root, header_directories, header_
                 entity = Entity(
                     id=entity_id,
                     name=name,
-                    qualified_name="::".join(parents + [name]),
+                    qualified_name="::".join(parents + (['<声明名称待确认>'] if ambiguous_name else []) + [name]),
                     signature=signature,
                     signature_key=json.dumps(semantic_tree(declarator)) if declarator else signature,
                     language=language,
@@ -632,6 +644,18 @@ def _cpp_analysis(root, files, version, source_root, header_directories, header_
                 entity = entity_for_cursor(cursor)
                 if entity:
                     active_scope = entity.scope_id
+                    if cursor.spelling:
+                        leaf = entity.name.split('::')[-1]
+                        names = [leaf if leaf.startswith(cursor.spelling+'<') else cursor.spelling]
+                        parent = cursor.semantic_parent
+                        while parent and parent.kind != cindex.CursorKind.TRANSLATION_UNIT:
+                            if parent.spelling:
+                                names.insert(0,parent.displayname if parent.kind in {
+                                    cindex.CursorKind.CLASS_DECL,cindex.CursorKind.STRUCT_DECL,
+                                    cindex.CursorKind.CLASS_TEMPLATE,cindex.CursorKind.CLASS_TEMPLATE_PARTIAL_SPECIALIZATION
+                                } else parent.spelling)
+                            parent = parent.semantic_parent
+                        native_names.setdefault(entity.id,set()).add('::'.join(names))
                     usr = cursor.get_usr()
                     if usr:
                         entries = native_symbols.setdefault(usr, [])
@@ -736,6 +760,15 @@ def _cpp_analysis(root, files, version, source_root, header_directories, header_
                 message=f"已分别解析 {len(choices)} 个快照内编译配置；相同调用位置的目标冲突不进入确定图。"))
         for configured_arguments, includes, _ in choices:
             parse_unit(path, text, configured_arguments, includes)
+    scopes_by_id = {scope.id:scope for scope in result.scopes}
+    for entity in result.entities:
+        names = native_names.get(entity.id,set())
+        if len(names) == 1 and entity.location.path not in failed_config_paths:
+            entity.qualified_name = next(iter(names))
+            scopes_by_id[entity.scope_id].name = entity.qualified_name
+            if entity.id in ambiguous_names:
+                entity.name = entity.qualified_name
+                result.diagnostics.remove(ambiguous_names[entity.id])
     outcomes = {}
     entities = {entity.id:entity for entity in result.entities}
     callers = {entity.scope_id:entity for entity in result.entities}

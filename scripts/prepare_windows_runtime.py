@@ -69,7 +69,11 @@ def extract_headers(path):
             if not destination.resolve().is_relative_to(target.resolve()):
                 raise ValueError("声明包路径越界。")
             destination.parent.mkdir(parents=True, exist_ok=True)
-            destination.write_bytes(archive.read(entry))
+            content = archive.read(entry)
+            # A live native parser may memory-map an identical trusted header.
+            # Verify its bytes, then reuse it rather than opening it for writing.
+            if not destination.is_file() or destination.read_bytes() != content:
+                destination.write_bytes(content)
     files = {item.relative_to(target).as_posix(): hashlib.sha256(item.read_bytes()).hexdigest()
         for item in sorted(target.rglob("*")) if item.is_file() and item.name != "headers-manifest.json"}
     (target / "headers-manifest.json").write_text(json.dumps({"files": files, "compiler_major": 18,
