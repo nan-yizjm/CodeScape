@@ -23,7 +23,7 @@ function MapNode({ data }: NodeProps<Node<Data>>) {
       <button className="node-info nodrag nopan" aria-label={`查看 ${node.label} 详情`} onPointerDown={event => event.stopPropagation()} onClick={event => { event.stopPropagation(); event.nativeEvent.stopImmediatePropagation?.(); data.onInfo(node); }}><Info size={16} /></button></div>
     <div className="node-title" title={node.label}>{node.label}</div>
     {node.kind === 'module' && <p>{node.description}</p>}
-    <div className="node-footer"><span className="node-count">{node.kind === 'module' ? node.shownCount !== undefined && node.shownCount < node.count ? `显示 ${node.shownCount} / ${node.count} 个函数` : `${node.count} 个函数` : node.external ? <><ArrowUpRight size={12} /> 跨模块</> : '真实源码实现'}</span>
+    <div className="node-footer"><span className="node-count">{node.kind === 'module' ? node.shownCount !== undefined && node.shownCount < node.count ? `显示 ${node.shownCount} / ${node.count} 个函数` : `${node.count} 个函数` : node.external ? <><ArrowUpRight size={12} /> 跨模块</> : '真实源码实现'}</span>{node.kind === 'module' && node.internalRelationCount ? <span className="node-dependency">内部依赖 {node.internalRelationCount}</span> : null}
       <span className="node-state" title={stateLabel}>{node.incomplete && <AlertTriangle size={12} />}{node.state === 'mastered' ? <Check size={12} /> : node.state === 'in_progress' ? <span className="learning-dot" /> : <Circle size={10} />}<span>{stateLabel}</span></span></div>
     <span className="node-action" aria-hidden="true">{node.kind === 'module' ? node.canExpand ? (node.expanded ? '收起子模块' : '展开子模块') : '进入模块' : '阅读源码'}<ArrowUpRight size={13} /></span>
     <Handle type="source" position={Position.Bottom} />
@@ -33,7 +33,8 @@ function MapNode({ data }: NodeProps<Node<Data>>) {
 function RoutedEdge(props: EdgeProps) {
   const from = props.data?.from as ProjectionNode | undefined, to = props.data?.to as ProjectionNode | undefined;
   if (!from || !to) return null;
-  return <BaseEdge id={props.id} path={edgePath(from, to)} markerEnd={props.markerEnd} style={{ stroke: '#999999', strokeWidth: 1.5 }} interactionWidth={20} />;
+  const internal = from.id === to.id;
+  return <BaseEdge id={props.id} path={edgePath(from, to)} markerEnd={props.markerEnd} style={{ stroke: internal ? '#b9c0ca' : '#89919d', strokeWidth: internal ? 1.2 : 1.5, strokeDasharray: internal ? '4 4' : undefined, opacity: internal ? .72 : .9 }} interactionWidth={20} />;
 }
 
 const nodeTypes = { map: MapNode };

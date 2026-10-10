@@ -184,7 +184,9 @@ export default function App() {
           changeFocus(null);
           return;
         }
-        setExpandedModule(node.expanded ? null : node.id);
+        const currentExpanded = expandedModule ? modules.find(module => module.id === expandedModule) : undefined;
+        const isOuterParent = !!currentExpanded && currentExpanded.parent_id === node.module?.id;
+        setExpandedModule(isOuterParent ? (node.module?.parent_id || null) : node.expanded ? (node.module?.parent_id || null) : node.id);
         setShowOtherModules(false);
         setPanels([]);
       } else changeFocus(node.id);
@@ -320,7 +322,7 @@ export default function App() {
                 viewport={viewports[`${isFunctions ? 'grouped-functions' : 'vertical'}:${focus || 'root'}`]} onViewport={value => { const next = { ...viewports, [`${isFunctions ? 'grouped-functions' : 'vertical'}:${focus || 'root'}`]: value }; setViewports(next); saveSession(focus, next); }} /></Suspense>
                 : <div className="empty-state"><Boxes size={32} /><h3>此模块没有可展示函数</h3><p>实现可能位于顶层代码或其他隐藏作用域，详情中保留源码依据。</p><button className="secondary-button" onClick={() => activeModule && pushPanel({ kind: 'module', module: activeModule })}>查看模块详情</button></div>
                 : <div className="empty-state"><span className="large-empty-icon"><Sparkles size={30} /></span><h3>{['indexing', 'queued'].includes(project.status) ? '正在建立静态源码索引' : project.status === 'analyzing' ? '正在分批理解项目架构' : '源码已就绪，下一步理解架构'}</h3><p>{project.status === 'analyzing' ? `${analysisHint}${batchProgress?.total ? ` · 已完成 ${batchProgress.completed}/${batchProgress.total} 批` : ''}` : '静态索引不会被当作语义架构。授权后，AI 将基于当前快照归纳模块职责与整体工作原理；超大项目会自动拆成受控批次。'}</p>{project.status === 'indexed' && <button className="primary-button" onClick={() => { setError(''); setModal('consent'); }}><Sparkles size={15} />开始 AI 架构分析</button>}{project.status === 'paused' && <button className="primary-button" disabled={busy} onClick={() => void retryAI()}>{busy ? <span className="spinner" /> : <Sparkles size={15} />}重新开始分批分析</button>}{project.error && <p className="inline-error">{project.error}</p>}</div>}
-              <div className="canvas-caption"><span>{isFunctions ? '点击函数阅读源码 · 点击连线查看证据' : projection.abstraction ? '点击代码域逐层展开 · 再次点击收起 · 信息按钮查看职责' : '点击父模块展开 · 再次点击收起 · 信息按钮查看职责'}</span><span>{projection.nodes.length} 节点 <span className="caption-dot">·</span> {projection.relations.length} 连线</span></div>
+              <div className="canvas-caption"><span>{isFunctions ? '点击函数阅读源码 · 点击连线查看证据' : projection.abstraction ? '点击代码域逐层展开 · 再次点击收起 · 信息按钮查看职责' : '点击父模块展开 · 再次点击收起 · 信息按钮查看职责'}</span><span>{projection.nodes.length} 节点 <span className="caption-dot">·</span> {projection.relations.filter(relation => relation.from !== relation.to).length} 条协作线{projection.relations.some(relation => relation.from === relation.to) ? ` · ${projection.relations.filter(relation => relation.from === relation.to).length} 个内部依赖` : ''}</span></div>
             </div>
             {panel && <><div className="panel-resizer" onPointerDown={event => {
               event.currentTarget.setPointerCapture(event.pointerId);

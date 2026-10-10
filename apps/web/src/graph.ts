@@ -81,10 +81,12 @@ function compactAbstractChildren(modules: Module[]): Module[] {
         const suffix = chunks.length > 1 ? `-${index + 1}` : '';
         const id = `${parent.id}/_bucket/${key}${suffix}`;
         for (const child of chunk) assignments.set(child.id, id);
+        const sample = chunk.slice(0, 2).map(child => child.name).join('、');
+        const fallbackName = sample ? `相关模块 · ${sample}${chunk.length > 2 ? '等' : ''}` : `其他模块${chunks.length > 1 ? ` ${index + 1}` : ''}`;
         synthetic.push({
           id, parent_id: parent.id,
-          name: group.bucket ? `${group.bucket.label}${chunks.length > 1 ? ` ${index + 1}` : ''}` : `其他模块${chunks.length > 1 ? ` ${index + 1}` : ''}`,
-          summary: `按职责归纳 ${chunk.length} 个代码域，点击继续查看。`,
+          name: group.bucket ? `${group.bucket.label}${chunks.length > 1 ? ` ${index + 1}` : ''}` : fallbackName,
+          summary: group.bucket ? `按职责归纳 ${chunk.length} 个代码域，点击继续查看。` : `包含 ${chunk.length} 个相关代码域：${sample || '待进一步归类'}。`,
           entity_ids: [], code_paths: [`${parent.code_paths[0] || ''}_bucket/${key}${suffix}/`],
           incomplete: chunk.some(child => child.incomplete),
         });
@@ -192,46 +194,23 @@ export function projectGraph(project: ProjectDetail, focus: string | null, optio
         const isExpanded = options.expandedModuleId === active.id;
         otherModuleCount = isExpanded ? siblings.length : 0;
         hiddenModuleCount = isExpanded && !options.showOtherModules ? siblings.length : 0;
-        if (options.expandedModuleId === active.id) descend(active.id, 2);
+        if (options.expandedModuleId === active.id) descend(active.id, 1);
         if (options.showOtherModules || !isExpanded) displayed.push(...siblings);
       }
     } else {
       const roots = modules.filter(module => module.parent_id === null);
       const expandedId = options.expandedModuleId || null;
       const expanded = modules.find(module => module.id === expandedId);
-      let anchorRoot = expanded;
-      while (anchorRoot?.parent_id) anchorRoot = modules.find(module => module.id === anchorRoot!.parent_id);
-      const visibleRoots = expanded && !options.showOtherModules ? roots.filter(module => module.id === anchorRoot?.id) : roots;
-      hiddenModuleCount = roots.length - visibleRoots.length;
-      otherModuleCount = expanded ? Math.max(0, roots.length - 1) : 0;
-      for (const root of visibleRoots) {
-        displayed.push(root);
-        if (!expanded) continue;
-        let onPath = root.id === anchorRoot?.id;
-        let cursor: Module | undefined = expanded;
-        while (cursor?.parent_id && !onPath) {
-          onPath = cursor.parent_id === root.id;
-          cursor = modules.find(module => module.id === cursor!.parent_id);
-        }
-        if (onPath) {
-          const addExpanded = (parentId: string, depth: number, maxDepth: number) => {
-            if (depth > maxDepth) return;
-            for (const child of modules.filter(item => item.parent_id === parentId)) {
-              displayed.push(child);
-              addExpanded(child.id, depth + 1, maxDepth);
-            }
-          };
-          if (expanded.id === root.id) addExpanded(root.id, 1, abstracted ? 1 : 2);
-          else {
-            const ancestors: Module[] = [];
-            let current: Module | undefined = expanded;
-            while (current && current.id !== root.id) { ancestors.unshift(current); current = current.parent_id ? modules.find(item => item.id === current!.parent_id) : undefined; }
-            for (const ancestor of ancestors) {
-              if (!displayed.some(item => item.id === ancestor.id)) displayed.push(ancestor);
-            }
-            addExpanded(expanded.id, 1, abstracted ? 1 : 2);
-          }
-        }
+      if (!expanded) displayed.push(...roots);
+      else {
+        const parent = expanded.parent_id ? modules.find(module => module.id === expanded.parent_id) : undefined;
+        const siblings = parent ? modules.filter(module => module.parent_id === parent.id && module.id !== expanded.id) : roots.filter(module => module.id !== expanded.id);
+        otherModuleCount = siblings.length;
+        hiddenModuleCount = options.showOtherModules ? 0 : siblings.length;
+        displayed.push(expanded);
+        const addExpanded = (parentId: string) => displayed.push(...modules.filter(item => item.parent_id === parentId));
+        addExpanded(expanded.id);
+        if (options.showOtherModules) displayed.push(...siblings);
       }
     }
   }
@@ -256,7 +235,7 @@ export function projectGraph(project: ProjectDetail, focus: string | null, optio
       parentId: !functions && module.parent_id && displayed.some(item => item.id === module.parent_id) ? module.parent_id : undefined,
       container: functionNodes.some(node => node.parentId === module.id) || displayed.some(item => item.parent_id === module.id),
       canExpand: functions ? module.id === active.id : modules.some(item => item.parent_id === module.id),
-      expanded: functions ? module.id === active.id && functionExpanded : displayed.some(item => item.parent_id === module.id),
+      expanded: functions ? module.id === active.id && functionExpanded : module.id === options.expandedModuleId,
       shownCount: functions ? functionNodes.filter(node => node.parentId === module.id).length : undefined,
       x: 0, y: 0, width: 300, height: 204 };
   });
@@ -267,6 +246,7 @@ export function projectGraph(project: ProjectDetail, focus: string | null, optio
     for (const id of node.kind === 'function' ? [node.id] : moduleEntities(node.module!, modules)) owner.set(id, node.id);
   }
   const grouped = new Map<string, Relation>();
+  const internalRelationCounts = new Map<string, number>();
   for (const call of project.analysis.calls) {
     if (call.resolution !== 'confirmed' || !call.target_id) continue;
     const fromEntity = scopes.get(call.caller_scope_id);
@@ -280,8 +260,9 @@ export function projectGraph(project: ProjectDetail, focus: string | null, optio
     const label = functions ? '' : from === to ? '域内依赖' : '调用协作';
     if (!grouped.has(key)) grouped.set(key, { id: key, from, to, label, calls: [] });
     grouped.get(key)!.calls.push(call);
+    if (from === to) internalRelationCounts.set(from, (internalRelationCounts.get(from) || 0) + 1);
   }
-  return { nodes, relations: [...grouped.values()], hiddenModuleCount, otherModuleCount, abstraction: abstracted };
+  return { nodes: nodes.map(node => ({ ...node, internalRelationCount: internalRelationCounts.get(node.id) || 0 })), relations: [...grouped.values()], hiddenModuleCount, otherModuleCount, abstraction: abstracted };
 }
 
 export function escapeXml(value: string) {
@@ -291,7 +272,10 @@ export function escapeXml(value: string) {
 export function edgePath(from: ProjectionNode, to: ProjectionNode) {
   const sx = from.x + from.width / 2, sy = from.y + from.height;
   const tx = to.x + to.width / 2, ty = to.y;
-  if (from.id === to.id) return `M ${sx} ${sy} C ${sx} ${sy + 50}, ${from.x + from.width + 60} ${sy + 50}, ${from.x + from.width + 60} ${from.y - 50} C ${from.x + from.width + 60} ${from.y - 50}, ${tx} ${from.y - 50}, ${tx} ${ty}`;
+  if (from.id === to.id) {
+    const right = from.x + from.width, top = from.y + 34, bottom = from.y + from.height - 34, loop = right + 24;
+    return `M ${right - 48} ${top} C ${loop} ${top}, ${loop} ${bottom}, ${right - 48} ${bottom}`;
+  }
   if (ty < sy) {
     const lane = Math.max(from.x + from.width, to.x + to.width) + 50;
     return `M ${sx} ${sy} C ${sx} ${sy + 40}, ${lane} ${sy + 40}, ${lane} ${sy} L ${lane} ${ty - 40} C ${lane} ${ty - 60}, ${tx} ${ty - 60}, ${tx} ${ty}`;

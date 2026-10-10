@@ -87,7 +87,7 @@ describe('基于证据生成图形', () => {
     expect(collapsed.nodes.map(node => node.id)).toEqual(['root']);
     expect(collapsed.hiddenModuleCount).toBe(0);
     const view = await layoutHierarchy(projectGraph(project, null, { expandedModuleId: 'root' }), verticalFallback);
-    expect(view.nodes.map(node => node.id)).toEqual(['root', 'middle', 'm']);
+    expect(view.nodes.map(node => node.id)).toEqual(['root', 'middle']);
     for (const node of view.nodes.filter(node => node.parentId)) {
       const parent = view.nodes.find(item => item.id === node.parentId)!;
       expect(node.x).toBeGreaterThan(parent.x);
@@ -97,7 +97,7 @@ describe('基于证据生成图形', () => {
     }
     expect(projectGraph(project, 'middle', { expandedModuleId: 'middle' }).nodes.map(node => node.id)).toEqual(['middle', 'm']);
     const childView = projectGraph(project, null, { expandedModuleId: 'middle' });
-    expect(childView.nodes.map(node => node.id)).toEqual(['root', 'middle', 'm']);
+    expect(childView.nodes.map(node => node.id)).toEqual(['middle', 'm']);
     const svg = exportSvg(view, '嵌套');
     expect(svg.indexOf('父模块')).toBeLessThan(svg.indexOf('子模块'));
   });
@@ -112,11 +112,11 @@ describe('基于证据生成图形', () => {
     );
     expect(projectGraph(project, null).nodes.map(node => node.id)).toEqual(['root', 'sibling']);
     const expanded = projectGraph(project, null, { expandedModuleId: 'root' });
-    expect(expanded.nodes.map(node => node.id)).toEqual(['root', 'middle', 'm']);
+    expect(expanded.nodes.map(node => node.id)).toEqual(['root', 'middle']);
     expect(expanded.hiddenModuleCount).toBe(1);
     expect(expanded.otherModuleCount).toBe(1);
     expect(projectGraph(project, null, { expandedModuleId: 'root', showOtherModules: true }).nodes.map(node => node.id))
-      .toEqual(['root', 'middle', 'm', 'sibling']);
+      .toEqual(['root', 'middle', 'sibling']);
   });
   it('大型项目概览先展示源码域，再逐层进入逻辑模块', () => {
     const project = fixture();
@@ -135,6 +135,8 @@ describe('基于证据生成图形', () => {
     expect(featureGroup).toBeDefined();
     expect(web.nodes.some(node => node.id === 'large-0')).toBe(false);
     const featureFiles = projectGraph(project, null, { expandedModuleId: featureGroup!.id });
+    expect(featureFiles.nodes.some(node => node.id === '__abstract__:apps/web')).toBe(false);
+    expect(featureFiles.nodes.find(node => node.id === featureGroup!.id)?.parentId).toBeUndefined();
     const otherFeatureGroup = featureFiles.nodes.find(node => node.id === '__abstract__:apps/web/features/_bucket/other-1');
     expect(otherFeatureGroup).toBeDefined();
     const fileGroups = projectGraph(project, null, { expandedModuleId: otherFeatureGroup!.id });
