@@ -536,6 +536,34 @@ def create_app(root: Path | None = None, nonce: str | None = None) -> FastAPI:
         task.add_done_callback(tasks.discard)
         return envelope({"status": "analyzing"})
 
+    @app.post("/api/v1/projects/{project_id}/overview")
+    async def refresh_overview(project_id: str):
+        project = get_project(project_id)
+        if not project["architecture"] or project["status"] != "ready":
+            raise HTTPException(409, "请先完成架构分析，再归纳项目概览。")
+        consents = json.loads(consents_path.read_text()) if consents_path.exists() else {}
+        granted = consents.get(project_id, {})
+        if (
+            granted.get("base_url") != provider.settings()["base_url"]
+            or granted.get("snapshot_hash") != project["snapshot"]["hash"]
+        ):
+            raise HTTPException(403, "请先在 AI 架构分析中授权当前快照与接收端，再更新概览。")
+        if run_lock.locked():
+            raise HTTPException(409, "已有任务运行，请等待后主动启动。")
+        async with run_lock:
+            architecture = Architecture.model_validate(project["architecture"])
+            try:
+                overview, usage = await provider.project_overview(
+                    architecture, Analysis.model_validate(project["result"])
+                )
+            except ProviderError as error:
+                raise HTTPException(503, str(error)) from None
+            architecture.overview = overview
+            database.update(project_id, architecture=architecture.model_dump())
+            usage_path = root / "projects" / project_id / "overview-usage.json"
+            usage_path.write_text(json.dumps(usage), encoding="utf-8")
+        return envelope(public(get_project(project_id), full=True))
+
     dist = REPOSITORY / "apps/web/dist"
 
     @app.get("/{path:path}")

@@ -7,7 +7,7 @@ export type Call = { id: string; caller_scope_id: string; target_id: string | nu
   location: Location; resolution: string; origin: string; reason: string; target_name: string | null };
 export type Module = { id: string; parent_id: string | null; name: string; summary: string; entity_ids: string[];
   code_paths: string[]; incomplete: boolean };
-export type Overview = { introduction: string; capabilities: string[]; principle: string; limitations: string[] };
+export type Overview = { introduction: string; capabilities: string[]; principle: string; limitations: string[]; synthesized?: boolean; analysis_notes?: string[] };
 export type Project = { id: string; name: string; source: string; created_at: string; status: string;
   version_id: string; demo: boolean; error: string | null; function_count: number; file_count: number;
   progress: { mastered: number; total: number }; languages: string[]; diagnostic_count: number;

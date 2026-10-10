@@ -108,6 +108,39 @@ def test_connection_test_contains_no_source(tmp_path, monkeypatch):
     assert "files" not in recorded[0][1] and recorded[0][2] == 256
 
 
+def test_refresh_overview_requires_consent_and_preserves_architecture(client, monkeypatch):
+    project = client.get("/api/v1/projects").json()["data"][0]
+    url = f"/api/v1/projects/{project['id']}"
+    before = client.get(url).json()["data"]
+    assert client.post(url + "/overview", json={}).status_code == 403
+    client.post(url + "/consent", json={"accepted": True})
+
+    async def fake(self, architecture, analysis):
+        return Overview(introduction="示例用于学习源码协作。", capabilities=["理解模块协作"],
+                        principle="输入经过分析后变成图形。", limitations=["预置验证样例"],
+                        synthesized=True), {"total_tokens": 5}
+
+    monkeypatch.setattr(Provider, "project_overview", fake)
+    response = client.post(url + "/overview", json={})
+    assert response.status_code == 200
+    after = response.json()["data"]
+    assert after["architecture"]["overview"]["synthesized"]
+    for field in ("version_id", "status", "analysis", "learning", "scope", "file_ids"):
+        assert after[field] == before[field]
+    assert after["architecture"]["modules"] == before["architecture"]["modules"]
+
+    async def failed(self, architecture, analysis):
+        raise ProviderError("模拟概览失败")
+
+    monkeypatch.setattr(Provider, "project_overview", failed)
+    assert client.post(url + "/overview", json={}).status_code == 503
+    assert client.get(url).json()["data"]["architecture"] == after["architecture"]
+
+    # 失败后锁释放，接收端变化需要重新授权，不能沿用旧授权。
+    client.put("/api/v1/settings/ai", json={"base_url": "https://example.org", "model": "test"})
+    assert client.post(url + "/overview", json={}).status_code == 403
+
+
 def test_architecture_splits_large_context_and_merges_checked_batches(tmp_path, monkeypatch):
     provider = Provider(tmp_path)
     files = {"one.py": "# one\n" + "x" * 90_000, "two.py": "# two\n" + "y" * 90_000}
@@ -137,6 +170,10 @@ def test_architecture_splits_large_context_and_merges_checked_batches(tmp_path, 
     async def fake_request(self, system, user, max_tokens=8000):
         requests.append(user)
         payload = json.loads(user)
+        if "confirmed_collaboration" in payload:
+            assert len(payload["modules"]) == 2
+            return {"introduction": "这是一个示例项目。", "capabilities": ["处理两类输入"],
+                    "principle": "两类模块各自处理输入。", "limitations": []}, {"total_tokens": 3}
         modules = [
             {"id": f"local-{entity['id']}", "name": entity["name"], "summary": "批次职责",
              "entity_ids": [entity["id"]], "code_paths": [entity["location"]["path"]], "incomplete": False}
@@ -161,15 +198,17 @@ def test_architecture_splits_large_context_and_merges_checked_batches(tmp_path, 
     )
     assert len(architecture.modules) == 2
     assert {entity_id for module in architecture.modules for entity_id in module.entity_ids} == {"one-f", "two-f"}
-    assert usage["total_tokens"] == 20
+    assert usage["total_tokens"] == 23
+    assert architecture.overview.synthesized
+    assert architecture.overview.introduction == "这是一个示例项目。"
     assert progress[0][0] == 0 and progress[-1][0] == progress[-1][1] == 2
-    assert len(requests) == len(batches) == 2
+    assert len(requests) == 3 and len(batches) == 2
     requests.clear()
     resumed, resumed_usage = asyncio.run(
         provider.architecture(analysis, files, completed_batches=batches[:1], on_batch=on_batch)
     )
     assert len(resumed.modules) == 2
-    assert len(requests) == 1 and resumed_usage["total_tokens"] == 10
+    assert len(requests) == 2 and resumed_usage["total_tokens"] == 13
 
 
 def test_ai_analysis_resumes_from_last_checkpoint(client, monkeypatch):
@@ -254,6 +293,9 @@ def test_architecture_replans_when_model_output_is_truncated(monkeypatch, tmp_pa
         if calls == 1:
             raise ProviderError("模型输出被截断，请缩小分析批次。")
         payload = json.loads(user)
+        if "confirmed_collaboration" in payload:
+            return {"introduction": "这是一个示例项目。", "capabilities": ["处理输入"],
+                    "principle": "两个模块共同处理输入。", "limitations": []}, {"total_tokens": 1}
         response = {
             "modules": [
                 {"id": entity["id"], "name": entity["name"], "summary": "职责",
@@ -269,7 +311,7 @@ def test_architecture_replans_when_model_output_is_truncated(monkeypatch, tmp_pa
 
     monkeypatch.setattr(Provider, "request", fake_request)
     architecture, _ = asyncio.run(provider.architecture(analysis, files))
-    assert calls == 3
+    assert calls == 4
     assert {entity_id for module in architecture.modules for entity_id in module.entity_ids} == {
         entity.id for entity in analysis.entities
     }

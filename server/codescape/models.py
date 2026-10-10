@@ -83,6 +83,8 @@ class Overview(Contract):
     capabilities: list[str]
     principle: str
     limitations: list[str]
+    synthesized: bool = False
+    analysis_notes: list[str] = Field(default_factory=list)
 
 
 class Architecture(Contract):
