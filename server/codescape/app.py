@@ -6,7 +6,6 @@ import os
 import secrets
 import shutil
 import subprocess
-import sys
 import threading
 import time
 import uuid
@@ -42,6 +41,7 @@ from .models import (
 from .provider import PIPELINE_VERSION, Provider, ProviderError, validate_architecture
 from .publication import load_output, prepare_output
 from .reads import VersionReads
+from .runtime import worker_command
 from .security import data_root
 from .snapshots import create_snapshot, read_snapshot
 from .tasks import TaskQueue
@@ -248,6 +248,7 @@ def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=
 
     @asynccontextmanager
     async def lifespan(_):
+        app.state.loop = asyncio.get_running_loop()
         imports.cleanup()
         seed()
         for operation in database.pending_deletes():
@@ -259,9 +260,7 @@ def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=
                 await asyncio.sleep(5)
                 cleanup_versions()
                 if on_idle_exit and lifetime.should_exit():
-                    closing = True
-                    await queue.shutdown()
-                    await on_idle_exit()
+                    await request_shutdown()
                     return
         cleanup_versions()
         monitor = asyncio.create_task(watch_clients())
@@ -273,6 +272,14 @@ def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=
         await queue.shutdown()
         await deletion.shutdown()
         database.engine.dispose()
+
+    async def request_shutdown():
+        nonlocal closing
+        closing = True
+        await queue.shutdown()
+        await deletion.shutdown()
+        if on_idle_exit:
+            await on_idle_exit()
 
     def cleanup_versions():
         for version in database.reclaimable_versions():
@@ -311,6 +318,7 @@ def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=
     app.state.issue_nonce = issue_nonce
     app.state.ready_event = threading.Event()
     app.state.lifetime = lifetime
+    app.state.request_shutdown = request_shutdown
 
     @app.middleware("http")
     async def protect(request: Request, call_next):
@@ -474,12 +482,17 @@ def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=
         process = None
         worker_job = None
         try:
-            process = await asyncio.create_subprocess_exec(
-                sys.executable, str(REPOSITORY / "scripts/analyze_snapshot.py"),
+            spawning = asyncio.create_task(asyncio.create_subprocess_exec(
+                *worker_command("codescape.index_worker", "--index-worker"),
                 stdin=asyncio.subprocess.PIPE, stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.DEVNULL, cwd=REPOSITORY,
                 creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
-            )
+            ))
+            try:
+                process = await asyncio.shield(spawning)
+            except asyncio.CancelledError:
+                process = await spawning
+                raise
             # The parser blocks on stdin until containment is ready. Native
             # crashes, cancellation and timeouts cannot leave a Node child behind.
             worker_job = WorkerJob()

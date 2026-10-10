@@ -99,3 +99,19 @@ def test_windows_mutex_and_authenticated_pipe_activation(tmp_path):
     reopened = LocalInstance(tmp_path)
     assert reopened.primary
     reopened.close()
+
+
+def test_authenticated_update_request_does_not_replace_activation(tmp_path):
+    requested = []
+    first = LocalInstance(tmp_path)
+    second = None
+    try:
+        first.serve(lambda: "http://127.0.0.1:8125/#nonce=owned", lambda: requested.append(True) or True)
+        second = LocalInstance(tmp_path)
+        assert second._command("shutdown") == {"accepted": True}
+        assert requested == [True]
+        assert second.activate() == "http://127.0.0.1:8125/#nonce=owned"
+    finally:
+        if second:
+            second.close()
+        first.close()

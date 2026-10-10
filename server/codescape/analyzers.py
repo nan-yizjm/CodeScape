@@ -10,8 +10,9 @@ import uuid
 from pathlib import Path
 
 from .models import Analysis, Call, Diagnostic, Entity, Location, Scope
+from .runtime import executable, resource_root
 
-REPOSITORY = Path(__file__).resolve().parents[2]
+REPOSITORY = resource_root()
 
 
 def stable_id(*parts: object) -> str:
@@ -579,7 +580,7 @@ def typescript_analysis(root: Path, files: dict[str, str], version: str) -> Anal
         return Analysis()
     try:
         completed = subprocess.run(
-            ["node", str(REPOSITORY / "analyzers/typescript/analyze.mjs")],
+            [executable("runtime/node/node.exe", "node"), str(REPOSITORY / "analyzers/typescript/analyze.mjs")],
             input=json.dumps({"root": str(root), "paths": paths, "version": version}),
             text=True,
             encoding="utf-8",

@@ -65,11 +65,8 @@ def git_environment() -> dict[str, str]:
 
 
 def git_command(*arguments: str) -> list[str]:
-    bundled = Path(__file__).resolve().parents[2] / "runtime/git/cmd/git.exe"
-    executable = str(bundled) if bundled.is_file() else shutil.which("git")
-    if not executable:
-        raise ValueError("Git 运行组件不可用，请修复 CodeScape 安装。")
-    return [executable, "-c", "credential.helper=", "-c", "core.hooksPath=",
+    from .runtime import executable
+    return [executable("runtime/git/cmd/git.exe", "git"), "-c", "credential.helper=", "-c", "core.hooksPath=",
             "-c", "http.followRedirects=false", "-c", "http.sslVerify=true", "-c", "http.proxy=", "-c", "http.cookieFile=",
             "-c", "protocol.file.allow=never", "-c", "protocol.ext.allow=never", *arguments]
 

@@ -1,0 +1,17 @@
+{
+  "date": "2026-10-11",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "build_id": "20261010T172840Z",
+  "setup_sha256": "02b0429135c4bc19da630b017bef5ce1a5bbca80ae086cf45e62b2a353934872",
+  "validation_root": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\output\\windows-installer-validation\\35af2714-5581-4465-9608-c3e860073db1",
+  "first_install": "通过",
+  "installed_files_match_manifest": true,
+  "upgrade_while_running": "通过；应用先正常退出，返回码 0",
+  "learning_retained": true,
+  "uninstall": "通过；程序和本次安装记录移除",
+  "data_and_snapshot_retained": true,
+  "developer_path_removed": true,
+  "model_requests": 0,
+  "signed": false,
+  "boundary": "开发机 Windows 11 x64 验证，同版本覆盖升级；不代替干净 Windows 10/11 与跨版本升级验收。"
+}

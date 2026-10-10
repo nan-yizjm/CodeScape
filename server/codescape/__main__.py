@@ -1,4 +1,5 @@
 import argparse
+import asyncio
 import json
 import os
 import secrets
@@ -13,23 +14,47 @@ import uvicorn
 from .app import create_app
 from .instance import LocalInstance, secure_directory
 from .security import data_root
-from .storage_schema import StorageError
+from .storage_schema import KNOWN_REVISIONS, SCHEMA_VERSION, StorageError, check_database
 
 
 def main():
+    if sys.stdout is not None:
+        sys.stdout.reconfigure(encoding="utf-8")
+    if sys.stderr is not None:
+        sys.stderr.reconfigure(encoding="utf-8")
     parser = argparse.ArgumentParser(description="启动 CodeScape 本地源码学习空间")
     parser.add_argument("--port", type=int, default=0)
     parser.add_argument("--no-browser", action="store_true")
     parser.add_argument("--ai-worker", action="store_true", help=argparse.SUPPRESS)
+    parser.add_argument("--index-worker", action="store_true", help=argparse.SUPPRESS)
+    parser.add_argument("--prepare-update", action="store_true", help="安全保存并停止本地应用，校验现有数据")
     args = parser.parse_args()
     if args.ai_worker:
         from .ai_worker import main as worker_main
         worker_main()
         return
+    if args.index_worker:
+        from .index_worker import main as index_main
+        index_main()
+        return
     if args.port != 0 and not 1024 <= args.port <= 65535:
         parser.exit(2, "端口范围为 1024 至 65535；0 表示自动选择。\n")
     root = data_root()
     instance = LocalInstance(root)
+    if args.prepare_update:
+        try:
+            if not instance.primary:
+                instance.stop_for_update()
+            if (root / "app.db").exists():
+                version, revision, _ = check_database(root / "app.db")
+                if version > SCHEMA_VERSION or revision not in {None, *KNOWN_REVISIONS}:
+                    raise StorageError("数据库来自更新版本，不能继续安装旧版本。")
+            print("应用已安全保存并停止，现有数据校验通过；安装数据不会被清理。")
+        except (OSError, RuntimeError):
+            parser.exit(2, "应用保存或数据校验未通过，安装不能继续；请保留应用数据并排查。\n")
+        finally:
+            instance.close()
+        return
     runtime = root / "run"
     developer_runtime = (Path.cwd() / ".runtime"
                          if not getattr(sys, "frozen", False) and "CODESCAPE_DATA_DIR" not in os.environ else None)
@@ -80,7 +105,13 @@ def main():
                 raise RuntimeError("应用尚未启动完成。")
             return f"http://127.0.0.1:{port}/#nonce={app.state.issue_nonce()}"
 
-        instance.serve(issue_url)
+        def stop_for_update():
+            if not app.state.ready_event.wait(10) or not server:
+                return False
+            asyncio.run_coroutine_threadsafe(app.state.request_shutdown(), app.state.loop)
+            return True
+
+        instance.serve(issue_url, stop_for_update)
         save_launch(url)
         if not args.no_browser:
             def open_when_ready():

@@ -63,22 +63,36 @@ class LocalInstance:
             temporary.replace(self.key_path)
 
     def activate(self) -> str:
+        document = self._command("open")
+        if "url" not in document:
+            raise RuntimeError("现有实例正在退出，请稍后重试。")
+        return document["url"]
+
+    def stop_for_update(self, timeout: float = 60) -> None:
+        if self._command("shutdown").get("accepted") is not True:
+            raise RuntimeError("现有实例无法安全保存，请关闭界面后重试安装。")
+        self.kernel.WaitForSingleObject.argtypes = [wintypes.HANDLE, wintypes.DWORD]
+        self.kernel.WaitForSingleObject.restype = wintypes.DWORD
+        result = self.kernel.WaitForSingleObject(self.handle, int(timeout * 1000))
+        if result not in {0, 0x80}:
+            raise RuntimeError("应用尚未完成保存，安装没有继续；请稍后重试。")
+        # The wait acquires ownership of the named mutex. Release it before installation.
+        self.kernel.ReleaseMutex(self.handle)
+
+    def _command(self, command: str) -> dict:
         for _ in range(50):
             try:
                 authkey = _crypt(self.key_path.read_bytes(), True)
                 with Client(self.address, family="AF_PIPE", authkey=authkey) as connection:
-                    connection.send_bytes(b'{"command":"open"}')
+                    connection.send_bytes(json.dumps({"command": command}).encode())
                     if not connection.poll(5):
                         raise RuntimeError("现有实例未响应，请稍后重试。")
-                    document = json.loads(connection.recv_bytes(4096))
-                    if "url" not in document:
-                        raise RuntimeError("现有实例正在退出，请稍后重试。")
-                    return document["url"]
+                    return json.loads(connection.recv_bytes(4096))
             except (OSError, EOFError, AuthenticationError):
                 time.sleep(0.1)
         raise RuntimeError("已有 CodeScape 实例启动中或未响应，请稍后重试。")
 
-    def serve(self, issue_url) -> None:
+    def serve(self, issue_url, request_shutdown=None) -> None:
         self.listener = Listener(self.address, family="AF_PIPE", authkey=self.authkey)
 
         def loop():
@@ -88,6 +102,10 @@ class LocalInstance:
                         if not connection.poll(5):
                             continue
                         request = json.loads(connection.recv_bytes(1024))
+                        if request == {"command": "shutdown"}:
+                            accepted = bool(request_shutdown and request_shutdown())
+                            connection.send_bytes(json.dumps({"accepted": accepted}).encode())
+                            continue
                         if request != {"command": "open"}:
                             continue
                         try:

@@ -18,6 +18,9 @@ dependencies = [
 
 [dependency-groups]
 dev = ["pytest>=8,<10", "ruff>=0.11,<1"]
+packaging = [
+    "pyinstaller==6.22.3",
+]
 
 [build-system]
 requires = ["hatchling"]
