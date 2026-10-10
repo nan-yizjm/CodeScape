@@ -129,11 +129,31 @@ describe('基于证据生成图形', () => {
     expect(overview.nodes.map(node => node.id)).toEqual(['__abstract__:apps', '__abstract__:packages']);
     const apps = projectGraph(project, null, { expandedModuleId: '__abstract__:apps' });
     expect(apps.nodes[0].id).toBe('__abstract__:apps');
-    const featureGroup = apps.nodes.find(node => node.id === '__abstract__:apps/web/features/feature-0.tsx');
+    expect(apps.nodes.some(node => node.id === '__abstract__:apps/web')).toBe(true);
+    const web = projectGraph(project, null, { expandedModuleId: '__abstract__:apps/web' });
+    const featureGroup = web.nodes.find(node => node.id === '__abstract__:apps/web/features');
     expect(featureGroup).toBeDefined();
-    expect(apps.nodes.some(node => node.id === 'large-0')).toBe(false);
-    const feature = projectGraph(project, null, { expandedModuleId: featureGroup!.id });
+    expect(web.nodes.some(node => node.id === 'large-0')).toBe(false);
+    const featureFiles = projectGraph(project, null, { expandedModuleId: featureGroup!.id });
+    const otherFeatureGroup = featureFiles.nodes.find(node => node.id === '__abstract__:apps/web/features/_bucket/other-1');
+    expect(otherFeatureGroup).toBeDefined();
+    const fileGroups = projectGraph(project, null, { expandedModuleId: otherFeatureGroup!.id });
+    const fileGroup = fileGroups.nodes.find(node => node.id === '__abstract__:apps/web/features/feature-0.tsx');
+    expect(fileGroup).toBeDefined();
+    const feature = projectGraph(project, null, { expandedModuleId: fileGroup!.id });
     expect(feature.nodes.some(node => node.id === 'large-0')).toBe(true);
+  });
+  it('展开代码域时将拥挤的同级职责归并为少量子域', () => {
+    const project = fixture();
+    const base = project.architecture!.modules[0];
+    const parts = ['server', 'entry.server', 'vite.config', 'components', 'modules', 'features', 'routes', 'lib', 'tests'];
+    project.architecture!.modules = parts.concat(['features', 'routes', 'lib', 'components']).map((part, index) => ({
+      ...base, id: `crowded-${index}`, name: `${part} ${index}`, entity_ids: [], code_paths: [`apps/web/${part}/file-${index}.tsx`],
+    }));
+    const expanded = projectGraph(project, null, { expandedModuleId: '__abstract__:apps/web' });
+    const parents = expanded.nodes.filter(node => node.parentId === '__abstract__:apps/web');
+    expect(parents.length).toBeLessThanOrEqual(6);
+    expect(parents.map(node => node.label)).toEqual(expect.arrayContaining(['运行与入口', '界面与基础', '业务功能', '测试验证']));
   });
   it('抽象总览仍聚合跨代码域依赖', () => {
     const project = fixture();

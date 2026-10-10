@@ -19,6 +19,7 @@ export function moduleEntities(module: Module, modules: Module[]): string[] {
 
 const ABSTRACT_PREFIX = '__abstract__:';
 const ABSTRACT_THRESHOLD = 12;
+const ABSTRACT_CHILD_LIMIT = 6;
 const IGNORED_PATH_PARTS = new Set(['src', 'app', 'server']);
 const ABSTRACT_LABELS: Record<string, string> = {
   apps: '应用服务', packages: '核心包', tests: '测试验证', scripts: '工具脚本', site: '站点基础',
@@ -42,6 +43,64 @@ function abstractLabel(part: string, depth: number): string {
 
 function abstractId(parts: string[]): string { return `${ABSTRACT_PREFIX}${parts.join('/')}`; }
 
+type AbstractBucket = { key: string; label: string; match: Set<string> };
+const ABSTRACT_BUCKETS: AbstractBucket[] = [
+  { key: 'runtime', label: '运行与入口', match: new Set(['server', 'entry.server', 'vite.config', 'config']) },
+  { key: 'interface', label: '界面与基础', match: new Set(['components', 'modules', 'root', 'site-modules', 'site modules', 'lib']) },
+  { key: 'product', label: '业务功能', match: new Set(['features', 'routes', 'pages', 'reports']) },
+  { key: 'tests', label: '测试验证', match: new Set(['tests', 'test', '测试验证']) },
+];
+
+function abstractBucket(child: Module): AbstractBucket | undefined {
+  const key = child.id.split('/').pop() || child.name.toLowerCase();
+  return ABSTRACT_BUCKETS.find(bucket => bucket.match.has(key) || bucket.match.has(child.name.toLowerCase()));
+}
+
+/** Keep an expanded code domain readable by grouping crowded sibling domains. */
+function compactAbstractChildren(modules: Module[]): Module[] {
+  const result = [...modules];
+  const parents = result.filter(module => module.id.startsWith(ABSTRACT_PREFIX));
+  for (const parent of parents) {
+    const children = result.filter(module => module.parent_id === parent.id);
+    if (children.length <= ABSTRACT_CHILD_LIMIT) continue;
+    const groups = new Map<string, { bucket?: AbstractBucket; children: Module[] }>();
+    for (const child of children) {
+      const bucket = abstractBucket(child);
+      const key = bucket?.key || 'other';
+      if (!groups.has(key)) groups.set(key, { bucket, children: [] });
+      groups.get(key)!.children.push(child);
+    }
+    const assignments = new Map<string, string>();
+    const synthetic: Module[] = [];
+    for (const [key, group] of groups) {
+      const chunks: Module[][] = [];
+      for (let index = 0; index < group.children.length; index += ABSTRACT_CHILD_LIMIT) {
+        chunks.push(group.children.slice(index, index + ABSTRACT_CHILD_LIMIT));
+      }
+      chunks.forEach((chunk, index) => {
+        const suffix = chunks.length > 1 ? `-${index + 1}` : '';
+        const id = `${parent.id}/_bucket/${key}${suffix}`;
+        for (const child of chunk) assignments.set(child.id, id);
+        synthetic.push({
+          id, parent_id: parent.id,
+          name: group.bucket ? `${group.bucket.label}${chunks.length > 1 ? ` ${index + 1}` : ''}` : `其他模块${chunks.length > 1 ? ` ${index + 1}` : ''}`,
+          summary: `按职责归纳 ${chunk.length} 个代码域，点击继续查看。`,
+          entity_ids: [], code_paths: [`${parent.code_paths[0] || ''}_bucket/${key}${suffix}/`],
+          incomplete: chunk.some(child => child.incomplete),
+        });
+      });
+    }
+    const childIds = new Set(children.map(child => child.id));
+    for (const child of children) child.parent_id = assignments.get(child.id)!;
+    const firstChild = result.findIndex(module => childIds.has(module.id));
+    const withoutChildren = result.filter(module => !childIds.has(module.id));
+    const parentIndex = withoutChildren.findIndex(module => module.id === parent.id);
+    withoutChildren.splice(parentIndex >= 0 ? parentIndex + 1 : firstChild, 0, ...synthetic, ...children);
+    result.splice(0, result.length, ...withoutChildren);
+  }
+  return result;
+}
+
 /**
  * Large repositories often have hundreds of model modules at the same level.
  * Build a deterministic path-based navigation tree for the overview only;
@@ -61,9 +120,9 @@ function abstractModules(modules: Module[]): Module[] {
       if (!next.has(part)) next.set(part, []);
       next.get(part)!.push(module);
     }
-    // Skip path segments with a single branch (for example packages/backend/src)
-    // so that the extra layer communicates a real subsystem boundary.
-    if (next.size === 1 && bucket.length > ABSTRACT_THRESHOLD) {
+    // Skip an unlabeled path segment with a single branch so the extra layer
+    // communicates a real subsystem boundary while preserving named domains.
+    if (next.size === 1 && bucket.length > ABSTRACT_THRESHOLD && !ABSTRACT_LABELS[[...next.keys()][0]]) {
       const [part, branch] = [...next.entries()][0];
       add(branch, [...prefix, part], parentId);
       return;
@@ -90,7 +149,7 @@ function abstractModules(modules: Module[]): Module[] {
   // Preserve nested model modules and make them children of their original roots.
   const rootIds = new Set(roots.map(module => module.id));
   result.push(...modules.filter(module => !rootIds.has(module.id)));
-  return result;
+  return compactAbstractChildren(result);
 }
 
 export function aggregateState(states: LearningState[]): LearningState {
