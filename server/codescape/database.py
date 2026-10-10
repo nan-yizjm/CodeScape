@@ -6,6 +6,7 @@ from pathlib import Path
 
 from sqlalchemy import JSON, Column, Integer, MetaData, String, Table, create_engine, event, select
 
+from .idempotency import redact_project_receipts
 from .learning import learning_units, module_learning_mapping
 from .migration import learning_mapping, module_mapping
 from .models import Analysis, Architecture
@@ -174,6 +175,7 @@ class Database:
             for table in [self.learning, self.sessions, self.analysis_tasks, self.jobs, self.versions, self.requests]:
                 connection.execute(table.delete().where(table.c.project_id == project_id))
             connection.execute(self.projects.delete().where(self.projects.c.id == project_id))
+            redact_project_receipts(connection, self.app_metadata, project_id)
             connection.execute(self.operations.update().where(self.operations.c.id == operation_id).values(
                 status="completed", phase="complete", detail="软件内项目数据已永久删除", updated_at=now()))
 

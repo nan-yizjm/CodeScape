@@ -23,6 +23,7 @@ from .context_tools import validate_explanations
 from .database import Database, now
 from .deletion import ProjectDeletion
 from .dependencies import validate_primary_dependencies
+from .idempotency import MutationReceipts
 from .imports import ImportService, remove_staging
 from .learning import learning_units
 from .ledger import RequestLedger, ai_scope
@@ -52,6 +53,8 @@ def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=
     root = root or data_root()
     database = Database(root)
     database.recover_interrupted()
+    receipts = MutationReceipts(database)
+    receipts.recover()
     provider = Provider(root, database)
     ledger = RequestLedger(database)
     ledger.recover()
@@ -319,6 +322,7 @@ def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=
     app.state.ready_event = threading.Event()
     app.state.lifetime = lifetime
     app.state.request_shutdown = request_shutdown
+    app.state.receipts = receipts
 
     @app.middleware("http")
     async def protect(request: Request, call_next):
@@ -359,7 +363,7 @@ def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=
                     return JSONResponse(
                         {"error": {"code": "CSRF", "message": "会话校验失败。"}}, status_code=403
                     )
-        response = await call_next(request)
+        response = await receipts.handle(request, call_next)
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["Referrer-Policy"] = "no-referrer"
         if request.url.path.startswith("/api/"):
