@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
-import { ReactFlow, ReactFlowProvider, Background, Controls, Handle, Position, BaseEdge, MarkerType, Panel, useReactFlow,
+import { ReactFlow, ReactFlowProvider, Background, Controls, Handle, Position, BaseEdge, EdgeLabelRenderer, MarkerType, Panel, useReactFlow,
   type Node, type NodeProps, type EdgeProps, type Viewport } from '@xyflow/react';
 import ELK, { type ElkNode } from 'elkjs/lib/elk-api';
 import { Info, Check, Circle, ArrowUpRight, AlertTriangle, Boxes, Braces } from 'lucide-react';
 import type { Point, Projection, ProjectionNode, Relation } from './types';
-import { edgePath, nodePalette } from './graph';
+import { edgePath, nodePalette, relationLabelPoint } from './graph';
 import { layoutCompound, layoutHierarchy, orthogonalOptions, verticalFallback } from './layout';
 
 type Data = { node: ProjectionNode; onInfo: (node: ProjectionNode) => void; onOpen: (node: ProjectionNode) => void; onInternal: (node: ProjectionNode) => void } & Record<string, unknown>;
@@ -15,7 +15,7 @@ function MapNode({ data }: NodeProps<Node<Data>>) {
   const Icon = node.kind === 'module' ? Boxes : Braces;
   const palette = nodePalette(node);
   const stateLabel = { not_started: '未开始', in_progress: '学习中', mastered: '已掌握', not_applicable: '不适用' }[node.state];
-  return <div className={`map-node ${node.kind} ${node.container ? 'module-container' : ''} ${node.expanded ? 'is-expanded' : ''} ${node.external ? 'external-node' : ''} state-${node.state}`} style={{ width: node.width, height: node.height, '--node-bg': palette.background, '--node-border': palette.border, '--node-accent': palette.accent } as CSSProperties}>
+  return <div className={`map-node ${node.kind} ${node.container ? 'module-container' : ''} ${node.expanded ? 'is-expanded' : ''} ${node.external && node.kind === 'module' ? 'external-node' : ''} state-${node.state}`} style={{ width: node.width, height: node.height, '--node-bg': palette.background, '--node-border': palette.border, '--node-accent': palette.accent } as CSSProperties}>
     <button className="node-hit-area nodrag nopan" aria-label={node.kind === 'module' ? (node.canExpand ? `${node.expanded ? '收起' : '展开'}模块 ${node.label}` : `进入模块 ${node.label}`) : `阅读 ${node.label} 源码`} aria-expanded={node.canExpand ? node.expanded : undefined}
       onClick={event => { event.stopPropagation(); data.onOpen(node); }} />
     <Handle type="target" position={Position.Top} />
@@ -34,9 +34,15 @@ function RoutedEdge(props: EdgeProps) {
   const from = props.data?.from as ProjectionNode | undefined, to = props.data?.to as ProjectionNode | undefined;
   if (!from || !to) return null;
   const internal = from.id === to.id;
-  const path = edgePath(from, to, props.data?.points as Point[] | undefined);
+  const points = props.data?.points as Point[] | undefined;
+  const path = edgePath(from, to, points);
+  const labelPoint = relationLabelPoint(points);
   return <><path d={path} fill="none" stroke="#f8f9fd" strokeWidth={6} strokeLinecap="round" strokeLinejoin="round" pointerEvents="none" />
-    <BaseEdge id={props.id} path={path} markerEnd={props.markerEnd} style={{ stroke: internal ? '#b9c0ca' : '#89919d', strokeWidth: internal ? 1.2 : 1.5, strokeLinecap: 'round', strokeLinejoin: 'round', strokeDasharray: internal ? '4 4' : undefined, opacity: internal ? .72 : .9 }} interactionWidth={12} /></>;
+    <BaseEdge id={props.id} path={path} markerEnd={props.markerEnd} style={{ stroke: internal ? '#b9c0ca' : '#89919d', strokeWidth: internal ? 1.2 : 1.5, strokeLinecap: 'round', strokeLinejoin: 'round', strokeDasharray: internal ? '4 4' : undefined, opacity: internal ? .72 : .9 }} interactionWidth={12} />
+    {labelPoint && from.kind === 'module' && to.kind === 'module' && <EdgeLabelRenderer><button
+      className="edge-evidence-label nodrag nopan" aria-label={`查看 ${from.label} → ${to.label} 调用证据`}
+      style={{transform: `translate(-50%, -50%) translate(${labelPoint.x}px, ${labelPoint.y}px)`}}
+      onClick={event => {event.stopPropagation(); (props.data?.open as (() => void))();}}>调用协作</button></EdgeLabelRenderer>}</>;
 }
 
 const nodeTypes = { map: MapNode };
@@ -140,13 +146,18 @@ export function Canvas({ projection, onNode, onInfo, onRelation, onLayout, onVie
       position: { x: node.x - (parent?.x || 0), y: node.y - (parent?.y || 0) }, data: { node, onInfo, onOpen: onNode, onInternal: node => {
         const relation = projection.relations.find(item => item.from === node.id && item.to === node.id); if (relation) onRelation(relation);
       } },
-      width: node.width, height: node.height, style: { zIndex: node.container ? 0 : 1 } };
+      // Controlled nodes are rebuilt after viewport/panel changes. Preserve the
+      // measured size so React Flow retains its handle bounds on those updates.
+      width: node.width, height: node.height, measured: { width: node.width, height: node.height },
+      style: { zIndex: node.container ? 0 : 1 } };
   });
   const edges = useMemo(() => {
     const byId = new Map(positioned.map(node => [node.id, node]));
     return (layout?.relations || []).filter(relation => relation.from !== relation.to || byId.get(relation.from)?.kind === 'function').map(relation => ({ id: relation.id, source: relation.from, target: relation.to,
-      type: 'routed', markerEnd: { type: MarkerType.ArrowClosed, color: '#89919d' }, data: { from: byId.get(relation.from), to: byId.get(relation.to), points: relation.points } }));
-  }, [positioned, layout]);
+      ariaLabel: `${byId.get(relation.from)?.label} → ${byId.get(relation.to)?.label}，查看调用证据`,
+      type: 'routed', markerEnd: { type: MarkerType.ArrowClosed, color: '#89919d' }, data: { from: byId.get(relation.from), to: byId.get(relation.to), points: relation.points,
+        open: () => onRelation(projection.relations.find(item => item.id === relation.id) || relation) } }));
+  }, [positioned, layout, projection, onRelation]);
   if (!layout || layoutStructure !== structure) return <div className="canvas-loading"><span className="spinner" />正在组织架构布局…</div>;
   return <ReactFlowProvider><ReactFlow key={structure} nodes={nodes} edges={edges} nodeTypes={nodeTypes} edgeTypes={edgeTypes}
     onNodeClick={(_, node) => onNode(node.data.node)} onEdgeClick={(_, edge) => { const relation = projection.relations.find(item => item.id === edge.id); if (relation) onRelation(relation); }}

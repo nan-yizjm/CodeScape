@@ -186,7 +186,8 @@ class Provider:
             and entity.location.start_line <= ranges[entity.location.path][1]
         ]
         local_ids = {entity.id for entity in local_entities}
-        scope_paths = {entity.scope_id: entity.location.path for entity in visible}
+        scope_paths = {scope.id: scope.location.path for scope in analysis.scopes}
+        scope_paths.update({entity.scope_id: entity.location.path for entity in analysis.entities})
         local_scopes = [
             scope for scope in analysis.scopes
             if scope.location.path in ranges
@@ -207,7 +208,7 @@ class Provider:
         related = [
             {"id": entity.id, "name": entity.name, "qualified_name": entity.qualified_name,
              "signature": entity.signature, "location": entity.location.model_dump()}
-            for entity in visible if entity.id in related_ids
+            for entity in analysis.entities if entity.id in related_ids
         ]
         diagnostics = [
             item.model_dump() for item in analysis.diagnostics

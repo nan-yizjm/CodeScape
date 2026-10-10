@@ -254,13 +254,6 @@ export function projectGraph(project: ProjectDetail, focus: string | null, optio
   const functions = !!active && children.length === 0;
   const visible = project.analysis.entities.filter(entity => entity.visible);
   const scopes = new Map(visible.map(entity => [entity.scope_id, entity.id]));
-  const included = new Set(active?.entity_ids || []);
-  if (functions) for (const call of project.analysis.calls) {
-    const caller = scopes.get(call.caller_scope_id);
-    if (call.resolution !== 'confirmed' || !call.target_id || !caller) continue;
-    if (active.entity_ids.includes(caller)) included.add(call.target_id);
-    if (active.entity_ids.includes(call.target_id)) included.add(caller);
-  }
   const displayed: Module[] = [];
   function descend(parentId: string | null, maxDepth = Infinity, depth = 0) {
     if (depth >= maxDepth) return;
@@ -302,22 +295,21 @@ export function projectGraph(project: ProjectDetail, focus: string | null, optio
   const functionExpanded = functions && options.expandedModuleId !== null &&
     (options.expandedModuleId === undefined || options.expandedModuleId === active.id);
   const siblings = functions ? modules.filter(module => module.id !== active.id && module.parent_id === active.parent_id) : [];
-  const related = functions ? modules.filter(module => module.id !== active.id && module.entity_ids.some(id => included.has(id))) : [];
   const contextModules = siblings;
-  // 显式同级开关仅展开当前模块的函数，其余卡片保持收起。
-  // 无选项的投影仍支持调用图 API 原有的直接关联函数展示。
-  const includeRelatedFunctions = options.showOtherModules === undefined;
-  const functionNodes: ProjectionNode[] = functionExpanded ? visible.filter(entity => included.has(entity.id) &&
-    (includeRelatedFunctions || active.entity_ids.includes(entity.id))).map(entity => ({
+  // 函数层始终只展示当前模块的实现，跨模块调用使用存在性标记。
+  const crossModuleCallers = new Set(project.analysis.calls.filter(call => call.resolution === 'confirmed' &&
+    call.target_id && !active?.entity_ids.includes(call.target_id) &&
+    sourceModules.some(module => module.entity_ids.includes(call.target_id!))).map(call => call.caller_scope_id));
+  const functionNodes: ProjectionNode[] = functionExpanded ? visible.filter(entity => active.entity_ids.includes(entity.id)).map(entity => ({
     id: entity.id, label: visible.filter(item => item.name === entity.name).length > 1 ? `${entity.signature} · L${entity.location.start_line}` : entity.name, description: '', kind: 'function', entity, count: 0,
     state: project.learning[entity.id]?.state || 'not_started', incomplete: entity.unresolved_count > 0,
-    external: !active.entity_ids.includes(entity.id), tone: modules.findIndex(module => module.entity_ids.includes(entity.id)),
+    external: crossModuleCallers.has(entity.scope_id), tone: modules.findIndex(module => module.entity_ids.includes(entity.id)),
     parentId: modules.find(module => module.entity_ids.includes(entity.id))?.id, x: 0, y: 0, width: 248, height: 116,
   })) : [];
   if (functions) {
     otherModuleCount = functionExpanded ? contextModules.length : 0;
     hiddenModuleCount = functionExpanded && !options.showOtherModules ? contextModules.length : 0;
-    displayed.push(active, ...(options.showOtherModules ? contextModules : includeRelatedFunctions ? related : []));
+    displayed.push(active, ...(options.showOtherModules ? contextModules : []));
   }
   const moduleNodes: ProjectionNode[] = displayed.map(module => {
     const entityIds = moduleEntities(module, modules);
@@ -329,7 +321,7 @@ export function projectGraph(project: ProjectDetail, focus: string | null, optio
       container: functionNodes.some(node => node.parentId === module.id) || displayed.some(item => item.parent_id === module.id),
       canExpand: functions ? module.id === active.id : modules.some(item => item.parent_id === module.id),
       expanded: functions ? module.id === active.id && functionExpanded : module.id === options.expandedModuleId,
-      shownCount: functions && (module.id === active.id || includeRelatedFunctions) ? functionNodes.filter(node => node.parentId === module.id).length : undefined,
+      shownCount: functions ? functionNodes.filter(node => node.parentId === module.id).length : undefined,
       x: 0, y: 0, width: 300, height: 204 };
   });
   const nodes = [...moduleNodes, ...functionNodes];
@@ -338,17 +330,54 @@ export function projectGraph(project: ProjectDetail, focus: string | null, optio
     if (functions && node.kind === 'module' && node.id === active.id) continue;
     for (const id of node.kind === 'function' ? [node.id] : moduleEntities(node.module!, modules)) owner.set(id, node.id);
   }
+  // 隐藏作用域只聚合到模块边界，绝不提升成外层函数的直接调用。
+  // 先沿真实作用域找到明确实体归属，再以唯一可见文件范围作为保守后备。
+  const scopeRecords = new Map(project.analysis.scopes.map(scope => [scope.id, scope]));
+  const allScopeEntities = new Map(project.analysis.entities.map(entity => [entity.scope_id, entity]));
+  const allEntities = new Map(project.analysis.entities.map(entity => [entity.id, entity]));
+  const pathOwners = new Map<string, string | null>();
+  for (const node of moduleNodes) {
+    const paths = new Set<string>();
+    // 无函数叶模块同样保留代码路径；抽象域用其所有后代真实路径。
+    const collectPaths = (id: string) => {
+      const module = modules.find(item => item.id === id);
+      module?.code_paths.filter(path => !path.endsWith('/')).forEach(path => paths.add(path));
+      modules.filter(item => item.parent_id === id).forEach(item => collectPaths(item.id));
+    };
+    collectPaths(node.id);
+    for (const path of paths) {
+      const previous = pathOwners.get(path);
+      if (previous === undefined || (previous && node.parentId === previous))
+        pathOwners.set(path, node.id);
+      else if (previous !== node.id) pathOwners.set(path, null);
+    }
+  }
+  const scopeOwner = (scopeId: string): string | undefined => {
+    let current: string | null | undefined = scopeId;
+    const visited = new Set<string>();
+    while (current && !visited.has(current)) {
+      visited.add(current);
+      const entity = allScopeEntities.get(current);
+      const explicit = entity && owner.get(entity.id);
+      if (explicit) return explicit;
+      current = scopeRecords.get(current)?.parent_id;
+    }
+    const path = scopeRecords.get(scopeId)?.location.path || allScopeEntities.get(scopeId)?.location.path;
+    return path ? pathOwners.get(path) || undefined : undefined;
+  };
   const grouped = new Map<string, Relation>();
   const internalRelationCounts = new Map<string, number>();
   for (const call of project.analysis.calls) {
     if (call.resolution !== 'confirmed' || !call.target_id) continue;
     const fromEntity = scopes.get(call.caller_scope_id);
-    const from = fromEntity && owner.get(fromEntity), to = owner.get(call.target_id);
+    const from = functions ? fromEntity && owner.get(fromEntity) : scopeOwner(call.caller_scope_id);
+    const target = allEntities.get(call.target_id);
+    const to = owner.get(call.target_id) || (!functions && target ? scopeOwner(target.scope_id) : undefined);
     // In a compact source-domain overview, retain a self-loop as an honest
     // signal that the visible domain contains internal dependencies. The
     // concrete module/function view continues to hide same-module calls.
     if (!from || !to || (!functions && from === to && !abstracted)) continue;
-    if (functions && !active.entity_ids.includes(from) && !active.entity_ids.includes(to)) continue;
+    if (functions && !active.entity_ids.includes(fromEntity || '') && !active.entity_ids.includes(call.target_id)) continue;
     const key = `${from}->${to}`;
     const label = functions ? '' : from === to ? '域内依赖' : '调用协作';
     if (!grouped.has(key)) grouped.set(key, { id: key, from, to, label, calls: [] });
@@ -360,6 +389,19 @@ export function projectGraph(project: ProjectDetail, focus: string | null, optio
 
 export function escapeXml(value: string) {
   return value.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&apos;');
+}
+
+export function relationLabelPoint(points?: Point[]): Point | undefined {
+  const segments = points?.slice(1).map((point, index) => ({a: points[index], b: point,
+    length: Math.hypot(point.x - points[index].x, point.y - points[index].y)})) || [];
+  let remaining = segments.reduce((sum, segment) => sum + segment.length, 0) / 2;
+  for (const segment of segments) {
+    if (remaining <= segment.length && segment.length) return {
+      x: segment.a.x + (segment.b.x - segment.a.x) * remaining / segment.length,
+      y: segment.a.y + (segment.b.y - segment.a.y) * remaining / segment.length,
+    };
+    remaining -= segment.length;
+  }
 }
 
 export function edgePath(from: ProjectionNode, to: ProjectionNode, points?: Point[]) {
@@ -403,7 +445,8 @@ export function exportSvg(projection: Projection, title: string): string {
   const edges = projection.relations.filter(relation => relation.from !== relation.to || byId.get(relation.from)?.kind === 'function').map(relation => {
     const from = byId.get(relation.from)!, to = byId.get(relation.to)!;
     const path = edgePath(from, to, relation.points);
-    return `<path d="${path}" fill="none" stroke="#f8f9fd" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/><path d="${path}" fill="none" stroke="#929292" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow)"/>`;
+    const label = from.kind === 'module' && to.kind === 'module' ? relationLabelPoint(relation.points) : undefined;
+    return `<path d="${path}" fill="none" stroke="#f8f9fd" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/><path d="${path}" fill="none" stroke="#929292" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow)"/>${label ? `<rect x="${label.x - 27}" y="${label.y - 10}" width="54" height="20" rx="7" fill="#f8f9fd" stroke="#dfe3eb"/><text x="${label.x}" y="${label.y + 4}" text-anchor="middle" font-size="10" fill="#626b78">调用协作</text>` : ''}`;
   }).join('');
   const shapes = nodes.map(node => {
     const palette = nodePalette(node);
@@ -418,6 +461,7 @@ export function exportSvg(projection: Projection, title: string): string {
       <text x="${node.x + 20}" y="${node.y + 52}" font-size="16" font-weight="600" fill="#202020">${escapeXml(node.label)}</text>
       <text x="${node.x + 20}" y="${node.y + 80}" font-size="13" fill="#666666">${description}</text>
       ${node.kind === 'module' && node.internalRelationCount ? `<text x="${node.x + 20}" y="${node.y + 132}" font-size="10" fill="${palette.accent}">内部依赖 ${node.internalRelationCount}</text>` : ''}
+      ${node.kind === 'function' && node.external ? `<text x="${node.x + 20}" y="${node.y + node.height - 15}" font-size="10" fill="#626b78">↗ 跨模块</text>` : ''}
       <text x="${node.x + node.width - 20}" y="${node.y + (node.container ? 115 : node.height - 15)}" text-anchor="end" font-size="10" fill="#555555">${node.state === 'mastered' ? '已掌握' : node.state === 'in_progress' ? '学习中' : node.state === 'not_applicable' ? '不适用' : '未开始'}</text>
       ${node.incomplete ? `<text x="${node.x + node.width - 22}" y="${node.y + 24}" fill="#9c6b32">!</text>` : ''}</g>`;
   }).join('');

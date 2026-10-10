@@ -20,7 +20,7 @@ export type Project = { id: string; name: string; source: string; created_at: st
   progress: { mastered: number; total: number }; languages: string[]; diagnostic_count: number;
   has_architecture: boolean; analysis_progress?: { phase: string; completed: number; total: number; detail: string } | null };
 export type ProjectDetail = Project & { file_ids: Record<string, string>; analysis: { entities: Entity[]; calls: Call[];
-  scopes: { id: string; kind: string; name: string; location: Location }[];
+  scopes: { id: string; kind: string; name: string; location: Location; parent_id?: string | null }[];
   diagnostics: { category: string; message: string; path: string | null; line: number | null }[];
   tools: Record<string, string> };
   architecture: { modules: Module[]; overview: Overview } | null;

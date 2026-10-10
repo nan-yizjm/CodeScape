@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { abstractModules, aggregateState, edgePath, exportSvg, moduleLearningState, projectGraph } from './graph';
+import { abstractModules, aggregateState, edgePath, exportSvg, moduleLearningState, projectGraph, relationLabelPoint } from './graph';
 import { layoutCompound, layoutHierarchy, verticalFallback } from './layout';
 import ELK from 'elkjs/lib/elk.bundled.js';
 import type { ProjectDetail, ProjectionNode } from './types';
@@ -32,43 +32,67 @@ describe('基于证据生成图形', () => {
   it('模块内部调用不伪装为模块间关系', () => {
     expect(projectGraph(fixture(), null).relations).toHaveLength(0);
   });
-  it('函数视图保留所属模块容器，跨模块函数只嵌入真实所属模块，导出与画布一致', async () => {
+  it('函数视图只展示当前实现，同级模块收起，跨模块调用仅标记存在性', async () => {
     const project = fixture();
     project.architecture!.modules[0].entity_ids = ['f'];
-    project.architecture!.modules.push({ ...project.architecture!.modules[0], id: 'other', name: '关联模块', entity_ids: ['g'] });
-    const view = await layoutHierarchy(projectGraph(project, 'm'), verticalFallback);
-    expect(view.nodes.map(node => node.id)).toEqual(['m', 'other', 'f', 'g']);
-    for (const [id, parentId] of [['f', 'm'], ['g', 'other']]) {
-      const node = view.nodes.find(item => item.id === id)!;
-      const parent = view.nodes.find(item => item.id === parentId)!;
-      expect(node.parentId).toBe(parentId);
-      expect(parent.container).toBe(true);
-      expect(node.x).toBeGreaterThan(parent.x);
-      expect(node.y).toBeGreaterThan(parent.y + 140);
-      expect(node.x + node.width).toBeLessThan(parent.x + parent.width);
-      expect(node.y + node.height).toBeLessThan(parent.y + parent.height);
-    }
-    expect(view.nodes.find(node => node.id === 'm')?.external).toBe(false);
-    expect(view.nodes.find(node => node.id === 'other')?.sibling).toBe(true);
-    expect(view.nodes.find(node => node.id === 'other')?.external).toBe(false);
-    expect(view.relations.find(edge => edge.from === 'f' && edge.to === 'g')?.calls).toHaveLength(2);
+    project.architecture!.modules.push({ ...project.architecture!.modules[0], id: 'other', name: '同级模块', entity_ids: ['g'] });
+    const view = await layoutHierarchy(projectGraph(project, 'm', {showOtherModules: true}), verticalFallback);
+    expect(view.nodes.map(node => node.id)).toEqual(['m', 'other', 'f']);
+    const node = view.nodes.find(item => item.id === 'f')!, parent = view.nodes.find(item => item.id === 'm')!;
+    expect(node.parentId).toBe('m');
+    expect(parent.container).toBe(true);
+    expect(node.x).toBeGreaterThan(parent.x);
+    expect(node.y).toBeGreaterThan(parent.y + 140);
+    expect(node.x + node.width).toBeLessThan(parent.x + parent.width);
+    expect(node.y + node.height).toBeLessThan(parent.y + parent.height);
+    expect(node.external).toBe(true);
+    expect(view.nodes.find(item => item.id === 'other')?.sibling).toBe(true);
+    expect(view.nodes.find(item => item.id === 'other')?.container).toBe(false);
+    expect(view.relations.find(edge => edge.from === 'f' && edge.to === 'other')?.calls).toHaveLength(2);
     const svg = exportSvg(view, '函数与所属模块');
-    expect(svg).toContain('关联模块');
+    expect(svg).toContain('同级模块');
+    expect(svg).toContain('跨模块');
     expect(svg.indexOf('>模块</text>')).toBeLessThan(svg.indexOf('>f</text>'));
+    const isolated = projectGraph(project, 'm');
+    expect(isolated.nodes.map(item => item.id)).toEqual(['m', 'f']);
+    expect(isolated.relations.every(edge => edge.from === 'f' && edge.to === 'f')).toBe(true);
+    const incoming = projectGraph(project, 'other');
+    expect(incoming.nodes.map(item => item.id)).toEqual(['other', 'g']);
+    expect(incoming.nodes.find(item => item.id === 'g')?.external).toBe(false);
+    expect(incoming.relations).toHaveLength(0);
   });
-  it('跨模块调用显示直接关联函数，仍保留多条证据和真实归属', () => {
+  it('协作标签位于走线长度中点，SVG 与画布共享位置', () => {
+    const points = [{x:0,y:0},{x:0,y:20},{x:100,y:20}];
+    expect(relationLabelPoint(points)).toEqual({x:40,y:20});
+    expect(relationLabelPoint([{x:0,y:0},{x:0,y:0}])).toBeUndefined();
     const project = fixture();
     project.architecture!.modules[0].entity_ids = ['f'];
-    project.architecture!.modules.push({ ...project.architecture!.modules[0], id: 'other', name: '其他模块', entity_ids: ['g'] });
-    const view = projectGraph(project, 'm');
-    expect(view.nodes.find(node => node.id === 'g')?.external).toBe(true);
-    expect(view.nodes.find(node => node.id === 'f')?.external).toBe(false);
-    expect(view.relations.find(edge => edge.to === 'g')?.calls).toHaveLength(2);
-    const incoming = projectGraph(project, 'other');
-    expect(incoming.nodes.find(node => node.id === 'f')?.external).toBe(true);
-    expect(incoming.nodes.find(node => node.id === 'g')?.external).toBe(false);
-    expect(incoming.relations).toHaveLength(1);
-    expect(incoming.relations[0].calls).toHaveLength(2);
+    project.architecture!.modules.push({...project.architecture!.modules[0], id: 'other',entity_ids:['g']});
+    const view = projectGraph(project,null);
+    view.relations[0].points = points;
+    expect(exportSvg(view,'协作')).toContain('x="40" y="24"');
+    expect(exportSvg(view,'协作')).toContain('调用协作');
+  });
+  it('隐藏与顶层作用域可聚合唯一模块范围，函数图仍不提升匿名调用', () => {
+    const project = fixture();
+    project.analysis.entities.find(item => item.id === 'g')!.location = {...project.analysis.entities[0].location, path: 'b.py'};
+    project.architecture!.modules[0].entity_ids = ['f'];
+    project.architecture!.modules.push({...project.architecture!.modules[0], id: 'other', entity_ids: ['g'], code_paths: ['b.py']});
+    project.analysis.scopes = [{id: 'top', name: 'a.py', kind: 'module', location: project.analysis.entities[0].location}];
+    project.analysis.calls.push({...project.analysis.calls[0], id: 'top-call', caller_scope_id: 'top'});
+    const view = projectGraph(project, null);
+    expect(view.relations).toHaveLength(1);
+    expect(view.relations[0].from).toBe('m');
+    expect(view.relations[0].to).toBe('other');
+    expect(view.relations[0].calls.map(call => call.caller_scope_id)).toEqual(['f-scope','f-scope','hidden-scope','top']);
+    const functions = projectGraph(project, 'm', {showOtherModules: true});
+    expect(functions.relations.find(edge => edge.to === 'other')?.calls).toHaveLength(2);
+    // 同文件被多个独立模块覆盖时，不根据文件名猜测匿名逻辑的职责。
+    project.architecture!.modules.push({...project.architecture!.modules[0], id: 'ambiguous', entity_ids: []});
+    expect(projectGraph(project, null).relations[0].calls).toHaveLength(2);
+    // 匿名作用域在真实具名实现内时，只聚合其模块，证据仍保留原作用域。
+    project.analysis.scopes.push({id:'hidden-scope',name:'匿名',kind:'lambda',location:project.analysis.entities[0].location,parent_id:'f-scope'});
+    expect(projectGraph(project, null).relations[0].calls).toHaveLength(3);
   });
   it('函数视图默认保留函数节点和调用连线，显式收起才隐藏函数', () => {
     const project = fixture();
