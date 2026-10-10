@@ -26,6 +26,10 @@ model_budget: ContextVar[ModelBudget | None] = ContextVar("model_budget", defaul
 
 @contextmanager
 def model_unit():
+    previous = model_budget.get()
+    if previous is not None:
+        yield previous
+        return
     budget = ModelBudget()
     token = model_budget.set(budget)
     try:

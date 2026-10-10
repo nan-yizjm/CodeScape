@@ -9,6 +9,7 @@ export type ImportPreview = { preview_id: string; name: string; source: string; 
 export type Location = { path: string; start_line: number; end_line: number; start_byte: number; end_byte: number };
 export type Entity = { id: string; name: string; qualified_name: string; signature: string; language: string;
   location: Location; scope_id: string; visible: boolean; hidden_reason: string | null; explanation: string | null;
+  explanation_details?: string | null; explanation_evidence?: {path:string;start_line:number;end_line:number}[];
   condition: string | null; unresolved_count: number };
 export type Call = { id: string; caller_scope_id: string; target_id: string | null; expression: string;
   location: Location; resolution: string; origin: string; reason: string; target_name: string | null };

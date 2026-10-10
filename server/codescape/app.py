@@ -18,6 +18,7 @@ from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 
 from .analyzers import REPOSITORY, analyze, stable_id
+from .context_tools import validate_explanations
 from .database import Database, now
 from .deletion import ProjectDeletion
 from .imports import ImportService, remove_staging
@@ -35,7 +36,7 @@ from .models import (
     ProjectDeleteRequest,
     SessionRequest,
 )
-from .provider import Provider, ProviderError, validate_architecture
+from .provider import PIPELINE_VERSION, Provider, ProviderError, validate_architecture
 from .reads import VersionReads
 from .security import data_root
 from .snapshots import create_snapshot, read_snapshot
@@ -93,6 +94,14 @@ def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=
         analysis = Analysis.model_validate(project["result"]) if project["result"] else Analysis()
         visible = [entity for entity in analysis.entities if entity.visible]
         architecture = Architecture.model_validate(project["architecture"]) if project["architecture"] else None
+        if architecture:
+            explanations = {note.entity_id: note for note in architecture.explanations}
+            for entity in analysis.entities:
+                note = explanations.get(entity.id)
+                if note:
+                    entity.explanation = note.summary
+                    entity.explanation_details = note.details
+                    entity.explanation_evidence = [ref.model_dump() for ref in note.evidence]
         units = learning_units(analysis, architecture, project["snapshot"]["files"])
         states = database.states(project["id"])
         total = len(units)
@@ -738,6 +747,7 @@ def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=
                         if (
                             saved.get("version_id") == project["version_id"]
                             and saved.get("snapshot_hash") == project["snapshot"]["hash"]
+                            and saved.get("pipeline_version") == PIPELINE_VERSION
                         ):
                             checkpoint = [Architecture.model_validate(item) for item in saved.get("batches", [])]
                     except (OSError, ValueError, TypeError):
@@ -767,30 +777,35 @@ def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=
                 async def save_batch(completed: int, total: int, architecture: Architecture):
                     saved_batches = checkpoint + [architecture]
                     temporary = checkpoint_path.with_suffix(".tmp")
-                    temporary.write_text(
-                        json.dumps(
+                    with temporary.open("w", encoding="utf-8") as handle:
+                        json.dump(
                             {
                                 "version_id": project["version_id"],
                                 "snapshot_hash": project["snapshot"]["hash"],
+                                "pipeline_version": PIPELINE_VERSION,
                                 "batches": [item.model_dump() for item in saved_batches],
                             },
-                            ensure_ascii=False,
-                        ),
-                        encoding="utf-8",
-                    )
+                            handle, ensure_ascii=False,
+                        )
+                        handle.flush()
+                        os.fsync(handle.fileno())
                     temporary.replace(checkpoint_path)
                     checkpoint.clear()
                     checkpoint.extend(saved_batches)
 
+                source_files = read_snapshot(snapshot_root, project["snapshot"])
+                source_analysis = Analysis.model_validate(project["result"])
                 with ai_scope(project_id=project_id, version_id=project["version_id"], job_id=job["id"]):
                     architecture, usage = await provider.architecture(
-                        Analysis.model_validate(project["result"]),
-                        read_snapshot(snapshot_root, project["snapshot"]),
+                        source_analysis,
+                        source_files,
                         on_progress=progress,
                         on_batch=save_batch,
                         completed_batches=checkpoint,
                     )
                 validate_architecture(architecture, Analysis.model_validate(project["result"]), set(project["snapshot"]["files"]))
+                validate_explanations(architecture, source_analysis, {entity.id for entity in source_analysis.entities if entity.visible},
+                                      source_files, {path: [(1, max(1, len(text.splitlines())))] for path, text in source_files.items()})
                 if candidate:
                     read_snapshot(snapshot_root, project["snapshot"])
                     # Durable artifact precedes the short publication transaction.

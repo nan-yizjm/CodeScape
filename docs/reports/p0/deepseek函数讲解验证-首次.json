@@ -1,0 +1,202 @@
+{
+  "verified_at": "2026-10-10T15:55:29.111650+00:00",
+  "test_kind": "真实 DeepSeek 模型测试，与固定响应测试分开",
+  "recipient": "https://api.deepseek.com",
+  "model": "deepseek-flash",
+  "authorized_source_paths": [
+    "tests/fixtures/learning_project/input.py",
+    "tests/fixtures/learning_project/engine.py",
+    "tests/fixtures/learning_project/presentation.py"
+  ],
+  "function_count": 8,
+  "explained_count": 8,
+  "missing_count": 0,
+  "source_references_validated": true,
+  "usage": {
+    "prompt_tokens": 6876,
+    "completion_tokens": 3531,
+    "total_tokens": 10407,
+    "prompt_cache_hit_tokens": 0,
+    "prompt_cache_miss_tokens": 6876
+  },
+  "architecture": {
+    "modules": [
+      {
+        "id": "m1",
+        "parent_id": null,
+        "name": "输入配置读取与校验",
+        "summary": "从调用方提供的映射中整理分析参数（语言、深度），并校验其基本有效性，作为整条分析流程的入口配置。",
+        "entity_ids": [
+          "5735c283-dd2d-55c1-b58b-6724317282d2",
+          "14e908f9-af45-540c-9477-d59230d5f97f"
+        ],
+        "code_paths": [
+          "input.py"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "m2",
+        "parent_id": null,
+        "name": "分析流程编排",
+        "summary": "按“取配置 → 解析源码 → 汇总结果”的顺序串联各步骤，对外暴露单一分析入口。",
+        "entity_ids": [
+          "60956f0b-9327-5c9a-ab19-9bc71a5c8a15"
+        ],
+        "code_paths": [
+          "engine.py"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "m3",
+        "parent_id": null,
+        "name": "语法遍历与结果汇总",
+        "summary": "对以字典描述的语法结构做递归遍历统计节点数量，并与配置结果合并为汇总字典。",
+        "entity_ids": [
+          "b4e2d9a2-47b1-529a-a60a-8292bf741f18",
+          "b577b61e-b171-5115-a853-21908bcf1daa",
+          "054503e8-f483-556e-8d53-f7ad4603a8f9"
+        ],
+        "code_paths": [
+          "engine.py"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "m4",
+        "parent_id": null,
+        "name": "结果呈现与导出",
+        "summary": "把分析结果包装为带标题的图形数据字典，并进一步转换为可输出的字符串表示。",
+        "entity_ids": [
+          "86a7f57f-f36a-57bb-aea2-12e2e21b41e1",
+          "d3009cff-b31c-5f96-ad21-d4dddcaca7f4"
+        ],
+        "code_paths": [
+          "presentation.py"
+        ],
+        "incomplete": false
+      }
+    ],
+    "overview": {
+      "introduction": "本批次是一个小型静态分析样例工程，分三层：输入配置（input.py）、分析引擎（engine.py）、结果呈现（presentation.py），共 8 个函数，串联演示配置读取校验、语法递归统计、结果汇总与图形构建导出。",
+      "capabilities": [
+        "读取并校验分析配置参数",
+        "递归遍历语法节点并统计数量",
+        "汇总节点统计与配置结果",
+        "包装分析结果为图形字典",
+        "将图形数据转换为字符串输出"
+      ],
+      "principle": "调用自 presentation.build_graph 开始：它把 source 交给 engine.analyze_project；后者先经 input.read_config 取得并校验配置，再调用 parse_source，由 walk_syntax 以递归方式对 node[\"children\"] 逐层累加计数，最后 summarize 把节点统计与配置合并成字典返回。export_graph 则调用 build_graph 并对结果做字符串转换。配置校验仅判断 language 字段存在且 depth 大于零。",
+      "limitations": [
+        "为示例代码，未实现真实文件解析或外部配置读取",
+        "语法结构依赖字典形式的 children，无类型与环检测",
+        "parse_source 对同一输入遍历两次，统计值翻倍",
+        "校验函数只返回布尔值，不提供具体错误信息",
+        "导出仅使用字典字符串表示，非标准图格式"
+      ],
+      "synthesized": false,
+      "analysis_notes": [
+        "模块依据职责划分，与文件边界一致；engine.py 内将流程编排与遍历汇总拆为两个叶模块。"
+      ]
+    },
+    "explanations": [
+      {
+        "entity_id": "5735c283-dd2d-55c1-b58b-6724317282d2",
+        "summary": "从传入映射整理分析配置（语言与固定深度），并调用校验函数返回其校验结果。",
+        "details": "输入 source 为字典类映射对象；函数用 source.get(\"language\", \"python\") 取语言、把 depth 固定为 3 组成 options，然后调用 validate_config(options) 并把该调用的返回值直接作为自己的返回值。可见边界：函数并未真正读取外部配置源，也未做异常处理，返回的是校验布尔值而非配置字典。",
+        "evidence": [
+          {
+            "path": "input.py",
+            "start_line": 4,
+            "end_line": 7
+          }
+        ]
+      },
+      {
+        "entity_id": "14e908f9-af45-540c-9477-d59230d5f97f",
+        "summary": "检查配置中是否存在 language 字段且 depth 大于零，返回布尔校验结果。",
+        "details": "输入 options 为配置字典；函数通过 \"language\" in options and options[\"depth\"] > 0 表达式返回布尔值，逻辑上先做键存在性判断再比较深度。可见边界：未做类型或取值合法性检查，depth 缺失或非数值时会抛出异常，也不返回具体错误说明。",
+        "evidence": [
+          {
+            "path": "input.py",
+            "start_line": 10,
+            "end_line": 12
+          }
+        ]
+      },
+      {
+        "entity_id": "60956f0b-9327-5c9a-ab19-9bc71a5c8a15",
+        "summary": "顺序执行配置读取、源码解析与结果汇总，作为分析引擎的统一入口。",
+        "details": "输入 source；先调用 read_config(source) 得到 configuration，再调用 parse_source(source) 得到 parsed，最后调用 summarize(parsed, configuration) 并返回其字典结果。可见边界：本身不含计算逻辑，结果完全由被调函数决定，也没有异常处理或参数校验。",
+        "evidence": [
+          {
+            "path": "engine.py",
+            "start_line": 6,
+            "end_line": 10
+          }
+        ]
+      },
+      {
+        "entity_id": "b4e2d9a2-47b1-529a-a60a-8292bf741f18",
+        "summary": "对同一输入调用两次语法遍历并将两次计数相加返回。",
+        "details": "输入 source；函数把 walk_syntax(source) 的结果分别存入 first 与 second，返回 first + second。可见边界：对同一输入遍历两遍使统计值成倍增长（注释说明是为保留同一边的两条证据），函数自身不做去重或校验。",
+        "evidence": [
+          {
+            "path": "engine.py",
+            "start_line": 13,
+            "end_line": 17
+          }
+        ]
+      },
+      {
+        "entity_id": "b577b61e-b171-5115-a853-21908bcf1daa",
+        "summary": "递归遍历以字典表示的节点及其 children，累加统计子节点数量。",
+        "details": "输入 node 为字典，函数读取 node.get(\"children\", [])；若无子节点直接返回 1，否则累加对每个子节点调用 walk_syntax 的返回值并返回总和。可见边界：计数含义为“叶子数”而非全部节点数，强依赖 children 键的字典结构，未处理循环引用或非字典输入。",
+        "evidence": [
+          {
+            "path": "engine.py",
+            "start_line": 20,
+            "end_line": 28
+          }
+        ]
+      },
+      {
+        "entity_id": "054503e8-f483-556e-8d53-f7ad4603a8f9",
+        "summary": "把解析统计值与配置结果组合成一个结果字典。",
+        "details": "输入 parsed（遍历统计值）与 configuration（配置校验结果）；函数返回 {\"nodes\": parsed, \"configured\": configuration}。可见边界：只是键值封装，不做任何计算、过滤或格式转换。",
+        "evidence": [
+          {
+            "path": "engine.py",
+            "start_line": 31,
+            "end_line": 33
+          }
+        ]
+      },
+      {
+        "entity_id": "86a7f57f-f36a-57bb-aea2-12e2e21b41e1",
+        "summary": "调用分析入口获取结果，并加上固定标题包装为图形数据字典。",
+        "details": "输入 source；函数先调用 analyze_project(source) 得到 result，再返回 {\"title\": \"源码学习样例\", \"result\": result}。可见边界：标题为硬编码常量，输出只是普通字典，并未构建真正的图结构或可视化元素。",
+        "evidence": [
+          {
+            "path": "presentation.py",
+            "start_line": 6,
+            "end_line": 9
+          }
+        ]
+      },
+      {
+        "entity_id": "d3009cff-b31c-5f96-ad21-d4dddcaca7f4",
+        "summary": "先构建图形数据，再用字符串形式返回该数据。",
+        "details": "输入 source；函数调用 build_graph(source) 得到 graph，然后返回 str(graph)。可见边界：输出是 Python 字典的默认字符串表示，不是 JSON 或其它标准图格式，也未做序列化控制或过滤。",
+        "evidence": [
+          {
+            "path": "presentation.py",
+            "start_line": 12,
+            "end_line": 15
+          }
+        ]
+      }
+    ]
+  }
+}

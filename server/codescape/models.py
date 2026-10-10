@@ -31,6 +31,8 @@ class Entity(Contract):
     implementation_hash: str
     condition: str | None = None
     explanation: str | None = None
+    explanation_details: str | None = None
+    explanation_evidence: list[dict] = Field(default_factory=list)
     unresolved_count: int = 0
 
 
@@ -90,9 +92,29 @@ class Overview(Contract):
     analysis_notes: list[str] = Field(default_factory=list)
 
 
+class CodeReference(Contract):
+    path: str
+    start_line: int = Field(ge=1, strict=True)
+    end_line: int = Field(ge=1, strict=True)
+
+    @model_validator(mode="after")
+    def ordered(self):
+        if self.end_line < self.start_line:
+            raise ValueError("源码范围顺序错误")
+        return self
+
+
+class FunctionExplanation(Contract):
+    entity_id: str
+    summary: str = Field(min_length=1, max_length=160)
+    details: str = Field(min_length=1, max_length=1200)
+    evidence: list[CodeReference] = Field(min_length=1, max_length=6)
+
+
 class Architecture(Contract):
     modules: list[Module]
     overview: Overview
+    explanations: list[FunctionExplanation] = Field(default_factory=list)
 
 
 class ImportRequest(Contract):
