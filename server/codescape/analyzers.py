@@ -4,6 +4,7 @@ import ast
 import builtins
 import hashlib
 import json
+import re
 import subprocess
 import uuid
 from functools import lru_cache
@@ -301,7 +302,7 @@ def _cpp_analysis(root, files, version, source_root, header_directories, header_
     from clang import cindex
     from tree_sitter import Language, Parser
 
-    result = Analysis(tools={"cpp": "tree-sitter/0.25.2 + libclang/18.1.1 + snapshot-config/2"})
+    result = Analysis(tools={"cpp": "tree-sitter/0.25.2 + libclang/18.1.1 + snapshot-config/3"})
     if not any(Path(path).suffix in {".c", ".h", ".cc", ".cpp", ".cxx", ".hpp", ".hh"} for path in files):
         return result
     configurations, notes = compiler_configurations(root, files, source_root)
@@ -310,7 +311,9 @@ def _cpp_analysis(root, files, version, source_root, header_directories, header_
     if header_error:
         result.diagnostics.append(Diagnostic(category="missing_dependency", message=header_error))
     native_symbols: dict[str, list[Entity]] = {}
-    pending: list[tuple[Call, str, bool]] = []
+    failed_config_paths: set[str] = set(configurations.incomplete)
+    pending: list[tuple[Call, str, bool, str | None, bool]] = []
+    calls_by_id: dict[str, Call] = {}
     by_location: dict[tuple[str, int], Entity] = {}
     function_kinds = {
         cindex.CursorKind.FUNCTION_DECL,
@@ -326,6 +329,17 @@ def _cpp_analysis(root, files, version, source_root, header_directories, header_
         parser = Parser(Language(tree_sitter_c.language() if language == "c" else tree_sitter_cpp.language()))
         source_bytes = text.encode()
         parsed = parser.parse(source_bytes)
+        guard_range = None
+        meaningful = [child for child in parsed.root_node.named_children if child.type != 'comment']
+        if Path(path).suffix in {'.h','.hh','.hpp'} and len(meaningful) == 1:
+            guard = meaningful[0]
+            name = guard.child_by_field_name('name') if guard.type == 'preproc_ifdef' else None
+            if name and re.match(rb'#\s*ifndef\b', source_bytes[guard.start_byte:guard.end_byte].lstrip()):
+                definitions = [child for child in guard.named_children if child.type == 'preproc_def']
+                macro = source_bytes[name.start_byte:name.end_byte]
+                first = definitions[0].child_by_field_name('name') if definitions else None
+                if first and source_bytes[first.start_byte:first.end_byte] == macro and not guard.child_by_field_name('alternative'):
+                    guard_range = (guard.start_byte, guard.end_byte)
 
         def node_bytes(node) -> bytes:
             return source_bytes[node.start_byte : node.end_byte]
@@ -346,24 +360,47 @@ def _cpp_analysis(root, files, version, source_root, header_directories, header_
                 Diagnostic(category="parse_failed", path=path, message="部分语法无法识别。")
             )
 
+        def combined(outer, inner):
+            return f'({outer}) && ({inner})' if outer else inner
+
+        def alternative(node, parents, outer, previous):
+            excluded = ' && '.join(f'!({value})' for value in previous)
+            expression_node = node.child_by_field_name('condition')
+            expression = node_bytes(expression_node).decode() if expression_node else None
+            current = combined(outer, combined(excluded, expression) if expression else excluded)
+            following = node.child_by_field_name('alternative')
+            for child in node.children:
+                if following and child == following:
+                    alternative(child, parents, outer, previous + ([expression] if expression else []))
+                else:
+                    syntax(child, parents, current)
+
         def syntax(node, parents: list[str], condition: str | None = None):
             if node.type in ("preproc_if", "preproc_ifdef"):
                 condition_node = node.child_by_field_name("condition") or node.child_by_field_name("name")
                 expression = node_bytes(condition_node).decode() if condition_node else "未知条件"
-                if node_bytes(node).startswith(b"#ifndef"):
+                if node.type == 'preproc_ifdef':
+                    expression = f'defined({expression})'
+                if re.match(rb'#\s*ifndef\b', node_bytes(node).lstrip()):
                     expression = f"!({expression})"
-                condition = f"({condition}) && ({expression})" if condition else expression
-                result.diagnostics.append(
+                guard = (node.start_byte,node.end_byte) == guard_range
+                active = condition if guard else combined(condition, expression)
+                if not guard:
+                    result.diagnostics.append(
                     Diagnostic(
                         category="condition_unknown",
                         path=path,
                         line=node.start_point.row + 1,
-                        message="条件分支已索引；原型未枚举全部编译配置。",
+                        message="条件分支已索引；语义解析仅覆盖已提供的编译配置与保守默认配置。",
                     )
                 )
-            if node.type in ("preproc_else", "preproc_elif"):
-                expression = node.child_by_field_name("condition")
-                condition = f"!({condition})" + (f" && ({node_bytes(expression).decode()})" if expression else "")
+                following = node.child_by_field_name('alternative')
+                for child in node.children:
+                    if following and child == following:
+                        alternative(child, parents, condition, [expression])
+                    else:
+                        syntax(child, parents, active)
+                return
             if node.type in ("class_specifier", "struct_specifier", "namespace_definition"):
                 named = node.child_by_field_name("name")
                 parents = parents + ([node_bytes(named).decode()] if named else [])
@@ -376,15 +413,16 @@ def _cpp_analysis(root, files, version, source_root, header_directories, header_
                     "qualified_identifier",
                     "operator_name",
                     "destructor_name",
+                    "template_function",
                 }:
                     current = current.child_by_field_name("declarator")
                 name = node_bytes(current).decode() if current else "<unresolved>"
-                line = node.start_point.row + 1
+                implementation = node.parent if node.parent and node.parent.type == 'template_declaration' else node
                 location = Location(
                     path=path,
-                    start_line=line,
+                    start_line=implementation.start_point.row + 1,
                     end_line=node.end_point.row + 1,
-                    start_byte=node.start_byte,
+                    start_byte=implementation.start_byte,
                     end_byte=node.end_byte,
                 )
                 entity_id = stable_id(version, path, "fn", node.start_byte)
@@ -406,7 +444,7 @@ def _cpp_analysis(root, files, version, source_root, header_directories, header_
                     scope_id=stable_id(entity_id, "scope"),
                     visible=not hidden,
                     hidden_reason="构造或析构" if hidden else None,
-                    implementation_hash=digest(json.dumps(semantic_tree(node))),
+                    implementation_hash=digest(json.dumps(semantic_tree(implementation))),
                     condition=condition,
                 )
                 if (path, node.start_byte) not in by_location:
@@ -421,17 +459,12 @@ def _cpp_analysis(root, files, version, source_root, header_directories, header_
                 syntax(child, parents, condition)
 
         syntax(parsed.root_node, [])
-    # All entities must exist before parsing translation units that include other project files.
-    for path, text in files.items():
-        if Path(path).suffix not in {".c", ".h", ".cc", ".cpp", ".cxx", ".hpp", ".hh"}:
-            continue
+    entities_by_path = {}
+    for entity in result.entities:
+        entities_by_path.setdefault(entity.location.path,[]).append(entity)
+    # All entities exist before any translation unit/configuration is resolved.
+    def parse_unit(path, text, configured_arguments, includes):
         language = "c" if Path(path).suffix == ".c" else "cpp"
-        choices = configurations.get(path, [([], [root], 0)])
-        if len(choices) > 1:
-            result.diagnostics.append(Diagnostic(category="condition_unknown", path=path,
-                message="该文件有多个编译配置，尚未消除配置歧义；保留语法实体，不确认调用。"))
-            continue
-        configured_arguments, includes, _ = choices[0]
         visited, pending_paths, unsafe = set(), [path], False
         while pending_paths:
             checked = pending_paths.pop()
@@ -448,7 +481,9 @@ def _cpp_analysis(root, files, version, source_root, header_directories, header_
                 unsafe = True
                 result.diagnostics.append(Diagnostic(category="missing_dependency", path=checked, message=message))
         if unsafe:
-            continue
+            if path in configurations:
+                failed_config_paths.update(visited)
+            return
         try:
             unit = cindex.Index.create().parse(
                 str(root / path),
@@ -468,10 +503,12 @@ def _cpp_analysis(root, files, version, source_root, header_directories, header_
                 options=cindex.TranslationUnit.PARSE_DETAILED_PROCESSING_RECORD,
             )
         except cindex.TranslationUnitLoadError:
+            if path in configurations:
+                failed_config_paths.update(visited)
             result.diagnostics.append(
                 Diagnostic(category="parse_failed", path=path, message="libclang 无法解析该文件。")
             )
-            continue
+            return
         native_errors = False
         for diagnostic in unit.diagnostics:
             if diagnostic.severity >= cindex.Diagnostic.Error:
@@ -485,7 +522,9 @@ def _cpp_analysis(root, files, version, source_root, header_directories, header_
                     )
                 )
         if native_errors:
-            continue  # Recovery ASTs cannot establish unique targets in an incomplete unit.
+            if path in configurations:
+                failed_config_paths.update(visited)
+            return  # Recovery ASTs cannot establish unique targets in an incomplete unit.
 
         @lru_cache(maxsize=4096)
         def relative_native_path(filename):
@@ -498,6 +537,20 @@ def _cpp_analysis(root, files, version, source_root, header_directories, header_
             filename = cursor.location.file
             return relative_native_path(filename.name) if filename else None
 
+        def entity_for_cursor(cursor):
+            cursor_path = local_path(cursor)
+            if not cursor_path:
+                return None
+            entity = by_location.get((cursor_path, cursor.extent.start.offset))
+            if entity:
+                return entity
+            matches = [candidate for candidate in entities_by_path.get(cursor_path,[])
+                if candidate.location.path == cursor_path
+                and candidate.location.start_byte <= cursor.location.offset < candidate.location.end_byte
+                and (candidate.name.split('::')[-1] == cursor.spelling
+                    or candidate.name.split('::')[-1].startswith(cursor.spelling + '<'))]
+            return matches[0] if len(matches) == 1 else None
+
         def native(cursor, active_scope: str | None = None):
             cursor_path = local_path(cursor)
             if cursor.location.file and not cursor_path:
@@ -505,18 +558,7 @@ def _cpp_analysis(root, files, version, source_root, header_directories, header_
             if cursor_path and cursor_path not in files:
                 return
             if cursor.kind in function_kinds and cursor.is_definition() and cursor_path:
-                entity = by_location.get((cursor_path, cursor.extent.start.offset))
-                if not entity:
-                    matches = [
-                        candidate
-                        for candidate in result.entities
-                        if candidate.location.path == cursor_path
-                        and candidate.location.start_byte
-                        <= cursor.location.offset
-                        < candidate.location.end_byte
-                        and candidate.name.split("::")[-1] == cursor.spelling
-                    ]
-                    entity = matches[0] if len(matches) == 1 else None
+                entity = entity_for_cursor(cursor)
                 if entity:
                     active_scope = entity.scope_id
                     usr = cursor.get_usr()
@@ -546,6 +588,13 @@ def _cpp_analysis(root, files, version, source_root, header_directories, header_
             if cursor.kind == cindex.CursorKind.CALL_EXPR and active_scope and cursor_path:
                 target = cursor.referenced
                 usr = target.get_usr() if target else ""
+                definition = target.get_definition() if target else None
+                defined_entity = entity_for_cursor(definition) if definition else None
+                if target and not defined_entity:
+                    template = cindex.conf.lib.clang_getSpecializedCursorTemplate(target)
+                    if template:
+                        defined_entity = entity_for_cursor(template.get_definition() or template)
+                        usr = template.get_usr()
                 indirect = not target or target.kind not in function_kinds
                 if target and target.kind == cindex.CursorKind.CXX_METHOD and target.is_virtual_method():
                     indirect = True
@@ -561,14 +610,21 @@ def _cpp_analysis(root, files, version, source_root, header_directories, header_
                         end_byte=cursor.extent.end.offset,
                     ),
                 )
-                if all(item.id != call.id for item in result.calls):
+                existing = calls_by_id.get(call.id)
+                if existing is None:
                     result.calls.append(call)
-                    pending.append((call, usr, indirect))
+                    calls_by_id[call.id] = call
+                else:
+                    if existing.caller_scope_id != call.caller_scope_id:
+                        indirect = True
+                    call = existing
+                pending.append((call, usr, indirect, defined_entity.id if defined_entity else None, path in configurations))
             for child in cursor.get_children():
                 native(child, active_scope)
 
         module_scope = stable_id(version, path, "module")
-        result.scopes.append(
+        if not any(scope.id == module_scope for scope in result.scopes):
+            result.scopes.append(
             Scope(
                 id=module_scope,
                 kind="module",
@@ -581,23 +637,49 @@ def _cpp_analysis(root, files, version, source_root, header_directories, header_
                     end_byte=len(text.encode()),
                 ),
             )
-        )
+            )
         native(unit.cursor, module_scope)
-    for call, usr, indirect in pending:
-        targets = native_symbols.get(usr, [])
+
+    for path, text in files.items():
+        if Path(path).suffix not in {".c", ".h", ".cc", ".cpp", ".cxx", ".hpp", ".hh"}:
+            continue
+        choices = configurations.get(path, [([], [root], 0)])
+        if len(choices) > 1:
+            result.diagnostics.append(Diagnostic(category="configuration", path=path,
+                message=f"已分别解析 {len(choices)} 个快照内编译配置；相同调用位置的目标冲突不进入确定图。"))
+        for configured_arguments, includes, _ in choices:
+            parse_unit(path, text, configured_arguments, includes)
+    outcomes = {}
+    entities = {entity.id:entity for entity in result.entities}
+    callers = {entity.scope_id:entity for entity in result.entities}
+    for call, usr, indirect, definition_id, configured in pending:
+        targets = [entities[definition_id]] if definition_id else native_symbols.get(usr, [])
+        caller = callers.get(call.caller_scope_id)
+        target = targets[0] if len(targets) == 1 else None
         if indirect:
-            call.resolution = "excluded_indirect"
-            call.reason = "函数指针、回调或虚分派不进入直接调用图。"
-        elif len(targets) == 1 and not targets[0].condition:
-            call.target_id = targets[0].id
-            call.target_name = targets[0].qualified_name
-            call.resolution = "confirmed"
-            call.reason = "libclang 符号解析对应唯一实现。"
+            outcome = ('excluded_indirect',None)
+        elif target and (not target.condition or configured or (caller and caller.condition == target.condition)):
+            outcome = ('confirmed',target.id)
         elif not targets:
-            call.resolution = "external"
-            call.reason = "目标没有当前范围内实现。"
+            outcome = ('external',None)
         else:
-            call.reason = "条件配置或多个实现未消除歧义。"
+            outcome = ('unresolved',None)
+        outcomes.setdefault(call.id,set()).add(outcome)
+    for call in result.calls:
+        choices = outcomes.get(call.id,set())
+        if len(choices) != 1 or call.location.path in failed_config_paths:
+            call.reason = ("编译配置未覆盖或解析失败，不能确认该位置在全部配置中的目标。"
+                if call.location.path in failed_config_paths else "不同编译配置或同位置宏展开存在目标冲突，不生成确定调用。")
+            result.diagnostics.append(Diagnostic(category='condition_unknown', path=call.location.path,
+                line=call.location.start_line,message=call.reason))
+            continue
+        resolution, target_id = next(iter(choices))
+        call.resolution = resolution
+        call.target_id = target_id
+        call.target_name = entities[target_id].qualified_name if target_id else None
+        call.reason = {'confirmed':'libclang 在已解析配置中对应同一具体实现。',
+            'external':'目标没有当前范围内实现。','excluded_indirect':'函数指针、回调或虚分派不进入直接调用图。',
+            'unresolved':'条件配置或多个实现未消除歧义。'}[resolution]
     return result
 
 

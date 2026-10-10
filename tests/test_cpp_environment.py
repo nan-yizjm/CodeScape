@@ -89,14 +89,87 @@ def test_native_snapshot_content_and_safe_configuration_are_used(tmp_path):
     assert not any(item.path == "caller.c" and item.category == "missing_dependency" for item in result.diagnostics)
 
 
-def test_multiple_incompatible_compile_configurations_remain_uncertain(tmp_path):
+def test_multiple_compile_configurations_with_same_target_agree(tmp_path):
     files = {"owned.c": "int target(){return 1;}\nint caller(){return target();}\n",
         "compile_commands.json": json.dumps([{"file": "owned.c", "arguments": ["cc", "-DVALUE=1"]},
             {"file": "owned.c", "arguments": ["cc", "-DVALUE=2"]}])}
     write(tmp_path, files)
     result = cpp_analysis(tmp_path, files, "v1")
-    assert len(result.entities) == 2 and not result.calls
-    assert any(item.category == "condition_unknown" for item in result.diagnostics)
+    assert len(result.entities) == 2 and len(result.calls) == 1
+    assert result.calls[0].resolution == 'confirmed' and result.calls[0].target_name == 'target'
+    assert len({scope.id for scope in result.scopes})==len(result.scopes)
+    assert any(item.category == "configuration" for item in result.diagnostics)
+
+
+def test_multiple_configurations_selecting_different_implementations_have_no_edge(tmp_path):
+    files={'owned.c':'#if SELECT\nint chosen(){return 1;}\n#else\nint chosen(){return 2;}\n#endif\nint caller(){return chosen();}\n',
+        'compile_commands.json':json.dumps([{'file':'owned.c','arguments':['cc','-DSELECT=1']},
+            {'file':'owned.c','arguments':['cc','-DSELECT=0']}])}
+    write(tmp_path,files)
+    result=cpp_analysis(tmp_path,files,'v')
+    assert len([entity for entity in result.entities if entity.name=='chosen'])==2
+    assert len(result.calls)==1 and result.calls[0].resolution=='unresolved'
+    assert result.calls[0].target_id is None
+    assert any(item.category=='condition_unknown' and '冲突' in item.message for item in result.diagnostics)
+
+
+@pytest.mark.parametrize('gap',['failed','overflow'])
+def test_unverified_configurations_do_not_hide_behind_successful_configuration(tmp_path,gap):
+    source='int target(){return 1;}\n#if SELECT\n#include "missing.h"\n#endif\nint caller(){return target();}\n'
+    arguments=[['cc','-DSELECT=0'],['cc','-DSELECT=1']] if gap=='failed' else [['cc',f'-DVALUE={index}','-DSELECT=0'] for index in range(9)]
+    files={'owned.c':source,'compile_commands.json':json.dumps([{'file':'owned.c','arguments':value} for value in arguments])}
+    write(tmp_path,files)
+    result=cpp_analysis(tmp_path,files,'v')
+    assert len(result.entities)==2 and len(result.calls)==1
+    assert result.calls[0].resolution=='unresolved' and result.calls[0].target_id is None
+    assert any(item.category=='condition_unknown' for item in result.diagnostics)
+
+
+def test_header_guards_do_not_turn_ordinary_implementations_into_feature_branches(tmp_path):
+    files={'owned.h':'#ifndef OWNED_H\n#define OWNED_H\ninline int target(){return 1;}\ninline int helper(){return target();}\n#endif\n',
+        'owned.cpp':'#include "owned.h"\nint caller(){return helper();}\n'}
+    write(tmp_path,files)
+    result=cpp_analysis(tmp_path,files,'v')
+    assert len(result.entities)==3
+    assert all(entity.condition is None for entity in result.entities)
+    assert len(result.calls)==2 and all(call.resolution=='confirmed' for call in result.calls)
+
+
+def test_template_instances_share_definition_but_explicit_specialization_is_distinct(tmp_path):
+    files={'owned.cpp':'template<class T> T convert(T value){return value;}\ntemplate<> int convert<int>(int value){return value+1;}\nint caller(){return convert(1)+int(convert(2.0))+int(convert(3.0f));}\n'}
+    write(tmp_path,files)
+    result=cpp_analysis(tmp_path,files,'v')
+    assert len(result.entities)==3
+    calls=[call for call in result.calls if call.expression=='convert']
+    assert len(calls)==3 and all(call.resolution=='confirmed' for call in calls)
+    counts={target:sum(call.target_id==target for call in calls) for target in {call.target_id for call in calls}}
+    assert sorted(counts.values())==[1,2]
+
+
+def test_same_branch_calls_keep_conditions_and_do_not_connect_mutually_exclusive_bodies(tmp_path):
+    files={'owned.c':'#if SELECT\nint a(){return 1;}\nint caller(){return a();}\n#else\nint b(){return 2;}\nint caller(){return b();}\n#endif\n',
+        'compile_commands.json':json.dumps([{'file':'owned.c','arguments':['cc','-DSELECT=1']},
+            {'file':'owned.c','arguments':['cc','-DSELECT=0']}])}
+    write(tmp_path,files)
+    result=cpp_analysis(tmp_path,files,'v')
+    entities={entity.id:entity for entity in result.entities}
+    scopes={entity.scope_id:entity for entity in result.entities}
+    assert len(result.calls)==2
+    for call in result.calls:
+        assert call.resolution=='confirmed'
+        assert entities[call.target_id].condition==scopes[call.caller_scope_id].condition
+
+
+def test_nested_alternatives_retain_outer_condition_and_ifdef_defined_semantics(tmp_path):
+    files={'owned.c':'#ifdef OUTER\n#if INNER\nint a(){return 1;}\n#elif NEXT\nint b(){return 2;}\n#else\nint c(){return 3;}\nint caller(){return c();}\n#endif\n#endif\n',
+        'compile_commands.json':json.dumps([{'file':'owned.c','arguments':['cc','-DOUTER=0','-DINNER=0','-DNEXT=0']}])}
+    write(tmp_path,files)
+    result=cpp_analysis(tmp_path,files,'v')
+    assert len(result.calls)==1 and result.calls[0].resolution=='confirmed'
+    target=next(entity for entity in result.entities if entity.name=='c')
+    assert target.condition.startswith('(defined(OUTER)) &&')
+    assert '!(INNER)' in target.condition and '!(NEXT)' in target.condition
+    assert next(entity for entity in result.entities if entity.name=='caller').condition==target.condition
 
 
 def test_system_declaration_cannot_read_outside_overlay_even_through_macro(tmp_path, monkeypatch):

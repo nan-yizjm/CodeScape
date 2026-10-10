@@ -131,8 +131,14 @@ def safe_arguments(arguments, root: Path, source_root: str | None, directory: st
     return allowed, includes, removed
 
 
+class CompilerConfigurations(dict):
+    def __init__(self):
+        super().__init__()
+        self.incomplete: set[str] = set()
+
+
 def compiler_configurations(root: Path, files: dict[str, str], source_root: str | None = None):
-    configurations, notes = {}, []
+    configurations, notes = CompilerConfigurations(), []
     for path, text in files.items():
         if Path(path).name != "compile_commands.json":
             continue
@@ -164,6 +170,10 @@ def compiler_configurations(root: Path, files: dict[str, str], source_root: str 
                 bucket = configurations.setdefault(key, [])
                 if value not in bucket and len(bucket) < 8:
                     bucket.append(value)
+                elif value not in bucket:
+                    if key not in configurations.incomplete:
+                        notes.append((key, "编译配置超过八个，未覆盖的配置保留为缺口；相关调用不能认定全部配置一致。"))
+                    configurations.incomplete.add(key)
                 if value[2]:
                     notes.append((key, f"已移除 {value[2]} 项非白名单参数；没有执行编译命令。"))
         except (ValueError, TypeError, KeyError):

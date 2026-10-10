@@ -13,24 +13,26 @@
     ]
   },
   "snapshot_hash": "7240fe218f0552729c0343bf54f244013ed1ba2dd982d34f49e4bb421cbb39a2",
+  "data_root": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\output\\windows-bundle-validation\\d0ec19c4-120d-4fe5-9ddc-3b6255cac474",
+  "snapshot_id": "8a44d3a1-d04b-488d-a03b-5078230d0be6",
   "previous_confirmed_calls": 0,
   "files": 36,
   "visible_functions": 573,
-  "confirmed_calls": 395,
+  "confirmed_calls": 544,
   "call_resolution": {
     "excluded_indirect": 61,
-    "unresolved": 390,
-    "confirmed": 395,
+    "unresolved": 241,
+    "confirmed": 544,
     "external": 256
   },
   "diagnostics": {
-    "condition_unknown": 189,
+    "condition_unknown": 175,
     "parse_failed": 15,
     "missing_dependency": 50
   },
-  "elapsed_seconds": 9.957,
+  "elapsed_seconds": 9.602,
   "tools": {
-    "cpp": "tree-sitter/0.25.2 + libclang/18.1.1 + snapshot-config/2"
+    "cpp": "tree-sitter/0.25.2 + libclang/18.1.1 + snapshot-config/3"
   },
   "snapshot_bytes_unchanged": true,
   "target_code_executed": false,
@@ -39,7 +41,7 @@
   "diagnostic_examples": [
     {
       "category": "condition_unknown",
-      "message": "条件分支已索引；原型未枚举全部编译配置。",
+      "message": "条件分支已索引；语义解析仅覆盖已提供的编译配置与保守默认配置。",
       "path": "alloc.c",
       "line": 64
     },
@@ -51,40 +53,39 @@
     },
     {
       "category": "condition_unknown",
-      "message": "条件分支已索引；原型未枚举全部编译配置。",
-      "path": "alloc.h",
-      "line": 31
-    },
-    {
-      "category": "condition_unknown",
-      "message": "条件分支已索引；原型未枚举全部编译配置。",
+      "message": "条件分支已索引；语义解析仅覆盖已提供的编译配置与保守默认配置。",
       "path": "alloc.h",
       "line": 37
     },
     {
       "category": "condition_unknown",
-      "message": "条件分支已索引；原型未枚举全部编译配置。",
+      "message": "条件分支已索引；语义解析仅覆盖已提供的编译配置与保守默认配置。",
       "path": "alloc.h",
       "line": 53
     },
     {
       "category": "condition_unknown",
-      "message": "条件分支已索引；原型未枚举全部编译配置。",
+      "message": "条件分支已索引；语义解析仅覆盖已提供的编译配置与保守默认配置。",
       "path": "alloc.h",
       "line": 92
     },
     {
       "category": "condition_unknown",
-      "message": "条件分支已索引；原型未枚举全部编译配置。",
+      "message": "条件分支已索引；语义解析仅覆盖已提供的编译配置与保守默认配置。",
       "path": "async.c",
       "line": 36
     },
     {
       "category": "condition_unknown",
-      "message": "条件分支已索引；原型未枚举全部编译配置。",
+      "message": "条件分支已索引；语义解析仅覆盖已提供的编译配置与保守默认配置。",
       "path": "async.c",
       "line": 50
+    },
+    {
+      "category": "parse_failed",
+      "message": "部分语法无法识别。",
+      "path": "async.h",
+      "line": null
     }
-  ],
-  "data_root": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\output\\windows-bundle-validation\\d0ec19c4-120d-4fe5-9ddc-3b6255cac474"
+  ]
 }
