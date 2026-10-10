@@ -1,6 +1,8 @@
 import asyncio
 import json
+import threading
 import time
+import uuid
 
 import pytest
 from codescape.analyzers import python_analysis
@@ -100,6 +102,62 @@ def test_retry_index_uses_existing_snapshot(client, tmp_path, monkeypatch):
     assert detail["status"] == "indexed"
     assert [entity["name"] for entity in detail["analysis"]["entities"]] == ["original"]
     assert client.post(url + "/index", json={}).status_code == 409
+
+
+def test_task_api_pause_resume_cancel_and_no_automatic_successor(client, tmp_path, monkeypatch):
+    from codescape.database import Database
+    db = Database(tmp_path)
+    original = db.list_projects()[0]
+    second = dict(original, id=str(uuid.uuid4()), name="另一个项目", demo=0)
+    db.insert(second)
+    entered, release = threading.Event(), threading.Event()
+    started_projects = []
+
+    async def fixed_architecture(self, analysis, files, **callbacks):
+        started_projects.append(len(callbacks.get("completed_batches", [])))
+        architecture = Architecture.model_validate(original["architecture"])
+        if not callbacks.get("completed_batches"):
+            await callbacks["on_batch"](1, 1, architecture)
+        entered.set()
+        while not release.is_set():
+            await asyncio.sleep(0.01)
+        return architecture, {"total_tokens": 12}
+
+    monkeypatch.setattr(Provider, "architecture", fixed_architecture)
+    first_url, second_url = [f"/api/v1/projects/{project['id']}" for project in [original, second]]
+    for url in [first_url, second_url]:
+        assert client.post(url + "/consent", json={"accepted": True}).status_code == 200
+    first = client.post(first_url + "/analyze", json={}).json()["data"]
+    assert entered.wait(2)
+    second_task = client.post(second_url + "/analyze", json={}).json()["data"]
+    assert second_task["status"] == "waiting"
+    assert client.post(first_url + "/analyze", json={}).status_code == 409
+    jobs = client.get("/api/v1/tasks").json()["data"]
+    assert sum(task["status"] == "running" for task in jobs) == 1
+    assert client.post(f"/api/v1/tasks/{second_task['task_id']}/start", json={}).status_code == 409
+    assert client.post(f"/api/v1/tasks/{first['task_id']}/pause", json={}).status_code == 200
+    checkpoint = tmp_path / "projects" / original["id"] / "architecture-checkpoint.json"
+    assert checkpoint.exists()
+    paused = client.get(first_url).json()["data"]
+    assert paused["status"] == "paused"
+    assert paused["architecture"] == original["architecture"]
+    entered.clear()
+    assert client.post(f"/api/v1/tasks/{first['task_id']}/start", json={}).status_code == 200
+    assert entered.wait(2)
+    assert started_projects == [0, 1]
+    release.set()
+    for _ in range(100):
+        jobs = client.get("/api/v1/tasks").json()["data"]
+        if next(task for task in jobs if task["id"] == first["task_id"])["status"] == "completed":
+            break
+        time.sleep(0.02)
+    assert next(task for task in jobs if task["id"] == first["task_id"])["status"] == "completed"
+    assert next(task for task in jobs if task["id"] == second_task["task_id"])["status"] == "waiting"
+    assert started_projects == [0, 1]
+    assert client.post(f"/api/v1/tasks/{second_task['task_id']}/cancel", json={}).status_code == 200
+    assert client.get(second_url).json()["data"]["architecture"] == original["architecture"]
+    assert client.post(f"/api/v1/tasks/{second_task['task_id']}/start", json={}).status_code == 409
+    db.engine.dispose()
 
 
 def test_local_import_worker_handles_chinese_json_and_does_not_execute(client, tmp_path):

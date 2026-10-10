@@ -568,3 +568,24 @@ button:active:not(:disabled) { transform: translateY(1px); }
 .import-preview summary { font-size: 13px; cursor: pointer; }
 .import-preview ul { max-height: 160px; overflow: auto; padding-left: 20px; }
 .import-preview li span { display: block; color: var(--muted); }
+.task-trigger { position: relative; }
+.task-active-dot { position: absolute; top: 7px; right: 7px; width: 6px; height: 6px; border-radius: 50%; background: #667da5; }
+.task-modal { width: 600px; }
+.task-list { display: grid; gap: 12px; }
+.task-card { padding: 18px; border: 1px solid var(--line); border-radius: 18px; background: #fafafa; }
+.task-card.running { border-color: #ccd7eb; background: #f5f8fd; }
+.task-card-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.task-card-heading strong { font-size: 15px; overflow-wrap: anywhere; }
+.task-card-heading > span { display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--muted); white-space: nowrap; }
+.task-card p { font-size: 12px; margin: 12px 0 5px; }
+.task-card small { display: block; font-size: 11px; color: var(--muted); overflow-wrap: anywhere; line-height: 1.7; }
+.task-card-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; margin-top: 16px; }
+.task-card-actions > button { min-height: 34px; font-size: 12px; padding: 7px 12px; }
+.task-order-actions { display: flex; margin-left: auto; }
+.task-history { margin-top: 22px; font-size: 12px; }
+.task-history summary { color: var(--muted); cursor: pointer; padding: 8px 0; }
+.task-history > div { display: flex; justify-content: space-between; gap: 12px; padding: 13px 0; border-bottom: 1px solid var(--line); }
+.task-history small { color: var(--muted); margin-left: 9px; }
+.task-empty { padding: 30px 10px; display: grid; justify-items: center; gap: 12px; color: var(--muted); }
+.task-empty strong { color: #333; font-size: 14px; }
+.task-empty span { font-size: 12px; }

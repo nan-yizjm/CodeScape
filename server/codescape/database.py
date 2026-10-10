@@ -62,11 +62,25 @@ class Database:
             Column("project_id", String, primary_key=True),
             Column("value", JSON, nullable=False),
         )
+        self.jobs = Table(
+            "analysis_jobs", metadata,
+            Column("id", String, primary_key=True),
+            Column("project_id", String, nullable=False),
+            Column("kind", String, nullable=False),
+            Column("status", String, nullable=False),
+            Column("position", Integer, nullable=False),
+            Column("version_id", String, nullable=False),
+            Column("created_at", String, nullable=False),
+            Column("updated_at", String, nullable=False),
+            Column("detail", String, nullable=False),
+        )
         metadata.create_all(self.engine)
 
     def recover_interrupted(self) -> None:
         # A crashed preview never silently resumes paid analysis.
         with self.engine.begin() as connection:
+            connection.execute(self.jobs.update().where(self.jobs.c.status == "running")
+                               .values(status="paused", updated_at=now(), detail="上次任务中断，请主动恢复。"))
             connection.execute(
                 self.projects.update()
                 .where(self.projects.c.status == "analyzing")
@@ -77,6 +91,37 @@ class Database:
                 .where(self.projects.c.status.in_(["indexing", "queued"]))
                 .values(status="failed", error="上次静态解析中断，请重新导入。")
             )
+
+    def list_jobs(self) -> list[dict]:
+        with self.engine.connect() as connection:
+            return [dict(row) for row in connection.execute(
+                select(self.jobs).order_by(self.jobs.c.position, self.jobs.c.created_at)
+            ).mappings()]
+
+    def get_job(self, job_id: str) -> dict | None:
+        with self.engine.connect() as connection:
+            row = connection.execute(select(self.jobs).where(self.jobs.c.id == job_id)).mappings().first()
+            return dict(row) if row else None
+
+    def insert_job(self, values: dict) -> None:
+        with self.engine.begin() as connection:
+            connection.execute(self.jobs.insert().values(**values))
+
+    def update_job(self, job_id: str, **values) -> None:
+        with self.engine.begin() as connection:
+            connection.execute(self.jobs.update().where(self.jobs.c.id == job_id)
+                               .values(**values, updated_at=now()))
+
+    def reorder_jobs(self, ids: list[str]) -> None:
+        with self.engine.begin() as connection:
+            connection.exec_driver_sql("BEGIN IMMEDIATE")
+            waiting = set(connection.execute(select(self.jobs.c.id)
+                          .where(self.jobs.c.status == "waiting")).scalars())
+            if len(ids) != len(set(ids)) or set(ids) != waiting:
+                raise ValueError("等待队列已经改变，请刷新后重新排序。")
+            for position, job_id in enumerate(ids):
+                connection.execute(self.jobs.update().where(self.jobs.c.id == job_id)
+                                   .values(position=position, updated_at=now()))
 
     def list_projects(self) -> list[dict]:
         with self.engine.connect() as connection:

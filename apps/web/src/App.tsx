@@ -1,29 +1,32 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, ArrowRight, BookOpen, Boxes, ChevronRight, Code2, Download, FolderOpen, GitBranch,
   Info, Layers3, Plus, Settings2, ShieldCheck, Sparkles, X, Check, AlertTriangle, Circle, FileCode2,
-  Activity, Braces, ExternalLink, ArrowUpRight, Maximize2, Minimize2 } from 'lucide-react';
+  Activity, Braces, ExternalLink, ArrowUpRight, Maximize2, Minimize2, ListOrdered, Pause, Play, Square, ArrowUp, ArrowDown } from 'lucide-react';
 import type { Viewport } from '@xyflow/react';
 import { api, bootstrap } from './api';
 import { OverviewPanel } from './OverviewPanel';
 import { abstractModules, aggregateState, exportSvg, moduleEntities, projectGraph } from './graph';
-import type { Entity, ImportPreview, LearningState, Panel, Project, ProjectDetail, Projection, ProjectionNode, SourceFile } from './types';
+import type { AnalysisTask, Entity, ImportPreview, LearningState, Panel, Project, ProjectDetail, Projection, ProjectionNode, SourceFile } from './types';
 
 const Canvas = lazy(() => import('./Canvas').then(module => ({ default: module.Canvas })));
 const SourceReader = lazy(() => import('./SourceReader').then(module => ({ default: module.SourceReader })));
 
 const statuses: Record<string, string> = { ready: '可以探索', indexed: '静态索引就绪', indexing: '正在解析',
-  queued: '等待解析', analyzing: 'AI 分析中', paused: '分析已暂停', failed: '解析失败' };
+  queued: '等待解析', waiting: '等待主动启动', analyzing: 'AI 分析中', paused: '分析已暂停', failed: '解析失败', cancelled: '任务已取消' };
+const taskLabels: Record<string, string> = { waiting: '等待启动', running: '运行中', paused: '已暂停',
+  cancelled: '已取消', completed: '已完成', failed: '失败' };
 const stateLabels = { not_started: '未开始', in_progress: '学习中', mastered: '已掌握' };
 
 export default function App() {
   const [authorized, setAuthorized] = useState(false);
   const [projects, setProjects] = useState<Project[]>([]);
+  const [analysisTasks, setAnalysisTasks] = useState<AnalysisTask[]>([]);
   const [project, setProject] = useState<ProjectDetail | null>(null);
   const [focus, setFocus] = useState<string | null>(null);
   const [panels, setPanels] = useState<Panel[]>([]);
   const [source, setSource] = useState<SourceFile | null>(null);
   const [viewports, setViewports] = useState<Record<string, Viewport>>({});
-  const [modal, setModal] = useState<'import' | 'settings' | 'consent' | null>(null);
+  const [modal, setModal] = useState<'import' | 'settings' | 'consent' | 'tasks' | null>(null);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [busy, setBusy] = useState(false);
@@ -54,7 +57,30 @@ export default function App() {
   const viewportKey = `${isFunctions ? 'grouped-functions' : 'vertical'}:${focus || 'root'}:${expandedModule || 'collapsed'}:${showOtherModules ? 'all' : 'focused'}:v4`;
   const confirmedCount = project?.analysis.calls.filter(call => call.resolution === 'confirmed').length || 0;
 
-  async function refresh() { setProjects(await api<Project[]>('/projects')); }
+  async function refresh() {
+    const [nextProjects, nextTasks] = await Promise.all([api<Project[]>('/projects'), api<AnalysisTask[]>('/tasks')]);
+    setProjects(nextProjects); setAnalysisTasks(nextTasks);
+  }
+  async function taskAction(task: AnalysisTask, action: 'start' | 'pause' | 'cancel') {
+    setBusy(true); setError('');
+    try {
+      await api(`/tasks/${task.id}/${action}`, {});
+      await refresh();
+      if (project?.id === task.project_id) setProject(await api<ProjectDetail>(`/projects/${project.id}`));
+      setNotice(action === 'start' ? '任务已启动，完成后不会自动启动下一项。' : action === 'pause' ? '任务已暂停，有效检查点已保留。' : '任务已取消，已有成功结果保持可读。');
+    } catch (problem) { setError((problem as Error).message); }
+    finally { setBusy(false); }
+  }
+  async function moveTask(task: AnalysisTask, direction: number) {
+    const waiting = analysisTasks.filter(item => item.status === 'waiting');
+    const index = waiting.findIndex(item => item.id === task.id), target = index + direction;
+    if (target < 0 || target >= waiting.length) return;
+    [waiting[index], waiting[target]] = [waiting[target], waiting[index]];
+    setBusy(true); setError('');
+    try { setAnalysisTasks(await api<AnalysisTask[]>('/tasks/order', { ids: waiting.map(item => item.id) }, 'PUT')); }
+    catch (problem) { setError((problem as Error).message); }
+    finally { setBusy(false); }
+  }
   async function retryIndex() {
     if (!project) return;
     setError(''); setBusy(true);
@@ -104,7 +130,8 @@ export default function App() {
     if (!authorized) return;
     const timer = setInterval(() => {
       api<Project[]>('/projects').then(setProjects).catch(() => {});
-      if (project && ['indexing', 'analyzing', 'queued'].includes(project.status)) {
+      api<AnalysisTask[]>('/tasks').then(setAnalysisTasks).catch(() => {});
+      if (project && ['indexing', 'analyzing', 'queued', 'waiting'].includes(project.status)) {
         api<ProjectDetail>(`/projects/${project.id}`).then(next => {
           setProject(next);
           if (next.status === 'ready' && project.status !== 'ready') {
@@ -257,7 +284,7 @@ export default function App() {
       }
       const created = await api<Project>('/imports', { preview_id: importPreview.preview_id });
       setModal(null); setImportPath(''); setImportPreview(null); await refresh(); await openProject(created.id);
-      setNotice('源码快照已创建，正在进行静态解析。');
+      setNotice(created.status === 'queued' ? '源码快照已创建，解析任务等待主动启动。' : '源码快照已创建，正在进行静态解析。');
     } catch (problem) { setError((problem as Error).message); }
     finally { setBusy(false); }
   }
@@ -280,20 +307,24 @@ export default function App() {
     setBusy(true);
     try {
       await api(`/projects/${project.id}/consent`, { accepted: true });
-      await api(`/projects/${project.id}/analyze`, {});
+      const started = await api<{status: string}>(`/projects/${project.id}/analyze`, {});
       setProject(await api(`/projects/${project.id}`)); setModal(null);
-      setNotice('AI 分析已开始；已有样例架构保持可读。');
+      await refresh();
+      setNotice(started.status === 'waiting' ? '已进入等待队列，请在空闲后主动启动。' : 'AI 分析已开始，已有结果保持可读。');
     } catch (problem) { setError((problem as Error).message); }
     finally { setBusy(false); }
   }
 
   async function retryAI() {
     if (!project) return;
+    const pausedIndex = analysisTasks.find(task => task.project_id === project.id && task.kind === 'index' && task.status === 'paused');
+    if (pausedIndex) { await taskAction(pausedIndex, 'start'); return; }
     setBusy(true); setError('');
     try {
-      await api(`/projects/${project.id}/analyze`, {});
+      const started = await api<{status: string}>(`/projects/${project.id}/analyze`, {});
       setProject(await api(`/projects/${project.id}`));
-      setNotice('已重新开始分批分析；每批进度会实时显示。');
+      await refresh();
+      setNotice(started.status === 'waiting' ? '已进入等待队列，请在空闲后主动启动。' : '已恢复分批分析，有效检查点将继续使用。');
     } catch (problem) {
       const message = (problem as Error).message;
       if (message.includes('授权')) setModal('consent');
@@ -335,7 +366,7 @@ export default function App() {
     <header className="app-header">
       <button className="brand" onClick={() => { setProject(null); setPanels([]); }} aria-label="返回项目学习库"><span className="brand-symbol"><Layers3 size={22} /></span><span>CodeScape<span className="brand-cn">源境</span></span></button>
       <div className="header-center"><span className="status-dot" />本地工作空间<span className="header-divider" />M0 开发预览</div>
-      <div className="header-actions"><span className="local-badge"><ShieldCheck size={13} /> 数据本地保存</span><button className="icon-button" aria-label="AI 服务设置" onClick={() => void openSettings()}><Settings2 size={19} /></button></div>
+      <div className="header-actions"><span className="local-badge"><ShieldCheck size={13} /> 数据本地保存</span><button className="icon-button task-trigger" aria-label="分析任务" title="分析任务" onClick={() => { setError(''); setModal('tasks'); }}><ListOrdered size={19} />{analysisTasks.some(task => task.status === 'running') && <span className="task-active-dot" />}</button><button className="icon-button" aria-label="AI 服务设置" onClick={() => void openSettings()}><Settings2 size={19} /></button></div>
     </header>
     <div className="app-body">
       <aside className="sidebar">
@@ -394,7 +425,26 @@ export default function App() {
       </main>
     </div>
     {notice && <div className="toast" role="status"><Check size={16} />{notice}</div>}
-    {modal && <div className="modal-backdrop" onClick={event => { if (event.target === event.currentTarget && !busy) setModal(null); }}><section ref={modalRef} className="modal" role="dialog" aria-modal="true" aria-label={{ import: '导入项目', settings: 'AI 服务设置', consent: '源码上传授权' }[modal]}><div className="modal-heading"><span className="modal-icon">{modal === 'import' ? <FolderOpen size={22} /> : modal === 'settings' ? <Settings2 size={22} /> : <ShieldCheck size={22} />}</span><button className="tiny-icon" aria-label="关闭对话框" onClick={() => !busy && setModal(null)}><X size={19} /></button></div>{error && <div className="modal-error" role="alert"><AlertTriangle size={15} />{error}</div>}
+    {modal && <div className="modal-backdrop" onClick={event => { if (event.target === event.currentTarget && !busy) setModal(null); }}><section ref={modalRef} className={`modal ${modal === 'tasks' ? 'task-modal' : ''}`} role="dialog" aria-modal="true" aria-label={{ import: '导入项目', settings: 'AI 服务设置', consent: '源码上传授权', tasks: '分析任务' }[modal]}><div className="modal-heading"><span className="modal-icon">{modal === 'import' ? <FolderOpen size={22} /> : modal === 'settings' ? <Settings2 size={22} /> : modal === 'tasks' ? <ListOrdered size={22} /> : <ShieldCheck size={22} />}</span><button className="tiny-icon" aria-label="关闭对话框" onClick={() => !busy && setModal(null)}><X size={19} /></button></div>{error && <div className="modal-error" role="alert"><AlertTriangle size={15} />{error}</div>}
+      {modal === 'tasks' && <><h2>安排你的分析</h2><p>同时运行一个任务。完成后留在当前结果，下一项由你主动启动。</p>
+        <div className="task-list">{analysisTasks.filter(task => ['waiting', 'running', 'paused'].includes(task.status)).map(task => {
+          const waiting = analysisTasks.filter(item => item.status === 'waiting');
+          const position = waiting.findIndex(item => item.id === task.id);
+          return <article className={`task-card ${task.status}`} key={task.id} aria-label={`${task.project_name} ${taskLabels[task.status]}`}>
+            <div className="task-card-heading"><strong>{task.project_name}</strong><span>{task.status === 'running' && <span className="spinner small" />}{taskLabels[task.status]}</span></div>
+            <p>{task.kind === 'index' ? '建立静态索引' : 'AI 架构分析'}{task.status === 'running' && task.progress?.total ? ` · ${task.progress.completed}/${task.progress.total} 批` : ''}</p>
+            <small>{task.status === 'running' ? task.progress?.detail || task.detail : task.detail}</small>
+            <div className="task-card-actions">
+              {task.status === 'running' ? <button className="secondary-button" disabled={busy} onClick={() => void taskAction(task, 'pause')}><Pause size={14} />暂停</button> : <button className="primary-button" disabled={busy || analysisTasks.some(item => item.status === 'running')} onClick={() => void taskAction(task, 'start')}><Play size={14} />{task.status === 'paused' ? '恢复' : '启动'}</button>}
+              <button className="text-button" disabled={busy} onClick={() => void taskAction(task, 'cancel')}><Square size={12} />{task.status === 'waiting' ? '移出队列' : '取消任务'}</button>
+              {task.status === 'waiting' && <span className="task-order-actions"><button className="tiny-icon" aria-label={`上移 ${task.project_name}`} disabled={busy || position === 0} onClick={() => void moveTask(task, -1)}><ArrowUp size={14} /></button><button className="tiny-icon" aria-label={`下移 ${task.project_name}`} disabled={busy || position === waiting.length - 1} onClick={() => void moveTask(task, 1)}><ArrowDown size={14} /></button></span>}
+            </div>
+          </article>;
+        })}</div>
+        {!analysisTasks.some(task => ['waiting', 'running', 'paused'].includes(task.status)) && <div className="task-empty"><Check size={22} /><strong>当前没有待执行任务</strong><span>从项目中启动分析，任务会出现在这里。</span></div>}
+        {analysisTasks.some(task => !['waiting', 'running', 'paused'].includes(task.status)) && <details className="task-history"><summary>已结束任务</summary>{analysisTasks.filter(task => !['waiting', 'running', 'paused'].includes(task.status)).map(task => <div key={task.id}><span>{task.project_name}<small>{task.kind === 'index' ? '静态索引' : 'AI 架构'}</small></span><span>{taskLabels[task.status]}</span></div>)}</details>}
+        <div className="privacy-note"><Info size={15} />暂停保留有效检查点；取消结束本轮任务。已发送的云端请求仍可能产生用量。</div>
+      </>}
       {modal === 'import' && <form onSubmit={event => { event.preventDefault(); void importProject(); }}>
         <h2>开始新的代码探索</h2><p>读取源码并创建独立快照。确认范围后建立静态索引，AI 分析需单独授权。</p>
         <div className="import-source-options" role="group" aria-label="源码来源">

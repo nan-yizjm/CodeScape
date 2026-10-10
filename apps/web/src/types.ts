@@ -1,4 +1,7 @@
 export type LearningState = 'not_started' | 'in_progress' | 'mastered';
+export type AnalysisTask = { id: string; project_id: string; project_name: string; kind: 'index' | 'architecture';
+  status: string; position: number; version_id: string; created_at: string; updated_at: string; detail: string;
+  progress: { phase: string; completed: number; total: number; detail: string } | null };
 export type ImportPreview = { preview_id: string; name: string; source: string; file_count: number; size: number;
   files: string[]; excluded: { path: string; reason: string }[];
   origin: { kind: string; default_branch?: string; commit?: string } };

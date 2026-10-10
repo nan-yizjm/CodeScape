@@ -30,6 +30,7 @@ from .models import (
 from .provider import Provider, ProviderError
 from .security import data_root
 from .snapshots import create_snapshot, read_snapshot
+from .tasks import TaskQueue
 
 
 def create_app(root: Path | None = None, nonce: str | None = None) -> FastAPI:
@@ -44,8 +45,8 @@ def create_app(root: Path | None = None, nonce: str | None = None) -> FastAPI:
     cookie_name = "codescape_" + secrets.token_hex(8)
     nonce_used = False
     nonce_expires = time.monotonic() + 300
-    tasks: set[asyncio.Task] = set()
     run_lock = asyncio.Lock()
+    queue = TaskQueue(database, run_lock)
     consents_path = root / "consents.json"
 
     def get_project(project_id: str) -> dict:
@@ -160,10 +161,7 @@ def create_app(root: Path | None = None, nonce: str | None = None) -> FastAPI:
         imports.cleanup()
         seed()
         yield
-        for task in tasks:
-            task.cancel()
-        if tasks:
-            await asyncio.gather(*tasks, return_exceptions=True)
+        await queue.shutdown()
         database.engine.dispose()
 
     app = FastAPI(
@@ -254,33 +252,30 @@ def create_app(root: Path | None = None, nonce: str | None = None) -> FastAPI:
         project = get_project(project_id)
         snapshot_root = root / "projects" / project_id / "snapshots" / project["snapshot"]["id"]
         database.update(project_id, status="indexing", error=None)
+        process = None
         try:
-
-            def run():
-                completed = subprocess.run(
-                    [sys.executable, str(REPOSITORY / "scripts/analyze_snapshot.py")],
-                    input=json.dumps(
-                        {
-                            "root": str(snapshot_root),
-                            "manifest": project["snapshot"],
-                            "version": project["version_id"],
-                        }
-                    ),
-                    encoding="utf-8",
-                    text=True,
-                    capture_output=True,
-                    timeout=120,
-                    cwd=REPOSITORY,
-                    creationflags=subprocess.CREATE_NO_WINDOW,
-                )
-                if completed.returncode:
-                    raise ValueError("静态解析进程失败，原始源码与旧结果未被修改。")
-                return Analysis.model_validate_json(completed.stdout)
-
-            result = await asyncio.to_thread(run)
+            process = await asyncio.create_subprocess_exec(
+                sys.executable, str(REPOSITORY / "scripts/analyze_snapshot.py"),
+                stdin=asyncio.subprocess.PIPE, stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.DEVNULL, cwd=REPOSITORY,
+                creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
+            )
+            payload = json.dumps({"root": str(snapshot_root), "manifest": project["snapshot"],
+                                  "version": project["version_id"]}).encode()
+            output, _ = await asyncio.wait_for(process.communicate(payload), timeout=120)
+            if process.returncode:
+                raise ValueError("静态解析进程失败，原始源码与旧结果未被修改。")
+            result = Analysis.model_validate_json(output)
             database.update(project_id, result=result.model_dump(), status="indexed")
+        except asyncio.CancelledError:
+            database.update(project_id, status="paused", error="静态索引已暂停，可复用当前快照恢复。")
+            raise
         except Exception as error:
             database.update(project_id, status="failed", error=str(error)[:300])
+        finally:
+            if process and process.returncode is None:
+                process.kill()
+                await process.wait()
 
     @app.post("/api/v1/imports/preview")
     async def preview_import(body: ImportRequest):
@@ -292,23 +287,14 @@ def create_app(root: Path | None = None, nonce: str | None = None) -> FastAPI:
     @app.post("/api/v1/projects/{project_id}/index")
     async def retry_index(project_id: str):
         project = get_project(project_id)
-        if project["result"] or project["status"] not in {"failed", "indexed"}:
+        if project["result"] or project["status"] not in {"failed", "indexed", "paused", "queued", "cancelled"}:
             raise HTTPException(409, "当前项目不需要重新建立静态索引。")
-        if run_lock.locked():
-            raise HTTPException(409, "已有任务运行，请等待后主动重试。")
-        await run_lock.acquire()
-        database.update(project_id, status="indexing", error=None)
-
-        async def work():
-            try:
-                await index_project(project_id)
-            finally:
-                run_lock.release()
-
-        task = asyncio.create_task(work())
-        tasks.add(task)
-        task.add_done_callback(tasks.discard)
-        return envelope({"status": "indexing"})
+        try:
+            job = queue.create(project, "index")
+            job = await queue.start(job["id"], lambda: index_project(project_id))
+        except ValueError as error:
+            raise HTTPException(409, str(error)) from None
+        return envelope(job)
 
     @app.post("/api/v1/imports")
     async def import_local(body: ImportRequest):
@@ -346,13 +332,9 @@ def create_app(root: Path | None = None, nonce: str | None = None) -> FastAPI:
             }
         )
 
-        async def work():
-            async with run_lock:
-                await index_project(project_id)
-
-        task = asyncio.create_task(work())
-        tasks.add(task)
-        task.add_done_callback(tasks.discard)
+        job = queue.create(get_project(project_id), "index")
+        if not run_lock.locked():
+            await queue.start(job["id"], lambda: index_project(project_id))
         return envelope(public(get_project(project_id)))
 
     @app.get("/api/v1/projects/{project_id}/files/{file_id}")
@@ -418,8 +400,11 @@ def create_app(root: Path | None = None, nonce: str | None = None) -> FastAPI:
 
     @app.post("/api/v1/settings/ai/test")
     async def test_ai():
+        if run_lock.locked():
+            raise HTTPException(409, "已有任务运行，请等待后测试连接。")
         try:
-            return envelope(await provider.test())
+            async with run_lock:
+                return envelope(await provider.test())
         except ProviderError as error:
             raise HTTPException(503, str(error)) from None
 
@@ -450,21 +435,27 @@ def create_app(root: Path | None = None, nonce: str | None = None) -> FastAPI:
             raise HTTPException(403, "请先授权将当前范围源码发送到所选 AI 接收端。")
         if not project["result"]:
             raise HTTPException(409, "请等待静态索引完成。")
+        try:
+            job = queue.create(project, "architecture")
+        except ValueError as error:
+            raise HTTPException(409, str(error)) from None
+        if job["status"] == "running":
+            raise HTTPException(409, "当前项目的分析已经运行。")
         if run_lock.locked():
-            raise HTTPException(409, "已有任务运行，请等待后主动启动。")
-        await run_lock.acquire()
-        database.update(project_id, status="analyzing", error=None)
-        database.analysis_progress(
-            project_id,
-            {"phase": "planning", "completed": 0, "total": 0, "detail": "正在估算源码批次"},
-        )
+            database.update(project_id, status="waiting", error=None)
+            return envelope({"status": "waiting", "task_id": job["id"]})
 
         async def work():
             checkpoint_path = root / "projects" / project_id / "architecture-checkpoint.json"
+            checkpoint: list[Architecture] = []
+            database.update(project_id, status="analyzing", error=None)
+            database.analysis_progress(
+                project_id, {"phase": "planning", "completed": 0, "total": 0,
+                             "detail": "正在估算源码批次"},
+            )
             try:
                 await asyncio.sleep(0)
                 snapshot_root = root / "projects" / project_id / "snapshots" / project["snapshot"]["id"]
-                checkpoint: list[Architecture] = []
                 if checkpoint_path.exists():
                     try:
                         saved = json.loads(checkpoint_path.read_text(encoding="utf-8"))
@@ -562,13 +553,68 @@ def create_app(root: Path | None = None, nonce: str | None = None) -> FastAPI:
                         "detail": str(error)[:300],
                     },
                 )
-            finally:
-                run_lock.release()
+        try:
+            await queue.start(job["id"], work)
+        except ValueError as error:
+            raise HTTPException(409, str(error)) from None
+        return envelope({"status": "analyzing", "task_id": job["id"]})
 
-        task = asyncio.create_task(work())
-        tasks.add(task)
-        task.add_done_callback(tasks.discard)
-        return envelope({"status": "analyzing"})
+    @app.get("/api/v1/tasks")
+    async def task_list():
+        names = {project["id"]: project["name"] for project in database.list_projects()}
+        return envelope([{**job, "project_name": names.get(job["project_id"], "已删除项目"),
+                          "progress": database.analysis_progress(job["project_id"])}
+                         for job in database.list_jobs()])
+
+    @app.put("/api/v1/tasks/order")
+    async def task_order(request: Request):
+        body = await request.json()
+        ids = body.get("ids")
+        if not isinstance(ids, list) or not all(isinstance(value, str) for value in ids):
+            raise HTTPException(422, "请提供完整的等待任务顺序。")
+        try:
+            database.reorder_jobs(ids)
+        except ValueError as error:
+            raise HTTPException(409, str(error)) from None
+        return await task_list()
+
+    @app.post("/api/v1/tasks/{job_id}/start")
+    async def task_start(job_id: str):
+        job = database.get_job(job_id)
+        if not job:
+            raise HTTPException(404, "任务不存在。")
+        if job["status"] not in {"waiting", "paused"}:
+            raise HTTPException(409, "此任务不能启动，请刷新状态。")
+        project = get_project(job["project_id"])
+        if project["version_id"] != job["version_id"]:
+            raise HTTPException(409, "任务源码版本已失效，请创建新的分析。")
+        if run_lock.locked():
+            raise HTTPException(409, "已有任务运行，请等待后主动启动。")
+        if job["kind"] == "index":
+            return await retry_index(job["project_id"])
+        return await ai_analysis(job["project_id"])
+
+    @app.post("/api/v1/tasks/{job_id}/pause")
+    async def task_pause(job_id: str):
+        try:
+            job = await queue.stop(job_id)
+        except ValueError as error:
+            raise HTTPException(409, str(error)) from None
+        database.update(job["project_id"], status="paused", error="任务已暂停，请主动恢复。")
+        return envelope(job)
+
+    @app.post("/api/v1/tasks/{job_id}/cancel")
+    async def task_cancel(job_id: str):
+        try:
+            job = await queue.stop(job_id, cancel=True)
+        except ValueError as error:
+            raise HTTPException(409, str(error)) from None
+        project = get_project(job["project_id"])
+        database.update(job["project_id"], status="ready" if project["architecture"] else "cancelled",
+                        error=None)
+        if job["kind"] == "architecture":
+            (root / "projects" / job["project_id"] / "architecture-checkpoint.json").unlink(missing_ok=True)
+        return envelope(job)
 
     @app.post("/api/v1/projects/{project_id}/overview")
     async def refresh_overview(project_id: str):
