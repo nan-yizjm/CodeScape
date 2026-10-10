@@ -1,9 +1,9 @@
 {
   "date": "2026-10-11",
   "platform": "Windows-11-10.0.26200-SP0",
-  "build_id": "20261010T200330Z",
-  "setup_sha256": "4e138149536c17d0eb16ed21257e51e28a52ad433bc2e7423f61b0bb45de80c1",
-  "validation_root": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\output\\windows-installer-validation\\f9248c40-0371-4ccb-aa58-e45e966f5718",
+  "build_id": "20261010T201838Z",
+  "setup_sha256": "782fae1f0058087d400994052250e3b82447bbf15564727a9e07d3ac75571ac5",
+  "validation_root": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\output\\windows-installer-validation\\ab49d687-cac5-40b9-9908-cba36750678c",
   "first_install": "通过",
   "installed_files_match_manifest": true,
   "upgrade_while_running": "通过；应用先正常退出，返回码 0",
