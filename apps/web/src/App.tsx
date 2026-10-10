@@ -4,7 +4,7 @@ import { ArrowLeft, ArrowRight, BookOpen, Boxes, ChevronRight, Code2, Download, 
   Activity, Braces, ExternalLink, ArrowUpRight, Maximize2, Minimize2 } from 'lucide-react';
 import type { Viewport } from '@xyflow/react';
 import { api, bootstrap } from './api';
-import { aggregateState, exportSvg, moduleEntities, projectGraph } from './graph';
+import { abstractModules, aggregateState, exportSvg, moduleEntities, projectGraph } from './graph';
 import type { Entity, LearningState, Panel, Project, ProjectDetail, Projection, ProjectionNode, SourceFile } from './types';
 
 const Canvas = lazy(() => import('./Canvas').then(module => ({ default: module.Canvas })));
@@ -40,12 +40,14 @@ export default function App() {
   const modalBusy = useRef(false);
   modalBusy.current = busy;
   const layout = useRef<Projection | null>(null);
+  const functionOrigin = useRef<{ focus: string | null; expanded: string | null; siblings: boolean } | null>(null);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const panel = panels.at(-1);
   const modules = project?.architecture?.modules || [];
   const activeModule = modules.find(module => module.id === focus);
   const projection = useMemo(() => project ? projectGraph(project, focus, { expandedModuleId: expandedModule, showOtherModules }) : { nodes: [], relations: [] }, [project, focus, expandedModule, showOtherModules]);
   const isFunctions = !!activeModule && !modules.some(module => module.parent_id === focus);
+  const viewportKey = `${isFunctions ? 'grouped-functions' : 'vertical'}:${focus || 'root'}:${expandedModule || 'collapsed'}:${showOtherModules ? 'all' : 'focused'}:v2`;
   const confirmedCount = project?.analysis.calls.filter(call => call.resolution === 'confirmed').length || 0;
 
   async function refresh() { setProjects(await api<Project[]>('/projects')); }
@@ -144,6 +146,7 @@ export default function App() {
   }, [project?.id, project?.version_id, panel]);
 
   async function openProject(id: string) {
+    functionOrigin.current = null;
     setError(''); setSource(null); setPanels([]); setViewports({}); setExpandedModule(null); setShowOtherModules(false); layout.current = null;
     try {
       const detail = await api<ProjectDetail>(`/projects/${id}`);
@@ -166,6 +169,19 @@ export default function App() {
   }
 
   function changeFocus(next: string | null) {
+    if (next && !modules.some(module => module.id === next) && abstractModules(modules).some(module => module.id === next)) {
+      functionOrigin.current = null;
+      setPanels([]); setFocus(null); setExpandedModule(next); setShowOtherModules(false);
+      layout.current = null; saveSession(null);
+      return;
+    }
+    if (next !== focus) {
+      const isLeaf = !!next && !modules.some(module => module.parent_id === next);
+      const parentId = isLeaf ? abstractModules(modules).find(module => module.id === next)?.parent_id || null : null;
+      functionOrigin.current = isLeaf ? { focus: projection.nodes.some(node => node.id === next) ? focus : null,
+        expanded: projection.nodes.some(node => node.id === next) ? expandedModule || parentId : parentId,
+        siblings: projection.nodes.some(node => node.id === next) && showOtherModules } : null;
+    }
     setPanels([]);
     setExpandedModule(null); setShowOtherModules(false);
     if (next === focus) return;
@@ -181,7 +197,14 @@ export default function App() {
     if (node.kind === 'module') {
       if (node.canExpand) {
         if (node.expanded && focus && isFunctions) {
-          changeFocus(null);
+          const origin = functionOrigin.current;
+          const navigationModules = abstractModules(modules);
+          const parentId = navigationModules.find(module => module.id === node.id)?.parent_id || null;
+          setFocus(origin?.focus || null);
+          setExpandedModule(origin ? origin.expanded : parentId);
+          setShowOtherModules(origin?.siblings || false);
+          setPanels([]); layout.current = null; saveSession(origin?.focus || null);
+          functionOrigin.current = null;
           return;
         }
         const currentExpanded = expandedModule ? modules.find(module => module.id === expandedModule) : undefined;
@@ -319,7 +342,7 @@ export default function App() {
               {project.architecture ? projection.nodes.length ? <Suspense fallback={<div className="canvas-loading"><span className="spinner" />正在准备探索画布…</div>}><Canvas key={`${project.id}:${focus || 'root'}:${expandedModule || 'collapsed'}:${showOtherModules ? 'all' : 'focused'}`} projection={projection} onNode={onNode}
                 onInfo={node => pushPanel(node.kind === 'module' ? { kind: 'module', module: node.module! } : { kind: 'function', entity: node.entity! })}
                 onRelation={relation => pushPanel({ kind: 'relation', relation })} onLayout={value => { layout.current = value; }}
-                viewport={viewports[`${isFunctions ? 'grouped-functions' : 'vertical'}:${focus || 'root'}`]} onViewport={value => { const next = { ...viewports, [`${isFunctions ? 'grouped-functions' : 'vertical'}:${focus || 'root'}`]: value }; setViewports(next); saveSession(focus, next); }} /></Suspense>
+                viewport={viewports[viewportKey]} onViewport={value => { const next = { ...viewports, [viewportKey]: value }; setViewports(next); saveSession(focus, next); }} /></Suspense>
                 : <div className="empty-state"><Boxes size={32} /><h3>此模块没有可展示函数</h3><p>实现可能位于顶层代码或其他隐藏作用域，详情中保留源码依据。</p><button className="secondary-button" onClick={() => activeModule && pushPanel({ kind: 'module', module: activeModule })}>查看模块详情</button></div>
                 : <div className="empty-state"><span className="large-empty-icon"><Sparkles size={30} /></span><h3>{['indexing', 'queued'].includes(project.status) ? '正在建立静态源码索引' : project.status === 'analyzing' ? '正在分批理解项目架构' : '源码已就绪，下一步理解架构'}</h3><p>{project.status === 'analyzing' ? `${analysisHint}${batchProgress?.total ? ` · 已完成 ${batchProgress.completed}/${batchProgress.total} 批` : ''}` : '静态索引不会被当作语义架构。授权后，AI 将基于当前快照归纳模块职责与整体工作原理；超大项目会自动拆成受控批次。'}</p>{project.status === 'indexed' && <button className="primary-button" onClick={() => { setError(''); setModal('consent'); }}><Sparkles size={15} />开始 AI 架构分析</button>}{project.status === 'paused' && <button className="primary-button" disabled={busy} onClick={() => void retryAI()}>{busy ? <span className="spinner" /> : <Sparkles size={15} />}重新开始分批分析</button>}{project.error && <p className="inline-error">{project.error}</p>}</div>}
               <div className="canvas-caption"><span>{isFunctions ? '点击函数阅读源码 · 点击连线查看证据' : projection.abstraction ? '点击代码域逐层展开 · 再次点击收起 · 信息按钮查看职责' : '点击父模块展开 · 再次点击收起 · 信息按钮查看职责'}</span><span>{projection.nodes.length} 节点 <span className="caption-dot">·</span> {projection.relations.filter(relation => relation.from !== relation.to).length} 条协作线{projection.relations.some(relation => relation.from === relation.to) ? ` · ${projection.relations.filter(relation => relation.from === relation.to).length} 个内部依赖` : ''}</span></div>

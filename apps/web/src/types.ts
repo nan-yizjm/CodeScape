@@ -20,7 +20,8 @@ export type ProjectDetail = Project & { file_ids: Record<string, string>; analys
   learning: Record<string, { state: LearningState; revision: number }>;
   scope: { excluded: { path: string; reason: string }[]; snapshot_id: string } };
 export type SourceFile = { path: string; text: string; version_id: string; hash: string };
-export type Relation = { id: string; from: string; to: string; label: string; calls: Call[] };
+export type Point = { x: number; y: number };
+export type Relation = { id: string; from: string; to: string; label: string; calls: Call[]; points?: Point[] };
 export type Panel = { kind: 'overview' } | { kind: 'module'; module: Module } | { kind: 'function'; entity: Entity }
   | { kind: 'relation'; relation: Relation } | { kind: 'source'; entity: Entity; location: Location }
   | { kind: 'diagnostics' };

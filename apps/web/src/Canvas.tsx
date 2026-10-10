@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { ReactFlow, ReactFlowProvider, Background, Controls, Handle, Position, BaseEdge, MarkerType, Panel, useReactFlow,
   type Node, type NodeProps, type EdgeProps, type Viewport } from '@xyflow/react';
-import ELK from 'elkjs/lib/elk-api';
+import ELK, { type ElkNode } from 'elkjs/lib/elk-api';
 import { Info, Check, Circle, ArrowUpRight, AlertTriangle, Boxes, Braces } from 'lucide-react';
-import type { Projection, ProjectionNode, Relation } from './types';
+import type { Point, Projection, ProjectionNode, Relation } from './types';
 import { edgePath, nodePalette } from './graph';
-import { layoutHierarchy, verticalFallback } from './layout';
+import { layoutCompound, layoutHierarchy, orthogonalOptions, verticalFallback } from './layout';
 
-type Data = { node: ProjectionNode; onInfo: (node: ProjectionNode) => void; onOpen: (node: ProjectionNode) => void } & Record<string, unknown>;
+type Data = { node: ProjectionNode; onInfo: (node: ProjectionNode) => void; onOpen: (node: ProjectionNode) => void; onInternal: (node: ProjectionNode) => void } & Record<string, unknown>;
 const elk = new ELK({ workerFactory: () => new Worker(new URL('elkjs/lib/elk-worker.min.js', import.meta.url)) });
 
 function MapNode({ data }: NodeProps<Node<Data>>) {
@@ -19,11 +19,11 @@ function MapNode({ data }: NodeProps<Node<Data>>) {
     <button className="node-hit-area nodrag nopan" aria-label={node.kind === 'module' ? (node.canExpand ? `${node.expanded ? '收起' : '展开'}模块 ${node.label}` : `进入模块 ${node.label}`) : `阅读 ${node.label} 源码`} aria-expanded={node.canExpand ? node.expanded : undefined}
       onClick={event => { event.stopPropagation(); data.onOpen(node); }} />
     <Handle type="target" position={Position.Top} />
-    <div className="node-top"><span className="node-symbol"><Icon size={16} /></span><span className="node-kind">{node.kind === 'module' ? node.external ? '关联模块' : '逻辑模块' : '函数'}</span>
+    <div className="node-top"><span className="node-symbol"><Icon size={16} /></span><span className="node-kind">{node.kind === 'module' ? node.external ? '关联模块' : node.id.startsWith('__abstract__:') ? '功能分组' : '逻辑模块' : '函数'}</span>
       <button className="node-info nodrag nopan" aria-label={`查看 ${node.label} 详情`} onPointerDown={event => event.stopPropagation()} onClick={event => { event.stopPropagation(); event.nativeEvent.stopImmediatePropagation?.(); data.onInfo(node); }}><Info size={16} /></button></div>
     <div className="node-title" title={node.label}>{node.label}</div>
     {node.kind === 'module' && <p>{node.description}</p>}
-    <div className="node-footer"><span className="node-count">{node.kind === 'module' ? node.shownCount !== undefined && node.shownCount < node.count ? `显示 ${node.shownCount} / ${node.count} 个函数` : `${node.count} 个函数` : node.external ? <><ArrowUpRight size={12} /> 跨模块</> : '真实源码实现'}</span>{node.kind === 'module' && node.internalRelationCount ? <span className="node-dependency">内部依赖 {node.internalRelationCount}</span> : null}
+    <div className="node-footer"><span className="node-count">{node.kind === 'module' ? node.shownCount !== undefined && node.shownCount < node.count ? `显示 ${node.shownCount} / ${node.count} 个函数` : `${node.count} 个函数` : node.external ? <><ArrowUpRight size={12} /> 跨模块</> : '真实源码实现'}</span>{node.kind === 'module' && node.internalRelationCount ? <button className="node-dependency nodrag nopan" aria-label={`查看 ${node.label} 内部依赖`} onClick={event => { event.stopPropagation(); data.onInternal(node); }}>内部依赖 {node.internalRelationCount}</button> : null}
       <span className="node-state" title={stateLabel}>{node.incomplete && <AlertTriangle size={12} />}{node.state === 'mastered' ? <Check size={12} /> : node.state === 'in_progress' ? <span className="learning-dot" /> : <Circle size={10} />}<span>{stateLabel}</span></span></div>
     <span className="node-action" aria-hidden="true">{node.kind === 'module' ? node.canExpand ? (node.expanded ? '收起子模块' : '展开子模块') : '进入模块' : '阅读源码'}<ArrowUpRight size={13} /></span>
     <Handle type="source" position={Position.Bottom} />
@@ -34,7 +34,7 @@ function RoutedEdge(props: EdgeProps) {
   const from = props.data?.from as ProjectionNode | undefined, to = props.data?.to as ProjectionNode | undefined;
   if (!from || !to) return null;
   const internal = from.id === to.id;
-  return <BaseEdge id={props.id} path={edgePath(from, to)} markerEnd={props.markerEnd} style={{ stroke: internal ? '#b9c0ca' : '#89919d', strokeWidth: internal ? 1.2 : 1.5, strokeDasharray: internal ? '4 4' : undefined, opacity: internal ? .72 : .9 }} interactionWidth={20} />;
+  return <BaseEdge id={props.id} path={edgePath(from, to, props.data?.points as Point[] | undefined)} markerEnd={props.markerEnd} style={{ stroke: internal ? '#b9c0ca' : '#89919d', strokeWidth: internal ? 1.2 : 1.5, strokeDasharray: internal ? '4 4' : undefined, opacity: internal ? .72 : .9 }} interactionWidth={12} />;
 }
 
 const nodeTypes = { map: MapNode };
@@ -95,7 +95,9 @@ export function Canvas({ projection, onNode, onInfo, onRelation, onLayout, onVie
     setLayout(null);
     setWarning('');
     let timeout: ReturnType<typeof setTimeout>;
-    Promise.race([layoutHierarchy(projection, async (boxes, edges) => {
+    const parents = new Map(projection.nodes.map(node => [node.id, node.parentId]));
+    const crossContainer = projection.relations.some(edge => edge.from !== edge.to && parents.get(edge.from) !== parents.get(edge.to));
+    const organized = crossContainer ? layoutCompound(projection, graph => elk.layout<ElkNode>(graph)) : layoutHierarchy(projection, async (boxes, edges) => {
       if (!boxes.length) return [];
       if (!edges.length) {
         const columns = Math.min(2, boxes.length);
@@ -106,11 +108,14 @@ export function Canvas({ projection, onNode, onInfo, onRelation, onLayout, onVie
           return { ...box, x: index % columns * columnWidth, y };
         });
       }
-      const result = await elk.layout({ id: 'root', layoutOptions: { 'elk.algorithm': 'layered', 'elk.direction': 'DOWN',
-        'elk.spacing.nodeNode': '48', 'elk.layered.spacing.nodeNodeBetweenLayers': '72', 'elk.padding': '[top=0,left=0,bottom=0,right=0]' },
-        children: boxes, edges: edges.map(edge => ({ id: edge.id, sources: [edge.from], targets: [edge.to] })) });
-      return result.children || [];
-    }), new Promise<never>((_, reject) => { timeout = setTimeout(() => reject(new Error('布局超时')), 30000); })]).then(positioned => {
+      const result = await elk.layout<ElkNode>({ id: 'root', layoutOptions: { ...orthogonalOptions, 'elk.padding': '[top=0,left=0,bottom=0,right=0]' },
+        children: boxes.map(box => ({ ...box, layoutOptions: { 'elk.portConstraints': 'FIXED_ORDER' }, ports: edges.flatMap(edge => [
+          ...(edge.from === box.id ? [{ id: `${edge.id}:out`, width: 0, height: 0, layoutOptions: { 'elk.port.side': 'SOUTH' } }] : []),
+          ...(edge.to === box.id ? [{ id: `${edge.id}:in`, width: 0, height: 0, layoutOptions: { 'elk.port.side': 'NORTH' } }] : []),
+        ]) })), edges: edges.map(edge => ({ id: edge.id, sources: [`${edge.id}:out`], targets: [`${edge.id}:in`] })) });
+      return { boxes: (result.children || []).map(box => ({ id: box.id, width: box.width!, height: box.height!, x: box.x, y: box.y })), routes: (result.edges || []).map(edge => ({ id: edge.id, points: edge.sections?.flatMap(section => [section.startPoint, ...(section.bendPoints || []), section.endPoint]) || [] })) };
+    });
+    Promise.race([organized, new Promise<never>((_, reject) => { timeout = setTimeout(() => reject(new Error('布局超时')), 30000); })]).then(positioned => {
       clearTimeout(timeout);
       if (!active) return;
       setLayout(positioned); setLayoutStructure(structure); onLayout(positioned);
@@ -129,14 +134,16 @@ export function Canvas({ projection, onNode, onInfo, onRelation, onLayout, onVie
   const nodes: Node<Data>[] = positioned.map(node => {
     const parent = positioned.find(item => item.id === node.parentId);
     return { id: node.id, type: 'map', parentId: node.parentId, extent: node.parentId ? 'parent' : undefined,
-      position: { x: node.x - (parent?.x || 0), y: node.y - (parent?.y || 0) }, data: { node, onInfo, onOpen: onNode },
+      position: { x: node.x - (parent?.x || 0), y: node.y - (parent?.y || 0) }, data: { node, onInfo, onOpen: onNode, onInternal: node => {
+        const relation = projection.relations.find(item => item.from === node.id && item.to === node.id); if (relation) onRelation(relation);
+      } },
       width: node.width, height: node.height, style: { zIndex: node.container ? 0 : 1 } };
   });
   const edges = useMemo(() => {
     const byId = new Map(positioned.map(node => [node.id, node]));
-    return projection.relations.map(relation => ({ id: relation.id, source: relation.from, target: relation.to,
-      type: 'routed', markerEnd: { type: MarkerType.ArrowClosed, color: '#999999' }, data: { from: byId.get(relation.from), to: byId.get(relation.to) } }));
-  }, [positioned, projection]);
+    return (layout?.relations || []).filter(relation => relation.from !== relation.to || byId.get(relation.from)?.kind === 'function').map(relation => ({ id: relation.id, source: relation.from, target: relation.to,
+      type: 'routed', markerEnd: { type: MarkerType.ArrowClosed, color: '#89919d' }, data: { from: byId.get(relation.from), to: byId.get(relation.to), points: relation.points } }));
+  }, [positioned, layout]);
   if (!layout || layoutStructure !== structure) return <div className="canvas-loading"><span className="spinner" />正在组织架构布局…</div>;
   return <ReactFlowProvider><ReactFlow key={structure} nodes={nodes} edges={edges} nodeTypes={nodeTypes} edgeTypes={edgeTypes}
     onNodeClick={(_, node) => onNode(node.data.node)} onEdgeClick={(_, edge) => { const relation = projection.relations.find(item => item.id === edge.id); if (relation) onRelation(relation); }}

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { aggregateState, exportSvg, projectGraph } from './graph';
-import { layoutHierarchy, verticalFallback } from './layout';
+import { abstractModules, aggregateState, edgePath, exportSvg, projectGraph } from './graph';
+import { layoutCompound, layoutHierarchy, verticalFallback } from './layout';
+import ELK from 'elkjs/lib/elk.bundled.js';
 import type { ProjectDetail, ProjectionNode } from './types';
 
 function fixture(): ProjectDetail {
@@ -137,9 +138,10 @@ describe('基于证据生成图形', () => {
     const featureFiles = projectGraph(project, null, { expandedModuleId: featureGroup!.id });
     expect(featureFiles.nodes.some(node => node.id === '__abstract__:apps/web')).toBe(false);
     expect(featureFiles.nodes.find(node => node.id === featureGroup!.id)?.parentId).toBeUndefined();
-    const otherFeatureGroup = featureFiles.nodes.find(node => node.id === '__abstract__:apps/web/features/_bucket/other-1');
+    const otherFeatureGroup = featureFiles.nodes.find(node => node.id === '__abstract__:apps/web/features/_bucket/infrastructure');
     expect(otherFeatureGroup).toBeDefined();
-    const fileGroups = projectGraph(project, null, { expandedModuleId: otherFeatureGroup!.id });
+    const subgroups = projectGraph(project, null, { expandedModuleId: otherFeatureGroup!.id });
+    const fileGroups = projectGraph(project, null, { expandedModuleId: subgroups.nodes.find(node => node.id.endsWith('infrastructure-1'))!.id });
     const fileGroup = fileGroups.nodes.find(node => node.id === '__abstract__:apps/web/features/feature-0.tsx');
     expect(fileGroup).toBeDefined();
     const feature = projectGraph(project, null, { expandedModuleId: fileGroup!.id });
@@ -169,7 +171,62 @@ describe('基于证据生成图形', () => {
     const cross = overview.relations.find(relation => relation.from !== relation.to)!;
     expect(new Set(cross.calls.map(call => call.target_id))).toEqual(new Set(['g']));
   });
-  it('抽象总览保留代码域内部依赖的自环提示', () => {
+  it('测试代码域按功能概括，保留真实模块与可回退的直属父级', () => {
+    const project = fixture(), base = project.architecture!.modules[0];
+    const paths = ['backup-files', 'collection-detail-budget', 'admin-session', 'model-budget', 'report-edition', 'web-render'];
+    project.architecture!.modules = Array.from({ length: 30 }, (_, index) => ({ ...base,
+      id: `test-${index}`, name: paths[index % paths.length], summary: '', entity_ids: [], code_paths: [`tests/${paths[index % paths.length]}-${index}.test.ts`] }));
+    const modules = abstractModules(project.architecture!.modules);
+    const view = projectGraph(project, null, { expandedModuleId: '__abstract__:tests' });
+    const children = view.nodes.filter(node => node.parentId === '__abstract__:tests');
+    expect(children.length).toBeLessThanOrEqual(6);
+    expect(children.map(node => node.label)).toContain('采集与信源验证');
+    expect(children.every(node => !node.label.includes('.test') && !node.description.includes('.test'))).toBe(true);
+    const leaf = modules.find(module => module.id === 'test-0')!;
+    const parentView = projectGraph(project, null, { expandedModuleId: leaf.parent_id });
+    expect(parentView.nodes.some(node => node.id === leaf.id)).toBe(true);
+    expect(parentView.nodes.some(node => node.expanded && node.id === leaf.parent_id)).toBe(true);
+  });
+  it('嵌套连线路径坐标随父容器平移，画布和导出使用相同圆角走线', async () => {
+    const nodes = projectGraph(fixture(), 'm').nodes;
+    const view = await layoutHierarchy({ nodes, relations: [{ id: 'f-g', from: 'f', to: 'g', label: '', calls: [] }] }, async (boxes, edges) => ({
+      boxes: boxes.map((box, index) => ({ ...box, x: index * 400, y: 0 })),
+      routes: edges.map(edge => ({ id: edge.id, points: [{ x: 10, y: 116 }, { x: 10, y: 140 }, { x: 410, y: 140 }, { x: 410, y: 0 }] })),
+    }));
+    const parent = view.nodes.find(node => node.id === 'm')!;
+    const route = view.relations[0].points!;
+    expect(route[0]).toEqual({ x: parent.x + 42, y: parent.y + 280 });
+    const path = edgePath(view.nodes.find(node => node.id === 'f')!, view.nodes.find(node => node.id === 'g')!, route);
+    expect(path).toContain(' Q ');
+    expect(exportSvg(view, '路径')).toContain(`d="${path}"`);
+  });
+  it('跨容器依赖由真实端点正交布线，不穿过无关节点', async () => {
+    const nodes = projectGraph(fixture(), 'm').nodes;
+    nodes.push({ ...nodes[0], id: 'external', container: false, canExpand: false, expanded: false });
+    const view = await layoutCompound({ nodes, relations: [
+      { id: 'out', from: 'f', to: 'external', label: '', calls: [] },
+      { id: 'back', from: 'external', to: 'g', label: '', calls: [] },
+    ] }, graph => new ELK().layout(graph));
+    expect(view.nodes).toHaveLength(nodes.length);
+    for (const edge of view.relations) {
+      expect(edge.points!.length).toBeGreaterThanOrEqual(2);
+      const unrelated = view.nodes.filter(node => !node.container && node.id !== edge.from && node.id !== edge.to);
+      for (let index = 1; index < edge.points!.length; index++) {
+        const a = edge.points![index - 1], b = edge.points![index];
+        expect(a.x === b.x || a.y === b.y).toBe(true);
+        for (const node of unrelated) {
+          const intersects = a.x === b.x ? a.x > node.x && a.x < node.x + node.width && Math.max(a.y, b.y) > node.y && Math.min(a.y, b.y) < node.y + node.height
+            : a.y > node.y && a.y < node.y + node.height && Math.max(a.x, b.x) > node.x && Math.min(a.x, b.x) < node.x + node.width;
+          expect(intersects).toBe(false);
+        }
+      }
+      const source = view.nodes.find(node => node.id === edge.from)!;
+      expect(edge.points![0].y).toBe(source.y + source.height);
+      const target = view.nodes.find(node => node.id === edge.to)!;
+      expect(edge.points!.at(-1)!.y).toBe(target.y);
+    }
+  });
+  it('抽象总览保留内部依赖计数及原始证据', () => {
     const project = fixture();
     const base = project.architecture!.modules[0];
     project.architecture!.modules = Array.from({ length: 13 }, (_, index) => ({
@@ -180,6 +237,8 @@ describe('基于证据生成图形', () => {
     expect(overview.relations).toHaveLength(1);
     expect(overview.relations[0].from).toBe(overview.relations[0].to);
     expect(overview.relations[0].label).toBe('域内依赖');
+    expect(overview.nodes[0].internalRelationCount).toBe(3);
+    expect(exportSvg(overview, '内部依赖')).not.toContain('<path d="M ');
   });
   it('函数视图只保留真实关联模块，模块视图才提供同层模块开关', () => {
     const project = fixture();

@@ -1,4 +1,4 @@
-import type { LearningState, Module, ProjectDetail, Projection, ProjectionNode, Relation } from './types';
+import type { LearningState, Module, Point, ProjectDetail, Projection, ProjectionNode, Relation } from './types';
 
 export const modulePalette = [
   { background: '#edf2ff', border: '#cbd7f5', accent: '#405ea9' },
@@ -29,6 +29,18 @@ const ABSTRACT_LABELS: Record<string, string> = {
   operations: '运营工具', notify: '通知服务', lib: '基础库', routes: '路由集合',
   features: '功能域', components: '组件库', config: '配置',
 };
+const ABSTRACT_SUMMARIES: Record<string, string> = {
+  apps: '组织 API 接口、Web 页面与后台服务入口。', packages: '承载核心业务处理与共享契约，供应用层调用。',
+  tests: '验证业务流程、模块协作与异常恢复。', scripts: '提供维护、检查与评测工具。', site: '组织站点文案、品牌信息与基础展示。',
+  api: '接收外部请求，完成接口装配、校验与响应。', web: '组织页面路由、界面组件与浏览器交互。', worker: '运行后台任务与定时调度。',
+  backend: '执行内容处理、业务编排与数据服务。', contracts: '定义模块之间共享的数据结构与接口约定。',
+  publication: '管理内容公开发布、检索与读取投影。', sources: '接入信源，调度采集并维护来源健康。', events: '归并相关内容，维护事件关系与后续报道。',
+  editorial: '分析材料，生成标题、摘要与翻译内容。', media: '获取、处理与缓存图片和分享素材。', providers: '封装模型调用与外部数据服务。',
+  admin: '提供后台管理、权限与运营操作。', content: '管理内容身份、正文处理与修订。', reports: '编排报告、版次与发布调度。',
+  jobs: '组织作业队列、任务执行与失败恢复。', operations: '维护备份、监控与运行可靠性。', notify: '组织通知、告警与内容投递。',
+  lib: '提供共享工具、状态管理与运行支持。', routes: '组织请求分发、页面入口与接口处理。',
+  features: '组织业务功能、数据加载与用户操作。', components: '提供可复用界面组件与交互元素。', config: '管理运行参数与配置读取。',
+};
 
 function pathParts(module: Module): string[] {
   const path = module.code_paths[0] || '';
@@ -51,6 +63,22 @@ const ABSTRACT_BUCKETS: AbstractBucket[] = [
   { key: 'tests', label: '测试验证', match: new Set(['tests', 'test', '测试验证']) },
 ];
 
+const FUNCTION_DOMAINS = [
+  { key: 'collection', label: '采集与信源', pattern: /collect|source|crawl|fetch|rss|feed|采集|抓取|信源|来源/, summary: '负责信源接入、内容采集与抓取恢复。' },
+  { key: 'management', label: '管理与权限', pattern: /admin|auth|session|cookie|audit|feedback|管理|权限|会话|审计|反馈/, summary: '负责管理操作、身份权限与反馈处理。' },
+  { key: 'intelligence', label: '模型与评测', pattern: /llm|model|bench|eval|embed|digest|translate|grouping|relation|模型|评测|翻译|摘要|分组|关系/, summary: '负责模型调用、内容理解与效果评测。' },
+  { key: 'publication', label: '发布与检索', pattern: /publish|publication|edition|report|search|topic|reading|story|发布|版次|报告|搜索|主题|阅读|故事/, summary: '负责内容发布、检索与阅读数据组织。' },
+  { key: 'presentation', label: '界面与交互', pattern: /web|render|ui|component|navigation|media|image|界面|渲染|组件|导航|媒体|图片/, summary: '负责页面呈现、用户交互与媒体展示。' },
+  { key: 'infrastructure', label: '运行与可靠性', pattern: /backup|migration|queue|worker|watchdog|budget|runtime|http|db|cache|备份|迁移|队列|预算|运行|缓存|恢复/, summary: '负责运行环境、数据维护与可靠性保障。' },
+];
+
+function functionalBucket(child: Module, modules: Module[], testing: boolean): AbstractBucket {
+  const descendants = (module: Module): Module[] => [module, ...modules.filter(item => item.parent_id === module.id).flatMap(descendants)];
+  const text = descendants(child).map(module => `${module.name} ${module.summary} ${module.code_paths.map(path => path.split('/').slice(-2).join('/')).join(' ')}`).join(' ').toLowerCase();
+  const domain = FUNCTION_DOMAINS.find(item => item.pattern.test(text)) || FUNCTION_DOMAINS.at(-1)!;
+  return { key: domain.key, label: `${domain.label}${testing ? '验证' : ''}`, match: new Set() };
+}
+
 function abstractBucket(child: Module): AbstractBucket | undefined {
   const key = child.id.split('/').pop() || child.name.toLowerCase();
   return ABSTRACT_BUCKETS.find(bucket => bucket.match.has(key) || bucket.match.has(child.name.toLowerCase()));
@@ -64,8 +92,9 @@ function compactAbstractChildren(modules: Module[]): Module[] {
     const children = result.filter(module => module.parent_id === parent.id);
     if (children.length <= ABSTRACT_CHILD_LIMIT) continue;
     const groups = new Map<string, { bucket?: AbstractBucket; children: Module[] }>();
+    const testing = /tests|测试/.test(`${parent.id} ${parent.name}`);
     for (const child of children) {
-      const bucket = abstractBucket(child);
+      const bucket = abstractBucket(child) || functionalBucket(child, result, testing);
       const key = bucket?.key || 'other';
       if (!groups.has(key)) groups.set(key, { bucket, children: [] });
       groups.get(key)!.children.push(child);
@@ -77,16 +106,19 @@ function compactAbstractChildren(modules: Module[]): Module[] {
       for (let index = 0; index < group.children.length; index += ABSTRACT_CHILD_LIMIT) {
         chunks.push(group.children.slice(index, index + ABSTRACT_CHILD_LIMIT));
       }
+      const domain = FUNCTION_DOMAINS.find(item => item.key === key);
+      const summary = domain ? testing ? domain.summary.replace('负责', '验证') : domain.summary : `聚合${group.bucket?.label || '相关功能'}，逐层查看模块职责与协作。`;
+      const domainId = `${parent.id}/_bucket/${key}`;
+      if (chunks.length > 1) synthetic.push({ id: domainId, parent_id: parent.id, name: group.bucket!.label,
+        summary, entity_ids: [], code_paths: parent.code_paths, incomplete: group.children.some(child => child.incomplete) });
       chunks.forEach((chunk, index) => {
         const suffix = chunks.length > 1 ? `-${index + 1}` : '';
         const id = `${parent.id}/_bucket/${key}${suffix}`;
         for (const child of chunk) assignments.set(child.id, id);
-        const sample = chunk.slice(0, 2).map(child => child.name).join('、');
-        const fallbackName = sample ? `相关模块 · ${sample}${chunk.length > 2 ? '等' : ''}` : `其他模块${chunks.length > 1 ? ` ${index + 1}` : ''}`;
         synthetic.push({
-          id, parent_id: parent.id,
-          name: group.bucket ? `${group.bucket.label}${chunks.length > 1 ? ` ${index + 1}` : ''}` : fallbackName,
-          summary: group.bucket ? `按职责归纳 ${chunk.length} 个代码域，点击继续查看。` : `包含 ${chunk.length} 个相关代码域：${sample || '待进一步归类'}。`,
+          id, parent_id: chunks.length > 1 ? domainId : parent.id,
+          name: `${group.bucket!.label}${chunks.length > 1 ? ` ${index + 1}` : ''}`,
+          summary,
           entity_ids: [], code_paths: [`${parent.code_paths[0] || ''}_bucket/${key}${suffix}/`],
           incomplete: chunk.some(child => child.incomplete),
         });
@@ -108,7 +140,7 @@ function compactAbstractChildren(modules: Module[]): Module[] {
  * Build a deterministic path-based navigation tree for the overview only;
  * the original modules and their evidence remain unchanged underneath it.
  */
-function abstractModules(modules: Module[]): Module[] {
+export function abstractModules(modules: Module[]): Module[] {
   const roots = modules.filter(module => module.parent_id === null);
   if (roots.length <= ABSTRACT_THRESHOLD) return modules;
   const paths = new Map(roots.map(module => [module.id, pathParts(module)]));
@@ -138,7 +170,7 @@ function abstractModules(modules: Module[]): Module[] {
       }
       const group: Module = {
         id: abstractId(current), parent_id: parentId, name: abstractLabel(part, current.length),
-        summary: `按源码路径归纳的高层代码域，包含 ${branch.length} 个逻辑模块。点击继续展开下一层。`,
+        summary: ABSTRACT_SUMMARIES[part] || [...new Set(branch.map(module => module.summary.split(/[。；]/)[0]).filter(Boolean))].slice(0, 2).join('；') + '。',
         entity_ids: [], code_paths: [`${current.join('/')}/`], incomplete: branch.some(module => module.incomplete),
       };
       result.push(group);
@@ -269,7 +301,21 @@ export function escapeXml(value: string) {
   return value.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&apos;');
 }
 
-export function edgePath(from: ProjectionNode, to: ProjectionNode) {
+export function edgePath(from: ProjectionNode, to: ProjectionNode, points?: Point[]) {
+  if (points && points.length >= 2) {
+    let path = `M ${points[0].x} ${points[0].y}`;
+    for (let index = 1; index < points.length - 1; index++) {
+      const previous = points[index - 1], current = points[index], next = points[index + 1];
+      const incoming = Math.hypot(current.x - previous.x, current.y - previous.y);
+      const outgoing = Math.hypot(next.x - current.x, next.y - current.y);
+      const radius = Math.min(8, incoming / 2, outgoing / 2);
+      if (!incoming || !outgoing) continue;
+      const before = { x: current.x + (previous.x - current.x) * radius / incoming, y: current.y + (previous.y - current.y) * radius / incoming };
+      const after = { x: current.x + (next.x - current.x) * radius / outgoing, y: current.y + (next.y - current.y) * radius / outgoing };
+      path += ` L ${before.x} ${before.y} Q ${current.x} ${current.y} ${after.x} ${after.y}`;
+    }
+    return `${path} L ${points.at(-1)!.x} ${points.at(-1)!.y}`;
+  }
   const sx = from.x + from.width / 2, sy = from.y + from.height;
   const tx = to.x + to.width / 2, ty = to.y;
   if (from.id === to.id) {
@@ -287,14 +333,15 @@ export function edgePath(from: ProjectionNode, to: ProjectionNode) {
 export function exportSvg(projection: Projection, title: string): string {
   const nodes = projection.nodes;
   if (!nodes.length) throw new Error('当前视图没有可以导出的节点。');
-  const left = Math.min(...nodes.map(node => node.x)) - 95;
-  const top = Math.min(...nodes.map(node => node.y)) - 95;
-  const right = Math.max(...nodes.map(node => node.x + node.width)) + 100;
-  const bottom = Math.max(...nodes.map(node => node.y + node.height)) + 50;
+  const routePoints = projection.relations.flatMap(relation => relation.points || []);
+  const left = Math.min(...nodes.map(node => node.x), ...routePoints.map(point => point.x)) - 95;
+  const top = Math.min(...nodes.map(node => node.y), ...routePoints.map(point => point.y)) - 95;
+  const right = Math.max(...nodes.map(node => node.x + node.width), ...routePoints.map(point => point.x)) + 100;
+  const bottom = Math.max(...nodes.map(node => node.y + node.height), ...routePoints.map(point => point.y)) + 50;
   const byId = new Map(nodes.map(node => [node.id, node]));
-  const edges = projection.relations.map(relation => {
+  const edges = projection.relations.filter(relation => relation.from !== relation.to || byId.get(relation.from)?.kind === 'function').map(relation => {
     const from = byId.get(relation.from)!, to = byId.get(relation.to)!;
-    return `<path d="${edgePath(from, to)}" fill="none" stroke="#929292" stroke-width="1.6" marker-end="url(#arrow)"/>`;
+    return `<path d="${edgePath(from, to, relation.points)}" fill="none" stroke="#929292" stroke-width="1.6" marker-end="url(#arrow)"/>`;
   }).join('');
   const shapes = nodes.map(node => {
     const palette = nodePalette(node);
@@ -308,6 +355,7 @@ export function exportSvg(projection: Projection, title: string): string {
       <rect x="${node.x + 20}" y="${node.y + 19}" width="18" height="3" rx="1.5" fill="${palette.accent}"/>
       <text x="${node.x + 20}" y="${node.y + 52}" font-size="16" font-weight="600" fill="#202020">${escapeXml(node.label)}</text>
       <text x="${node.x + 20}" y="${node.y + 80}" font-size="13" fill="#666666">${description}</text>
+      ${node.kind === 'module' && node.internalRelationCount ? `<text x="${node.x + 20}" y="${node.y + 132}" font-size="10" fill="${palette.accent}">内部依赖 ${node.internalRelationCount}</text>` : ''}
       <text x="${node.x + node.width - 20}" y="${node.y + (node.container ? 115 : node.height - 15)}" text-anchor="end" font-size="10" fill="#555555">${node.state === 'mastered' ? '已掌握' : node.state === 'in_progress' ? '学习中' : '未开始'}</text>
       ${node.incomplete ? `<text x="${node.x + node.width - 22}" y="${node.y + 24}" fill="#9c6b32">!</text>` : ''}</g>`;
   }).join('');
