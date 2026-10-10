@@ -212,10 +212,13 @@ export function projectGraph(project: ProjectDetail, focus: string | null, optio
     if (call.resolution !== 'confirmed' || !call.target_id) continue;
     const fromEntity = scopes.get(call.caller_scope_id);
     const from = fromEntity && owner.get(fromEntity), to = owner.get(call.target_id);
-    if (!from || !to || (!functions && from === to)) continue;
+    // In a compact source-domain overview, retain a self-loop as an honest
+    // signal that the visible domain contains internal dependencies. The
+    // concrete module/function view continues to hide same-module calls.
+    if (!from || !to || (!functions && from === to && !abstracted)) continue;
     if (functions && !active.entity_ids.includes(from) && !active.entity_ids.includes(to)) continue;
     const key = `${from}->${to}`;
-    const label = functions ? '' : '调用协作';
+    const label = functions ? '' : from === to ? '域内依赖' : '调用协作';
     if (!grouped.has(key)) grouped.set(key, { id: key, from, to, label, calls: [] });
     grouped.get(key)!.calls.push(call);
   }

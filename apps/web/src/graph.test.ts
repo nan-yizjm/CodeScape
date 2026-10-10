@@ -143,8 +143,21 @@ describe('基于证据生成图形', () => {
       code_paths: [index === 0 ? 'apps/api/src/entry.ts' : `packages/backend/src/core-${index}.ts`],
     }));
     const overview = projectGraph(project, null);
+    expect(overview.relations).toHaveLength(2);
+    const cross = overview.relations.find(relation => relation.from !== relation.to)!;
+    expect(new Set(cross.calls.map(call => call.target_id))).toEqual(new Set(['g']));
+  });
+  it('抽象总览保留代码域内部依赖的自环提示', () => {
+    const project = fixture();
+    const base = project.architecture!.modules[0];
+    project.architecture!.modules = Array.from({ length: 13 }, (_, index) => ({
+      ...base, id: `same-domain-${index}`, name: `同域模块 ${index}`, entity_ids: index === 0 ? ['f', 'g'] : [],
+      code_paths: [`packages/backend/src/core-${index}.ts`],
+    }));
+    const overview = projectGraph(project, null);
     expect(overview.relations).toHaveLength(1);
-    expect(new Set(overview.relations[0].calls.map(call => call.target_id))).toEqual(new Set(['g']));
+    expect(overview.relations[0].from).toBe(overview.relations[0].to);
+    expect(overview.relations[0].label).toBe('域内依赖');
   });
   it('函数视图只保留真实关联模块，模块视图才提供同层模块开关', () => {
     const project = fixture();
