@@ -96,6 +96,15 @@ class Database:
             Column("created_at", String, nullable=False), Column("updated_at", String, nullable=False))
         self.app_metadata = Table("application_metadata", metadata, Column("key", String, primary_key=True),
                                   Column("value", JSON, nullable=False))
+        self.requests = Table("ai_requests", metadata,
+            Column("id", String, primary_key=True), Column("project_id", String), Column("version_id", String),
+            Column("job_id", String), Column("unit_id", String, nullable=False), Column("attempt", Integer, nullable=False),
+            Column("phase", String, nullable=False), Column("recipient", String, nullable=False),
+            Column("model", String, nullable=False), Column("status", String, nullable=False),
+            Column("created_at", String, nullable=False), Column("sent_at", String), Column("finished_at", String),
+            Column("payload_hash", String, nullable=False), Column("source_chars", Integer, nullable=False),
+            Column("usage", JSON), Column("cost", String), Column("currency", String),
+            Column("price_snapshot", JSON), Column("http_status", Integer), Column("error_code", String))
         try:
             migrate_database(root, metadata)
         except Exception:
@@ -161,7 +170,7 @@ class Database:
     def finish_delete(self, operation_id: str, project_id: str):
         with self.engine.begin() as connection:
             connection.exec_driver_sql("BEGIN IMMEDIATE")
-            for table in [self.learning, self.sessions, self.analysis_tasks, self.jobs, self.versions]:
+            for table in [self.learning, self.sessions, self.analysis_tasks, self.jobs, self.versions, self.requests]:
                 connection.execute(table.delete().where(table.c.project_id == project_id))
             connection.execute(self.projects.delete().where(self.projects.c.id == project_id))
             connection.execute(self.operations.update().where(self.operations.c.id == operation_id).values(

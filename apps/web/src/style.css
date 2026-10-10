@@ -600,3 +600,14 @@ button:active:not(:disabled) { transform: translateY(1px); }
 .task-empty span { font-size: 12px; }
 .version-controls { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 8px 24px; color: var(--muted); font-size: 11px; border-bottom: 1px solid rgba(120, 132, 157, .1); }
 .version-controls .text-button { font-size: 11px; padding: 4px 0; }
+.request-usage {margin-top:22px; border-top:1px solid var(--line); padding-top:16px;}
+.request-usage summary {cursor:pointer; font-size:14px; font-weight:600; padding:6px 0;}
+.usage-stats {display:flex; gap:12px; margin:14px 0;}
+.usage-stats > span {flex:1; border-radius:14px; background:#f5f6f8; padding:12px; color:#70747e; font-size:12px;}
+.usage-stats strong {display:block; margin-top:6px; color:#20232a; font-size:19px;}
+.request-usage .usage-note {font-size:12px; line-height:1.7; color:#727683; margin:10px 0;}
+.receipt-row {display:flex; justify-content:space-between; gap:16px; padding:12px 0; border-bottom:1px solid #eceef3; font-size:12px;}
+.receipt-row > span {min-width:0;} .receipt-row > span:last-child {text-align:right;}
+.receipt-row strong {font-size:13px;} .receipt-row small {display:block; margin-top:5px; color:#777d88; overflow-wrap:anywhere;}
+.receipt-row .uncertain {color:#986333;}
+.receipt-pagination {display:flex; align-items:center; justify-content:center; gap:18px; margin-top:12px; font-size:12px;}

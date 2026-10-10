@@ -102,3 +102,16 @@ def test_schema_one_upgrade_adds_delete_lifecycle_without_losing_learning(tmp_pa
     assert upgraded.states("p")["f"]["state"] == "mastered"
     assert upgraded.operation("missing") is None
     upgraded.engine.dispose()
+
+
+def test_schema_two_upgrade_creates_ledger_without_changing_existing_projects(tmp_path):
+    database = Database(tmp_path)
+    database.engine.dispose()
+    with sqlite3.connect(tmp_path / "app.db") as connection:
+        connection.execute("DROP TABLE ai_requests")
+        connection.execute("UPDATE alembic_version SET version_num='cs_0002'")
+        connection.execute("PRAGMA user_version=2")
+    upgraded = Database(tmp_path)
+    from codescape.ledger import RequestLedger
+    assert RequestLedger(upgraded).summary()["request_count"] == 0
+    upgraded.engine.dispose()

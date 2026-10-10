@@ -3,12 +3,17 @@ from __future__ import annotations
 import asyncio
 import inspect
 import json
+import math
+import uuid
 from collections.abc import Awaitable, Callable
+from datetime import UTC, datetime
+from email.utils import parsedate_to_datetime
 from pathlib import Path
 from urllib.parse import urlparse
 
 import httpx
 
+from .ledger import RequestLedger, ai_scope, known_usage, model_budget, model_unit
 from .models import Analysis, Architecture, Module, Overview
 from .overview import ConciseOverview, overview_context
 from .security import CredentialStore
@@ -19,13 +24,30 @@ ProgressCallback = Callable[[int, int, str], Awaitable[None]]
 BatchCallback = Callable[[int, int, Architecture], Awaitable[None]]
 
 
+def retry_after(value: str | None) -> float | None:
+    if not value:
+        return None
+    try:
+        seconds = float(value)
+        return max(0., seconds) if math.isfinite(seconds) else None
+    except ValueError:
+        try:
+            timestamp = parsedate_to_datetime(value)
+            if timestamp.tzinfo is None:
+                timestamp = timestamp.replace(tzinfo=UTC)
+            return max(0., (timestamp - datetime.now(UTC)).total_seconds())
+        except (ValueError, TypeError, OverflowError):
+            return None
+
+
 class ProviderError(Exception):
     """Safe, user-facing error; never embed provider request headers."""
 
 
 class Provider:
-    def __init__(self, root: Path):
+    def __init__(self, root: Path, database=None):
         self.root = root
+        self.database = database
         self.credentials = CredentialStore(root)
         self.config_path = root / "provider.json"
 
@@ -41,7 +63,8 @@ class Provider:
         if (
             parsed.scheme != "https"
             or not parsed.hostname
-            or parsed.username
+            or parsed.username is not None
+            or parsed.password is not None
             or parsed.query
             or parsed.fragment
         ):
@@ -71,46 +94,114 @@ class Provider:
             "max_tokens": max_tokens,
             "stream": False,
         }
-        for attempt in range(3):
-            try:
-                async with httpx.AsyncClient(
-                    timeout=httpx.Timeout(600, connect=15), trust_env=False, follow_redirects=False
-                ) as client:
-                    response = await client.post(
-                        endpoint, json=payload, headers={"Authorization": f"Bearer {key}"}
-                    )
-                if response.status_code in {429, 500, 502, 503, 504}:
+        from .database import Database
+        database = self.database or Database(self.root)
+        ledger = RequestLedger(database)
+        budget = model_budget.get()
+        unit_id = budget.unit_id if budget else str(uuid.uuid4())
+        try:
+            for attempt in range(3):
+                if budget:
+                    if budget.attempts >= 6:
+                        raise ProviderError("本分析单元已达到 6 次模型尝试上限，请检查结果后主动恢复。")
+                    budget.attempts += 1
+                identifier = ledger.prepare(config, payload, unit_id, budget.attempts if budget else attempt + 1)
+                if budget:
+                    budget.last_request = identifier
+                usage = None
+                sent = False
+                received = False
+                try:
+                    async with httpx.AsyncClient(timeout=httpx.Timeout(600, connect=15),
+                                                 trust_env=False, follow_redirects=False) as client:
+                        ledger.sent(identifier)
+                        sent = True
+                        async with asyncio.timeout(600):
+                            response = await client.post(endpoint, json=payload,
+                                                         headers={"Authorization": f"Bearer {key}"})
+                        received = True
+                    try:
+                        document = response.json()
+                        usage = known_usage(document.get("usage")) if isinstance(document, dict) else None
+                    except ValueError:
+                        document = None
+                    status = response.status_code
+                    if status != 200:
+                        ledger.finish(identifier, "failed", usage=usage, http_status=status, error_code=f"HTTP_{status}")
+                        if status in {429, 500, 502, 503, 504}:
+                            delay = retry_after(response.headers.get("retry-after"))
+                            if delay is not None and delay > 60:
+                                raise ProviderError(f"服务建议等待 {math.ceil(delay)} 秒；本次已暂停，请到时主动恢复。")
+                            if attempt < 2:
+                                await asyncio.sleep(delay if delay is not None else [2, 8][attempt])
+                                continue
+                            raise ProviderError("服务限流或暂时不可用，已达到有限重试次数。")
+                        errors = {401: "API Key 无效。", 402: "服务余额不足。", 403: "服务拒绝请求。",
+                                  404: "模型或接口地址不可用。", 400: "模型参数或上下文不兼容。"}
+                        raise ProviderError(errors.get(status, f"AI 服务返回 HTTP {status}。"))
+                    try:
+                        choice = document["choices"][0]
+                        if choice.get("finish_reason") == "length":
+                            raise ProviderError("模型输出被截断，请缩小分析批次。")
+                        content = choice["message"].get("content")
+                        if not content:
+                            raise ProviderError("模型返回空内容。")
+                        result = json.loads(content)
+                        if not isinstance(result, dict):
+                            raise ValueError("输出不是对象")
+                    except (ValueError, KeyError, IndexError, TypeError):
+                        ledger.finish(identifier, "failed", usage=usage, http_status=status, error_code="INVALID_JSON")
+                        raise ProviderError("模型响应不符合结构化契约。") from None
+                    except ProviderError:
+                        ledger.finish(identifier, "failed", usage=usage, http_status=status, error_code="INVALID_CONTENT")
+                        raise
+                    ledger.finish(identifier, "success", usage=usage, http_status=status)
+                    return result, usage or {}
+                except asyncio.CancelledError:
+                    if not received:
+                        ledger.finish(identifier, "outcome_unknown" if sent else "failed", usage=usage,
+                                      error_code="CANCELLED_AFTER_SEND" if sent else "NOT_SENT")
+                    raise
+                except (httpx.HTTPError, TimeoutError):
+                    ledger.finish(identifier, "outcome_unknown" if sent else "failed", usage=usage,
+                                  error_code="TRANSPORT_UNKNOWN" if sent else "NOT_SENT")
                     if attempt < 2:
                         await asyncio.sleep([2, 8][attempt])
                         continue
-                    raise ProviderError("服务限流或暂时不可用，已达到有限重试次数。")
-                errors = {
-                    401: "API Key 无效。",
-                    402: "服务余额不足。",
-                    403: "服务拒绝请求。",
-                    404: "模型或接口地址不可用。",
-                    400: "模型参数或上下文不兼容。",
-                }
-                if response.status_code != 200:
-                    raise ProviderError(
-                        errors.get(response.status_code, f"AI 服务返回 HTTP {response.status_code}。")
-                    )
-                document = response.json()
-                choice = document["choices"][0]
-                if choice.get("finish_reason") == "length":
-                    raise ProviderError("模型输出被截断，请缩小分析批次。")
-                content = choice["message"].get("content")
-                if not content:
-                    raise ProviderError("模型返回空内容。")
-                return json.loads(content), document.get("usage", {})
-            except (httpx.TimeoutException, httpx.NetworkError):
-                if attempt < 2:
-                    await asyncio.sleep([2, 8][attempt])
-                    continue
-                raise ProviderError("网络请求超时或失败；远端用量可能不确定。") from None
-            except (json.JSONDecodeError, KeyError, IndexError):
-                raise ProviderError("模型响应不符合结构化契约。") from None
-        raise ProviderError("请求未完成。")
+                    raise ProviderError("网络请求超时或失败；远端用量可能不确定。") from None
+            raise ProviderError("请求未完成。")
+        finally:
+            if self.database is None:
+                database.engine.dispose()
+
+    async def structured(self, system, context, validator, max_tokens=8000):
+        """Two repairs share the six-send budget with transport retries."""
+        usage_total = {}
+        with model_unit() as budget:
+            for repair in range(3):
+                try:
+                    with ai_scope(**({"phase": "repair"} if repair else {})):
+                        document, usage = await self.request(
+                            system + ("上一次结构校验未通过，请按同一 schema 修正，仅返回 JSON 对象。" if repair else ""),
+                            context, max_tokens=max_tokens)
+                    for key, value in usage.items():
+                        if isinstance(value, int) and not isinstance(value, bool):
+                            usage_total[key] = usage_total.get(key, 0) + value
+                    try:
+                        return validator(document), usage_total
+                    except ValueError:
+                        if budget.last_request:
+                            from .database import Database
+                            database = self.database or Database(self.root)
+                            try:
+                                RequestLedger(database).finish(budget.last_request, "failed", error_code="SCHEMA_INVALID")
+                            finally:
+                                if self.database is None:
+                                    database.engine.dispose()
+                except ProviderError as error:
+                    if str(error) not in {"模型响应不符合结构化契约。", "模型返回空内容。"}:
+                        raise
+            raise ProviderError("模型输出未通过结构校验，已用完有限修复次数；已有结果和检查点保留。")
 
     async def test(self) -> dict:
         response, usage = await self.request(
@@ -145,22 +236,23 @@ class Provider:
             + json.dumps(ConciseOverview.model_json_schema(), ensure_ascii=False)
         )
         # 推理模型的思考也占输出额度；正文长度由契约单独约束。
-        try:
-            document, usage = await self.request(system, context, max_tokens=8192)
-        except ProviderError as error:
-            if "输出被截断" in str(error):
-                raise ProviderError("全局概览未完整返回，原有结果已保留，请重试概览归纳。") from None
-            raise
-        try:
+        def checked_overview(document):
             concise = ConciseOverview.model_validate(document)
-            if any(len(item) > 48 for item in concise.capabilities) or any(
-                len(item) > 100 for item in concise.limitations
-            ):
+            if any(len(item) > 48 for item in concise.capabilities) or any(len(item) > 100 for item in concise.limitations):
                 raise ValueError("概览条目过长")
             if any(word in concise.introduction + concise.principle for word in ("本批", "本次批次")):
                 raise ValueError("概览仍为批次描述")
-        except ValueError:
-            raise ProviderError("全局概览未符合简明说明要求，原有结果已保留。") from None
+            return concise
+
+        try:
+            with ai_scope(phase="overview", source_chars=0):
+                concise, usage = await self.structured(system, context, checked_overview, max_tokens=8192)
+        except ProviderError as error:
+            if "输出被截断" in str(error):
+                raise ProviderError("全局概览未完整返回，原有结果已保留，请重试概览归纳。") from None
+            if "未通过结构校验" in str(error):
+                raise ProviderError("全局概览未符合简明说明要求，已达到有限修复次数；原有结果已保留。") from None
+            raise
         return Overview(
             **concise.model_dump(),
             synthesized=True,
@@ -391,8 +483,18 @@ class Provider:
                 raise ProviderError(f"源码批次仍超过上下文保护上限：{paths}。请缩小该批次范围。")
             system = system_prefix + f"本次是第 {index}/{len(batches)} 批，只能为本批 entities 中的函数分配模块。"
             await self._progress(on_progress, index - 1, len(batches), f"正在分析第 {index}/{len(batches)} 批 · {len(batch_files)} 个文件")
+            def checked_batch(document):
+                if isinstance(document, dict) and document.get("type") == "json_object":
+                    document = {key: value for key, value in document.items() if key != "type"}
+                architecture = Architecture.model_validate(document)
+                architecture.overview.synthesized = False
+                repair_batch_architecture(architecture, analysis, expected, set(batch_files))
+                validate_architecture(architecture, analysis, set(batch_files), expected_entity_ids=expected)
+                return architecture
+
             try:
-                document, usage = await self.request(system, context)
+                with ai_scope(phase="architecture", source_chars=sum(len(text) for text in batch_files.values())):
+                    architecture, usage = await self.structured(system, context, checked_batch)
             except ProviderError as error:
                 if "输出被截断" in str(error):
                     smaller = self._split_batch(batch_files, batch_ranges)
@@ -406,12 +508,6 @@ class Provider:
                         )
                         continue
                 raise
-            if isinstance(document, dict) and document.get("type") == "json_object":
-                document = {key: value for key, value in document.items() if key != "type"}
-            architecture = Architecture.model_validate(document)
-            architecture.overview.synthesized = False
-            repair_batch_architecture(architecture, analysis, expected, set(batch_files))
-            validate_architecture(architecture, analysis, set(batch_files), expected_entity_ids=expected)
             results.append(architecture)
             for key, value in usage.items():
                 if isinstance(value, (int, float)):

@@ -5,6 +5,7 @@ import { ArrowLeft, ArrowRight, BookOpen, Boxes, ChevronRight, Code2, Download, 
 import type { Viewport } from '@xyflow/react';
 import { api, ApiError, bootstrap, keepalive, pageClientId } from './api';
 import { OverviewPanel } from './OverviewPanel';
+import { RequestUsage } from './RequestUsage';
 import { abstractModules, exportSvg, moduleEntities, moduleLearningState, projectGraph } from './graph';
 import type { AnalysisTask, Entity, ImportPreview, LearningState, Panel, Project, ProjectDetail, Projection, ProjectionNode, SourceFile } from './types';
 
@@ -480,7 +481,7 @@ export default function App() {
         <button aria-label="项目学习库" title="项目学习库" className={`sidebar-nav ${!project ? 'active' : ''}`} onClick={() => { setProject(null); setPanels([]); }}><BookOpen size={18} />项目学习库<span className="nav-count">{projects.length}</span></button>
         <div className="project-list-label">最近的项目<button className="tiny-icon" aria-label="导入项目" onClick={() => beginImport()}><Plus size={15} /></button></div>
         <div className="sidebar-projects">{projects.map(item => <button key={item.id} aria-label={`打开项目 ${item.name}`} title={item.name} className={`sidebar-project ${project?.id === item.id ? 'selected' : ''}`} onClick={() => void openProject(item.id)}><span className="small-project-icon"><Code2 size={15} /></span><span><strong>{item.name}</strong><small>{item.status === 'analyzing' && item.analysis_progress?.total ? `AI 分析 ${item.analysis_progress.completed}/${item.analysis_progress.total} 批` : item.demo ? '预置验证样例' : item.languages.join(' / ') || statuses[item.status]}</small></span>{item.status === 'analyzing' || item.status === 'indexing' ? <span className="spinner small" /> : <ChevronRight size={13} />}</button>)}</div>
-        <div className="sidebar-bottom"><div className="quiet-note"><Braces size={16} /><strong>从全景，深入源码</strong><p>每条关系都有出处。每次探索都能继续。</p></div><div className="connection"><span className="status-dot" />{settings.has_key ? 'DeepSeek 已配置' : 'AI 服务待配置'}<span>v0.1.0</span></div></div>
+        <div className="sidebar-bottom"><div className="quiet-note"><Braces size={16} /><strong>从全景，深入源码</strong><p>每条关系都有出处。每次探索都能继续。</p></div><div className="connection"><span className="status-dot" />{settings.has_key ? 'AI 服务已配置' : 'AI 服务待配置'}<span>v0.1.0</span></div></div>
       </aside>
       <main className={`main ${project ? 'workspace-main' : ''}`}>
         {error && !modal && <div className="error-banner" role="alert"><AlertTriangle size={16} />{error}<button aria-label="关闭错误" onClick={() => setError('')}><X size={14} /></button></div>}
@@ -553,6 +554,7 @@ export default function App() {
         {!analysisTasks.some(task => ['waiting', 'running', 'paused'].includes(task.status)) && <div className="task-empty"><Check size={22} /><strong>当前没有待执行任务</strong><span>从项目中启动分析，任务会出现在这里。</span></div>}
         {analysisTasks.some(task => !['waiting', 'running', 'paused'].includes(task.status)) && <details className="task-history"><summary>已结束任务</summary>{analysisTasks.filter(task => !['waiting', 'running', 'paused'].includes(task.status)).map(task => <div key={task.id}><span>{task.project_name}<small>{task.kind === 'index' ? '静态索引' : task.kind === 'reanalysis' ? '重新分析' : 'AI 架构'}</small></span><span>{taskLabels[task.status]}</span></div>)}</details>}
         <div className="privacy-note"><Info size={15} />暂停保留有效检查点；取消结束本轮任务。已发送的云端请求仍可能产生用量。</div>
+        <RequestUsage />
       </>}
       {modal === 'import' && <form onSubmit={event => { event.preventDefault(); void importProject(); }}>
         <h2>{reanalysisProject ? '重新扫描项目' : '开始新的代码探索'}</h2><p>{reanalysisProject ? '从原来源读取最新源码，预览新的范围。旧结果保持可读；创建候选后再次确认上传，新结果成功才发布。' : '读取源码并创建独立快照。确认范围后建立静态索引，AI 分析需单独授权。'}</p>

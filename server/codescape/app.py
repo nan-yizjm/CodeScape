@@ -14,7 +14,7 @@ from contextlib import asynccontextmanager
 from datetime import UTC, datetime
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 
 from .analyzers import REPOSITORY, analyze, stable_id
@@ -22,6 +22,7 @@ from .database import Database, now
 from .deletion import ProjectDeletion
 from .imports import ImportService, remove_staging
 from .learning import learning_units
+from .ledger import RequestLedger, ai_scope
 from .lifecycle import ClientLifetime
 from .models import (
     AISettings,
@@ -46,7 +47,9 @@ def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=
     root = root or data_root()
     database = Database(root)
     database.recover_interrupted()
-    provider = Provider(root)
+    provider = Provider(root, database)
+    ledger = RequestLedger(database)
+    ledger.recover()
     imports = ImportService(root)
     bootstrap_nonce = nonce or secrets.token_urlsafe(32)
     session_token = secrets.token_urlsafe(32)
@@ -758,13 +761,14 @@ def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=
                     checkpoint.clear()
                     checkpoint.extend(saved_batches)
 
-                architecture, usage = await provider.architecture(
-                    Analysis.model_validate(project["result"]),
-                    read_snapshot(snapshot_root, project["snapshot"]),
-                    on_progress=progress,
-                    on_batch=save_batch,
-                    completed_batches=checkpoint,
-                )
+                with ai_scope(project_id=project_id, version_id=project["version_id"], job_id=job["id"]):
+                    architecture, usage = await provider.architecture(
+                        Analysis.model_validate(project["result"]),
+                        read_snapshot(snapshot_root, project["snapshot"]),
+                        on_progress=progress,
+                        on_batch=save_batch,
+                        completed_batches=checkpoint,
+                    )
                 validate_architecture(architecture, Analysis.model_validate(project["result"]), set(project["snapshot"]["files"]))
                 if candidate:
                     read_snapshot(snapshot_root, project["snapshot"])
@@ -828,6 +832,12 @@ def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=
         return envelope([{**job, "project_name": names.get(job["project_id"], "已删除项目"),
                           "progress": database.analysis_progress(job["project_id"])}
                          for job in database.list_jobs()])
+
+    @app.get("/api/v1/usage")
+    async def ai_usage(project_id: str | None = None, offset: int = Query(0, ge=0), limit: int = Query(20, ge=1, le=100)):
+        if project_id:
+            get_project(project_id)
+        return envelope(ledger.summary(project_id, offset, limit))
 
     @app.put("/api/v1/tasks/order")
     async def task_order(request: Request):
@@ -901,9 +911,10 @@ def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=
         async with run_lock:
             architecture = Architecture.model_validate(project["architecture"])
             try:
-                overview, usage = await provider.project_overview(
-                    architecture, Analysis.model_validate(project["result"])
-                )
+                with ai_scope(project_id=project_id, version_id=project["version_id"], phase="overview"):
+                    overview, usage = await provider.project_overview(
+                        architecture, Analysis.model_validate(project["result"])
+                    )
             except ProviderError as error:
                 raise HTTPException(503, str(error)) from None
             architecture.overview = overview

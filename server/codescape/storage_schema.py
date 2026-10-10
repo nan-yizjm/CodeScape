@@ -9,9 +9,9 @@ from alembic import command
 from alembic.config import Config
 from sqlalchemy import create_engine, inspect
 
-SCHEMA_VERSION = 2
-SCHEMA_REVISION = "cs_0002"
-KNOWN_REVISIONS = {"cs_0001": 1, "cs_0002": 2}
+SCHEMA_VERSION = 3
+SCHEMA_REVISION = "cs_0003"
+KNOWN_REVISIONS = {"cs_0001": 1, "cs_0002": 2, "cs_0003": 3}
 _migration_lock = threading.RLock()
 
 
