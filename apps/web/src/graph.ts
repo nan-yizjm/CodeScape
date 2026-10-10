@@ -24,7 +24,7 @@ const IGNORED_PATH_PARTS = new Set(['src', 'app', 'server']);
 const ABSTRACT_LABELS: Record<string, string> = {
   apps: '应用服务', packages: '核心包', tests: '测试验证', scripts: '工具脚本', site: '站点基础',
   api: 'API 服务', web: 'Web 前端', worker: '后台任务', backend: '后端核心', contracts: '契约定义',
-  publication: '内容发布', sources: '信源采集', events: '事件归并', editorial: '编辑分析', media: '媒体处理',
+  publication: '内容发布', sources: '信源采集', ingest: '外部内容导入', root: '页面骨架', events: '事件归并', editorial: '编辑分析', media: '媒体处理',
   providers: '模型与外部服务', admin: '管理后台', content: '内容处理', reports: '报告编排', jobs: '作业调度',
   operations: '运营工具', notify: '通知服务', lib: '基础库', routes: '路由集合',
   features: '功能域', components: '组件库', config: '配置',
@@ -34,6 +34,7 @@ const ABSTRACT_SUMMARIES: Record<string, string> = {
   tests: '验证业务流程、模块协作与异常恢复。', scripts: '提供维护、检查与评测工具。', site: '组织站点文案、品牌信息与基础展示。',
   api: '接收外部请求，完成接口装配、校验与响应。', web: '组织页面路由、界面组件与浏览器交互。', worker: '运行后台任务与定时调度。',
   backend: '执行内容处理、业务编排与数据服务。', contracts: '定义模块之间共享的数据结构与接口约定。',
+  ingest: '接收外部条目，校验来源、去重并交给后续处理。', root: '加载页面公共数据，组织页面骨架与通用界面。',
   publication: '管理内容公开发布、检索与读取投影。', sources: '接入信源，调度采集并维护来源健康。', events: '归并相关内容，维护事件关系与后续报道。',
   editorial: '分析材料，生成标题、摘要与翻译内容。', media: '获取、处理与缓存图片和分享素材。', providers: '封装模型调用与外部数据服务。',
   admin: '提供后台管理、权限与运营操作。', content: '管理内容身份、正文处理与修订。', reports: '编排报告、版次与发布调度。',
@@ -50,6 +51,7 @@ function pathParts(module: Module): string[] {
 function abstractLabel(part: string, depth: number): string {
   if (ABSTRACT_LABELS[part]) return ABSTRACT_LABELS[part];
   const clean = part.replace(/\.(tsx?|jsx?|py|cpp|h)$/, '').replace(/[-_]+/g, ' ');
+  if (ABSTRACT_LABELS[clean]) return ABSTRACT_LABELS[clean];
   return depth > 1 ? clean : `代码域 · ${clean}`;
 }
 
@@ -66,27 +68,56 @@ const ABSTRACT_BUCKETS: AbstractBucket[] = [
 const FUNCTION_DOMAINS = [
   { key: 'collection', label: '采集与信源', pattern: /collect|source|crawl|fetch|rss|feed|采集|抓取|信源|来源/, summary: '负责信源接入、内容采集与抓取恢复。' },
   { key: 'management', label: '管理与权限', pattern: /admin|auth|session|cookie|audit|feedback|管理|权限|会话|审计|反馈/, summary: '负责管理操作、身份权限与反馈处理。' },
-  { key: 'intelligence', label: '模型与评测', pattern: /llm|model|bench|eval|embed|digest|translate|grouping|relation|模型|评测|翻译|摘要|分组|关系/, summary: '负责模型调用、内容理解与效果评测。' },
+  { key: 'intelligence', label: '内容分析与评测', pattern: /llm|model|bench|eval|embed|digest|translate|grouping|relation|模型|评测|翻译|摘要|分组|关系/, summary: '负责模型调用、内容理解与效果评测。' },
   { key: 'publication', label: '发布与检索', pattern: /publish|publication|edition|report|search|topic|reading|story|发布|版次|报告|搜索|主题|阅读|故事/, summary: '负责内容发布、检索与阅读数据组织。' },
   { key: 'presentation', label: '界面与交互', pattern: /web|render|ui|component|navigation|media|image|界面|渲染|组件|导航|媒体|图片/, summary: '负责页面呈现、用户交互与媒体展示。' },
   { key: 'infrastructure', label: '运行与可靠性', pattern: /backup|migration|queue|worker|watchdog|budget|runtime|http|db|cache|备份|迁移|队列|预算|运行|缓存|恢复/, summary: '负责运行环境、数据维护与可靠性保障。' },
 ];
 
-function functionalBucket(child: Module, modules: Module[], testing: boolean): AbstractBucket {
-  const descendants = (module: Module): Module[] => [module, ...modules.filter(item => item.parent_id === module.id).flatMap(descendants)];
-  const text = descendants(child).map(module => `${module.name} ${module.summary} ${module.code_paths.map(path => path.split('/').slice(-2).join('/')).join(' ')}`).join(' ').toLowerCase();
-  const domain = FUNCTION_DOMAINS.find(item => item.pattern.test(text)) || FUNCTION_DOMAINS.at(-1)!;
+const DOMAIN_PATHS: Record<string, string> = {
+  sources: 'collection', ingest: 'collection', collect: 'collection',
+  admin: 'management', auth: 'management', audit: 'management', feedback: 'management',
+  editorial: 'intelligence', events: 'intelligence', providers: 'intelligence', content: 'intelligence',
+  publication: 'publication', reports: 'publication',
+  media: 'presentation', site: 'presentation', components: 'presentation',
+  jobs: 'infrastructure', operations: 'infrastructure', config: 'infrastructure', db: 'infrastructure', lib: 'infrastructure', modules: 'infrastructure', notify: 'infrastructure',
+};
+
+function scopeNames(children: Module[], modules: Module[]): string[] {
+  const names = children.flatMap(child => child.id.startsWith(ABSTRACT_PREFIX)
+    ? modules.filter(item => item.parent_id === child.id).map(item => item.name)
+    : [child.name]);
+  return [...new Set(names.length ? names : children.map(child => child.name))];
+}
+
+function scopeSummary(children: Module[], modules: Module[]): string {
+  const names = scopeNames(children, modules);
+  return `涵盖${names.slice(0, 3).join('、')}${names.length > 3 ? '等职责' : ''}。`;
+}
+
+function scopeLabel(children: Module[], modules: Module[]): string {
+  // 相同描述不代表相同实现：用各自真实职责区别范围，不再编号复制同一句话。
+  const names = scopeNames(children, modules);
+  return names.slice(0, 2).map(name => name.length > 16 ? `${name.slice(0, 16)}…` : name).join(' · ');
+}
+
+function functionalBucket(child: Module, testing: boolean): AbstractBucket {
+  const pathKey = (child.id.startsWith(ABSTRACT_PREFIX) ? child.id.split('/').pop() : child.code_paths[0]?.split('/').pop())?.replace(/\.(tsx?|test|spec)\b/g, '') || '';
+  const direct = DOMAIN_PATHS[pathKey];
+  const text = `${child.name} ${pathKey}`.toLowerCase();
+  // 仅比较自身的名称/范围，避免在全部下游说明中匹配一个常见词便覆盖本职。
+  const domain = FUNCTION_DOMAINS.find(item => item.key === direct) || FUNCTION_DOMAINS.find(item => item.pattern.test(text)) || FUNCTION_DOMAINS.at(-1)!;
   return { key: domain.key, label: `${domain.label}${testing ? '验证' : ''}`, match: new Set() };
 }
 
 function abstractBucket(child: Module): AbstractBucket | undefined {
-  const key = child.id.split('/').pop() || child.name.toLowerCase();
+  const key = (child.id.split('/').pop() || child.name.toLowerCase()).replace(/\.(tsx?|jsx?)$/, '');
   return ABSTRACT_BUCKETS.find(bucket => bucket.match.has(key) || bucket.match.has(child.name.toLowerCase()));
 }
 
 /** Keep an expanded code domain readable by grouping crowded sibling domains. */
 function compactAbstractChildren(modules: Module[]): Module[] {
-  const result = [...modules];
+  const result = modules.map(module => ({ ...module }));
   const parents = result.filter(module => module.id.startsWith(ABSTRACT_PREFIX));
   for (const parent of parents) {
     const children = result.filter(module => module.parent_id === parent.id);
@@ -94,7 +125,7 @@ function compactAbstractChildren(modules: Module[]): Module[] {
     const groups = new Map<string, { bucket?: AbstractBucket; children: Module[] }>();
     const testing = /tests|测试/.test(`${parent.id} ${parent.name}`);
     for (const child of children) {
-      const bucket = abstractBucket(child) || functionalBucket(child, result, testing);
+      const bucket = /\/web$/.test(parent.id) ? abstractBucket(child) || functionalBucket(child, testing) : functionalBucket(child, testing);
       const key = bucket?.key || 'other';
       if (!groups.has(key)) groups.set(key, { bucket, children: [] });
       groups.get(key)!.children.push(child);
@@ -102,27 +133,31 @@ function compactAbstractChildren(modules: Module[]): Module[] {
     const assignments = new Map<string, string>();
     const synthetic: Module[] = [];
     for (const [key, group] of groups) {
-      const chunks: Module[][] = [];
-      for (let index = 0; index < group.children.length; index += ABSTRACT_CHILD_LIMIT) {
-        chunks.push(group.children.slice(index, index + ABSTRACT_CHILD_LIMIT));
-      }
-      const domain = FUNCTION_DOMAINS.find(item => item.key === key);
-      const summary = domain ? testing ? domain.summary.replace('负责', '验证') : domain.summary : `聚合${group.bucket?.label || '相关功能'}，逐层查看模块职责与协作。`;
       const domainId = `${parent.id}/_bucket/${key}`;
-      if (chunks.length > 1) synthetic.push({ id: domainId, parent_id: parent.id, name: group.bucket!.label,
-        summary, entity_ids: [], code_paths: parent.code_paths, incomplete: group.children.some(child => child.incomplete) });
-      chunks.forEach((chunk, index) => {
-        const suffix = chunks.length > 1 ? `-${index + 1}` : '';
-        const id = `${parent.id}/_bucket/${key}${suffix}`;
-        for (const child of chunk) assignments.set(child.id, id);
-        synthetic.push({
-          id, parent_id: chunks.length > 1 ? domainId : parent.id,
-          name: `${group.bucket!.label}${chunks.length > 1 ? ` ${index + 1}` : ''}`,
-          summary,
-          entity_ids: [], code_paths: [`${parent.code_paths[0] || ''}_bucket/${key}${suffix}/`],
-          incomplete: chunk.some(child => child.incomplete),
-        });
-      });
+      const addGroup = (items: Module[], id: string, parentId: string, name: string) => {
+        if (items.length === 1) { assignments.set(items[0].id, parentId); return; }
+        synthetic.push({ id, parent_id: parentId, name, summary: scopeSummary(items, result), entity_ids: [],
+          code_paths: [...new Set(items.flatMap(item => item.code_paths))], incomplete: items.some(item => item.incomplete) });
+        if (items.length <= ABSTRACT_CHILD_LIMIT) {
+          for (const item of items) assignments.set(item.id, id);
+          return;
+        }
+        const ordered = [...items].sort((a, b) => a.id.localeCompare(b.id));
+        const size = Math.ceil(ordered.length / ABSTRACT_CHILD_LIMIT);
+        for (let offset = 0; offset < ordered.length; offset += size) {
+          const part = ordered.slice(offset, offset + size);
+          addGroup(part, `${id}/scope-${offset}`, id, scopeLabel(part, result));
+        }
+      };
+      // 只有一个同职责集合时，父级已经表达该范围，省去完全重复的一层。
+      if (groups.size === 1) {
+        const ordered = [...group.children].sort((a, b) => a.id.localeCompare(b.id));
+        const size = Math.ceil(ordered.length / ABSTRACT_CHILD_LIMIT);
+        for (let offset = 0; offset < ordered.length; offset += size) {
+          const part = ordered.slice(offset, offset + size);
+          addGroup(part, `${domainId}/scope-${offset}`, parent.id, scopeLabel(part, result));
+        }
+      } else addGroup(group.children, domainId, parent.id, group.bucket!.label);
     }
     const childIds = new Set(children.map(child => child.id));
     for (const child of children) child.parent_id = assignments.get(child.id)!;
@@ -163,14 +198,15 @@ export function abstractModules(modules: Module[]): Module[] {
     }
     for (const [part, branch] of next) {
       const current = [...prefix, part];
-      const canGroup = branch.length > ABSTRACT_THRESHOLD || next.size > 1;
+      const singleFile = branch.length === 1 && /\.(tsx?|jsx?|py|cpp|h)$/.test(part);
+      const canGroup = !singleFile && (branch.length > ABSTRACT_THRESHOLD || next.size > 1);
       if (!canGroup) {
         for (const module of branch) result.push({ ...module, parent_id: parentId });
         continue;
       }
       const group: Module = {
         id: abstractId(current), parent_id: parentId, name: abstractLabel(part, current.length),
-        summary: ABSTRACT_SUMMARIES[part] || [...new Set(branch.map(module => module.summary.split(/[。；]/)[0]).filter(Boolean))].slice(0, 2).join('；') + '。',
+        summary: ABSTRACT_SUMMARIES[part] || ABSTRACT_SUMMARIES[part.replace(/\.(tsx?|jsx?|py|cpp|h)$/, '')] || [...new Set(branch.map(module => module.summary.split(/[。；]/)[0]).filter(Boolean))].slice(0, 2).join('；') + '。',
         entity_ids: [], code_paths: [`${current.join('/')}/`], incomplete: branch.some(module => module.incomplete),
       };
       result.push(group);
@@ -194,7 +230,8 @@ export function aggregateState(states: LearningState[]): LearningState {
 
 export function projectGraph(project: ProjectDetail, focus: string | null, options: { expandedModuleId?: string | null; showOtherModules?: boolean } = {}): Projection {
   const sourceModules = project.architecture?.modules || [];
-  const modules = focus ? sourceModules : abstractModules(sourceModules);
+  // 函数层的同级关系沿用导航树，不能退回数百个原始根模块。
+  const modules = abstractModules(sourceModules);
   const abstracted = modules !== sourceModules;
   const active = modules.find(module => module.id === focus);
   const children = modules.filter(module => module.parent_id === (focus || null));
@@ -248,33 +285,41 @@ export function projectGraph(project: ProjectDetail, focus: string | null, optio
   }
   const functionExpanded = functions && options.expandedModuleId !== null &&
     (options.expandedModuleId === undefined || options.expandedModuleId === active.id);
+  const siblings = functions ? modules.filter(module => module.id !== active.id && module.parent_id === active.parent_id) : [];
+  const related = functions ? modules.filter(module => module.id !== active.id && module.entity_ids.some(id => included.has(id))) : [];
+  const contextModules = siblings;
+  // 显式同级开关仅展开当前模块的函数，其余卡片保持收起。
+  // 无选项的投影仍支持调用图 API 原有的直接关联函数展示。
+  const includeRelatedFunctions = options.showOtherModules === undefined;
   const functionNodes: ProjectionNode[] = functionExpanded ? visible.filter(entity => included.has(entity.id) &&
-    (options.showOtherModules !== false || active.entity_ids.includes(entity.id))).map(entity => ({
+    (includeRelatedFunctions || active.entity_ids.includes(entity.id))).map(entity => ({
     id: entity.id, label: visible.filter(item => item.name === entity.name).length > 1 ? `${entity.signature} · L${entity.location.start_line}` : entity.name, description: '', kind: 'function', entity, count: 0,
     state: project.learning[entity.id]?.state || 'not_started', incomplete: entity.unresolved_count > 0,
     external: !active.entity_ids.includes(entity.id), tone: modules.findIndex(module => module.entity_ids.includes(entity.id)),
     parentId: modules.find(module => module.entity_ids.includes(entity.id))?.id, x: 0, y: 0, width: 248, height: 116,
   })) : [];
   if (functions) {
-    const related = modules.filter(module => module.id !== active.id && functionNodes.some(node => module.entity_ids.includes(node.id)));
-    displayed.push(active, ...related);
+    otherModuleCount = functionExpanded ? contextModules.length : 0;
+    hiddenModuleCount = functionExpanded && !options.showOtherModules ? contextModules.length : 0;
+    displayed.push(active, ...(options.showOtherModules ? contextModules : includeRelatedFunctions ? related : []));
   }
   const moduleNodes: ProjectionNode[] = displayed.map(module => {
     const entityIds = moduleEntities(module, modules);
     return { id: module.id, label: module.name, description: module.summary, kind: 'module', module,
       count: entityIds.length, state: aggregateState(entityIds.map(id => project.learning[id]?.state || 'not_started')),
-      incomplete: module.incomplete, external: functions && module.id !== active.id, tone: modules.indexOf(module),
+      incomplete: module.incomplete, sibling: functions && siblings.some(item => item.id === module.id),
+      external: functions && module.id !== active.id && !siblings.some(item => item.id === module.id), tone: modules.indexOf(module),
       parentId: !functions && module.parent_id && displayed.some(item => item.id === module.parent_id) ? module.parent_id : undefined,
       container: functionNodes.some(node => node.parentId === module.id) || displayed.some(item => item.parent_id === module.id),
       canExpand: functions ? module.id === active.id : modules.some(item => item.parent_id === module.id),
       expanded: functions ? module.id === active.id && functionExpanded : module.id === options.expandedModuleId,
-      shownCount: functions ? functionNodes.filter(node => node.parentId === module.id).length : undefined,
+      shownCount: functions && (module.id === active.id || includeRelatedFunctions) ? functionNodes.filter(node => node.parentId === module.id).length : undefined,
       x: 0, y: 0, width: 300, height: 204 };
   });
   const nodes = [...moduleNodes, ...functionNodes];
   const owner = new Map<string, string>();
   for (const node of nodes) {
-    if (functions && node.kind !== 'function') continue;
+    if (functions && node.kind === 'module' && node.id === active.id) continue;
     for (const id of node.kind === 'function' ? [node.id] : moduleEntities(node.module!, modules)) owner.set(id, node.id);
   }
   const grouped = new Map<string, Relation>();

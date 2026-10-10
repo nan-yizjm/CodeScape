@@ -49,7 +49,8 @@ describe('基于证据生成图形', () => {
       expect(node.y + node.height).toBeLessThan(parent.y + parent.height);
     }
     expect(view.nodes.find(node => node.id === 'm')?.external).toBe(false);
-    expect(view.nodes.find(node => node.id === 'other')?.external).toBe(true);
+    expect(view.nodes.find(node => node.id === 'other')?.sibling).toBe(true);
+    expect(view.nodes.find(node => node.id === 'other')?.external).toBe(false);
     expect(view.relations.find(edge => edge.from === 'f' && edge.to === 'g')?.calls).toHaveLength(2);
     const svg = exportSvg(view, '函数与所属模块');
     expect(svg).toContain('关联模块');
@@ -138,13 +139,19 @@ describe('基于证据生成图形', () => {
     const featureFiles = projectGraph(project, null, { expandedModuleId: featureGroup!.id });
     expect(featureFiles.nodes.some(node => node.id === '__abstract__:apps/web')).toBe(false);
     expect(featureFiles.nodes.find(node => node.id === featureGroup!.id)?.parentId).toBeUndefined();
-    const otherFeatureGroup = featureFiles.nodes.find(node => node.id === '__abstract__:apps/web/features/_bucket/infrastructure');
-    expect(otherFeatureGroup).toBeDefined();
-    const subgroups = projectGraph(project, null, { expandedModuleId: otherFeatureGroup!.id });
-    const fileGroups = projectGraph(project, null, { expandedModuleId: subgroups.nodes.find(node => node.id.endsWith('infrastructure-1'))!.id });
-    const fileGroup = fileGroups.nodes.find(node => node.id === '__abstract__:apps/web/features/feature-0.tsx');
-    expect(fileGroup).toBeDefined();
-    const feature = projectGraph(project, null, { expandedModuleId: fileGroup!.id });
+    const navigation = abstractModules(project.architecture!.modules);
+    const ancestors: string[] = [];
+    let current = navigation.find(module => module.id === 'large-0')!;
+    while (current.parent_id) {
+      ancestors.unshift(current.parent_id);
+      current = navigation.find(module => module.id === current.parent_id)!;
+    }
+    for (const ancestor of ancestors) {
+      const level = projectGraph(project, null, { expandedModuleId: ancestor });
+      expect(level.nodes.every(node => !node.parentId || node.parentId === ancestor)).toBe(true);
+      expect(level.nodes.filter(node => node.parentId === ancestor).length).toBeLessThanOrEqual(6);
+    }
+    const feature = projectGraph(project, null, { expandedModuleId: ancestors.at(-1) });
     expect(feature.nodes.some(node => node.id === 'large-0')).toBe(true);
   });
   it('展开代码域时将拥挤的同级职责归并为少量子域', () => {
@@ -276,7 +283,7 @@ describe('基于证据生成图形', () => {
     expect(overview.nodes[0].internalRelationCount).toBe(3);
     expect(exportSvg(overview, '内部依赖')).not.toContain('<path d="M ');
   });
-  it('函数视图只保留真实关联模块，模块视图才提供同层模块开关', () => {
+  it('函数层也能显示同级模块，其他模块保持收起并连接真实调用证据', () => {
     const project = fixture();
     project.architecture!.modules[0].entity_ids = ['f'];
     project.architecture!.modules.push({ ...project.architecture!.modules[0], id: 'other', name: '同层模块', entity_ids: ['g'] });
@@ -285,16 +292,51 @@ describe('基于证据生成图形', () => {
     const expanded = projectGraph(project, 'm', options);
     expect(expanded.nodes.map(node => node.id)).toEqual(['m', 'f']);
     expect(expanded.nodes[0].expanded).toBe(true);
-    expect(expanded.otherModuleCount).toBe(0);
+    expect(expanded.otherModuleCount).toBe(2);
+    expect(expanded.hiddenModuleCount).toBe(2);
     const all = projectGraph(project, 'm', { ...options, showOtherModules: true });
-    expect(all.nodes.map(node => node.id)).toEqual(['m', 'other', 'f', 'g']);
-    expect(all.otherModuleCount).toBe(0);
+    expect(all.nodes.map(node => node.id)).toEqual(['m', 'other', 'unrelated', 'f']);
+    expect(all.otherModuleCount).toBe(2);
+    expect(all.nodes.filter(node => node.sibling).every(node => !node.expanded && !node.container)).toBe(true);
+    expect(all.relations.find(edge => edge.from === 'f' && edge.to === 'other')?.calls).toHaveLength(2);
+    expect(all.relations.some(edge => edge.from === 'unrelated' || edge.to === 'unrelated')).toBe(false);
     expect(all.hiddenModuleCount).toBe(0);
     const collapsed = projectGraph(project, 'm', { ...options, expandedModuleId: null });
     expect(collapsed.nodes.map(node => node.id)).toEqual(['m']);
     expect(collapsed.otherModuleCount).toBe(0);
     expect(collapsed.nodes[0].container).toBe(false);
     expect(collapsed.nodes[0].canExpand).toBe(true);
+  });
+  it('只恢复当前父级的同级模块，不把其他源码域的关联模块当成同级', () => {
+    const project = fixture(), base = project.architecture!.modules[0];
+    project.architecture!.modules = [
+      { ...base, id: 'parent', entity_ids: [] },
+      { ...base, parent_id: 'parent', entity_ids: ['f'] },
+      { ...base, id: 'peer', parent_id: 'parent', entity_ids: [] },
+      { ...base, id: 'outside', entity_ids: ['g'] },
+    ];
+    const view = projectGraph(project, 'm', { expandedModuleId: 'm', showOtherModules: true });
+    expect(view.otherModuleCount).toBe(1);
+    expect(view.nodes.map(node => node.id)).toEqual(['m', 'peer', 'f']);
+  });
+  it('分组依据自身源码范围，保持原始归属，去掉相同覆盖范围的重复层', () => {
+    const project = fixture(), base = project.architecture!.modules[0];
+    const parts = ['sources', 'ingest', 'admin', 'content', 'events', 'providers', 'reports', 'jobs', 'media', 'operations', 'notify', 'lib', 'publication'];
+    project.architecture!.modules = parts.map((part, index) => ({ ...base,
+      id: `role-${index}`, name: `${part}职责`, summary: '会使用来源、抓取结果与模型进行发布', entity_ids: [], code_paths: [`packages/backend/src/${part}/file.ts`] }));
+    const before = JSON.stringify(project.architecture!.modules);
+    const grouped = abstractModules(project.architecture!.modules);
+    const source = grouped.find(module => module.id === '__abstract__:packages/backend/sources')!;
+    const admin = grouped.find(module => module.id === '__abstract__:packages/backend/admin')!;
+    expect(source.parent_id).toContain('/collection');
+    expect(admin.parent_id).toBe('__abstract__:packages/backend');
+    expect(grouped.some(module => module.id === '__abstract__:packages/backend/_bucket/management')).toBe(false);
+    const domains = grouped.filter(module => module.parent_id === '__abstract__:packages/backend');
+    expect(new Set(domains.map(module => module.summary)).size).toBe(domains.length);
+    expect(grouped.filter(module => !module.id.startsWith('__abstract__:')).map(module => module.id).sort())
+      .toEqual(project.architecture!.modules.map(module => module.id).sort());
+    expect(JSON.stringify(project.architecture!.modules)).toBe(before);
+    expect(grouped.every(module => !/采集与信源\s*\d+$/.test(module.name))).toBe(true);
   });
   it('聚合状态涵盖空模块和混合掌握情况', () => {
     expect(aggregateState([])).toBe('not_started');
