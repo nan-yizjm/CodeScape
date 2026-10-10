@@ -9,6 +9,7 @@ from sqlalchemy import JSON, Column, Integer, MetaData, String, Table, create_en
 from .learning import learning_units, module_learning_mapping
 from .migration import learning_mapping, module_mapping
 from .models import Analysis, Architecture
+from .storage_schema import migrate_database
 
 
 def now() -> str:
@@ -87,7 +88,11 @@ class Database:
             Column("created_at", String, nullable=False),
             Column("value", JSON, nullable=False),
         )
-        metadata.create_all(self.engine)
+        try:
+            migrate_database(root, metadata)
+        except Exception:
+            self.engine.dispose()
+            raise
 
     def candidate(self, project_id: str) -> dict | None:
         with self.engine.connect() as connection:

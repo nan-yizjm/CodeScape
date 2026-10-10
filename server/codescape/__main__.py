@@ -13,6 +13,7 @@ import uvicorn
 from .app import create_app
 from .instance import LocalInstance, secure_directory
 from .security import data_root
+from .storage_schema import StorageError
 
 
 def main():
@@ -64,7 +65,10 @@ def main():
             if server:
                 server.should_exit = True
 
-        app = create_app(root, nonce, on_idle_exit=idle_exit)
+        try:
+            app = create_app(root, nonce, on_idle_exit=idle_exit)
+        except StorageError as error:
+            parser.exit(2, f"{error}\n")
 
         def issue_url():
             if not app.state.ready_event.wait(10):
