@@ -3,7 +3,7 @@ import { ArrowLeft, ArrowRight, BookOpen, Boxes, ChevronRight, Code2, Download, 
   Info, Layers3, Plus, Settings2, ShieldCheck, Sparkles, X, Check, AlertTriangle, Circle, FileCode2,
   Activity, Braces, ExternalLink, ArrowUpRight, Maximize2, Minimize2, ListOrdered, Pause, Play, Square, ArrowUp, ArrowDown } from 'lucide-react';
 import type { Viewport } from '@xyflow/react';
-import { api, bootstrap } from './api';
+import { api, bootstrap, keepalive } from './api';
 import { OverviewPanel } from './OverviewPanel';
 import { abstractModules, aggregateState, exportSvg, moduleEntities, projectGraph } from './graph';
 import type { AnalysisTask, Entity, ImportPreview, LearningState, Panel, Project, ProjectDetail, Projection, ProjectionNode, SourceFile } from './types';
@@ -126,6 +126,25 @@ export default function App() {
     bootstrap().then(async () => { setAuthorized(true); await refresh(); setSettings(await api('/settings/ai')); })
       .catch(problem => setError(problem.message));
   }, []);
+  useEffect(() => {
+    if (!authorized) return;
+    const clientId = crypto.randomUUID();
+    let connection: EventSource | undefined;
+    let stopped = false;
+    const heartbeat = () => api('/clients/heartbeat', { client_id: clientId }).catch(() => {});
+    void heartbeat().then(() => {
+      if (!stopped) connection = new EventSource(`/api/v1/clients/${clientId}/events`);
+    });
+    const timer = setInterval(() => void heartbeat(), 20000);
+    const disconnect = () => { connection?.close(); void keepalive('/clients/disconnect', { client_id: clientId }).catch(() => {}); };
+    const restore = () => { void heartbeat(); if (!connection || connection.readyState === EventSource.CLOSED) connection = new EventSource(`/api/v1/clients/${clientId}/events`); };
+    window.addEventListener('pagehide', disconnect);
+    window.addEventListener('pageshow', restore);
+    return () => {
+      stopped = true; clearInterval(timer); disconnect();
+      window.removeEventListener('pagehide', disconnect); window.removeEventListener('pageshow', restore);
+    };
+  }, [authorized]);
   useEffect(() => {
     if (!authorized) return;
     const timer = setInterval(() => {

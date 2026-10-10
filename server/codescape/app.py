@@ -6,17 +6,19 @@ import secrets
 import shutil
 import subprocess
 import sys
+import threading
 import time
 import uuid
 from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 
 from .analyzers import REPOSITORY, analyze, stable_id
 from .database import Database, now
 from .imports import ImportService
+from .lifecycle import ClientLifetime
 from .models import (
     AISettings,
     Analysis,
@@ -31,9 +33,10 @@ from .provider import Provider, ProviderError
 from .security import data_root
 from .snapshots import create_snapshot, read_snapshot
 from .tasks import TaskQueue
+from .workers import WorkerJob
 
 
-def create_app(root: Path | None = None, nonce: str | None = None) -> FastAPI:
+def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=None) -> FastAPI:
     root = root or data_root()
     database = Database(root)
     database.recover_interrupted()
@@ -43,11 +46,26 @@ def create_app(root: Path | None = None, nonce: str | None = None) -> FastAPI:
     session_token = secrets.token_urlsafe(32)
     csrf_token = secrets.token_urlsafe(32)
     cookie_name = "codescape_" + secrets.token_hex(8)
-    nonce_used = False
-    nonce_expires = time.monotonic() + 300
+    nonces = {bootstrap_nonce: time.monotonic() + 300}
+    nonce_lock = threading.Lock()
+    lifetime = ClientLifetime()
+    closing = False
     run_lock = asyncio.Lock()
     queue = TaskQueue(database, run_lock)
     consents_path = root / "consents.json"
+
+    def issue_nonce() -> str:
+        if closing:
+            raise RuntimeError("应用正在保存并退出，请稍后重新启动。")
+        value = secrets.token_urlsafe(32)
+        with nonce_lock:
+            expired = [key for key, expires in nonces.items() if expires < time.monotonic()]
+            for key in expired:
+                nonces.pop(key, None)
+            if len(nonces) >= 16:
+                nonces.pop(next(iter(nonces)))
+            nonces[value] = time.monotonic() + 300
+        return value
 
     def get_project(project_id: str) -> dict:
         project = database.get(project_id)
@@ -160,7 +178,24 @@ def create_app(root: Path | None = None, nonce: str | None = None) -> FastAPI:
     async def lifespan(_):
         imports.cleanup()
         seed()
+        app.state.ready_event.set()
+        monitor = None
+        if on_idle_exit:
+            async def watch_clients():
+                nonlocal closing
+                while True:
+                    await asyncio.sleep(5)
+                    if lifetime.should_exit():
+                        closing = True
+                        await queue.shutdown()
+                        await on_idle_exit()
+                        return
+            monitor = asyncio.create_task(watch_clients())
         yield
+        closing = True
+        if monitor:
+            monitor.cancel()
+            await asyncio.gather(monitor, return_exceptions=True)
         await queue.shutdown()
         database.engine.dispose()
 
@@ -169,10 +204,15 @@ def create_app(root: Path | None = None, nonce: str | None = None) -> FastAPI:
     )
     app.state.nonce = bootstrap_nonce
     app.state.root = root
+    app.state.issue_nonce = issue_nonce
+    app.state.ready_event = threading.Event()
+    app.state.lifetime = lifetime
 
     @app.middleware("http")
     async def protect(request: Request, call_next):
         if request.url.path.startswith("/api/"):
+            if closing and request.method not in {"GET", "HEAD"}:
+                return JSONResponse({"error": {"code": "STOPPING", "message": "应用正在保存并退出。"}}, status_code=503)
             if (
                 request.method not in {"GET", "HEAD"}
                 and request.headers.get("content-type", "").split(";")[0] != "application/json"
@@ -223,18 +263,50 @@ def create_app(root: Path | None = None, nonce: str | None = None) -> FastAPI:
 
     @app.post("/api/v1/session/exchange")
     async def exchange(request: Request):
-        nonlocal nonce_used
         body = await request.json()
-        if (
-            nonce_used
-            or time.monotonic() > nonce_expires
-            or not secrets.compare_digest(str(body.get("nonce", "")), bootstrap_nonce)
-        ):
+        supplied = str(body.get("nonce", ""))
+        with nonce_lock:
+            expires = nonces.pop(supplied, 0)
+        if time.monotonic() > expires:
             raise HTTPException(401, "启动凭证已失效，请重新通过启动入口打开。")
-        nonce_used = True
         response = JSONResponse(envelope({"csrf_token": csrf_token}))
         response.set_cookie(cookie_name, session_token, httponly=True, samesite="strict")
         return response
+
+    def client_identity(value) -> str:
+        try:
+            identity = str(uuid.UUID(value))
+        except (ValueError, TypeError, AttributeError):
+            raise HTTPException(422, "页面标识不合法。") from None
+        return identity
+
+    @app.post("/api/v1/clients/heartbeat")
+    async def client_heartbeat(request: Request):
+        identity = client_identity((await request.json()).get("client_id"))
+        lifetime.heartbeat(identity)
+        return envelope({"connected": True})
+
+    @app.post("/api/v1/clients/disconnect")
+    async def client_disconnect(request: Request):
+        identity = client_identity((await request.json()).get("client_id"))
+        lifetime.disconnect(identity)
+        return envelope({"connected": False})
+
+    @app.get("/api/v1/clients/{client_id}/events")
+    async def client_events(client_id: str, request: Request):
+        identity = client_identity(client_id)
+
+        async def events():
+            connection_id = str(uuid.uuid4())
+            lifetime.connect(identity, connection_id)
+            try:
+                while not closing and not await request.is_disconnected():
+                    yield 'event: heartbeat\ndata: {}\n\n'
+                    await asyncio.sleep(20)
+            finally:
+                lifetime.close_connection(connection_id)
+
+        return StreamingResponse(events(), media_type="text/event-stream", headers={"Cache-Control": "no-store"})
 
     @app.get("/api/v1/session")
     async def session_info():
@@ -253,6 +325,7 @@ def create_app(root: Path | None = None, nonce: str | None = None) -> FastAPI:
         snapshot_root = root / "projects" / project_id / "snapshots" / project["snapshot"]["id"]
         database.update(project_id, status="indexing", error=None)
         process = None
+        worker_job = None
         try:
             process = await asyncio.create_subprocess_exec(
                 sys.executable, str(REPOSITORY / "scripts/analyze_snapshot.py"),
@@ -260,6 +333,10 @@ def create_app(root: Path | None = None, nonce: str | None = None) -> FastAPI:
                 stderr=asyncio.subprocess.DEVNULL, cwd=REPOSITORY,
                 creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
             )
+            # The parser blocks on stdin until containment is ready. Native
+            # crashes, cancellation and timeouts cannot leave a Node child behind.
+            worker_job = WorkerJob()
+            worker_job.attach(process.pid)
             payload = json.dumps({"root": str(snapshot_root), "manifest": project["snapshot"],
                                   "version": project["version_id"]}).encode()
             output, _ = await asyncio.wait_for(process.communicate(payload), timeout=120)
@@ -273,8 +350,13 @@ def create_app(root: Path | None = None, nonce: str | None = None) -> FastAPI:
         except Exception as error:
             database.update(project_id, status="failed", error=str(error)[:300])
         finally:
+            if worker_job:
+                worker_job.close()
             if process and process.returncode is None:
-                process.kill()
+                try:
+                    process.kill()
+                except ProcessLookupError:
+                    pass
                 await process.wait()
 
     @app.post("/api/v1/imports/preview")

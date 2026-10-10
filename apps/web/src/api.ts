@@ -23,3 +23,8 @@ export async function bootstrap() {
     csrf = result.csrf_token;
   }
 }
+
+export function keepalive(path: string, body: unknown) {
+  return fetch(`/api/v1${path}`, { method: 'POST', keepalive: true, credentials: 'same-origin',
+    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrf }, body: JSON.stringify(body) });
+}
