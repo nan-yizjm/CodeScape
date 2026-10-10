@@ -1,6 +1,7 @@
 {
-  "verified_at": "2026-10-10T15:57:44.608620+00:00",
+  "verified_at": "2026-10-10T19:30:33.531723+00:00",
   "test_kind": "真实 DeepSeek 模型测试，与固定响应测试分开",
+  "pipeline_version": "architecture/2-explanations/1-reads/1-judgments/1-dependencies/1-cpp-config/5-interfaces/1-facts/1",
   "recipient": "https://api.deepseek.com",
   "model": "deepseek-flash",
   "authorized_source_paths": [
@@ -11,11 +12,11 @@
   "function_count": 8,
   "explained_count": 8,
   "missing_count": 0,
-  "version_id": "ee33326f-64b4-45dd-a4f0-031c4f53b0a0",
+  "version_id": "b9183bb4-0619-4a40-b145-d2de23be5571",
   "analysis": {
     "entities": [
       {
-        "id": "12f7beeb-1b22-5c64-9426-83852e479607",
+        "id": "2c63fde4-a75c-510d-b6f9-0344e8559962",
         "name": "read_config",
         "qualified_name": "read_config",
         "signature": "read_config(source)",
@@ -28,7 +29,7 @@
           "start_byte": 99,
           "end_byte": 282
         },
-        "scope_id": "e3deb76e-7689-5b35-a59f-f102c140beac",
+        "scope_id": "d9c8e093-6364-563c-9f27-832eb27734c1",
         "visible": true,
         "hidden_reason": null,
         "implementation_hash": "8fd0b382cbeade26e8044a96ee7c37f535d5e56558d28f437b20750b41fe6685",
@@ -39,7 +40,7 @@
         "unresolved_count": 1
       },
       {
-        "id": "4e5d4947-8b1c-5ece-8ef2-1d70df6d24bd",
+        "id": "cfc481bd-4164-5bb1-ae60-3691ebf329a3",
         "name": "validate_config",
         "qualified_name": "validate_config",
         "signature": "validate_config(options)",
@@ -52,7 +53,7 @@
           "start_byte": 285,
           "end_byte": 419
         },
-        "scope_id": "88d6cc77-7c11-517d-a2e2-df5875d34bab",
+        "scope_id": "974fc19f-cfbe-5ede-bf9c-f76a04d0966f",
         "visible": true,
         "hidden_reason": null,
         "implementation_hash": "6ee42a5a799d245a6647a2f09ba0ff9295b4121c03d6a237e5db8a578554ace8",
@@ -63,7 +64,7 @@
         "unresolved_count": 0
       },
       {
-        "id": "9e844c5e-b89c-55d2-bc55-113053232637",
+        "id": "8bc961d4-2e68-50d4-b6e9-4969a3037a5a",
         "name": "analyze_project",
         "qualified_name": "analyze_project",
         "signature": "analyze_project(source)",
@@ -76,7 +77,7 @@
           "start_byte": 85,
           "end_byte": 290
         },
-        "scope_id": "545f385f-9fb0-5435-8eb4-5d0b06162328",
+        "scope_id": "4e824701-b2b2-50a2-917c-cf19222c0bfb",
         "visible": true,
         "hidden_reason": null,
         "implementation_hash": "57cb860605a7d590787c43f3c8026b15b643bcb7d685d7ab5b9fa0b488bf120f",
@@ -87,7 +88,7 @@
         "unresolved_count": 0
       },
       {
-        "id": "033b5b56-067f-5bb6-a476-e29cfcb95594",
+        "id": "1e23191e-be7a-519b-b21f-218c254a531e",
         "name": "parse_source",
         "qualified_name": "parse_source",
         "signature": "parse_source(source)",
@@ -100,7 +101,7 @@
           "start_byte": 293,
           "end_byte": 489
         },
-        "scope_id": "f6da2a18-8a77-55c9-bf8b-9a8fa70c02cd",
+        "scope_id": "510aab83-bc81-514f-8320-75d4fbd395f1",
         "visible": true,
         "hidden_reason": null,
         "implementation_hash": "bc5ae4ecac7ed56ea11e8c71f405e9a6f6ad2a9f3d57e08b92e8bbbc208aa680",
@@ -111,7 +112,7 @@
         "unresolved_count": 0
       },
       {
-        "id": "134c11f6-bfa4-52bf-8c41-797a8a25c385",
+        "id": "f8492849-4ae2-54f8-90ce-c5037d2d539f",
         "name": "walk_syntax",
         "qualified_name": "walk_syntax",
         "signature": "walk_syntax(node)",
@@ -124,7 +125,7 @@
           "start_byte": 492,
           "end_byte": 721
         },
-        "scope_id": "b6ef1f63-755c-5e0b-a849-38e3c3928606",
+        "scope_id": "ba48bdb6-f87e-538b-82ae-5e4530fecbb8",
         "visible": true,
         "hidden_reason": null,
         "implementation_hash": "b471bb0b15ab4a57672c2869e163012a3803d169eb1ea6fb157e45b729d2b4d4",
@@ -135,7 +136,7 @@
         "unresolved_count": 1
       },
       {
-        "id": "f8855de8-6deb-5802-8c5b-7eca3eb07e24",
+        "id": "24a9656e-3d74-5c00-80f6-e3c64cabb1a1",
         "name": "summarize",
         "qualified_name": "summarize",
         "signature": "summarize(parsed, configuration)",
@@ -148,7 +149,7 @@
           "start_byte": 724,
           "end_byte": 866
         },
-        "scope_id": "2fd3b93f-35da-5e66-abb5-67c3c1a2c37b",
+        "scope_id": "3dd0d7ce-98c8-58c4-aa09-ebbd55a5e50f",
         "visible": true,
         "hidden_reason": null,
         "implementation_hash": "4ce7734c42d0a68251f2c1e51d9956457b1c8a89f43606b1ec5039c409c0be49",
@@ -159,7 +160,7 @@
         "unresolved_count": 0
       },
       {
-        "id": "adc838ca-9a86-506e-899f-52d0dbc929c9",
+        "id": "c393c2d0-a170-542b-b974-72adc227fb56",
         "name": "build_graph",
         "qualified_name": "build_graph",
         "signature": "build_graph(source)",
@@ -172,7 +173,7 @@
           "start_byte": 84,
           "end_byte": 262
         },
-        "scope_id": "cd15741d-b51d-5794-a584-20926bf45ad9",
+        "scope_id": "009e164b-bbeb-51a4-96d5-d41b5fbe7956",
         "visible": true,
         "hidden_reason": null,
         "implementation_hash": "61445b780db25468f4905f4068b73ae75a223e432f24d563c2aa352db6e63a5d",
@@ -183,7 +184,7 @@
         "unresolved_count": 0
       },
       {
-        "id": "fa88872c-04d8-55bc-aecf-c43a0338f334",
+        "id": "667e110c-b437-5744-9b77-ce96216d0f63",
         "name": "export_graph",
         "qualified_name": "export_graph",
         "signature": "export_graph(source)",
@@ -196,7 +197,7 @@
           "start_byte": 265,
           "end_byte": 376
         },
-        "scope_id": "94f29cf3-b7c7-5397-8ed0-731ff0a4e61e",
+        "scope_id": "a664e53f-1cd2-5a90-a32a-e743d60881a5",
         "visible": true,
         "hidden_reason": null,
         "implementation_hash": "58b33bcd43f45cff3caf6e0c20a488724a606ec09f87c3991e1a520ec01b609c",
@@ -209,7 +210,7 @@
     ],
     "scopes": [
       {
-        "id": "33d858c7-bfae-582c-b165-b3c2f4329f13",
+        "id": "232f700b-19eb-5867-884d-2068ce247401",
         "kind": "module",
         "name": "input",
         "location": {
@@ -222,7 +223,7 @@
         "parent_id": null
       },
       {
-        "id": "e3deb76e-7689-5b35-a59f-f102c140beac",
+        "id": "d9c8e093-6364-563c-9f27-832eb27734c1",
         "kind": "function",
         "name": "read_config",
         "location": {
@@ -232,10 +233,10 @@
           "start_byte": 99,
           "end_byte": 282
         },
-        "parent_id": "33d858c7-bfae-582c-b165-b3c2f4329f13"
+        "parent_id": "232f700b-19eb-5867-884d-2068ce247401"
       },
       {
-        "id": "88d6cc77-7c11-517d-a2e2-df5875d34bab",
+        "id": "974fc19f-cfbe-5ede-bf9c-f76a04d0966f",
         "kind": "function",
         "name": "validate_config",
         "location": {
@@ -245,10 +246,10 @@
           "start_byte": 285,
           "end_byte": 419
         },
-        "parent_id": "33d858c7-bfae-582c-b165-b3c2f4329f13"
+        "parent_id": "232f700b-19eb-5867-884d-2068ce247401"
       },
       {
-        "id": "aa24abdf-f45e-5a7f-a03c-8dc8440ec23c",
+        "id": "a6185f21-5cb4-57d1-b939-0760c62473df",
         "kind": "module",
         "name": "engine",
         "location": {
@@ -261,7 +262,7 @@
         "parent_id": null
       },
       {
-        "id": "545f385f-9fb0-5435-8eb4-5d0b06162328",
+        "id": "4e824701-b2b2-50a2-917c-cf19222c0bfb",
         "kind": "function",
         "name": "analyze_project",
         "location": {
@@ -271,10 +272,10 @@
           "start_byte": 85,
           "end_byte": 290
         },
-        "parent_id": "aa24abdf-f45e-5a7f-a03c-8dc8440ec23c"
+        "parent_id": "a6185f21-5cb4-57d1-b939-0760c62473df"
       },
       {
-        "id": "f6da2a18-8a77-55c9-bf8b-9a8fa70c02cd",
+        "id": "510aab83-bc81-514f-8320-75d4fbd395f1",
         "kind": "function",
         "name": "parse_source",
         "location": {
@@ -284,10 +285,10 @@
           "start_byte": 293,
           "end_byte": 489
         },
-        "parent_id": "aa24abdf-f45e-5a7f-a03c-8dc8440ec23c"
+        "parent_id": "a6185f21-5cb4-57d1-b939-0760c62473df"
       },
       {
-        "id": "b6ef1f63-755c-5e0b-a849-38e3c3928606",
+        "id": "ba48bdb6-f87e-538b-82ae-5e4530fecbb8",
         "kind": "function",
         "name": "walk_syntax",
         "location": {
@@ -297,10 +298,10 @@
           "start_byte": 492,
           "end_byte": 721
         },
-        "parent_id": "aa24abdf-f45e-5a7f-a03c-8dc8440ec23c"
+        "parent_id": "a6185f21-5cb4-57d1-b939-0760c62473df"
       },
       {
-        "id": "2fd3b93f-35da-5e66-abb5-67c3c1a2c37b",
+        "id": "3dd0d7ce-98c8-58c4-aa09-ebbd55a5e50f",
         "kind": "function",
         "name": "summarize",
         "location": {
@@ -310,10 +311,10 @@
           "start_byte": 724,
           "end_byte": 866
         },
-        "parent_id": "aa24abdf-f45e-5a7f-a03c-8dc8440ec23c"
+        "parent_id": "a6185f21-5cb4-57d1-b939-0760c62473df"
       },
       {
-        "id": "3e4bfde0-4b09-5f1a-99da-4a34d2b65d63",
+        "id": "5dc4a975-ed0c-5178-b7e5-02ddefe03ead",
         "kind": "module",
         "name": "presentation",
         "location": {
@@ -326,7 +327,7 @@
         "parent_id": null
       },
       {
-        "id": "cd15741d-b51d-5794-a584-20926bf45ad9",
+        "id": "009e164b-bbeb-51a4-96d5-d41b5fbe7956",
         "kind": "function",
         "name": "build_graph",
         "location": {
@@ -336,10 +337,10 @@
           "start_byte": 84,
           "end_byte": 262
         },
-        "parent_id": "3e4bfde0-4b09-5f1a-99da-4a34d2b65d63"
+        "parent_id": "5dc4a975-ed0c-5178-b7e5-02ddefe03ead"
       },
       {
-        "id": "94f29cf3-b7c7-5397-8ed0-731ff0a4e61e",
+        "id": "a664e53f-1cd2-5a90-a32a-e743d60881a5",
         "kind": "function",
         "name": "export_graph",
         "location": {
@@ -349,13 +350,13 @@
           "start_byte": 265,
           "end_byte": 376
         },
-        "parent_id": "3e4bfde0-4b09-5f1a-99da-4a34d2b65d63"
+        "parent_id": "5dc4a975-ed0c-5178-b7e5-02ddefe03ead"
       }
     ],
     "calls": [
       {
-        "id": "d4724211-01d6-528a-873c-31d21c039242",
-        "caller_scope_id": "e3deb76e-7689-5b35-a59f-f102c140beac",
+        "id": "445dc02e-efb8-50d7-a371-001deaddaa77",
+        "caller_scope_id": "d9c8e093-6364-563c-9f27-832eb27734c1",
         "target_id": null,
         "expression": "source.get",
         "location": {
@@ -366,14 +367,19 @@
           "end_byte": 233
         },
         "resolution": "excluded_indirect",
+        "spelling_location": null,
+        "expansion_location": null,
+        "kind": "direct",
+        "interface_evidence": [],
         "origin": "static",
         "reason": "名称来自参数、局部绑定或重赋值，不能确认静态直接调用。",
-        "target_name": null
+        "target_name": null,
+        "judgment_evidence": []
       },
       {
-        "id": "545076bb-5d79-5a4d-aeb7-41425922ccb5",
-        "caller_scope_id": "e3deb76e-7689-5b35-a59f-f102c140beac",
-        "target_id": "4e5d4947-8b1c-5ece-8ef2-1d70df6d24bd",
+        "id": "0b13056a-1a27-53bf-9057-0c55991a1ca3",
+        "caller_scope_id": "d9c8e093-6364-563c-9f27-832eb27734c1",
+        "target_id": "cfc481bd-4164-5bb1-ae60-3691ebf329a3",
         "expression": "validate_config",
         "location": {
           "path": "input.py",
@@ -383,14 +389,19 @@
           "end_byte": 282
         },
         "resolution": "confirmed",
+        "spelling_location": null,
+        "expansion_location": null,
+        "kind": "direct",
+        "interface_evidence": [],
         "origin": "static",
         "reason": "词法绑定指向分析范围内唯一实现，无已知重赋值或装饰器改写。",
-        "target_name": "validate_config"
+        "target_name": "validate_config",
+        "judgment_evidence": []
       },
       {
-        "id": "1b386a46-5872-5448-87a3-c0fcc10940c0",
-        "caller_scope_id": "545f385f-9fb0-5435-8eb4-5d0b06162328",
-        "target_id": "12f7beeb-1b22-5c64-9426-83852e479607",
+        "id": "8536b7e5-9f00-5bec-b67f-6b2a343b007e",
+        "caller_scope_id": "4e824701-b2b2-50a2-917c-cf19222c0bfb",
+        "target_id": "2c63fde4-a75c-510d-b6f9-0344e8559962",
         "expression": "read_config",
         "location": {
           "path": "engine.py",
@@ -400,14 +411,19 @@
           "end_byte": 212
         },
         "resolution": "confirmed",
+        "spelling_location": null,
+        "expansion_location": null,
+        "kind": "direct",
+        "interface_evidence": [],
         "origin": "static",
         "reason": "词法绑定指向分析范围内唯一实现，无已知重赋值或装饰器改写。",
-        "target_name": "read_config"
+        "target_name": "read_config",
+        "judgment_evidence": []
       },
       {
-        "id": "71d4a6d2-3682-5762-b632-92e50bfb675e",
-        "caller_scope_id": "545f385f-9fb0-5435-8eb4-5d0b06162328",
-        "target_id": "033b5b56-067f-5bb6-a476-e29cfcb95594",
+        "id": "422aea33-7ebe-536c-9e43-84c51197fdad",
+        "caller_scope_id": "4e824701-b2b2-50a2-917c-cf19222c0bfb",
+        "target_id": "1e23191e-be7a-519b-b21f-218c254a531e",
         "expression": "parse_source",
         "location": {
           "path": "engine.py",
@@ -417,14 +433,19 @@
           "end_byte": 246
         },
         "resolution": "confirmed",
+        "spelling_location": null,
+        "expansion_location": null,
+        "kind": "direct",
+        "interface_evidence": [],
         "origin": "static",
         "reason": "词法绑定指向分析范围内唯一实现，无已知重赋值或装饰器改写。",
-        "target_name": "parse_source"
+        "target_name": "parse_source",
+        "judgment_evidence": []
       },
       {
-        "id": "d3a7c54f-9ee0-5dfd-a5fe-8a404639f175",
-        "caller_scope_id": "545f385f-9fb0-5435-8eb4-5d0b06162328",
-        "target_id": "f8855de8-6deb-5802-8c5b-7eca3eb07e24",
+        "id": "f498e1a1-484d-5cb7-89a3-6b7438fa8d75",
+        "caller_scope_id": "4e824701-b2b2-50a2-917c-cf19222c0bfb",
+        "target_id": "24a9656e-3d74-5c00-80f6-e3c64cabb1a1",
         "expression": "summarize",
         "location": {
           "path": "engine.py",
@@ -434,14 +455,19 @@
           "end_byte": 290
         },
         "resolution": "confirmed",
+        "spelling_location": null,
+        "expansion_location": null,
+        "kind": "direct",
+        "interface_evidence": [],
         "origin": "static",
         "reason": "词法绑定指向分析范围内唯一实现，无已知重赋值或装饰器改写。",
-        "target_name": "summarize"
+        "target_name": "summarize",
+        "judgment_evidence": []
       },
       {
-        "id": "abd060d0-d63d-5852-a8ae-d272f0255af0",
-        "caller_scope_id": "f6da2a18-8a77-55c9-bf8b-9a8fa70c02cd",
-        "target_id": "134c11f6-bfa4-52bf-8c41-797a8a25c385",
+        "id": "8f60ab5f-0623-5a0d-bbff-da511a405bc0",
+        "caller_scope_id": "510aab83-bc81-514f-8320-75d4fbd395f1",
+        "target_id": "f8492849-4ae2-54f8-90ce-c5037d2d539f",
         "expression": "walk_syntax",
         "location": {
           "path": "engine.py",
@@ -451,14 +477,19 @@
           "end_byte": 430
         },
         "resolution": "confirmed",
+        "spelling_location": null,
+        "expansion_location": null,
+        "kind": "direct",
+        "interface_evidence": [],
         "origin": "static",
         "reason": "词法绑定指向分析范围内唯一实现，无已知重赋值或装饰器改写。",
-        "target_name": "walk_syntax"
+        "target_name": "walk_syntax",
+        "judgment_evidence": []
       },
       {
-        "id": "3c59da0d-d3c6-5c22-ac7f-30149af6ad52",
-        "caller_scope_id": "f6da2a18-8a77-55c9-bf8b-9a8fa70c02cd",
-        "target_id": "134c11f6-bfa4-52bf-8c41-797a8a25c385",
+        "id": "dcf8dc68-3530-5eab-9d5c-b590fcd2d326",
+        "caller_scope_id": "510aab83-bc81-514f-8320-75d4fbd395f1",
+        "target_id": "f8492849-4ae2-54f8-90ce-c5037d2d539f",
         "expression": "walk_syntax",
         "location": {
           "path": "engine.py",
@@ -468,13 +499,18 @@
           "end_byte": 463
         },
         "resolution": "confirmed",
+        "spelling_location": null,
+        "expansion_location": null,
+        "kind": "direct",
+        "interface_evidence": [],
         "origin": "static",
         "reason": "词法绑定指向分析范围内唯一实现，无已知重赋值或装饰器改写。",
-        "target_name": "walk_syntax"
+        "target_name": "walk_syntax",
+        "judgment_evidence": []
       },
       {
-        "id": "6b31473c-34eb-51b4-b65d-f6095ce7e5b6",
-        "caller_scope_id": "b6ef1f63-755c-5e0b-a849-38e3c3928606",
+        "id": "1d0a2d38-d41e-5d0a-a470-179f6e943ac2",
+        "caller_scope_id": "ba48bdb6-f87e-538b-82ae-5e4530fecbb8",
         "target_id": null,
         "expression": "node.get",
         "location": {
@@ -485,14 +521,19 @@
           "end_byte": 589
         },
         "resolution": "excluded_indirect",
+        "spelling_location": null,
+        "expansion_location": null,
+        "kind": "direct",
+        "interface_evidence": [],
         "origin": "static",
         "reason": "名称来自参数、局部绑定或重赋值，不能确认静态直接调用。",
-        "target_name": null
+        "target_name": null,
+        "judgment_evidence": []
       },
       {
-        "id": "757072cf-134c-5be4-9d05-b09b4386dd5d",
-        "caller_scope_id": "b6ef1f63-755c-5e0b-a849-38e3c3928606",
-        "target_id": "134c11f6-bfa4-52bf-8c41-797a8a25c385",
+        "id": "bfb2c424-2b0a-5b4a-ae1a-a3be48d62354",
+        "caller_scope_id": "ba48bdb6-f87e-538b-82ae-5e4530fecbb8",
+        "target_id": "f8492849-4ae2-54f8-90ce-c5037d2d539f",
         "expression": "walk_syntax",
         "location": {
           "path": "engine.py",
@@ -502,14 +543,19 @@
           "end_byte": 704
         },
         "resolution": "confirmed",
+        "spelling_location": null,
+        "expansion_location": null,
+        "kind": "direct",
+        "interface_evidence": [],
         "origin": "static",
         "reason": "词法绑定指向分析范围内唯一实现，无已知重赋值或装饰器改写。",
-        "target_name": "walk_syntax"
+        "target_name": "walk_syntax",
+        "judgment_evidence": []
       },
       {
-        "id": "6c0ec90a-15bf-5efe-848f-c6eea3548a74",
-        "caller_scope_id": "cd15741d-b51d-5794-a584-20926bf45ad9",
-        "target_id": "9e844c5e-b89c-55d2-bc55-113053232637",
+        "id": "024fd3c2-0d38-5763-9d03-a223e915d7ed",
+        "caller_scope_id": "009e164b-bbeb-51a4-96d5-d41b5fbe7956",
+        "target_id": "8bc961d4-2e68-50d4-b6e9-4969a3037a5a",
         "expression": "analyze_project",
         "location": {
           "path": "presentation.py",
@@ -519,14 +565,19 @@
           "end_byte": 201
         },
         "resolution": "confirmed",
+        "spelling_location": null,
+        "expansion_location": null,
+        "kind": "direct",
+        "interface_evidence": [],
         "origin": "static",
         "reason": "词法绑定指向分析范围内唯一实现，无已知重赋值或装饰器改写。",
-        "target_name": "analyze_project"
+        "target_name": "analyze_project",
+        "judgment_evidence": []
       },
       {
-        "id": "a65d3d87-a240-5d3d-956c-542ee3404c27",
-        "caller_scope_id": "94f29cf3-b7c7-5397-8ed0-731ff0a4e61e",
-        "target_id": "adc838ca-9a86-506e-899f-52d0dbc929c9",
+        "id": "f200a729-1e8c-5b61-b6b5-41246d1b1ba2",
+        "caller_scope_id": "a664e53f-1cd2-5a90-a32a-e743d60881a5",
+        "target_id": "c393c2d0-a170-542b-b974-72adc227fb56",
         "expression": "build_graph",
         "location": {
           "path": "presentation.py",
@@ -536,13 +587,18 @@
           "end_byte": 354
         },
         "resolution": "confirmed",
+        "spelling_location": null,
+        "expansion_location": null,
+        "kind": "direct",
+        "interface_evidence": [],
         "origin": "static",
         "reason": "词法绑定指向分析范围内唯一实现，无已知重赋值或装饰器改写。",
-        "target_name": "build_graph"
+        "target_name": "build_graph",
+        "judgment_evidence": []
       },
       {
-        "id": "778e9268-6f6f-5059-84b2-b8132645cc18",
-        "caller_scope_id": "94f29cf3-b7c7-5397-8ed0-731ff0a4e61e",
+        "id": "b27ead50-575b-5557-80cd-c29e572f4454",
+        "caller_scope_id": "a664e53f-1cd2-5a90-a32a-e743d60881a5",
         "target_id": null,
         "expression": "str",
         "location": {
@@ -553,9 +609,14 @@
           "end_byte": 376
         },
         "resolution": "external",
+        "spelling_location": null,
+        "expansion_location": null,
+        "kind": "direct",
+        "interface_evidence": [],
         "origin": "static",
         "reason": "Python 内置函数或类型。",
-        "target_name": null
+        "target_name": null,
+        "judgment_evidence": []
       }
     ],
     "diagnostics": [],
@@ -573,25 +634,26 @@
       "presentation.py"
     ]
   },
-  "leaf_count_wording_check": "通过，仍需人工核对其他职责",
+  "leaf_count_wording_check": "已通过受限递推事实反例检查；语义仍需逐项源码复核",
+  "leaf_count_wording": "递归遍历子节点树，统计无子节点的叶项数量。输入 node 被当作支持 get 的映射：children = node.get(\"children\", []) 取子节点列表，缺省为空列表。若 children 为空（含假值情形）直接返回 1，即把当前节点计为一个叶项；否则把 total 初始化为 0，循环对每个 child 递归调用 walk_syntax 并累加，最后返回 total，当前节点本身不被额外计数。因此返回值是叶节点数量而非全部节点数量；仅对无环有限树终止，遇到环或递归深度过大不会自行收敛。",
   "source_references_validated": true,
   "usage": {
-    "prompt_tokens": 6924,
-    "completion_tokens": 4175,
-    "total_tokens": 11099,
-    "prompt_cache_hit_tokens": 128,
-    "prompt_cache_miss_tokens": 6796
+    "prompt_tokens": 8940,
+    "completion_tokens": 8444,
+    "total_tokens": 17384,
+    "prompt_cache_hit_tokens": 384,
+    "prompt_cache_miss_tokens": 8556
   },
   "architecture": {
     "modules": [
       {
         "id": "m1",
         "parent_id": null,
-        "name": "输入与配置模块",
-        "summary": "负责从 source 读取语言与深度配置，并校验配置字段的布尔结果。",
+        "name": "配置读取与校验",
+        "summary": "从输入字典读取分析配置（语言带默认值、深度为固定值），并校验其字段是否满足分析前置条件。",
         "entity_ids": [
-          "12f7beeb-1b22-5c64-9426-83852e479607",
-          "4e5d4947-8b1c-5ece-8ef2-1d70df6d24bd"
+          "2c63fde4-a75c-510d-b6f9-0344e8559962",
+          "cfc481bd-4164-5bb1-ae60-3691ebf329a3"
         ],
         "code_paths": [
           "input.py"
@@ -601,13 +663,13 @@
       {
         "id": "m2",
         "parent_id": null,
-        "name": "分析引擎模块",
-        "summary": "负责读取配置、解析语法、递归统计叶节点并组合汇总结果。",
+        "name": "分析引擎与语法遍历",
+        "summary": "编排配置读取、语法解析与结果汇总，并以递归方式统计语法结构的叶节点数量。",
         "entity_ids": [
-          "9e844c5e-b89c-55d2-bc55-113053232637",
-          "033b5b56-067f-5bb6-a476-e29cfcb95594",
-          "134c11f6-bfa4-52bf-8c41-797a8a25c385",
-          "f8855de8-6deb-5802-8c5b-7eca3eb07e24"
+          "8bc961d4-2e68-50d4-b6e9-4969a3037a5a",
+          "1e23191e-be7a-519b-b21f-218c254a531e",
+          "f8492849-4ae2-54f8-90ce-c5037d2d539f",
+          "24a9656e-3d74-5c00-80f6-e3c64cabb1a1"
         ],
         "code_paths": [
           "engine.py"
@@ -617,11 +679,11 @@
       {
         "id": "m3",
         "parent_id": null,
-        "name": "结果呈现模块",
-        "summary": "负责取得分析结果、包装为图形字典，并导出字符串表示。",
+        "name": "结果呈现与导出",
+        "summary": "调用分析引擎获取结果，包装为带标题的图形数据结构，并进一步导出为字符串表示。",
         "entity_ids": [
-          "adc838ca-9a86-506e-899f-52d0dbc929c9",
-          "fa88872c-04d8-55bc-aecf-c43a0338f334"
+          "c393c2d0-a170-542b-b974-72adc227fb56",
+          "667e110c-b437-5744-9b77-ce96216d0f63"
         ],
         "code_paths": [
           "presentation.py"
@@ -630,33 +692,43 @@
       }
     ],
     "overview": {
-      "introduction": "该代码快照由三个模块构成：input 负责读取与校验配置，engine 负责解析源码语法、递归统计并汇总结果，presentation 负责把分析结果组织为图形数据并导出字符串表示。整体是一个静态分析示例流水线。",
+      "introduction": "这是一个轻量级语法结构分析演示，面向需要从语法数据中获取叶节点数量并查看导出结果的开发者或学习者。它读取并校验分析配置，遍历语法结构完成统计，再把结果整理成图形数据和字符串输出。",
       "capabilities": [
-        "读取配置并提供默认语言与深度",
-        "校验配置中的语言字段与深度正数",
-        "递归统计语法结构叶节点数量",
-        "组合语法统计与配置生成汇总字典",
-        "构建图形数据并导出字符串"
+        "读取并校验分析配置，采用默认语言与固定深度。",
+        "解析语法结构并递归统计叶节点数量。",
+        "将统计结果包装为带标题的图形数据结构。",
+        "把图形结果导出为字符串表示，便于查看。"
       ],
-      "principle": "调用链从 presentation.build_graph 传入 source，经 engine.analyze_project 读取配置、解析语法并汇总，再由 export_graph 调用 build_graph 转为字符串；解析阶段 walk_syntax 以递归方式统计叶节点数量，parse_source 两次调用后相加，因此统计值被重复累加。",
+      "principle": "已确认协作显示：配置校验为分析引擎提供前置条件，分析引擎产出叶节点统计结果，结果呈现模块再把统计包装为带标题的图形数据并导出为字符串。",
       "limitations": [
-        "配置校验未处理缺失 depth 或非数值类型，会抛异常",
-        "parse_source 重复调用同一遍历，统计结果被加倍",
-        "walk_syntax 统计的是叶节点数量而非全部节点数",
-        "图形构建与导出仅做字典包装和 str 转换，无真实渲染",
-        "输入 source 的具体结构未在本快照中定义"
+        "统计只覆盖叶节点数量，不会累计全部语法节点。",
+        "对同一节点可能重复遍历，实际统计口径可能与预期不一致。",
+        "遍历假设语法节点是可读取字段的字典，其他形态未确认支持。",
+        "配置校验只返回布尔值，配置内容如何传递与生效尚未确认。",
+        "当前为演示样例，未确认真实文件读取或运行行为；诊断计数为 0 也不代表运行验证成功。"
       ],
       "synthesized": true,
       "analysis_notes": [
-        "本分析仅基于本批可见函数及其实现行范围。"
+        "input.py 首行注释明确说明该模块是用于静态分析和界面验证的预置样例，不运行此项目。",
+        "read_config 的名义语义是“读取配置”，但实际返回 validate_config 的布尔结果；engine.analyze_project 收到的 configuration 因此是布尔值。",
+        "统计结果只是叶节点数量，不累计全部节点",
+        "parse_source 对同一节点重复遍历两次",
+        "walk_syntax 假设节点为支持 get 的字典",
+        "read_config 返回布尔校验值而非配置字典",
+        "代码为演示样例，无真实文件读取与运行行为"
       ]
     },
     "explanations": [
       {
-        "entity_id": "12f7beeb-1b22-5c64-9426-83852e479607",
-        "summary": "读取 source 中的语言配置，构造固定深度选项并委托 validate_config 校验。",
-        "details": "输入 source 为可读取 get 的映射对象；函数取 language 字段，缺省为 python，并固定 depth 为 3，然后调用 validate_config 处理 options。返回值完全由 validate_config 决定，函数内未检查 depth 或 source 类型；可见边界是配置构建与委托校验。",
+        "entity_id": "2c63fde4-a75c-510d-b6f9-0344e8559962",
+        "summary": "从输入字典构造配置项并委托校验函数返回校验结果。",
+        "details": "输入参数 source 被当作字典使用：通过 source.get(\"language\", \"python\") 取语言，缺失时回退为字面量 \"python\"；depth 直接硬编码为 3，不来自输入。构造出的 options 字典随即作为实参传给 validate_config，函数直接返回该调用结果，因此返回值实际是布尔校验值而不是配置字典。代码可见边界：未做 source 类型检查，也未捕获异常或对 depth 做参数化。",
         "evidence": [
+          {
+            "path": "input.py",
+            "start_line": 4,
+            "end_line": 7
+          },
           {
             "path": "input.py",
             "start_line": 6,
@@ -665,95 +737,341 @@
         ]
       },
       {
-        "entity_id": "4e5d4947-8b1c-5ece-8ef2-1d70df6d24bd",
-        "summary": "校验 options 中是否存在 language 键且 depth 是否大于零。",
-        "details": "输入 options 映射；返回布尔表达式结果：要求存在 language 键且 options[\"depth\"] > 0。未对 depth 缺失做默认处理，也未校验 language 类型；可见边界是仅做两个条件的与运算。",
+        "entity_id": "cfc481bd-4164-5bb1-ae60-3691ebf329a3",
+        "summary": "检查配置字典是否同时含 language 键且 depth 大于 0。",
+        "details": "输入参数 options 被假定为字典。返回值为一个布尔表达式：\"language\" in options 与 options[\"depth\"] > 0 以 and 连接，因此要求 language 键存在且 depth 键存在并取值大于 0，否则返回 False。代码可见边界：若 options 缺少 depth 键会直接抛出 KeyError 而非返回 False；校验不检查 language 的取值类型或深度上限。",
         "evidence": [
           {
             "path": "input.py",
-            "start_line": 11,
+            "start_line": 10,
+            "end_line": 12
+          },
+          {
+            "path": "input.py",
+            "start_line": 12,
             "end_line": 12
           }
         ]
       },
       {
-        "entity_id": "9e844c5e-b89c-55d2-bc55-113053232637",
-        "summary": "串联配置读取、源码解析与结果汇总，返回汇总字典。",
-        "details": "输入 source；依次调用 read_config(source) 得到配置、parse_source(source) 得到解析结果，再调用 summarize(parsed, configuration)。返回 summarize 的字典结果，自身不做额外合并或异常处理；可见边界由三个被调函数的实现决定。",
+        "entity_id": "8bc961d4-2e68-50d4-b6e9-4969a3037a5a",
+        "summary": "按顺序执行配置读取、语法解析与结果汇总的分析主流程。",
+        "details": "输入 source 同时被用作配置来源与解析对象。函数依次执行：configuration = read_config(source) 得到校验布尔值；parsed = parse_source(source) 得到叶节点计数；最后返回 summarize(parsed, configuration) 的结果字典。代码可见边界：configuration 是布尔值而非配置字典，函数不做分支判断、异常处理或校验失败时的短路，也不会根据校验结果决定是否继续分析。",
         "evidence": [
           {
             "path": "engine.py",
-            "start_line": 7,
+            "start_line": 6,
+            "end_line": 10
+          },
+          {
+            "path": "engine.py",
+            "start_line": 8,
             "end_line": 10
           }
         ]
       },
       {
-        "entity_id": "033b5b56-067f-5bb6-a476-e29cfcb95594",
-        "summary": "对同一 source 调用两次 walk_syntax 并把两次结果相加返回。",
-        "details": "输入 source；对同一 source 分别调用两次 walk_syntax，将两次返回值相加后返回。两次调用彼此独立但参数相同，源码注释称其为同一边的两条证据；可见边界是结果等于两次叶节点统计之和，因而产生重复计数。",
+        "entity_id": "1e23191e-be7a-519b-b21f-218c254a531e",
+        "summary": "对同一节点调用两次语法遍历并返回两次结果之和。",
+        "details": "输入 source 直接作为 walk_syntax 的节点实参。函数两次以相同参数调用 walk_syntax，分别保存到 first 与 second，再返回 first + second。代码可见边界：由于两次遍历输入完全相同，返回值为单次遍历结果的两倍；函数本身不解析文本，也不校验 source 是否为字符串或映射结构。",
         "evidence": [
           {
             "path": "engine.py",
-            "start_line": 14,
+            "start_line": 13,
             "end_line": 17
+          },
+          {
+            "path": "engine.py",
+            "start_line": 15,
+            "end_line": 16
           }
         ]
       },
       {
-        "entity_id": "134c11f6-bfa4-52bf-8c41-797a8a25c385",
-        "summary": "递归遍历节点子节点，返回子树中叶节点的数量。",
-        "details": "输入 node，期望为支持 get 的映射；取 node.get(\"children\", [])。若无子节点则返回 1；否则初始化 total=0，遍历每个 child 递归调用自身并累加，最终返回 total。递归基例是 children 为空，累加发生在有子节点的每个中间节点；因此返回值实际是子树中叶节点的数量，而不是全部节点数量。",
+        "entity_id": "f8492849-4ae2-54f8-90ce-c5037d2d539f",
+        "summary": "递归遍历子节点树，统计无子节点的叶项数量。",
+        "details": "输入 node 被当作支持 get 的映射：children = node.get(\"children\", []) 取子节点列表，缺省为空列表。若 children 为空（含假值情形）直接返回 1，即把当前节点计为一个叶项；否则把 total 初始化为 0，循环对每个 child 递归调用 walk_syntax 并累加，最后返回 total，当前节点本身不被额外计数。因此返回值是叶节点数量而非全部节点数量；仅对无环有限树终止，遇到环或递归深度过大不会自行收敛。",
         "evidence": [
           {
             "path": "engine.py",
-            "start_line": 21,
+            "start_line": 20,
+            "end_line": 28
+          },
+          {
+            "path": "engine.py",
+            "start_line": 23,
             "end_line": 27
           }
         ]
       },
       {
-        "entity_id": "f8855de8-6deb-5802-8c5b-7eca3eb07e24",
-        "summary": "把解析结果与配置结果装入固定键名的字典并返回。",
-        "details": "输入 parsed 与 configuration 两个值；函数仅把它们装入字典，键为 nodes 和 configured，然后直接返回。没有统计、校验或格式化逻辑；可见边界是结果字段与输入一一对应。",
+        "entity_id": "24a9656e-3d74-5c00-80f6-e3c64cabb1a1",
+        "summary": "把语法统计结果与配置结果合并成一个结果字典。",
+        "details": "输入 parsed 与 configuration 均为已计算好的值。函数不做任何判断或转换，直接返回字面量字典 {\"nodes\": parsed, \"configured\": configuration}，把统计值放在 nodes 键、配置值放在 configured 键。代码可见边界：不区分 configuration 的具体类型，也不对 parsed 做验证或格式化。",
         "evidence": [
           {
             "path": "engine.py",
-            "start_line": 32,
+            "start_line": 31,
+            "end_line": 33
+          },
+          {
+            "path": "engine.py",
+            "start_line": 33,
             "end_line": 33
           }
         ]
       },
       {
-        "entity_id": "adc838ca-9a86-506e-899f-52d0dbc929c9",
-        "summary": "调用 analyze_project 取得分析结果，并包装为带标题的图形字典。",
-        "details": "输入 source；先调用 analyze_project(source) 取得分析结果，再包装为包含固定标题 title 和 result 字段的字典返回。未对分析结果做额外加工或错误处理；可见边界是图形数据仍是普通字典。",
+        "entity_id": "c393c2d0-a170-542b-b974-72adc227fb56",
+        "summary": "调用分析引擎并把结果包装为带固定标题的图形数据字典。",
+        "details": "输入 source 被直接透传给 analyze_project，返回值保存在 result。随后返回字面量字典 {\"title\": \"源码学习样例\", \"result\": result}，标题为硬编码字符串，不来自输入。代码可见边界：函数只做一层包装，不校验 result 结构，也不生成实际的图节点或边。",
         "evidence": [
           {
             "path": "presentation.py",
-            "start_line": 7,
+            "start_line": 6,
             "end_line": 9
+          },
+          {
+            "path": "presentation.py",
+            "start_line": 8,
+            "end_line": 8
           }
         ]
       },
       {
-        "entity_id": "fa88872c-04d8-55bc-aecf-c43a0338f334",
-        "summary": "调用 build_graph 构建图形数据，并返回其字符串表示。",
-        "details": "输入 source；调用 build_graph(source) 得到字典，再对其调用 str 返回字符串。它不写入文件或做序列化格式选择；可见边界是导出结果依赖 Python 对象字符串表示。",
+        "entity_id": "667e110c-b437-5744-9b77-ce96216d0f63",
+        "summary": "构建图形数据并返回其字符串表示。",
+        "details": "输入 source 被透传给 build_graph 得到 graph 字典，随后 return str(graph) 做字符串化。代码可见边界：导出结果只是 Python 字典的 str 形式，没有序列化为 JSON、写文件或生成图像；不处理 source 的合法性。",
         "evidence": [
           {
             "path": "presentation.py",
-            "start_line": 13,
+            "start_line": 12,
             "end_line": 15
+          },
+          {
+            "path": "presentation.py",
+            "start_line": 14,
+            "end_line": 14
           }
         ]
+      }
+    ],
+    "call_judgments": [
+      {
+        "call_id": "0b13056a-1a27-53bf-9057-0c55991a1ca3",
+        "target_id": "cfc481bd-4164-5bb1-ae60-3691ebf329a3",
+        "reason": "read_config 第 7 行以裸名 validate_config 调用，同一模块 input.py 内仅存在一个 validate_config 定义（第 10 行），词法绑定唯一且无重赋值或装饰器改写，因此确认为对该实现的直接调用。",
+        "evidence": [
+          {
+            "path": "input.py",
+            "start_line": 7,
+            "end_line": 7
+          },
+          {
+            "path": "input.py",
+            "start_line": 10,
+            "end_line": 12
+          }
+        ]
+      },
+      {
+        "call_id": "8536b7e5-9f00-5bec-b67f-6b2a343b007e",
+        "target_id": "2c63fde4-a75c-510d-b6f9-0344e8559962",
+        "reason": "engine.py 第 3 行 from input import read_config 引入该名称，analyze_project 第 8 行以裸名 read_config(source) 调用，模块内无同名覆盖，绑定到 input.py 中第 4-7 行的唯一实现。",
+        "evidence": [
+          {
+            "path": "engine.py",
+            "start_line": 8,
+            "end_line": 8
+          },
+          {
+            "path": "engine.py",
+            "start_line": 3,
+            "end_line": 3
+          },
+          {
+            "path": "input.py",
+            "start_line": 4,
+            "end_line": 7
+          }
+        ]
+      },
+      {
+        "call_id": "422aea33-7ebe-536c-9e43-84c51197fdad",
+        "target_id": "1e23191e-be7a-519b-b21f-218c254a531e",
+        "reason": "analyze_project 第 9 行调用 parse_source(source)，该名称在同文件 engine.py 第 13 行有唯一定义，无其他同名绑定，确认为直接调用该实现。",
+        "evidence": [
+          {
+            "path": "engine.py",
+            "start_line": 9,
+            "end_line": 9
+          },
+          {
+            "path": "engine.py",
+            "start_line": 13,
+            "end_line": 17
+          }
+        ]
+      },
+      {
+        "call_id": "f498e1a1-484d-5cb7-89a3-6b7438fa8d75",
+        "target_id": "24a9656e-3d74-5c00-80f6-e3c64cabb1a1",
+        "reason": "analyze_project 第 10 行以 summarize(parsed, configuration) 调用，summarize 在同文件第 31 行唯一定义，名称唯一绑定，确认为直接调用。",
+        "evidence": [
+          {
+            "path": "engine.py",
+            "start_line": 10,
+            "end_line": 10
+          },
+          {
+            "path": "engine.py",
+            "start_line": 31,
+            "end_line": 33
+          }
+        ]
+      },
+      {
+        "call_id": "8f60ab5f-0623-5a0d-bbff-da511a405bc0",
+        "target_id": "f8492849-4ae2-54f8-90ce-c5037d2d539f",
+        "reason": "parse_source 第 15 行 first = walk_syntax(source)，walk_syntax 在 engine.py 第 20 行唯一定义且无重赋值，词法绑定唯一，确认为直接调用。",
+        "evidence": [
+          {
+            "path": "engine.py",
+            "start_line": 15,
+            "end_line": 15
+          },
+          {
+            "path": "engine.py",
+            "start_line": 20,
+            "end_line": 28
+          }
+        ]
+      },
+      {
+        "call_id": "dcf8dc68-3530-5eab-9d5c-b590fcd2d326",
+        "target_id": "f8492849-4ae2-54f8-90ce-c5037d2d539f",
+        "reason": "parse_source 第 16 行 second = walk_syntax(source)，与第 15 行同一名称绑定，指向 engine.py 第 20 行唯一的 walk_syntax 实现，属直接调用，是同一边的第二条证据位置。",
+        "evidence": [
+          {
+            "path": "engine.py",
+            "start_line": 16,
+            "end_line": 16
+          },
+          {
+            "path": "engine.py",
+            "start_line": 20,
+            "end_line": 28
+          }
+        ]
+      },
+      {
+        "call_id": "bfb2c424-2b0a-5b4a-ae1a-a3be48d62354",
+        "target_id": "f8492849-4ae2-54f8-90ce-c5037d2d539f",
+        "reason": "walk_syntax 第 27 行在循环内以 total += walk_syntax(child) 调用自身，函数名在当前作用域由第 20 行的 def 绑定，无同域重绑定，确认为递归自调用。",
+        "evidence": [
+          {
+            "path": "engine.py",
+            "start_line": 27,
+            "end_line": 27
+          },
+          {
+            "path": "engine.py",
+            "start_line": 20,
+            "end_line": 28
+          }
+        ]
+      },
+      {
+        "call_id": "024fd3c2-0d38-5763-9d03-a223e915d7ed",
+        "target_id": "8bc961d4-2e68-50d4-b6e9-4969a3037a5a",
+        "reason": "presentation.py 第 3 行 from engine import analyze_project，build_graph 第 8 行以裸名 analyze_project(source) 调用，作用域内无同名覆盖，绑定到 engine.py 第 6-10 行的实现。",
+        "evidence": [
+          {
+            "path": "presentation.py",
+            "start_line": 8,
+            "end_line": 8
+          },
+          {
+            "path": "presentation.py",
+            "start_line": 3,
+            "end_line": 3
+          },
+          {
+            "path": "engine.py",
+            "start_line": 6,
+            "end_line": 10
+          }
+        ]
+      },
+      {
+        "call_id": "f200a729-1e8c-5b61-b6b5-41246d1b1ba2",
+        "target_id": "c393c2d0-a170-542b-b974-72adc227fb56",
+        "reason": "export_graph 第 14 行 graph = build_graph(source)，build_graph 在同文件 presentation.py 第 6 行唯一定义，名称唯一绑定，确认为直接调用。",
+        "evidence": [
+          {
+            "path": "presentation.py",
+            "start_line": 14,
+            "end_line": 14
+          },
+          {
+            "path": "presentation.py",
+            "start_line": 6,
+            "end_line": 9
+          }
+        ]
+      }
+    ],
+    "primary_dependencies": [
+      {
+        "call_ids": [
+          "8536b7e5-9f00-5bec-b67f-6b2a343b007e"
+        ],
+        "reason": "analyze_project 的分析前置步骤依赖 read_config 取得配置/校验结果，是引擎流程的第一个环节。"
+      },
+      {
+        "call_ids": [
+          "422aea33-7ebe-536c-9e43-84c51197fdad",
+          "f498e1a1-484d-5cb7-89a3-6b7438fa8d75"
+        ],
+        "reason": "parse_source 与 summarize 分别提供语法统计和结果合并，是分析引擎产出的核心两步。"
+      },
+      {
+        "call_ids": [
+          "8f60ab5f-0623-5a0d-bbff-da511a405bc0",
+          "dcf8dc68-3530-5eab-9d5c-b590fcd2d326"
+        ],
+        "reason": "parse_source 的全部统计能力都来自对 walk_syntax 的两次调用，二者构成遍历统计的主要协作。"
+      },
+      {
+        "call_ids": [
+          "024fd3c2-0d38-5763-9d03-a223e915d7ed"
+        ],
+        "reason": "呈现层的 build_graph 通过 analyze_project 间接获得全部分析结果，是呈现与引擎之间的主要接口协作。"
+      },
+      {
+        "call_ids": [
+          "f200a729-1e8c-5b61-b6b5-41246d1b1ba2"
+        ],
+        "reason": "export_graph 的导出内容完全来自 build_graph 的图形数据，构成导出环节的主要协作。"
       }
     ]
   },
   "source_review": {
-    "方式": "开发代理逐项静态对照八个函数的实现，不执行样例；尚待用户最终验收",
-    "结果": "最新说明正确区分配置布尔校验、两次统计相加、叶节点递归计数、字典封装和字符串表示",
-    "初次问题": "前两次 walk_syntax 把叶节点计数描述为所有后代节点数量，已保留原报告并修正分析提示",
-    "局限": "源码引用有效不等于语义自动正确；本样例通过不替代代表性工程验收"
+    "reviewer": "开发代理源码复核，不是用户验收",
+    "status": "核心事实通过，措辞仍需复核",
+    "verified": [
+      "8/8 函数完整引用可定位",
+      "walk_syntax 为叶项计数，非全部节点",
+      "read_config 使用固定 depth=3，并返回校验布尔结果",
+      "parse_source 对相同树遍历两次",
+      "analyze_project 不根据布尔校验结果提前终止",
+      "export_graph 返回 str，不是 JSON 序列化或文件写入",
+      "全局概览满足简短归纳要求"
+    ],
+    "remaining": [
+      "简介中前置条件一词容易被理解为校验失败会阻断流程，函数详情已正确说明没有该分支",
+      "validate_config 的否则 False 表述需结合短路求值和 KeyError 边界理解"
+    ],
+    "boundary": "通过受限源码事实与引用校验不代表所有自然语言或用户理解验收通过。"
   }
 }

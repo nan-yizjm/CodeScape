@@ -19,10 +19,13 @@ from codescape.workers import WorkerJob
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--id", required=True)
+    parser.add_argument("--include-bundled-headers", action="store_true", help="仅 spdlog 对照测量，纳入仓库自带 fmt 头文件，不安装依赖")
     args = parser.parse_args()
     repository = Path(__file__).resolve().parents[1]
     sources = json.loads((repository / "docs/benchmark_sources.json").read_text(encoding="utf-8"))
     selected = next(item for item in sources["repositories"] if item["id"] == args.id)
+    if args.include_bundled_headers and selected['id'] != 'spdlog-cpp':
+        parser.error('纳入 bundled 头文件的对照仅支持固定 spdlog 样本。')
     root = repository / "output/representative-index" / str(uuid.uuid4())
     root.mkdir(parents=True, exist_ok=False)
     url = validate_git_url(selected["url"])
@@ -35,7 +38,8 @@ def main():
     excluded = export_git_objects(objects, source, commit)
     outside = sorted(path.relative_to(source).as_posix() for path in source.rglob("*") if path.is_file()
         and not matches_scope(path.relative_to(source).as_posix(), selected["initial_includes"]))
-    manifest = create_snapshot(source, root / "project", excludes=selected["initial_excludes"] + outside,
+    exclusions = [pattern for pattern in selected['initial_excludes'] if not (args.include_bundled_headers and pattern == 'include/spdlog/fmt/bundled/**')]
+    manifest = create_snapshot(source, root / "project", excludes=exclusions + outside,
         includes=selected["initial_includes"])
     manifest["origin"] = {"kind": "git", "url": url, "commit": commit,
         "default_branch_at_selection": selected["default_branch_at_selection"], "excluded": excluded}
@@ -59,6 +63,7 @@ def main():
     assert all((source / path).read_bytes() == (snapshot / path).read_bytes() for path in files)
     result = {"date": "2026-10-11", "id": selected["id"], "root": str(root), "origin": manifest["origin"],
         "files": len(files), "snapshot_hash": manifest["hash"], "scope_hash": manifest["scope_hash"],
+        "bundled_headers_included": args.include_bundled_headers,
         "visible_functions": sum(entity.visible for entity in value.entities),
         "hidden_functions": sum(not entity.visible for entity in value.entities),
         "call_resolution": dict(Counter(call.resolution for call in value.calls)),
@@ -68,7 +73,8 @@ def main():
         "boundary": "仅静态测量，第三方依赖未安装；未生成 AI 架构，不是逐条人工正确性核对。"}
     (root / "manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
     (root / "static-analysis.json").write_text(value.model_dump_json(), encoding="utf-8")
-    (repository / f"docs/reports/p0/{selected['id']}静态测量.json").write_text(
+    suffix = '带依赖' if args.include_bundled_headers else ''
+    (repository / f"docs/reports/p0/{selected['id']}{suffix}静态测量.json").write_text(
         json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(json.dumps(result, ensure_ascii=False))
 

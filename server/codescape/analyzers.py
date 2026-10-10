@@ -287,22 +287,24 @@ def python_analysis(files: dict[str, str], version: str) -> Analysis:
     return result
 
 
-def cpp_analysis(root: Path, files: dict[str, str], version: str, source_root: str | None = None) -> Analysis:
+def cpp_analysis(root: Path, files: dict[str, str], version: str, source_root: str | None = None, syntax_only: bool = False) -> Analysis:
     if not any(Path(path).suffix in {".c", ".h", ".cc", ".cpp", ".cxx", ".hpp", ".hh"} for path in files):
         return Analysis()
     root = root.resolve()
     header_directories, header_files, header_error = trusted_headers()
     with snapshot_overlay(root, files, header_directories, header_files) as overlay:
-        return _cpp_analysis(root, files, version, source_root, header_directories, header_files, header_error, overlay)
+        return _cpp_analysis(root, files, version, source_root, header_directories, header_files, header_error, overlay, syntax_only)
 
 
-def _cpp_analysis(root, files, version, source_root, header_directories, header_files, header_error, overlay):
+def _cpp_analysis(root, files, version, source_root, header_directories, header_files, header_error, overlay, syntax_only=False):
     import tree_sitter_c
     import tree_sitter_cpp
     from clang import cindex
     from tree_sitter import Language, Parser
 
-    result = Analysis(tools={"cpp": "tree-sitter/0.25.2 + libclang/18.1.1 + snapshot-config/4"})
+    result = Analysis(tools={"cpp": "tree-sitter/0.25.2 + libclang/18.1.1 + snapshot-config/5"})
+    if syntax_only:
+        result.tools['cpp'] += ' + syntax-fallback/1'
     if not any(Path(path).suffix in {".c", ".h", ".cc", ".cpp", ".cxx", ".hpp", ".hh"} for path in files):
         return result
     configurations, notes = compiler_configurations(root, files, source_root)
@@ -718,10 +720,17 @@ def _cpp_analysis(root, files, version, source_root, header_directories, header_
             )
         native(unit.cursor, module_scope)
 
+    default_includes = [root] + ([root / 'include'] if any(relative.startswith('include/') for relative in files) else [])
+    default_arguments = ['-I' + str(directory) for directory in default_includes[1:]]
+    if len(default_includes) > 1 and any(path not in configurations for path in files if Path(path).suffix in {'.c','.cpp','.cc','.cxx','.h','.hpp','.hh'}):
+        result.diagnostics.append(Diagnostic(category='configuration',message=
+            '未提供编译配置的单元使用保守默认配置，包含目录仅为快照根及已有的 include 目录；不代表覆盖真实构建参数。'))
     for path, text in files.items():
         if Path(path).suffix not in {".c", ".h", ".cc", ".cpp", ".cxx", ".hpp", ".hh"}:
             continue
-        choices = configurations.get(path, [([], [root], 0)])
+        choices = configurations.get(path, [(default_arguments, default_includes, 0)])
+        if syntax_only:
+            continue
         if len(choices) > 1:
             result.diagnostics.append(Diagnostic(category="configuration", path=path,
                 message=f"已分别解析 {len(choices)} 个快照内编译配置；相同调用位置的目标冲突不进入确定图。"))
@@ -795,10 +804,10 @@ def typescript_analysis(root: Path, files: dict[str, str], version: str) -> Anal
         return Analysis(diagnostics=[Diagnostic(category="parse_failed", message=str(error))])
 
 
-def analyze(root: Path, files: dict[str, str], version: str, source_root: str | None = None) -> Analysis:
+def analyze(root: Path, files: dict[str, str], version: str, source_root: str | None = None, syntax_only: bool = False) -> Analysis:
     results = [
         python_analysis(files, version),
-        cpp_analysis(root, files, version, source_root),
+        cpp_analysis(root, files, version, source_root, syntax_only),
         typescript_analysis(root, files, version),
     ]
     combined = Analysis()

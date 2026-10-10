@@ -1,0 +1,20 @@
+{
+  "日期": "2026-10-11",
+  "样本Commit": "d6c93f38a08b4ea0f8ffcfd7f7857307d5d5c3fa",
+  "snapshot_hash": "2662a5d7d5594a78a03500f2538ff1b695a94f009b6a6b285168a80d00aec780",
+  "文件": 116,
+  "可见函数": 1858,
+  "隐藏结构": 289,
+  "正常解析期限秒": 120,
+  "总耗时秒": 122.919,
+  "原生语义回退": true,
+  "语法实体未丢失": true,
+  "C++直接调用未假确认": true,
+  "源码字节不变": true,
+  "模型请求": 0,
+  "工具": {
+    "python": "ast/3.12; conservative-bindings/1",
+    "cpp": "tree-sitter/0.25.2 + libclang/18.1.1 + snapshot-config/5 + syntax-fallback/1"
+  },
+  "边界": "仅验证固定快照的原生超时回退，不代表此结果完成了 C++ 工程语义或 AI 架构验收。"
+}

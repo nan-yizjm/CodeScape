@@ -10,6 +10,7 @@ from codescape.database import now
 from codescape.ledger import ai_scope
 from codescape.provider import PIPELINE_VERSION, Provider
 from codescape.security import data_root
+from codescape.semantic_facts import recursive_fold_facts, validate_fold_wording
 
 paths = ("input.py", "engine.py", "presentation.py")
 files = {path: (REPOSITORY / "tests/fixtures/learning_project" / path).read_text(encoding="utf-8") for path in paths}
@@ -23,6 +24,7 @@ with ai_scope(phase="architecture"):
     architecture, usage = asyncio.run(provider.architecture(analysis, files))
 expected = {entity.id for entity in analysis.entities if entity.visible}
 validate_explanations(architecture, analysis, expected, files, {path: [(1, len(text.splitlines()))] for path, text in files.items()})
+validate_fold_wording(architecture, recursive_fold_facts(analysis, files))
 explained = {note.entity_id for note in architecture.explanations}
 leaf_id = next(entity.id for entity in analysis.entities if entity.name == "walk_syntax" and entity.visible)
 leaf_note = next((note for note in architecture.explanations if note.entity_id == leaf_id), None)
@@ -33,7 +35,8 @@ report = {"verified_at": now(), "test_kind": "真实 DeepSeek 模型测试，与
           "authorized_source_paths": ["tests/fixtures/learning_project/" + path for path in paths],
           "function_count": len(expected), "explained_count": len(explained), "missing_count": len(expected - explained),
           "version_id": version, "analysis": analysis.model_dump(),
-          "leaf_count_wording_check": "通过，仍需人工核对其他职责" if "叶" in leaf_words and "所有后代节点" not in leaf_words else "未通过，叶级计数语义需复核",
+          "leaf_count_wording_check": "已通过受限递推事实反例检查；语义仍需逐项源码复核",
+          "leaf_count_wording": leaf_words,
           "source_references_validated": True, "usage": usage, "architecture": architecture.model_dump()}
 output = Path("docs/reports/p0/deepseek函数讲解验证.json")
 if output.exists():

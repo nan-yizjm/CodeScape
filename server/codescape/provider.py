@@ -20,10 +20,11 @@ from .ledger import RequestLedger, ai_scope, known_usage, model_budget, model_un
 from .models import Analysis, Architecture, Module, Overview
 from .overview import ConciseOverview, overview_context
 from .security import CredentialStore
+from .semantic_facts import recursive_fold_facts, validate_fold_wording
 
 MAX_CONTEXT_CHARS = 180_000
 BATCH_TARGET_CHARS = 150_000
-PIPELINE_VERSION = "architecture/2-explanations/1-reads/1-judgments/1-dependencies/1-cpp-config/4-interfaces/1"
+PIPELINE_VERSION = "architecture/2-explanations/1-reads/1-judgments/1-dependencies/1-cpp-config/5-interfaces/1-facts/1-index/2"
 ProgressCallback = Callable[[int, int, str], Awaitable[None]]
 BatchCallback = Callable[[int, int, Architecture], Awaitable[None]]
 
@@ -222,19 +223,22 @@ class Provider:
     async def structured(self, system, context, validator, max_tokens=8000):
         """Two repairs share the six-send budget with transport retries."""
         usage_total = {}
+        feedback = ''
         with model_unit() as budget:
             for repair in range(3):
                 try:
                     with ai_scope(**({"phase": "repair"} if repair else {})):
                         document, usage = await self.request(
-                            system + ("上一次结构校验未通过，请按同一 schema 修正，仅返回 JSON 对象。" if repair else ""),
+                            system + ("上一次校验未通过，请按同一 schema 修正，仅返回 JSON 对象。" + feedback if repair else ""),
                             context, max_tokens=max_tokens)
                     for key, value in usage.items():
                         if isinstance(value, int) and not isinstance(value, bool):
                             usage_total[key] = usage_total.get(key, 0) + value
                     try:
                         return validator(document), usage_total
-                    except ValueError:
+                    except ValueError as error:
+                        # Only application-authored feedback is echoed; never arbitrary validation input.
+                        feedback = str(error) if str(error).startswith('递归聚合说明与源码事实冲突：') else ''
                         if budget.last_request:
                             from .database import Database
                             database = self.database or Database(self.root)
@@ -372,6 +376,7 @@ class Provider:
             "files": files,
             "file_ranges": {path: {"start_line": start, "end_line": end} for path, (start, end) in ranges.items()},
             "diagnostics": diagnostics,
+            "source_facts": [fact for fact in recursive_fold_facts(analysis, {path:text for path,text in files.items() if ranges[path][0] == 1}).values() if fact['entity_id'] in local_ids],
         }
         return json.dumps(payload, ensure_ascii=False), local_ids
 
@@ -485,6 +490,7 @@ class Provider:
                         evidence_ranges.setdefault(path, bounds)
                     expected = {identifier for module in architecture.modules for identifier in module.entity_ids}
                     validate_explanations(architecture, analysis, expected, files, evidence_ranges)
+                    validate_fold_wording(architecture, recursive_fold_facts(analysis, files))
                     payload = json.loads(context)
                     validate_judgments(architecture, analysis, {call["id"] for call in payload["calls"] + payload["unresolved_calls"]},
                                        files, evidence_ranges)
@@ -585,6 +591,9 @@ class Provider:
             "为本批每个可见函数生成 explanations：summary 用一句中文说明功能，details 简述输入、关键处理、输出及代码可见边界，"
             "evidence 至少引用该函数实现内部真实行范围。不要重复空泛说明，不能凭函数名猜测。"
             "实际分支、表达式和返回值优先于注释或名称；说明递归统计时核对基例与累加，区分叶节点数量与全部节点数量。"
+            "source_facts 为受限静态递推事实，优先核对；非叶分支从0累加子项且不另加当前项时，只计叶项，不包含所有内部节点。"
+            "区分从输入读取的值和硬编码常量，不能将固定深度说成从输入读取；区分返回配置字典和返回校验布尔值。"
+            "reason 解释绑定依据即可，不重复编造行号；准确位置只在 evidence 中引用。"
             "可选 call_judgments 只判断已给出的具体调用：必须是直接调用，引用真实 call_id 和 target_id，"
             "reason 说明名称/作用域/绑定如何对应，evidence 同时包含完整调用位置、目标实现和必要的绑定依据。"
             "candidate_entities 只提供定位信息，不能凭同名确认，必须已提供目标源码或主动补读完整实现。"
@@ -651,6 +660,12 @@ class Provider:
                 and len(overview.capabilities) <= 5 and all(len(item) <= 48 for item in overview.capabilities)
                 and not any(word in overview.introduction + overview.principle for word in ("本批", "本次批次"))
             )
+            if not overview.synthesized:
+                await self._progress(on_progress, len(batches), len(batches), "正在归纳简明全局概览")
+                results[0].overview, overview_usage = await self.project_overview(results[0], reconcile_judgments(analysis, results[0]))
+                for key,value in overview_usage.items():
+                    if isinstance(value,(int,float)):
+                        usage_total[key] = usage_total.get(key,0) + int(value)
             return results[0], usage_total
         architecture = merge_architectures(results, len(batches), analysis, set(files))
         await self._progress(on_progress, len(batches), len(batches), "正在归纳全局用途与主要能力")

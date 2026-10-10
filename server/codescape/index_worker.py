@@ -15,7 +15,10 @@ def main():
     request = json.loads(sys.stdin.read())
     root = Path(request["root"])
     files = read_snapshot(root, request["manifest"])
-    result = analyze(root, files, request["version"], request["manifest"].get("source"))
+    mode = request.get('mode','full')
+    if mode not in {'full','syntax_fallback'}:
+        raise ValueError('解析工作模式无效')
+    result = analyze(root, files, request["version"], request["manifest"].get("source"), mode == 'syntax_fallback')
     sys.stdout.write(result.model_dump_json())
 
 

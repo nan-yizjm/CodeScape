@@ -22,6 +22,20 @@ def write(root, files):
         target.write_text(text, encoding="utf-8", newline="")
 
 
+def test_default_snapshot_include_root_and_explicit_config_stay_distinct(tmp_path):
+    files = {'include/owned/api.h':'int target(void);\n',
+             'src/main.c':'#include <owned/api.h>\nint target(void){return 1;}\nint caller(void){return target();}\n'}
+    write(tmp_path,files)
+    indexed=cpp_analysis(tmp_path,files,'v')
+    assert any(call.target_name == 'target' and call.resolution == 'confirmed' for call in indexed.calls)
+    configured={**files,'compile_commands.json':json.dumps([{'directory':str(tmp_path),'file':'src/main.c',
+                                                            'arguments':['cc','src/main.c']}])}
+    write(tmp_path,configured)
+    explicit=cpp_analysis(tmp_path,configured,'v')
+    assert not any(call.resolution == 'confirmed' for call in explicit.calls)
+    assert any(item.category == 'missing_dependency' for item in explicit.diagnostics)
+
+
 def test_config_prefers_arguments_and_remaps_original_without_reading_it(tmp_path):
     original = r"C:\original-private-project"
     commands = [{"directory": original + r"\build", "file": r"..\src\owned.c",

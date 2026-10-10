@@ -5,7 +5,6 @@ import json
 import os
 import secrets
 import shutil
-import subprocess
 import threading
 import time
 import uuid
@@ -25,6 +24,7 @@ from .deletion import ProjectDeletion
 from .dependencies import validate_primary_dependencies
 from .idempotency import MutationReceipts
 from .imports import ImportService, remove_staging
+from .index_process import index_snapshot
 from .learning import learning_units
 from .ledger import RequestLedger, ai_scope
 from .lifecycle import ClientLifetime
@@ -42,11 +42,9 @@ from .models import (
 from .provider import PIPELINE_VERSION, Provider, ProviderError, validate_architecture
 from .publication import load_output, prepare_output
 from .reads import VersionReads
-from .runtime import worker_command
 from .security import data_root
 from .snapshots import create_snapshot, read_snapshot
 from .tasks import TaskQueue
-from .workers import WorkerJob
 
 
 def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=None, architecture_runner=None) -> FastAPI:
@@ -448,7 +446,7 @@ def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=
 
     @app.get("/api/v1/session")
     async def session_info():
-        return envelope({"csrf_token": csrf_token, "stage": "M0", "version": "0.1.0"})
+        return envelope({"csrf_token": csrf_token, "stage": "P0 验收中", "version": "0.1.0"})
 
     @app.get("/api/v1/projects")
     async def projects():
@@ -483,30 +481,8 @@ def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=
             project = {**project, **candidate["value"], "version_id": candidate_id}
         snapshot_root = root / "projects" / project_id / "snapshots" / project["snapshot"]["id"]
         database.update(project_id, status="indexing", error=None)
-        process = None
-        worker_job = None
         try:
-            spawning = asyncio.create_task(asyncio.create_subprocess_exec(
-                *worker_command("codescape.index_worker", "--index-worker"),
-                stdin=asyncio.subprocess.PIPE, stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.DEVNULL, cwd=REPOSITORY,
-                creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
-            ))
-            try:
-                process = await asyncio.shield(spawning)
-            except asyncio.CancelledError:
-                process = await spawning
-                raise
-            # The parser blocks on stdin until containment is ready. Native
-            # crashes, cancellation and timeouts cannot leave a Node child behind.
-            worker_job = WorkerJob()
-            worker_job.attach(process.pid)
-            payload = json.dumps({"root": str(snapshot_root), "manifest": project["snapshot"],
-                                  "version": project["version_id"]}).encode()
-            output, _ = await asyncio.wait_for(process.communicate(payload), timeout=120)
-            if process.returncode:
-                raise ValueError("静态解析进程失败，原始源码与旧结果未被修改。")
-            result = Analysis.model_validate_json(output)
+            result = await index_snapshot(snapshot_root,project['snapshot'],project['version_id'])
             if candidate_id:
                 candidate["value"]["result"] = result.model_dump()
                 database.update_candidate(candidate_id, candidate["value"])
@@ -519,15 +495,6 @@ def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=
             database.update(project_id, status="failed", error=str(error)[:300])
             if candidate_id:
                 raise
-        finally:
-            if worker_job:
-                worker_job.close()
-            if process and process.returncode is None:
-                try:
-                    process.kill()
-                except ProcessLookupError:
-                    pass
-                await process.wait()
 
     @app.post("/api/v1/imports/preview")
     async def preview_import(body: ImportRequest):
