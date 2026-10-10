@@ -6,6 +6,11 @@ from copy import deepcopy
 def validate_session(value, project):
     entities = {entity["id"] for entity in (project.get("result") or {}).get("entities", [])}
     calls = {call["id"] for call in (project.get("result") or {}).get("calls", []) if call["resolution"] == "confirmed"}
+    if (project.get("architecture") or {}).get("call_judgments"):
+        from .call_judgments import reconcile_judgments
+        from .models import Analysis, Architecture
+        effective = reconcile_judgments(Analysis.model_validate(project["result"]), Architecture.model_validate(project["architecture"]))
+        calls = {call.id for call in effective.calls if call.resolution == "confirmed"}
     paths = project["snapshot"]["files"]
     for panel in value.get("panels", []):
         if panel.get("entity_id") and panel["entity_id"] not in entities:

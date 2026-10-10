@@ -257,7 +257,7 @@ def python_analysis(files: dict[str, str], version: str) -> Analysis:
             targets = symbols[(path, expression)]
         elif parts[0] in imports[path]:
             module, member = imports[path][parts[0]]
-            target_name = member if member else ".".join(parts[1:])
+            target_name = ".".join([member, *parts[1:]]) if member else ".".join(parts[1:])
             for candidate_path in files:
                 if module_name(candidate_path) == module:
                     targets += symbols.get((candidate_path, target_name or ""), [])

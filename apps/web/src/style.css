@@ -293,6 +293,11 @@ h1 { font-size: 29px; font-weight: 650; line-height: 1.25; letter-spacing: -1px;
 .diagnostic-entry code { font-size: 11px; color: #777; }
 .diagnostic-entry p { font-size: 11px; margin: 6px 0; }
 .diagnostic-entry small { font-size: 10px; }
+.judgment-evidence { margin: 12px 0; padding: 10px 12px; border: 1px solid #e5e7eb; border-radius: 12px; background: #f8f9fb; }
+.judgment-evidence > summary { cursor: pointer; font-size: 11px; color: #4b5563; }
+.judgment-evidence > summary:focus-visible { outline: 2px solid #71717a; outline-offset: 4px; border-radius: 3px; }
+.judgment-evidence > div + div { border-top: 1px solid #e5e7eb; padding-top: 10px; margin-top: 10px; }
+.judgment-evidence .source-reference { padding: 10px; background: white; border: 1px solid #e5e7eb; }
 .excluded-entry { overflow-wrap: anywhere; border-bottom: 1px solid #ededed; padding: 8px 0; }
 .excluded-entry small { display: block; }
 .source-file-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 18px; background: #fafafa; border-bottom: 1px solid var(--line); font: 11px Consolas, monospace; color: #707070; flex-shrink: 0; }

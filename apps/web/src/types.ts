@@ -12,7 +12,8 @@ export type Entity = { id: string; name: string; qualified_name: string; signatu
   explanation_details?: string | null; explanation_evidence?: {path:string;start_line:number;end_line:number}[];
   condition: string | null; unresolved_count: number };
 export type Call = { id: string; caller_scope_id: string; target_id: string | null; expression: string;
-  location: Location; resolution: string; origin: string; reason: string; target_name: string | null };
+  location: Location; resolution: string; origin: string; reason: string; target_name: string | null;
+  judgment_evidence?: {call_id:string; target_id:string; reason:string; evidence:{path:string;start_line:number;end_line:number}[]}[] };
 export type Module = { id: string; parent_id: string | null; name: string; summary: string; entity_ids: string[];
   code_paths: string[]; incomplete: boolean };
 export type Overview = { introduction: string; capabilities: string[]; principle: string; limitations: string[]; synthesized?: boolean; analysis_notes?: string[] };

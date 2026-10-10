@@ -54,6 +54,7 @@ class Call(Contract):
     origin: Literal["static", "ai_source_judgment"] = "static"
     reason: str = ""
     target_name: str | None = None
+    judgment_evidence: list[dict] = Field(default_factory=list)
 
 
 class Diagnostic(Contract):
@@ -111,10 +112,18 @@ class FunctionExplanation(Contract):
     evidence: list[CodeReference] = Field(min_length=1, max_length=6)
 
 
+class CallJudgment(Contract):
+    call_id: str
+    target_id: str
+    reason: str = Field(min_length=1, max_length=800)
+    evidence: list[CodeReference] = Field(min_length=2, max_length=8)
+
+
 class Architecture(Contract):
     modules: list[Module]
     overview: Overview
     explanations: list[FunctionExplanation] = Field(default_factory=list)
+    call_judgments: list[CallJudgment] = Field(default_factory=list)
 
 
 class ImportRequest(Contract):

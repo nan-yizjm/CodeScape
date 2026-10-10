@@ -19,6 +19,7 @@ from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 
 from .ai_process import run_architecture
 from .analyzers import REPOSITORY, analyze, stable_id
+from .call_judgments import reconcile_judgments, validate_judgments
 from .context_tools import validate_explanations
 from .database import Database, now
 from .deletion import ProjectDeletion
@@ -113,6 +114,8 @@ def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=
         visible = [entity for entity in analysis.entities if entity.visible]
         architecture = Architecture.model_validate(project["architecture"]) if project["architecture"] else None
         if architecture:
+            if architecture.call_judgments:
+                analysis = reconcile_judgments(analysis, architecture)
             explanations = {note.entity_id: note for note in architecture.explanations}
             for entity in analysis.entities:
                 note = explanations.get(entity.id)
@@ -860,6 +863,8 @@ def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=
                 validate_architecture(architecture, Analysis.model_validate(project["result"]), set(project["snapshot"]["files"]))
                 validate_explanations(architecture, source_analysis, {entity.id for entity in source_analysis.entities if entity.visible},
                                       source_files, {path: [(1, max(1, len(text.splitlines())))] for path, text in source_files.items()})
+                validate_judgments(architecture, source_analysis, {call.id for call in source_analysis.calls}, source_files,
+                                   {path: [(1, max(1, len(text.splitlines())))] for path, text in source_files.items()})
                 if candidate:
                     read_snapshot(snapshot_root, project["snapshot"])
                     # Durable artifact precedes the short publication transaction.

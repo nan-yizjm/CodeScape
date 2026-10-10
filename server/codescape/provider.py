@@ -13,6 +13,7 @@ from urllib.parse import urlparse
 
 import httpx
 
+from .call_judgments import callable_name, reconcile_judgments, validate_judgments
 from .context_tools import ArchitectureReply, SnapshotTools, validate_explanations
 from .ledger import RequestLedger, ai_scope, known_usage, model_budget, model_unit, request_scope
 from .models import Analysis, Architecture, Module, Overview
@@ -21,7 +22,7 @@ from .security import CredentialStore
 
 MAX_CONTEXT_CHARS = 180_000
 BATCH_TARGET_CHARS = 150_000
-PIPELINE_VERSION = "architecture/2-explanations/1-reads/1"
+PIPELINE_VERSION = "architecture/2-explanations/1-reads/1-judgments/1"
 ProgressCallback = Callable[[int, int, str], Awaitable[None]]
 BatchCallback = Callable[[int, int, Architecture], Awaitable[None]]
 
@@ -349,11 +350,23 @@ class Provider:
             item.model_dump() for item in analysis.diagnostics
             if item.path is None or item.path in ranges
         ]
+        unresolved = [call for call in analysis.calls if call.resolution == "unresolved"
+            and call.location.path in ranges and ranges[call.location.path][0] <= call.location.start_line
+            and call.location.end_line <= ranges[call.location.path][1]]
+        names = {callable_name(call.expression) for call in unresolved}
+        candidates = [
+            {"id": entity.id, "name": entity.name, "qualified_name": entity.qualified_name,
+             "signature": entity.signature, "location": entity.location.model_dump(), "condition": entity.condition}
+            for entity in analysis.entities if entity.id not in local_ids
+            and callable_name(entity.name) in names
+        ]
         payload = {
             "entities": [entity.model_dump() for entity in local_entities],
             "related_entities": related,
             "scopes": [scope.model_dump() for scope in local_scopes],
             "calls": [call.model_dump() for call in calls],
+            "unresolved_calls": [call.model_dump() for call in unresolved],
+            "candidate_entities": candidates,
             "files": files,
             "file_ranges": {path: {"start_line": start, "end_line": end} for path, (start, end) in ranges.items()},
             "diagnostics": diagnostics,
@@ -470,6 +483,9 @@ class Provider:
                         evidence_ranges.setdefault(path, bounds)
                     expected = {identifier for module in architecture.modules for identifier in module.entity_ids}
                     validate_explanations(architecture, analysis, expected, files, evidence_ranges)
+                    payload = json.loads(context)
+                    validate_judgments(architecture, analysis, {call["id"] for call in payload["calls"] + payload["unresolved_calls"]},
+                                       files, evidence_ranges)
                     return architecture
 
                 payload = context if not supplements else json.dumps({**json.loads(context), "supplemental_reads": supplements}, ensure_ascii=False)
@@ -563,6 +579,11 @@ class Provider:
             "为本批每个可见函数生成 explanations：summary 用一句中文说明功能，details 简述输入、关键处理、输出及代码可见边界，"
             "evidence 至少引用该函数实现内部真实行范围。不要重复空泛说明，不能凭函数名猜测。"
             "实际分支、表达式和返回值优先于注释或名称；说明递归统计时核对基例与累加，区分叶节点数量与全部节点数量。"
+            "可选 call_judgments 只判断已给出的具体调用：必须是直接调用，引用真实 call_id 和 target_id，"
+            "reason 说明名称/作用域/绑定如何对应，evidence 同时包含完整调用位置、目标实现和必要的绑定依据。"
+            "candidate_entities 只提供定位信息，不能凭同名确认，必须已提供目标源码或主动补读完整实现。"
+            "间接调用、参数/变量回调、虚调用、动态分派、装饰器改写、目标歧义或互斥编译条件不能确认；证据不足时省略判断。"
+            "与静态确认冲突须如实提供依据，系统会保留未解析，不会覆盖成另一条确定边。"
             "缺少相关实现时可输出 read_requests，最多3轮，每轮最多4项。code 只接受当前快照文件的行范围（每项最多200行/20000字）；"
             "entity 或 confirmed_relations 只接受当前真实ID；diagnostics 无参数。不使用 shell、任意路径、网络或执行代码。"
             "补读不改变本批函数归属集合，最后输出 modules、overview 和 explanations；无法说明的函数可省略讲解，页面明确标为未完成。"
@@ -627,7 +648,7 @@ class Provider:
             return results[0], usage_total
         architecture = merge_architectures(results, len(batches), analysis, set(files))
         await self._progress(on_progress, len(batches), len(batches), "正在归纳全局用途与主要能力")
-        architecture.overview, overview_usage = await self.project_overview(architecture, analysis)
+        architecture.overview, overview_usage = await self.project_overview(architecture, reconcile_judgments(analysis, architecture))
         for key, value in overview_usage.items():
             if isinstance(value, (int, float)):
                 usage_total[key] = usage_total.get(key, 0) + int(value)
@@ -668,6 +689,7 @@ def merge_architectures(
     architecture = Architecture(
         modules=list(merged.values()),
         explanations=list({note.entity_id: note for result in results for note in result.explanations}.values()),
+        call_judgments=list({item.model_dump_json(): item for result in results for item in result.call_judgments}.values()),
         overview=Overview(
             introduction="；".join(dict.fromkeys(result.overview.introduction for result in results)),
             capabilities=capabilities[:20],
