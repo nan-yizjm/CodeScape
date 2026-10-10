@@ -40,7 +40,7 @@ def test_delete_duplicate_isolated_and_confirmation_idempotent(tmp_path):
     source.mkdir()
     original = "raise RuntimeError('禁止执行')\ndef f(): return 1\n"
     (source / "a.py").write_text(original, encoding="utf-8")
-    with TestClient(create_app(root, "test")) as client:
+    with TestClient(create_app(root, "test", architecture_runner=lambda provider,*args,**kwargs: provider.architecture(*args,**kwargs))) as client:
         login(client)
         one, two = import_project(client, source), import_project(client, source)
         entity = two["analysis"]["entities"][0]
@@ -153,7 +153,7 @@ def test_delete_cancels_running_model_task_and_preserves_another_project(tmp_pat
     source.mkdir()
     (source / "a.py").write_text("def f(): return 1", encoding="utf-8")
     root = tmp_path / "data"
-    with TestClient(create_app(root, "test")) as client:
+    with TestClient(create_app(root, "test", architecture_runner=lambda provider,*args,**kwargs: provider.architecture(*args,**kwargs))) as client:
         login(client)
         project = import_project(client, source)
         url = f"/api/v1/projects/{project['id']}"

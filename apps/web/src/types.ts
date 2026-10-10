@@ -26,6 +26,7 @@ export type ProjectDetail = Project & { file_ids: Record<string, string>; analys
   diagnostics: { category: string; message: string; path: string | null; line: number | null }[];
   tools: Record<string, string> };
   architecture: { modules: Module[]; overview: Overview } | null;
+  upload_consent?: {version_id: string; accepted: boolean};
   learning: Record<string, { state: LearningState; revision: number }>;
   learning_entities?: {id: string; kind: 'function' | 'module'; source_id: string}[];
   candidate?: { version_id: string; status: string; file_count: number; excluded: {path: string; reason: string}[]; origin: {commit?: string} } | null;

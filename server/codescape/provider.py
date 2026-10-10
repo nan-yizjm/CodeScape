@@ -14,7 +14,7 @@ from urllib.parse import urlparse
 import httpx
 
 from .context_tools import ArchitectureReply, SnapshotTools, validate_explanations
-from .ledger import RequestLedger, ai_scope, known_usage, model_budget, model_unit
+from .ledger import RequestLedger, ai_scope, known_usage, model_budget, model_unit, request_scope
 from .models import Analysis, Architecture, Module, Overview
 from .overview import ConciseOverview, overview_context
 from .security import CredentialStore
@@ -60,6 +60,41 @@ class Provider:
         config["has_key"] = self.credentials.exists()
         return config
 
+    def verify_scope(self, database, config):
+        scope = request_scope.get()
+        expected = scope.get("request_config")
+        if expected and any(config[key] != expected[key] for key in ("base_url", "model")):
+            raise ProviderError("模型配置已改变，任务已停止，请主动重启分析。")
+        if not scope.get("project_id"):
+            return
+        project = database.get(scope["project_id"])
+        if not project or project.get("lifecycle", "active") != "active":
+            raise ProviderError("项目已删除或正在清理，已停止模型请求。")
+        job = database.get_job(scope["job_id"]) if scope.get("job_id") else None
+        if scope.get("job_id") and (not job or job["status"] != "running" or job["project_id"] != project["id"]):
+            raise ProviderError("任务已停止，不能继续发送模型请求。")
+        version = scope.get("version_id")
+        if not isinstance(version, str) or not version:
+            raise ProviderError("缺少有效的分析版本，已停止模型请求。")
+        if version == project["version_id"]:
+            manifest = project["snapshot"]
+        else:
+            candidate = database.version(project["id"], version)
+            if not candidate or candidate["status"] != "draft" or candidate["base_version_id"] != project["version_id"]:
+                raise ProviderError("分析版本已失效，已停止模型请求。")
+            manifest = candidate["value"]["snapshot"]
+        try:
+            path = self.root / "consents.json"
+            consents = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
+        except (OSError, ValueError):
+            raise ProviderError("无法确认上传授权，已停止模型请求。") from None
+        grant = consents.get(project["id"] + ":" + version, consents.get(project["id"], {}) if version == project["version_id"] else {})
+        if grant.get("base_url") != config["base_url"] or grant.get("snapshot_hash") != manifest["hash"]:
+            raise ProviderError("上传授权已失效，请重新确认当前快照与接收端。")
+        latest = self.settings()
+        if latest["base_url"] != config["base_url"] or latest["model"] != config["model"]:
+            raise ProviderError("模型配置已改变，任务已停止，请主动重启分析。")
+
     def configure(self, base_url: str, model: str, key: str | None) -> dict:
         parsed = urlparse(base_url)
         if (
@@ -103,6 +138,7 @@ class Provider:
         unit_id = budget.unit_id if budget else str(uuid.uuid4())
         try:
             for attempt in range(3):
+                self.verify_scope(database, config)
                 if budget:
                     if budget.attempts >= 6:
                         raise ProviderError("本分析单元已达到 6 次模型尝试上限，请检查结果后主动恢复。")
@@ -116,6 +152,7 @@ class Provider:
                 try:
                     async with httpx.AsyncClient(timeout=httpx.Timeout(600, connect=15),
                                                  trust_env=False, follow_redirects=False) as client:
+                        self.verify_scope(database, config)
                         ledger.sent(identifier)
                         sent = True
                         async with asyncio.timeout(600):
@@ -171,6 +208,10 @@ class Provider:
                         await asyncio.sleep([2, 8][attempt])
                         continue
                     raise ProviderError("网络请求超时或失败；远端用量可能不确定。") from None
+                except ProviderError:
+                    if not sent:
+                        ledger.finish(identifier, "failed", error_code="NOT_SENT")
+                    raise
             raise ProviderError("请求未完成。")
         finally:
             if self.database is None:

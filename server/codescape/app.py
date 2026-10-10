@@ -17,6 +17,7 @@ from pathlib import Path
 from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 
+from .ai_process import run_architecture
 from .analyzers import REPOSITORY, analyze, stable_id
 from .context_tools import validate_explanations
 from .database import Database, now
@@ -44,7 +45,7 @@ from .tasks import TaskQueue
 from .workers import WorkerJob
 
 
-def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=None) -> FastAPI:
+def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=None, architecture_runner=None) -> FastAPI:
     root = root or data_root()
     database = Database(root)
     database.recover_interrupted()
@@ -65,6 +66,23 @@ def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=
     queue = TaskQueue(database, run_lock)
     deletion = ProjectDeletion(root, database, queue, reads)
     consents_path = root / "consents.json"
+
+    def read_consents():
+        try:
+            document = json.loads(consents_path.read_text(encoding="utf-8")) if consents_path.exists() else {}
+        except (OSError, ValueError):
+            raise HTTPException(409, "上传授权记录暂不可用，请检查本地数据后重试。") from None
+        if not isinstance(document, dict) or any(not isinstance(value, dict) for value in document.values()):
+            raise HTTPException(409, "上传授权记录格式无效，请检查本地数据后重试。")
+        return document
+
+    def save_consents(document):
+        temporary = consents_path.with_suffix(".tmp")
+        with temporary.open("w", encoding="utf-8") as output:
+            json.dump(document, output, ensure_ascii=False)
+            output.flush()
+            os.fsync(output.fileno())
+        temporary.replace(consents_path)
 
     def issue_nonce() -> str:
         if closing:
@@ -129,8 +147,18 @@ def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=
         if full:
             candidate = database.candidate(project["id"])
             published = database.version(project["id"], project["version_id"])
+            consent_version = candidate["id"] if candidate else project["version_id"]
+            consent_manifest = candidate["value"]["snapshot"] if candidate else project["snapshot"]
+            try:
+                grants = read_consents()
+            except HTTPException:
+                grants = {}
+            grant = grants.get(project["id"] + ":" + consent_version, {} if candidate else grants.get(project["id"], {}))
             response.update(
                 {
+                    "upload_consent": {"version_id": consent_version, "accepted":
+                        isinstance(grant, dict) and grant.get("base_url") == provider.settings()["base_url"]
+                        and grant.get("snapshot_hash") == consent_manifest["hash"]},
                     "analysis": analysis.model_dump(),
                     "architecture": project["architecture"],
                     "file_ids": {
@@ -681,7 +709,7 @@ def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=
         body = await request.json()
         if body.get("accepted") is not True:
             raise HTTPException(400, "需要明确同意上传当前范围源码。")
-        document = json.loads(consents_path.read_text()) if consents_path.exists() else {}
+        document = read_consents()
         version_id = body.get("version_id", project["version_id"])
         candidate = database.candidate(project_id)
         if version_id != project["version_id"] and (not candidate or version_id != candidate["id"]):
@@ -692,8 +720,29 @@ def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=
             "snapshot_hash": manifest["hash"],
             "granted_at": now(),
         }
-        consents_path.write_text(json.dumps(document), encoding="utf-8")
+        save_consents(document)
         return envelope({"accepted": True})
+
+    @app.delete("/api/v1/projects/{project_id}/consent")
+    async def revoke_consent(project_id: str, version_id: str):
+        project = get_project(project_id)
+        candidate = database.candidate(project_id)
+        if version_id != project["version_id"] and (not candidate or version_id != candidate["id"]):
+            raise HTTPException(409, "授权版本已改变，请刷新后重试。")
+        document = read_consents()
+        document.pop(project_id + ":" + version_id, None)
+        if version_id == project["version_id"]:
+            document.pop(project_id, None)
+        save_consents(document)
+        # Revoke first, then stop the associated upload task. An already-sent
+        # request may still be processed/charged remotely; receipts remain.
+        for job in database.list_jobs():
+            target_version = candidate["id"] if job["kind"] == "reanalysis" and candidate else job["version_id"]
+            if (job["project_id"] == project_id and target_version == version_id and job["kind"] != "index"
+                    and job["status"] in {"waiting", "running", "paused"}):
+                await queue.stop(job["id"])
+                database.update(project_id, status="paused", error="上传授权已撤销，分析已暂停。")
+        return envelope({"accepted": False, "version_id": version_id})
 
     @app.post("/api/v1/projects/{project_id}/analyze")
     async def ai_analysis(project_id: str):
@@ -707,7 +756,7 @@ def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=
             if candidate["base_version_id"] != project["version_id"]:
                 raise HTTPException(409, "候选基线已失效，请取消并重新扫描。")
             project = {**project, **candidate["value"], "version_id": candidate["id"]}
-        consents = json.loads(consents_path.read_text()) if consents_path.exists() else {}
+        consents = read_consents()
         granted = consents.get(project_id + ":" + project["version_id"], {} if candidate else consents.get(project_id, {}))
         if (
             granted.get("base_url") != provider.settings()["base_url"]
@@ -775,6 +824,9 @@ def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=
                     )
 
                 async def save_batch(completed: int, total: int, architecture: Architecture):
+                    current_job = database.get_job(job["id"])
+                    if not current_job or current_job["status"] != "running":
+                        raise asyncio.CancelledError
                     saved_batches = checkpoint + [architecture]
                     temporary = checkpoint_path.with_suffix(".tmp")
                     with temporary.open("w", encoding="utf-8") as handle:
@@ -796,13 +848,15 @@ def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=
                 source_files = read_snapshot(snapshot_root, project["snapshot"])
                 source_analysis = Analysis.model_validate(project["result"])
                 with ai_scope(project_id=project_id, version_id=project["version_id"], job_id=job["id"]):
-                    architecture, usage = await provider.architecture(
-                        source_analysis,
-                        source_files,
-                        on_progress=progress,
-                        on_batch=save_batch,
-                        completed_batches=checkpoint,
-                    )
+                    callbacks = {"on_progress": progress, "on_batch": save_batch, "completed_batches": checkpoint}
+                    if architecture_runner:
+                        architecture, usage = await architecture_runner(provider, source_analysis, source_files, **callbacks)
+                    else:
+                        architecture, usage = await run_architecture(provider, source_analysis, source_files,
+                            project_id=project_id, version_id=project["version_id"], job_id=job["id"], **callbacks)
+                current_job = database.get_job(job["id"])
+                if not current_job or current_job["status"] != "running":
+                    raise asyncio.CancelledError
                 validate_architecture(architecture, Analysis.model_validate(project["result"]), set(project["snapshot"]["files"]))
                 validate_explanations(architecture, source_analysis, {entity.id for entity in source_analysis.entities if entity.visible},
                                       source_files, {path: [(1, max(1, len(text.splitlines())))] for path, text in source_files.items()})
@@ -935,7 +989,7 @@ def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=
         project = get_project(project_id)
         if not project["architecture"] or project["status"] != "ready":
             raise HTTPException(409, "请先完成架构分析，再归纳项目概览。")
-        consents = json.loads(consents_path.read_text()) if consents_path.exists() else {}
+        consents = read_consents()
         granted = consents.get(project_id + ":" + project["version_id"], consents.get(project_id, {}))
         if (
             granted.get("base_url") != provider.settings()["base_url"]

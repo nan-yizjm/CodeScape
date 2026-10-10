@@ -20,7 +20,7 @@ from fastapi.testclient import TestClient
 
 @pytest.fixture
 def client(tmp_path):
-    app = create_app(tmp_path, "test-start-token")
+    app = create_app(tmp_path, "test-start-token", architecture_runner=lambda provider,*args,**kwargs: provider.architecture(*args,**kwargs))
     with TestClient(app) as value:
         response = value.post("/api/v1/session/exchange", json={"nonce": "test-start-token"})
         value.headers["x-csrf-token"] = response.json()["data"]["csrf_token"]
@@ -75,6 +75,38 @@ def test_endpoint_change_invalidates_consent(client):
         == 200
     )
     assert client.post(url + "/analyze", json={}).status_code == 403
+
+
+def test_revoke_consent_pauses_upload_without_deleting_checkpoint_or_other_project(client, tmp_path, monkeypatch):
+    from codescape.database import Database
+    database = Database(tmp_path)
+    original = database.list_projects()[0]
+    second = dict(original, id=str(uuid.uuid4()), name="独立上传授权", demo=0)
+    database.insert(second)
+    urls = [f"/api/v1/projects/{project['id']}" for project in (original, second)]
+    started = threading.Event()
+    async def fixed(self, analysis, files, **callbacks):
+        await callbacks["on_batch"](1, 2, Architecture.model_validate(original["architecture"]))
+        started.set()
+        await asyncio.Event().wait()
+    monkeypatch.setattr(Provider, "architecture", fixed)
+    for url in urls:
+        assert client.post(url + "/consent", json={"accepted": True}).status_code == 200
+        assert client.get(url).json()["data"]["upload_consent"]["accepted"]
+    response = client.post(urls[0] + "/analyze", json={})
+    assert started.wait(2)
+    job_id = response.json()["data"]["task_id"]
+    revoke = urls[0] + "/consent?version_id=" + original["version_id"]
+    assert client.delete(revoke, headers={"Content-Type": "application/json"}).status_code == 200
+    assert not client.get(urls[0]).json()["data"]["upload_consent"]["accepted"]
+    assert database.get_job(job_id)["status"] == "paused"
+    assert (tmp_path / "projects" / original["id"] / "architecture-checkpoint.json").exists()
+    assert database.get(original["id"])["architecture"] == original["architecture"]
+    assert client.post(f"/api/v1/tasks/{job_id}/start", json={}).status_code == 403
+    assert client.get(urls[1]).json()["data"]["upload_consent"]["accepted"]
+    assert client.delete(revoke, headers={"Content-Type": "application/json"}).status_code == 200
+    assert client.delete(urls[0] + "/consent?version_id=stale", headers={"Content-Type": "application/json"}).status_code == 409
+    database.engine.dispose()
 
 
 def test_retry_index_uses_existing_snapshot(client, tmp_path, monkeypatch):

@@ -1,4 +1,5 @@
 """固定响应浏览器验收服务：独立数据目录，不发送任何模型请求。"""
+import argparse
 import asyncio
 import json
 from pathlib import Path
@@ -12,7 +13,11 @@ from codescape.provider import Provider
 from codescape.snapshots import create_snapshot, read_snapshot
 
 repository = Path(__file__).resolve().parents[1]
-root = repository / ".runtime/task-ui-validation"
+parser = argparse.ArgumentParser(description="应用自有固定响应界面验证，无模型请求")
+parser.add_argument("--data-dir", type=Path, default=repository / ".runtime/task-ui-validation")
+parser.add_argument("--port", type=int, default=8126)
+args = parser.parse_args()
+root = args.data_dir
 database = Database(root)
 for index in range(1, 4):
     project_id = stable_id("task-ui-validation", index)
@@ -44,7 +49,10 @@ async def fixed_architecture(self, analysis, files, **callbacks):
 
 
 Provider.architecture = fixed_architecture
+async def forbidden_request(*args, **kwargs):
+    raise AssertionError("固定响应浏览器验证禁止模型请求")
+Provider.request = forbidden_request
 Provider(root).configure("https://example.invalid", "固定响应验证", "本地验证假密钥")
 nonce = "fixed-response-ui-validation"
-(root / "launch.json").write_text(json.dumps({"url": f"http://127.0.0.1:8126/#nonce={nonce}"}), encoding="utf-8")
-uvicorn.run(create_app(root, nonce), host="127.0.0.1", port=8126, log_level="warning")
+(root / "launch.json").write_text(json.dumps({"url": f"http://127.0.0.1:{args.port}/#nonce={nonce}"}), encoding="utf-8")
+uvicorn.run(create_app(root, nonce, architecture_runner=lambda provider,*args,**kwargs: provider.architecture(*args,**kwargs)), host="127.0.0.1", port=args.port, log_level="warning")

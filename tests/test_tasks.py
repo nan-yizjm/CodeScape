@@ -108,3 +108,33 @@ def test_shutdown_and_crash_recovery_do_not_run_waiting_jobs(tmp_path):
         restarted.engine.dispose()
 
     asyncio.run(scenario())
+
+
+def test_shutdown_has_one_deadline_and_persists_stop_before_cleanup(tmp_path):
+    async def scenario():
+        db = Database(tmp_path)
+        queue = TaskQueue(db, asyncio.Lock())
+        a, b = [queue.create(add_project(db, name), "architecture") for name in ("a", "b")]
+        cleaning = asyncio.Event()
+        async def worker():
+            try:
+                await asyncio.Event().wait()
+            finally:
+                assert db.get_job(a["id"])["status"] == "paused"
+                cleaning.set()
+                await asyncio.Event().wait()
+        await queue.start(a["id"], worker)
+        task = queue.running[a["id"]]
+        started = asyncio.get_running_loop().time()
+        await queue.shutdown(timeout=0.1)
+        assert asyncio.get_running_loop().time() - started < 0.5
+        assert cleaning.is_set() and db.get_job(a["id"])["status"] == "paused"
+        assert db.get_job(b["id"])["status"] == "waiting"
+        with pytest.raises(ValueError, match="正在退出"):
+            queue.create(db.get("a"), "architecture")
+        with pytest.raises(ValueError, match="正在退出"):
+            await queue.start(b["id"], worker)
+        await asyncio.gather(task, return_exceptions=True)
+        assert not queue.running and not queue.lock.locked()
+        db.engine.dispose()
+    asyncio.run(scenario())

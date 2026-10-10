@@ -83,11 +83,12 @@ class RequestLedger:
         with self.database.engine.begin() as connection:
             connection.execute(self.table.update().where(self.table.c.id == identifier).values(status=status, **values))
 
-    def recover(self):
+    def recover(self, job_id=None):
         with self.database.engine.begin() as connection:
-            connection.execute(self.table.update().where(self.table.c.status == "sent").values(
+            scope = self.table.c.job_id == job_id if job_id is not None else True
+            connection.execute(self.table.update().where(self.table.c.status == "sent", scope).values(
                 status="outcome_unknown", error_code="PROCESS_INTERRUPTED", finished_at=now()))
-            connection.execute(self.table.update().where(self.table.c.status == "prepared").values(
+            connection.execute(self.table.update().where(self.table.c.status == "prepared", scope).values(
                 status="failed", error_code="NOT_SENT", finished_at=now()))
 
     def summary(self, project_id=None, offset=0, limit=20):

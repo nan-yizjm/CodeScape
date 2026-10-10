@@ -85,7 +85,7 @@ def test_publish_latest_learning_old_source_and_reclaim(tmp_path, monkeypatch):
             await asyncio.sleep(.01)
         return architecture(analysis), {"total_tokens": 8}
     monkeypatch.setattr(Provider, "architecture", fixed)
-    app = create_app(root, "test")
+    app = create_app(root, "test", architecture_runner=lambda provider,*args,**kwargs: provider.architecture(*args,**kwargs))
     with TestClient(app) as client:
         login(client, "test")
         imported = client.post("/api/v1/imports", json={"path": str(source)}).json()["data"]
@@ -153,7 +153,7 @@ def test_failed_cancelled_candidate_preserves_current(tmp_path, monkeypatch):
     async def failing(*args, **kwargs):
         raise ValueError("固定失败响应")
     monkeypatch.setattr(Provider, "architecture", failing)
-    with TestClient(create_app(root, "test")) as client:
+    with TestClient(create_app(root, "test", architecture_runner=lambda provider,*args,**kwargs: provider.architecture(*args,**kwargs))) as client:
         login(client, "test")
         imported = client.post("/api/v1/imports", json={"path": str(source)}).json()["data"]
         url = f"/api/v1/projects/{imported['id']}"

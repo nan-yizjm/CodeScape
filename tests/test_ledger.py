@@ -16,6 +16,13 @@ def configured(tmp_path, monkeypatch, handler):
     database = Database(tmp_path)
     provider = Provider(tmp_path, database)
     provider.configure("https://example.invalid/v1", "固定响应验证", "local-test-key")
+    # A scoped request must represent an active task and a concrete consent.
+    database.insert({"id": "p", "name": "固定响应账本验证", "source": "fixture", "created_at": "now",
+                     "status": "indexed", "snapshot": {"hash": "fixture-hash", "files": {}}, "version_id": "v", "demo": 0})
+    database.insert_job({"id": "j", "project_id": "p", "kind": "architecture", "status": "running",
+                         "version_id": "v", "position": 0, "created_at": "now", "updated_at": "now", "detail": "固定响应验证"})
+    (tmp_path / "consents.json").write_text(json.dumps({"p:v": {
+        "base_url": "https://example.invalid/v1", "snapshot_hash": "fixture-hash"}}), encoding="utf-8")
     original = httpx.AsyncClient
     monkeypatch.setattr(httpx, "AsyncClient", lambda **kwargs: original(transport=httpx.MockTransport(handler), **kwargs))
     return database, provider, RequestLedger(database)
@@ -231,4 +238,46 @@ def test_project_deletion_removes_only_its_receipts(tmp_path):
     database.finish_delete(operation["id"], "p")
     assert ledger.summary("p")["request_count"] == 0
     assert ledger.summary("q")["total_tokens"] == 2
+    database.engine.dispose()
+
+
+@pytest.mark.parametrize("change,expected", [("pause", "任务已停止"), ("consent", "授权已失效"),
+    ("delete", "正在清理"), ("model", "模型配置已改变"), ("version", "版本已失效")])
+def test_scope_is_rechecked_before_retry_without_second_upload(tmp_path, monkeypatch, change, expected):
+    calls = []
+    def handler(request):
+        calls.append(request)
+        if change == "pause":
+            database.update_job("j", status="paused")
+        elif change == "consent":
+            (tmp_path / "consents.json").write_text("{}", encoding="utf-8")
+        elif change == "delete":
+            database.begin_delete("p")
+        elif change == "model":
+            provider.configure("https://example.invalid/v1", "已改变模型", None)
+        else:
+            database.update("p", version_id="new-version")
+        return httpx.Response(429, headers={"retry-after": "0"})
+    database, provider, ledger = configured(tmp_path, monkeypatch, handler)
+    with ai_scope(project_id="p", version_id="v", job_id="j", phase="architecture"):
+        with pytest.raises(ProviderError, match=expected):
+            asyncio.run(provider.request("固定响应", "应用自有样例"))
+    assert len(calls) == ledger.summary()["request_count"] == 1
+    assert ledger.summary()["records"][0]["error_code"] == "HTTP_429"
+    database.engine.dispose()
+
+
+def test_model_change_between_batches_requires_active_restart(tmp_path, monkeypatch):
+    calls = []
+    def handler(request):
+        calls.append(request)
+        return httpx.Response(200, json=document())
+    database, provider, ledger = configured(tmp_path, monkeypatch, handler)
+    expected = {key: provider.settings()[key] for key in ("base_url", "model")}
+    with ai_scope(project_id="p", version_id="v", job_id="j", request_config=expected):
+        asyncio.run(provider.request("固定响应", "第一批"))
+        provider.configure("https://example.invalid/v1", "另一模型", None)
+        with pytest.raises(ProviderError, match="模型配置已改变"):
+            asyncio.run(provider.request("固定响应", "第二批"))
+    assert len(calls) == ledger.summary()["request_count"] == 1
     database.engine.dispose()

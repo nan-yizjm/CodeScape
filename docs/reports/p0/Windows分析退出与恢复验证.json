@@ -1,0 +1,10 @@
+{
+  "test": "真实 Windows CLI 与 AI 工作进程，应用自有固定响应，无模型请求",
+  "exit_seconds": 184.58,
+  "other_page_kept_running": true,
+  "exit_code": 0,
+  "checkpoint_batches": 1,
+  "reopen_auto_requested": false,
+  "resumed_same_snapshot_after_original_changed": true,
+  "model_requests": 0
+}

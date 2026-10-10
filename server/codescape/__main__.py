@@ -20,7 +20,12 @@ def main():
     parser = argparse.ArgumentParser(description="启动 CodeScape 本地源码学习空间")
     parser.add_argument("--port", type=int, default=0)
     parser.add_argument("--no-browser", action="store_true")
+    parser.add_argument("--ai-worker", action="store_true", help=argparse.SUPPRESS)
     args = parser.parse_args()
+    if args.ai_worker:
+        from .ai_worker import main as worker_main
+        worker_main()
+        return
     if args.port != 0 and not 1024 <= args.port <= 65535:
         parser.exit(2, "端口范围为 1024 至 65535；0 表示自动选择。\n")
     root = data_root()

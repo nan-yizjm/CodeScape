@@ -46,4 +46,4 @@ async def fixed_architecture(self, analysis, files, **callbacks):
 
 Provider.architecture = fixed_architecture
 Provider(root).configure("https://example.invalid", "固定响应验证", "本地验证假密钥")
-uvicorn.run(create_app(root, "versions-ui-test"), host="127.0.0.1", port=8126, log_level="warning")
+uvicorn.run(create_app(root, "versions-ui-test", architecture_runner=lambda provider,*args,**kwargs: provider.architecture(*args,**kwargs)), host="127.0.0.1", port=8126, log_level="warning")
