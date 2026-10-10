@@ -5,7 +5,7 @@ import type {Viewport} from '@xyflow/react';
 export type SavedPanel = {kind: Panel['kind']; module_id?: string; entity_id?: string; relation_id?: string;
   from_id?: string; to_id?: string; call_ids?: string[]; location?: Location; scroll?: ScrollPosition};
 export type SessionValue = {version_id: string; focus_id: string | null; expanded_id?: string | null;
-  show_other_modules?: boolean; function_origin?: {focus: string | null; expanded: string | null; siblings: boolean} | null;
+  show_other_modules?: boolean; dependency_mode?: 'primary' | 'all'; function_origin?: {focus: string | null; expanded: string | null; siblings: boolean} | null;
   viewport: Record<string,Viewport> | null; panels?: SavedPanel[]; expanded_evidence?: Record<string,boolean>; panel_width?: number; revision?: number};
 
 export function panelKey(panel: Panel): string {
@@ -33,7 +33,8 @@ export function restorePanels(saved: SavedPanel[], project: ProjectDetail): Pane
     if (panel.kind === 'source' && panel.location && project.file_ids[panel.location.path]) return [{kind:'source', location:panel.location, entity:panel.entity_id ? entities.get(panel.entity_id) : undefined,scroll}];
     if (panel.kind === 'relation' && panel.relation_id && panel.from_id && panel.to_id) {
       const found = (panel.call_ids || []).flatMap(id=>calls.has(id) ? [calls.get(id)!] : []);
-      if (found.length && found.length === panel.call_ids?.length) return [{kind:'relation',relation:{id:panel.relation_id,from:panel.from_id,to:panel.to_id,label:'调用协作',calls:found},scroll}];
+      const primaryReasons = [...new Set((project.architecture?.primary_dependencies || []).filter(item => item.call_ids.some(id => found.some(call => call.id === id))).map(item => item.reason))];
+      if (found.length && found.length === panel.call_ids?.length) return [{kind:'relation',relation:{id:panel.relation_id,from:panel.from_id,to:panel.to_id,label:'调用协作',calls:found,primaryReasons},scroll}];
     }
     return [];
   });

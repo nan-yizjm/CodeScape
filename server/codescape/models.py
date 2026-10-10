@@ -119,11 +119,17 @@ class CallJudgment(Contract):
     evidence: list[CodeReference] = Field(min_length=2, max_length=8)
 
 
+class PrimaryDependency(Contract):
+    call_ids: list[str] = Field(min_length=1, max_length=2000)
+    reason: str = Field(min_length=1, max_length=800)
+
+
 class Architecture(Contract):
     modules: list[Module]
     overview: Overview
     explanations: list[FunctionExplanation] = Field(default_factory=list)
     call_judgments: list[CallJudgment] = Field(default_factory=list)
+    primary_dependencies: list[PrimaryDependency] = Field(default_factory=list)
 
 
 class ImportRequest(Contract):
@@ -197,6 +203,7 @@ class SessionRequest(Contract):
     expected_revision: int = Field(default=0, ge=0)
     expanded_id: str | None = None
     show_other_modules: bool = False
+    dependency_mode: Literal["primary", "all"] = "primary"
     function_origin: NavigationOrigin | None = None
     panels: list[SavedPanel] = Field(default_factory=list, max_length=20)
     expanded_evidence: dict[str, bool] = Field(default_factory=dict, max_length=5000)

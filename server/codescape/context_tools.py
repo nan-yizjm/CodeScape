@@ -5,7 +5,16 @@ from typing import Literal
 
 from pydantic import Field
 
-from .models import Architecture, CallJudgment, CodeReference, Contract, FunctionExplanation, Module, Overview
+from .models import (
+    Architecture,
+    CallJudgment,
+    CodeReference,
+    Contract,
+    FunctionExplanation,
+    Module,
+    Overview,
+    PrimaryDependency,
+)
 
 
 class ReadRequest(Contract):
@@ -19,12 +28,14 @@ class ArchitectureReply(Contract):
     overview: Overview | None = None
     explanations: list[FunctionExplanation] = Field(default_factory=list)
     call_judgments: list[CallJudgment] = Field(default_factory=list)
+    primary_dependencies: list[PrimaryDependency] = Field(default_factory=list)
     read_requests: list[ReadRequest] = Field(default_factory=list, max_length=4)
 
     def architecture(self):
         if self.overview is None:
             raise ValueError("缺少项目概览")
-        return Architecture(modules=self.modules, overview=self.overview, explanations=self.explanations, call_judgments=self.call_judgments)
+        return Architecture(modules=self.modules, overview=self.overview, explanations=self.explanations,
+                            call_judgments=self.call_judgments, primary_dependencies=self.primary_dependencies)
 
 
 class SnapshotTools:

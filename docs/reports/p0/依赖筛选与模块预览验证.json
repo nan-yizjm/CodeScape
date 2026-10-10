@@ -1,0 +1,36 @@
+{
+  "checked_at": "2026-10-10T17:11:12.963834+00:00",
+  "kind": "应用自有人工产物与真实浏览器交互，不代表模型质量",
+  "actual_model_requests": 0,
+  "unexpected_request_marker": false,
+  "primary_view": {
+    "nodes": 4,
+    "cross_relations": 1,
+    "hidden": 1
+  },
+  "all_view": {
+    "nodes": 4,
+    "cross_relations": 2,
+    "hidden": 0
+  },
+  "focus_preview": {
+    "muted_nodes": 2,
+    "edge_opacity": [
+      0.12,
+      0.9
+    ],
+    "restored_preview_count": 0
+  },
+  "refresh_restored_mode": "all",
+  "function_preview_count": 0,
+  "parent_return": {
+    "nodes": 4,
+    "cross_relations": 1
+  },
+  "same_small_viewport_node_width_px": {
+    "before": 83.24174499511719,
+    "after": 120.23812103271484
+  },
+  "console_warnings_errors": [],
+  "screenshot": "output/playwright/P0主要协作与全部依赖.png"
+}

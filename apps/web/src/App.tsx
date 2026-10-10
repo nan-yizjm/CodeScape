@@ -9,7 +9,7 @@ import { RequestUsage } from './RequestUsage';
 import {panelKey, restorePanels, serializePanels, type SessionValue} from './exploration';
 import {useSessionSaver} from './useSessionSaver';
 import {LearningWrites,withLearning,type LearningValue} from './learningWrites';
-import { abstractModules, exportSvg, moduleEntities, moduleLearningState, projectGraph } from './graph';
+import { abstractModules, dependencyProjection, exportSvg, moduleEntities, moduleLearningState, projectGraph } from './graph';
 import type { AnalysisTask, Call, Entity, ImportPreview, LearningState, Panel, Project, ProjectDetail, Projection, ProjectionNode, SourceFile, ScrollPosition } from './types';
 
 const Canvas = lazy(() => import('./Canvas').then(module => ({ default: module.Canvas })));
@@ -66,6 +66,7 @@ export default function App() {
   const [fullscreen, setFullscreen] = useState(false);
   const [expandedModule, setExpandedModule] = useState<string | null>(null);
   const [showOtherModules, setShowOtherModules] = useState(false);
+  const [dependencyMode, setDependencyMode] = useState<'primary' | 'all'>('primary');
   const shellRef = useRef<HTMLDivElement>(null);
   const modalRef = useRef<HTMLElement>(null);
   const modalBusy = useRef(false);
@@ -77,11 +78,11 @@ export default function App() {
   const panel = panels.at(-1);
   const modules = project?.architecture?.modules || [];
   const activeModule = modules.find(module => module.id === focus);
-  const projection = useMemo(() => project ? projectGraph(project, focus, { expandedModuleId: expandedModule, showOtherModules }) : { nodes: [], relations: [] }, [project, focus, expandedModule, showOtherModules]);
+  const projection = useMemo(() => project ? dependencyProjection(projectGraph(project, focus, { expandedModuleId: expandedModule, showOtherModules }), dependencyMode) : { nodes: [], relations: [] }, [project, focus, expandedModule, showOtherModules, dependencyMode]);
   const isFunctions = !!activeModule && !modules.some(module => module.parent_id === focus);
-  const viewportKey = `${isFunctions ? 'grouped-functions' : 'vertical'}:${focus || 'root'}:${expandedModule || 'collapsed'}:${showOtherModules ? 'all' : 'focused'}:v4`;
+  const viewportKey = `${isFunctions ? 'grouped-functions' : 'vertical'}:${focus || 'root'}:${expandedModule || 'collapsed'}:${showOtherModules ? 'all' : 'focused'}:${isFunctions ? 'all' : dependencyMode}:v5`;
   const confirmedCount = project?.analysis.calls.filter(call => call.resolution === 'confirmed').length || 0;
-  const session = useSessionSaver(project, {focus_id:focus, expanded_id:expandedModule, show_other_modules:showOtherModules,
+  const session = useSessionSaver(project, {focus_id:focus, expanded_id:expandedModule, show_other_modules:showOtherModules, dependency_mode:dependencyMode,
     function_origin:functionOrigin.current, viewport:viewports, panels:serializePanels(panels),
     expanded_evidence:expandedEvidence, panel_width:Math.round(width)}, id=> {
       void openProject(id); setNotice('新版本已发布，已恢复当前架构。');
@@ -331,6 +332,7 @@ export default function App() {
       setProject(withLearning(detail,learningWrites.current!.overlay({id,version:detail.version_id},detail.learning)));
       setFocus(savedFocus); setExpandedModule(valid(saved?.expanded_id) || savedFocus);
       setShowOtherModules(saved?.show_other_modules || false);
+      setDependencyMode(saved?.dependency_mode || 'primary');
       setViewports(saved?.viewport || {});
       setPanels(restorePanels(saved?.panels || [],detail)); setExpandedEvidence(saved?.expanded_evidence || {});
       setWidth(saved?.panel_width || 420);
@@ -505,6 +507,9 @@ export default function App() {
 
   function download() {
     if (!layout.current || !project) return;
+    const identity = (view: Projection) => JSON.stringify({nodes:view.nodes.map(node=>[node.id,node.parentId,node.kind]).sort(),
+      relations:view.relations.map(relation=>[relation.id,relation.from,relation.to]).sort()});
+    if (identity(layout.current) !== identity(projection)) {setNotice('当前布局尚未完成，请稍后导出当前视图。'); return;}
     const contents = exportSvg({ ...layout.current, nodes: layout.current.nodes.map(node => ({ ...node,
       state: projection.nodes.find(current => current.id === node.id)?.state || node.state })) }, project.name);
     const url = URL.createObjectURL(new Blob([contents], { type: 'image/svg+xml;charset=utf-8' }));
@@ -567,6 +572,7 @@ export default function App() {
           <div className="exploration">
             <div className="graph-container">
               {project.architecture ? projection.nodes.length ? <Suspense fallback={<div className="canvas-loading"><span className="spinner" />正在准备探索画布…</div>}><Canvas key={`${project.id}:${focus || 'root'}:${expandedModule || 'collapsed'}:${showOtherModules ? 'all' : 'focused'}`} projection={projection} onNode={onNode}
+                dependencyMode={dependencyMode} onDependencyMode={setDependencyMode}
                 onInfo={node => pushPanel(node.kind === 'module' ? { kind: 'module', module: node.module! } : { kind: 'function', entity: node.entity! })}
                 onRelation={relation => pushPanel({ kind: 'relation', relation })} onLayout={value => { layout.current = value; }}
                 viewport={viewports[viewportKey]} onViewport={value => { const next = { ...viewports, [viewportKey]: value }; setViewports(next); }} /></Suspense>
@@ -590,7 +596,7 @@ export default function App() {
                   const caller = project.analysis.entities.find(entity => entity.scope_id === call.caller_scope_id);
                   const target = project.analysis.entities.find(entity => entity.id === call.target_id);
                   return <div className="evidence-card" key={call.id}><div className="evidence-card-top"><span>证据 {String(index + 1).padStart(2, '0')}</span><span className="origin-badge">{call.origin === 'static' ? '静态分析确认' : 'AI 基于源码判断'}</span></div><code>{caller?.name || project.analysis.scopes.find(scope => scope.id === call.caller_scope_id)?.name || '真实作用域'} → {call.target_name}</code><p>{call.reason}</p>{judgmentEvidence(call)}<button onClick={() => { setSource(null); pushPanel({kind: 'source', entity: caller, location: call.location}); }}><FileCode2 size={13} />调用位置 · {call.location.path}:{call.location.start_line}<ArrowUpRightIcon /></button>{target && <button onClick={() => void sourcePanel(target)}><FileCode2 size={13} />目标实现 · {target.location.path}:{target.location.start_line}<ArrowUpRightIcon /></button>}</div>;
-                })}</div>{panel.relation.calls.length > 3 && <button className="secondary-button wide" aria-expanded={!!expandedEvidence[panel.relation.id]} onClick={() => setExpandedEvidence(current => ({...current, [panel.relation.id]: !current[panel.relation.id]}))}>{expandedEvidence[panel.relation.id] ? '收起证据' : `展开全部 ${panel.relation.calls.length} 条证据`}</button>}</>}
+                })}</div>{panel.relation.calls.length > 3 && <button className="secondary-button wide" aria-expanded={!!expandedEvidence[panel.relation.id]} onClick={() => setExpandedEvidence(current => ({...current, [panel.relation.id]: !current[panel.relation.id]}))}>{expandedEvidence[panel.relation.id] ? '收起证据' : `展开全部 ${panel.relation.calls.length} 条证据`}</button>}{!!panel.relation.primaryReasons?.length && <><h3>主要协作的选择依据</h3>{panel.relation.primaryReasons.map(reason => <p key={reason}>{reason}</p>)}<small>由分析阶段归纳；上方保留对应的真实调用证据。</small></>}</>}
                 {panel.kind === 'diagnostics' && <><div className="panel-kicker">范围与局限</div><h2>认识分析的边界</h2><p className="lead">图中没有连线，只表示当前没有确认或显示该关系。</p><div className="detail-stat-row"><span>{project.file_count} 个纳入文件</span><span>{project.scope.excluded.length} 个排除项</span></div><h3>当前能力</h3><p>Python 名称绑定、TypeScript Compiler API、Tree-sitter 与 libclang 静态解析已接入；复杂宏配置、动态分派和跨语言接口仍需完善。</p><h3>解析诊断</h3>{project.analysis.diagnostics.length ? project.analysis.diagnostics.map((item, index) => <div className="diagnostic-entry" key={index}><strong>{item.category}</strong><p>{item.message}</p><small>{item.path}{item.line ? `:${item.line}` : ''}</small></div>) : <p>没有记录到解析器诊断，不代表覆盖所有运行时行为。</p>}<h3>未解析调用</h3>{project.analysis.calls.filter(call => ['unresolved', 'excluded_indirect'].includes(call.resolution)).map(call => <div className="diagnostic-entry" key={call.id}><code>{call.expression}</code><p>{call.reason}</p><small>{call.location.path}:{call.location.start_line}</small>{judgmentEvidence(call)}</div>)}<h3>排除项</h3>{project.scope.excluded.slice(0, 30).map((item, index) => <p className="excluded-entry" key={index}>{item.path}<small>{item.reason}</small></p>)}</>}
               </div>}
             </aside></>}

@@ -26,7 +26,7 @@ export type ProjectDetail = Project & { file_ids: Record<string, string>; analys
   scopes: { id: string; kind: string; name: string; location: Location; parent_id?: string | null }[];
   diagnostics: { category: string; message: string; path: string | null; line: number | null }[];
   tools: Record<string, string> };
-  architecture: { modules: Module[]; overview: Overview } | null;
+  architecture: { modules: Module[]; overview: Overview; primary_dependencies?: {call_ids: string[]; reason: string}[] } | null;
   upload_consent?: {version_id: string; accepted: boolean};
   learning: Record<string, { state: LearningState; revision: number }>;
   learning_entities?: {id: string; kind: 'function' | 'module'; source_id: string}[];
@@ -35,7 +35,7 @@ export type ProjectDetail = Project & { file_ids: Record<string, string>; analys
   scope: { excluded: { path: string; reason: string }[]; snapshot_id: string; includes?: string[]; excludes?: string[] } };
 export type SourceFile = { path: string; text: string; version_id: string; hash: string };
 export type Point = { x: number; y: number };
-export type Relation = { id: string; from: string; to: string; label: string; calls: Call[]; points?: Point[] };
+export type Relation = { id: string; from: string; to: string; label: string; calls: Call[]; points?: Point[]; primaryReasons?: string[] };
 export type ScrollPosition = {top: number; left: number; line?: number};
 export type Panel = ({ kind: 'overview' } | { kind: 'module'; module: Module } | { kind: 'function'; entity: Entity }
   | { kind: 'relation'; relation: Relation } | { kind: 'source'; entity?: Entity; location: Location }
@@ -43,4 +43,4 @@ export type Panel = ({ kind: 'overview' } | { kind: 'module'; module: Module } |
 export type ProjectionNode = { id: string; label: string; description: string; kind: 'module' | 'function';
   entity?: Entity; module?: Module; count: number; state: AggregateState; incomplete: boolean; external: boolean;
   tone?: number; sibling?: boolean; parentId?: string; container?: boolean; canExpand?: boolean; expanded?: boolean; internalRelationCount?: number; shownCount?: number; x: number; y: number; width: number; height: number };
-export type Projection = { nodes: ProjectionNode[]; relations: Relation[]; hiddenModuleCount?: number; otherModuleCount?: number; abstraction?: boolean };
+export type Projection = { nodes: ProjectionNode[]; relations: Relation[]; hiddenModuleCount?: number; otherModuleCount?: number; abstraction?: boolean; hiddenRelationCount?: number; primaryFallback?: boolean };

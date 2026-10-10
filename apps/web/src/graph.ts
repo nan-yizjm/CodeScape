@@ -384,7 +384,20 @@ export function projectGraph(project: ProjectDetail, focus: string | null, optio
     grouped.get(key)!.calls.push(call);
     if (from === to) internalRelationCounts.set(from, (internalRelationCounts.get(from) || 0) + 1);
   }
-  return { nodes: nodes.map(node => ({ ...node, internalRelationCount: internalRelationCounts.get(node.id) || 0 })), relations: [...grouped.values()], hiddenModuleCount, otherModuleCount, abstraction: abstracted };
+  const selections = project.architecture?.primary_dependencies || [];
+  const relations = [...grouped.values()].map(relation => ({...relation,
+    primaryReasons: [...new Set(selections.filter(item => item.call_ids.some(id => relation.calls.some(call => call.id === id))).map(item => item.reason))]}));
+  return { nodes: nodes.map(node => ({ ...node, internalRelationCount: internalRelationCounts.get(node.id) || 0 })), relations, hiddenModuleCount, otherModuleCount, abstraction: abstracted };
+}
+
+/** Filter only module collaboration lines; retain full evidence and every node. */
+export function dependencyProjection(projection: Projection, mode: 'primary' | 'all'): Projection {
+  if (projection.nodes.some(node => node.kind === 'function') || mode === 'all') return {...projection, hiddenRelationCount: 0};
+  const cross = projection.relations.filter(relation => relation.from !== relation.to);
+  const selected = cross.filter(relation => relation.primaryReasons?.length);
+  if (!selected.length) return {...projection, hiddenRelationCount: 0, primaryFallback: cross.length > 0};
+  return {...projection, relations: projection.relations.filter(relation => relation.from === relation.to || relation.primaryReasons?.length),
+    hiddenRelationCount: cross.length - selected.length};
 }
 
 export function escapeXml(value: string) {

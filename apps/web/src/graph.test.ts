@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { abstractModules, aggregateState, edgePath, exportSvg, moduleLearningState, projectGraph, relationLabelPoint } from './graph';
+import { abstractModules, aggregateState, dependencyProjection, edgePath, exportSvg, moduleLearningState, projectGraph, relationLabelPoint } from './graph';
 import { layoutCompound, layoutHierarchy, verticalFallback } from './layout';
 import ELK from 'elkjs/lib/elk.bundled.js';
 import type { ProjectDetail, ProjectionNode } from './types';
@@ -22,6 +22,31 @@ function fixture(): ProjectDetail {
 }
 
 describe('基于证据生成图形', () => {
+  it('主要依赖保留全部节点与聚合证据，高频辅助调用不挤掉核心协作', () => {
+    const project = fixture();
+    project.analysis.entities[2].visible = true;
+    project.architecture!.modules = project.analysis.entities.map((entity, index) => ({id:`m${index}`, parent_id:null,
+      name:entity.name, summary:'验证职责', entity_ids:[entity.id], code_paths:['a.py'], incomplete:false}));
+    project.analysis.calls.push(...Array.from({length:20}, (_,index) => ({...project.analysis.calls[3], id:`aux-${index}`})));
+    project.architecture!.primary_dependencies = [{call_ids:['c0'], reason:'实现核心结果'}];
+    const all = projectGraph(project, null);
+    const main = dependencyProjection(all, 'primary');
+    expect(main.nodes).toEqual(all.nodes);
+    expect(main.hiddenRelationCount).toBe(1);
+    expect(main.relations).toHaveLength(1);
+    expect(main.relations[0].calls.map(call=>call.id)).toEqual(['c0','c1']);
+    expect(main.relations[0].primaryReasons).toEqual(['实现核心结果']);
+    expect(dependencyProjection(all, 'all').relations).toHaveLength(2);
+    expect(exportSvg(main, '主要依赖')).toContain('>hidden</text>');
+  });
+  it('旧结果或当前投影没有主要筛选时显示全部，函数图始终保留所有确认调用', () => {
+    const project = fixture();
+    const functions = projectGraph(project, 'm');
+    expect(dependencyProjection(functions, 'primary').relations).toEqual(functions.relations);
+    const relation = functions.relations[0];
+    const modules = {nodes:functions.nodes.map(node=>({...node,kind:'module' as const})), relations:[relation]};
+    expect(dependencyProjection(modules, 'primary')).toMatchObject({hiddenRelationCount:0,primaryFallback:true,relations:[relation]});
+  });
   it('合并多条同向调用，保留自递归，隐藏作用域不提升到外层', () => {
     const view = projectGraph(fixture(), 'm');
     expect(view.nodes.filter(node => node.kind === 'function').map(node => node.id)).toEqual(['f', 'g']);
