@@ -56,17 +56,20 @@ class TaskQueue:
                 started.set()
                 await worker()
                 project = self.database.get(job["project_id"])
-                status = self.stop_requests.get(job_id) or ("completed" if project and project["status"] in {"ready", "indexed"}
+                committed = self.database.get_job(job_id)
+                status = "completed" if committed and committed["status"] == "completed" else self.stop_requests.get(job_id) or ("completed" if project and project["status"] in {"ready", "indexed"}
                           else "failed" if project and project["status"] == "failed" else "paused")
                 self.database.update_job(job_id, status=status,
                                          detail="任务已完成" if status == "completed" else "任务已暂停，请检查原因")
             except asyncio.CancelledError:
-                requested = self.stop_requests.get(job_id, "paused")
+                committed = self.database.get_job(job_id)
+                requested = "completed" if committed and committed["status"] == "completed" else self.stop_requests.get(job_id, "paused")
                 self.database.update_job(job_id, status=requested,
                                          detail="任务已取消" if requested == "cancelled" else "任务已暂停，可主动恢复")
                 raise
             except Exception:
-                status = self.stop_requests.get(job_id, "failed")
+                committed = self.database.get_job(job_id)
+                status = "completed" if committed and committed["status"] == "completed" else self.stop_requests.get(job_id, "failed")
                 self.database.update_job(job_id, status=status, detail="任务已停止" if status != "failed" else "任务失败，请检查项目诊断")
                 raise
             finally:
@@ -97,6 +100,9 @@ class TaskQueue:
         return self.database.get_job(job_id) or job
 
     def _request_stop(self, job_id, task, desired):
+        committed = self.database.get_job(job_id)
+        if committed and committed["status"] == "completed":
+            return
         # Durable before cancelling: the AI worker checks this before every send.
         self.stop_requests[job_id] = desired
         self.database.update_job(job_id, status=desired,

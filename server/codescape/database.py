@@ -115,6 +115,7 @@ class Database:
         with self.engine.connect() as connection:
             row = connection.execute(select(self.versions).where(
                 self.versions.c.project_id == project_id,
+                self.versions.c.base_version_id.is_not(None),
                 self.versions.c.status.in_(["draft", "paused", "failed"])
             ).order_by(self.versions.c.created_at.desc())).mappings().first()
             return dict(row) if row else None
@@ -200,6 +201,7 @@ class Database:
             current = connection.execute(select(self.projects.c.version_id).where(self.projects.c.id == project_id)).scalar()
             if current != base or connection.execute(select(self.versions.c.id).where(
                 self.versions.c.project_id == project_id,
+                self.versions.c.base_version_id.is_not(None),
                 self.versions.c.status.in_(["draft", "paused", "failed"])
             )).first():
                 raise ValueError("项目版本或候选已经改变，请刷新后重试。")
@@ -211,17 +213,69 @@ class Database:
             connection.execute(self.versions.update().where(self.versions.c.id == version_id)
                                .values(value=value, status=status))
 
+    def _publication_inputs(self, connection, project_id, version_id, job_id, *, candidate):
+        project = connection.execute(select(self.projects).where(self.projects.c.id == project_id)).mappings().first()
+        job = connection.execute(select(self.jobs).where(self.jobs.c.id == job_id)).mappings().first()
+        version = connection.execute(select(self.versions).where(
+            self.versions.c.id == version_id, self.versions.c.project_id == project_id)).mappings().first()
+        if (not project or project["lifecycle"] != "active" or not job or job["project_id"] != project_id
+                or job["status"] != "running" or job["version_id"] != project["version_id"]
+                or job["kind"] != ("reanalysis" if candidate else "architecture")):
+            raise ValueError("项目生命周期、版本基线或任务状态已改变，分析产物未发布。")
+        if candidate:
+            if not version or version["status"] != "draft" or version["base_version_id"] != project["version_id"]:
+                raise ValueError("候选基线已改变，分析产物未发布。")
+        elif (project["version_id"] != version_id or (version and version["status"] != "draft")
+              or (project["architecture"] and not any("人工预置" in text for text in
+                    project["architecture"].get("overview", {}).get("limitations", [])))):
+            raise ValueError("当前版本已有成功结果或基线已改变，分析产物未发布。")
+        return dict(project), dict(version) if version else None
+
+    def prepare_publication(self, project_id: str, version_id: str, job_id: str, descriptor: dict, *, candidate: bool):
+        with self.engine.begin() as connection:
+            connection.exec_driver_sql("BEGIN IMMEDIATE")
+            project, version = self._publication_inputs(connection, project_id, version_id, job_id, candidate=candidate)
+            value = dict(version["value"] if version else project)
+            if descriptor["snapshot_hash"] != value["snapshot"]["hash"]:
+                raise ValueError("源码快照已改变，分析产物未发布。")
+            value["prepared_output"] = descriptor
+            if version:
+                connection.execute(self.versions.update().where(self.versions.c.id == version_id).values(value=value))
+            else:
+                connection.execute(self.versions.insert().values(id=version_id, project_id=project_id,
+                    status="draft", created_at=now(), value=value))
+
+    def _publication_event(self, connection, project_id, version_id, job_id):
+        connection.execute(self.operations.insert().values(id="publish-" + job_id, project_id=project_id,
+            kind="version_publish", status="completed", phase="published", detail=version_id,
+            created_at=now(), updated_at=now()))
+        connection.execute(self.jobs.update().where(self.jobs.c.id == job_id)
+            .values(status="completed", detail="版本已原子发布", updated_at=now()))
+        value = {"phase": "completed", "completed": 1, "total": 1, "detail": "分批分析完成"}
+        if connection.execute(select(self.analysis_tasks.c.project_id).where(
+                self.analysis_tasks.c.project_id == project_id)).first():
+            connection.execute(self.analysis_tasks.update().where(self.analysis_tasks.c.project_id == project_id).values(value=value))
+        else:
+            connection.execute(self.analysis_tasks.insert().values(project_id=project_id, value=value))
+
+    def publish_initial(self, project_id: str, version_id: str, job_id: str, architecture: dict) -> None:
+        with self.engine.begin() as connection:
+            connection.exec_driver_sql("BEGIN IMMEDIATE")
+            project, version = self._publication_inputs(connection, project_id, version_id, job_id, candidate=False)
+            if not version or not version["value"].get("prepared_output"):
+                raise ValueError("分析产物尚未安全保存，未发布。")
+            value = {**version["value"], "architecture": architecture, "status": "ready", "error": None}
+            connection.execute(self.versions.update().where(self.versions.c.id == version_id).values(status="published", value=value))
+            connection.execute(self.projects.update().where(self.projects.c.id == project_id).values(
+                architecture=architecture, status="ready", error=None))
+            self._publication_event(connection, project_id, version_id, job_id)
+
     def publish_candidate(self, project_id: str, version_id: str, job_id: str, architecture: dict) -> dict:
         with self.engine.begin() as connection:
             connection.exec_driver_sql("BEGIN IMMEDIATE")
-            old = dict(connection.execute(select(self.projects).where(self.projects.c.id == project_id)).mappings().one())
-            candidate = dict(connection.execute(select(self.versions).where(
-                self.versions.c.id == version_id, self.versions.c.project_id == project_id
-            )).mappings().one())
-            job = connection.execute(select(self.jobs).where(self.jobs.c.id == job_id)).mappings().one()
-            if (old["version_id"] != candidate["base_version_id"] or job["status"] != "running"
-                    or candidate["status"] != "draft"):
-                raise ValueError("版本基线或任务状态已经改变，候选未发布。")
+            old, candidate = self._publication_inputs(connection, project_id, version_id, job_id, candidate=True)
+            if not candidate["value"].get("prepared_output"):
+                raise ValueError("候选产物尚未安全保存，未发布。")
             value = candidate["value"]
             mapping, report = learning_mapping(Analysis.model_validate(old["result"] or {}),
                                                Analysis.model_validate(value["result"]))
@@ -284,8 +338,7 @@ class Database:
                 from .sessions import migrate_session
                 session = migrate_session(session, old, value, modules, mapping, version_id)
                 connection.execute(self.sessions.update().where(self.sessions.c.project_id == project_id).values(value=session))
-            connection.execute(self.jobs.update().where(self.jobs.c.id == job_id)
-                               .values(status="completed", detail="新版本已发布，学习状态已迁移", updated_at=now()))
+            self._publication_event(connection, project_id, version_id, job_id)
             return report
 
     def recover_interrupted(self) -> None:

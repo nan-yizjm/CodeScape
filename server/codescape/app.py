@@ -39,6 +39,7 @@ from .models import (
     SessionRequest,
 )
 from .provider import PIPELINE_VERSION, Provider, ProviderError, validate_architecture
+from .publication import load_output, prepare_output
 from .reads import VersionReads
 from .security import data_root
 from .snapshots import create_snapshot, read_snapshot
@@ -781,6 +782,7 @@ def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=
         async def work():
             checkpoint_path = root / "projects" / project_id / (f"checkpoint-{project['version_id']}.json" if candidate else "architecture-checkpoint.json")
             checkpoint: list[Architecture] = []
+            published = False
             database.update(project_id, status="analyzing", error=None)
             database.analysis_progress(
                 project_id, {"phase": "planning", "completed": 0, "total": 0,
@@ -850,13 +852,21 @@ def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=
 
                 source_files = read_snapshot(snapshot_root, project["snapshot"])
                 source_analysis = Analysis.model_validate(project["result"])
-                with ai_scope(project_id=project_id, version_id=project["version_id"], job_id=job["id"]):
-                    callbacks = {"on_progress": progress, "on_batch": save_batch, "completed_batches": checkpoint}
-                    if architecture_runner:
-                        architecture, usage = await architecture_runner(provider, source_analysis, source_files, **callbacks)
-                    else:
-                        architecture, usage = await run_architecture(provider, source_analysis, source_files,
-                            project_id=project_id, version_id=project["version_id"], job_id=job["id"], **callbacks)
+                prepared_version = database.version(project_id, project["version_id"])
+                prepared = prepared_version["value"].get("prepared_output") if prepared_version else None
+                if prepared and prepared.get("pipeline_version") == PIPELINE_VERSION:
+                    saved = load_output(root / "projects" / project_id, project["version_id"], prepared)
+                    if saved["snapshot_hash"] != project["snapshot"]["hash"] or saved["result"] != project["result"]:
+                        raise ValueError("已保存的分析产物与当前快照不一致，未重新请求模型。")
+                    architecture, usage = Architecture.model_validate(saved["architecture"]), saved["usage"]
+                else:
+                    with ai_scope(project_id=project_id, version_id=project["version_id"], job_id=job["id"]):
+                        callbacks = {"on_progress": progress, "on_batch": save_batch, "completed_batches": checkpoint}
+                        if architecture_runner:
+                            architecture, usage = await architecture_runner(provider, source_analysis, source_files, **callbacks)
+                        else:
+                            architecture, usage = await run_architecture(provider, source_analysis, source_files,
+                                project_id=project_id, version_id=project["version_id"], job_id=job["id"], **callbacks)
                 current_job = database.get_job(job["id"])
                 if not current_job or current_job["status"] != "running":
                     raise asyncio.CancelledError
@@ -865,32 +875,22 @@ def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=
                                       source_files, {path: [(1, max(1, len(text.splitlines())))] for path, text in source_files.items()})
                 validate_judgments(architecture, source_analysis, {call.id for call in source_analysis.calls}, source_files,
                                    {path: [(1, max(1, len(text.splitlines())))] for path, text in source_files.items()})
+                read_snapshot(snapshot_root, project["snapshot"])
+                # Both first analysis and reanalysis save and verify output before a short transaction.
+                descriptor = prepare_output(root / "projects" / project_id, project["version_id"],
+                    project["snapshot"]["hash"], PIPELINE_VERSION, project["result"], architecture.model_dump(), usage)
+                database.prepare_publication(project_id, project["version_id"], job["id"], descriptor, candidate=bool(candidate))
                 if candidate:
-                    read_snapshot(snapshot_root, project["snapshot"])
-                    # Durable artifact precedes the short publication transaction.
-                    artifact = root / "projects" / project_id / f"version-{project['version_id']}.json"
-                    temporary = artifact.with_suffix(".tmp")
-                    with temporary.open("w", encoding="utf-8") as handle:
-                        json.dump({"result": project["result"], "architecture": architecture.model_dump()}, handle, ensure_ascii=False)
-                        handle.flush()
-                        os.fsync(handle.fileno())
-                    temporary.replace(artifact)
                     database.publish_candidate(project_id, candidate["id"], job["id"], architecture.model_dump())
                 else:
-                    database.update(project_id, architecture=architecture.model_dump(), status="ready", error=None)
-                database.analysis_progress(
-                    project_id,
-                    {
-                        "phase": "completed",
-                        "completed": 1,
-                        "total": 1,
-                        "detail": "分批分析完成",
-                    },
-                )
+                    database.publish_initial(project_id, project["version_id"], job["id"], architecture.model_dump())
+                published = True
                 checkpoint_path.unlink(missing_ok=True)
                 usage_path = root / "projects" / project_id / "usage.json"
                 usage_path.write_text(json.dumps(usage), encoding="utf-8")
             except asyncio.CancelledError:
+                if published:
+                    return
                 database.update(project_id, status="paused", error="分析已中断，请主动重新启动。")
                 previous = database.analysis_progress(project_id) or {}
                 database.analysis_progress(
@@ -904,6 +904,9 @@ def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=
                 )
                 raise
             except Exception as error:
+                if published:
+                    # Cleanup failures cannot turn a committed version into a paused task.
+                    return
                 database.update(project_id, status="paused", error=str(error)[:300])
                 previous = database.analysis_progress(project_id) or {}
                 database.analysis_progress(

@@ -138,3 +138,28 @@ def test_shutdown_has_one_deadline_and_persists_stop_before_cleanup(tmp_path):
         assert not queue.running and not queue.lock.locked()
         db.engine.dispose()
     asyncio.run(scenario())
+
+
+def test_shutdown_cannot_cancel_an_already_committed_publication(tmp_path):
+    async def scenario():
+        db = Database(tmp_path)
+        queue = TaskQueue(db, asyncio.Lock())
+        job = queue.create(add_project(db, "published"), "architecture")
+        committed, cleanup = asyncio.Event(), asyncio.Event()
+        async def worker():
+            db.update("published", status="ready")
+            db.update_job(job["id"], status="completed")
+            committed.set()
+            await cleanup.wait()
+        await queue.start(job["id"], worker)
+        await committed.wait()
+        task = queue.running[job["id"]]
+        with pytest.raises(ValueError, match="已经结束"):
+            await queue.stop(job["id"], cancel=True)
+        await queue.shutdown(timeout=0)
+        await asyncio.gather(task, return_exceptions=True)
+        assert db.get_job(job["id"])["status"] == "completed"
+        assert db.get("published")["status"] == "ready"
+        assert not queue.running and not queue.lock.locked()
+        db.engine.dispose()
+    asyncio.run(scenario())
