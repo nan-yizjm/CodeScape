@@ -51,6 +51,31 @@ def extract_git(path):
     assert (target / "cmd/git.exe").is_file()
 
 
+def extract_headers(path):
+    target = resources / "runtime/clang"
+    target.mkdir(parents=True, exist_ok=True)
+    with zipfile.ZipFile(path) as archive:
+        prefix = "llvm-mingw-20240619-ucrt-x86_64/"
+        for entry in archive.infolist():
+            relative = entry.filename.removeprefix(prefix)
+            keep = relative.startswith(("include/", "lib/clang/18/include/"))
+            keep = keep or PurePosixPath(relative).name.upper().startswith(("COPYING", "LICENSE", "NOTICE"))
+            if entry.is_dir() or not entry.filename.startswith(prefix) or not keep:
+                continue
+            parts = PurePosixPath(relative).parts
+            if ".." in parts or "\\" in relative or ":" in relative:
+                raise ValueError("声明包路径越界。")
+            destination = target.joinpath(*parts)
+            if not destination.resolve().is_relative_to(target.resolve()):
+                raise ValueError("声明包路径越界。")
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            destination.write_bytes(archive.read(entry))
+    files = {item.relative_to(target).as_posix(): hashlib.sha256(item.read_bytes()).hexdigest()
+        for item in sorted(target.rglob("*")) if item.is_file() and item.name != "headers-manifest.json"}
+    (target / "headers-manifest.json").write_text(json.dumps({"files": files, "compiler_major": 18,
+        "include_roots": ["include/c++/v1", "lib/clang/18/include", "include"]}, indent=2), encoding="utf-8")
+
+
 def licenses(records):
     target = resources / "licenses"
     target.mkdir(parents=True, exist_ok=True)
@@ -108,6 +133,7 @@ def main():
         for name in ["node.exe", "LICENSE"]:
             (target / name).write_bytes(archive.read(prefix + name))
     extract_git(download("git", records["git"]))
+    extract_headers(download("clang_headers", records["clang_headers"]))
     download("inno", records["inno"])
     licenses(records)
     print("Windows x64 构建资源已准备；仅应用自有目录。", flush=True)

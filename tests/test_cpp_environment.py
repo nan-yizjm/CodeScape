@@ -1,0 +1,160 @@
+import json
+from pathlib import Path
+
+import pytest
+from clang import cindex
+from codescape import analyzers
+from codescape.analyzers import cpp_analysis
+from codescape.cpp_environment import (
+    compiler_configurations,
+    preprocessing_lines,
+    remap_path,
+    safe_arguments,
+    trusted_headers,
+)
+from codescape.snapshots import create_snapshot
+
+
+def write(root, files):
+    for path, text in files.items():
+        target = root / path
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(text, encoding="utf-8", newline="")
+
+
+def test_config_prefers_arguments_and_remaps_original_without_reading_it(tmp_path):
+    original = r"C:\original-private-project"
+    commands = [{"directory": original + r"\build", "file": r"..\src\owned.c",
+        "arguments": ["untrusted-compiler.exe", "-I", r"..\include", "-D", "VALUE=7", "-std=c17",
+            "-o", "must-not-write.exe", "-Xclang", "-load", "plugin.dll", "@private.rsp", "-I", r"C:\outside"],
+        "command": "do-not-execute --different"}]
+    files = {"src/owned.c": "int f(){return VALUE;}", "compile_commands.json": json.dumps(commands)}
+    values, notes = compiler_configurations(tmp_path, files, original)
+    args, includes, removed = values["src/owned.c"][0]
+    assert args == ["-I", str(tmp_path / "include"), "-DVALUE=7", "-std=c17"]
+    assert includes == [tmp_path, tmp_path / "include"] and removed > 0 and notes
+    assert remap_path(r"..\..\outside", tmp_path, original, "build") is None
+
+
+def test_command_is_tokenized_only_and_maximum_configurations_is_bounded(tmp_path):
+    records = [{"file": "owned.c", "command": f'"never run.exe" -DVALUE={index} -I "include directory" && touch outside'}
+        for index in range(20)]
+    result, notes = compiler_configurations(tmp_path, {"owned.c": "int f(){return VALUE;}",
+        "compile_commands.json": json.dumps(records)})
+    assert len(result["owned.c"]) == 8
+    assert all("touch" not in arg and "&&" not in arg for args, _, _ in result["owned.c"] for arg in args)
+    assert notes
+
+
+@pytest.mark.parametrize("directive", [
+    '#include "../private.h"',
+    '/* comment */ #include "../private.h"',
+    '%:include "../private.h"',
+    '#inc\\\nlude "../private.h"',
+    '#inc??/\nlude "../private.h"',
+    '#define FILE "../private.h"\n#include FILE',
+    '#include_next "private.h"',
+    '#import "private.h"',
+])
+def test_hidden_or_dynamic_external_include_never_starts_parser(tmp_path, monkeypatch, directive):
+    files = {"unsafe.cpp": directive + "\nvoid owned(){}\n"}
+    write(tmp_path, files)
+    monkeypatch.setattr(cindex.Index, "create", lambda: pytest.fail("越界包含不能进入原生解析"))
+    result = cpp_analysis(tmp_path, files, "v1")
+    assert any(item.category == "missing_dependency" for item in result.diagnostics)
+
+
+def test_missing_dependency_does_not_disable_unrelated_unit(tmp_path):
+    files = {"unsafe.c": '#include "missing.h"\nvoid unparsed(){}\n',
+        "safe.c": "int target(){return 1;}\nint caller(){return target();}\n"}
+    write(tmp_path, files)
+    result = cpp_analysis(tmp_path, files, "v1")
+    assert len([call for call in result.calls if call.resolution == "confirmed"]) == 1
+    assert {entity.name for entity in result.entities if entity.visible} == {"unparsed", "target", "caller"}
+
+
+def test_native_snapshot_content_and_safe_configuration_are_used(tmp_path):
+    files = {"include/decl.h": "int target(void);\n",
+        "impl.c": "int target(void){return 1;}\n",
+        "caller.c": '#include "decl.h"\nint caller(void){return target()+VALUE;}\n'}
+    files["compile_commands.json"] = json.dumps([{"file": "caller.c",
+        "arguments": ["never-execute", "-I", "include", "-DVALUE=7"]}])
+    write(tmp_path, files)
+    (tmp_path / "caller.c").write_text("already modified physical original", encoding="utf-8")
+    result = cpp_analysis(tmp_path, files, "v1")
+    calls = [call for call in result.calls if call.resolution == "confirmed"]
+    assert len(calls) == 1
+    assert calls[0].target_name == "target"
+    assert "compile_commands.json" not in result.readable_paths
+    assert not any(item.path == "caller.c" and item.category == "missing_dependency" for item in result.diagnostics)
+
+
+def test_multiple_incompatible_compile_configurations_remain_uncertain(tmp_path):
+    files = {"owned.c": "int target(){return 1;}\nint caller(){return target();}\n",
+        "compile_commands.json": json.dumps([{"file": "owned.c", "arguments": ["cc", "-DVALUE=1"]},
+            {"file": "owned.c", "arguments": ["cc", "-DVALUE=2"]}])}
+    write(tmp_path, files)
+    result = cpp_analysis(tmp_path, files, "v1")
+    assert len(result.entities) == 2 and not result.calls
+    assert any(item.category == "condition_unknown" for item in result.diagnostics)
+
+
+def test_system_declaration_cannot_read_outside_overlay_even_through_macro(tmp_path, monkeypatch):
+    sdk = tmp_path / "trusted-sdk"
+    include = sdk / "include"
+    (include / "c++/v1").mkdir(parents=True)
+    (include / "bridge.h").write_text("#include LEAK\n", encoding="utf-8")
+    private = tmp_path / "private.h"
+    private.write_text("int forbidden_private_symbol(){return 42;}\n", encoding="utf-8")
+    root = tmp_path / "snapshot"
+    root.mkdir()
+    files = {"owned.c": "#include <bridge.h>\nint owned(){return 1;}\n",
+        "compile_commands.json": json.dumps([{"file": "owned.c", "arguments": ["cc",
+            '-DLEAK="' + private.as_posix() + '"']}])}
+    write(root, files)
+    monkeypatch.setattr(analyzers, "trusted_headers", lambda: ((include / "c++/v1", include),
+        frozenset({"include/bridge.h"}), None))
+    result = cpp_analysis(root, files, "v1")
+    assert {entity.name for entity in result.entities} == {"owned"}
+    assert any("file not found" in item.message for item in result.diagnostics)
+
+
+def test_trusted_standard_library_is_not_a_project_entity(tmp_path):
+    directories, _, error = trusted_headers()
+    if error:
+        pytest.skip("该开发环境尚未准备随包声明资源；安装验证必须单列执行")
+    assert directories
+    files = {"owned.cpp": "#include <vector>\nint target(){return 1;}\nint caller(){std::vector<int> v{target()};return v[0];}\n"}
+    write(tmp_path, files)
+    result = cpp_analysis(tmp_path, files, "v1")
+    assert {entity.name for entity in result.entities if entity.visible} == {"target", "caller"}
+    assert any(call.target_name == "target" and call.resolution == "confirmed" for call in result.calls)
+    assert not any(item.category == "missing_dependency" for item in result.diagnostics)
+
+
+def test_metadata_copied_as_data_with_no_scripts_and_source_unchanged(tmp_path):
+    source = tmp_path / "source"
+    source.mkdir()
+    files = {"owned.c": "int owned(){return 1;}\n", "compile_commands.json": "[]",
+        "README.md": "# 应用自有验证\n", "install.ps1": "must never execute", ".env": "must never upload"}
+    write(source, files)
+    manifest = create_snapshot(source, tmp_path / "workspace")
+    assert set(manifest["files"]) == {"owned.c", "compile_commands.json", "README.md"}
+    assert manifest["files"]["compile_commands.json"]["kind"] == "metadata"
+    assert manifest["files"]["owned.c"]["kind"] == "source"
+    assert all((source / path).read_text(encoding="utf-8") == text for path, text in files.items())
+
+
+def test_preprocessing_keeps_literal_content_and_blocks_comments():
+    assert preprocessing_lines('/* x */ #include "safe.h" // comment')[0].strip() == '#include "safe.h"'
+    args, _, removed = safe_arguments(["cc", "-fplugin=evil.dll", "-include", "../private.h",
+        "-isysroot", "outside", "-DVALID=1", "-UOLD"], Path("C:/snapshot"), None, ".")
+    assert args == ["-DVALID=1", "-UOLD"] and removed == 5
+
+
+def test_relative_include_can_return_to_another_snapshot_directory(tmp_path):
+    files = {"include/decl.h": "int target(void);\n", "impl.c": "int target(void){return 1;}\n",
+        "sub/caller.c": '#include "../include/decl.h"\nint caller(void){return target();}\n'}
+    write(tmp_path, files)
+    result = cpp_analysis(tmp_path, files, "v1")
+    assert any(call.resolution == "confirmed" and call.target_name == "target" for call in result.calls)

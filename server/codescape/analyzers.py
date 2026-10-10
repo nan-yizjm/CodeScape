@@ -4,11 +4,12 @@ import ast
 import builtins
 import hashlib
 import json
-import re
 import subprocess
 import uuid
+from functools import lru_cache
 from pathlib import Path
 
+from .cpp_environment import compiler_configurations, snapshot_overlay, trusted_headers, verify_includes
 from .models import Analysis, Call, Diagnostic, Entity, Location, Scope
 from .runtime import executable, resource_root
 
@@ -285,13 +286,29 @@ def python_analysis(files: dict[str, str], version: str) -> Analysis:
     return result
 
 
-def cpp_analysis(root: Path, files: dict[str, str], version: str) -> Analysis:
+def cpp_analysis(root: Path, files: dict[str, str], version: str, source_root: str | None = None) -> Analysis:
+    if not any(Path(path).suffix in {".c", ".h", ".cc", ".cpp", ".cxx", ".hpp", ".hh"} for path in files):
+        return Analysis()
+    root = root.resolve()
+    header_directories, header_files, header_error = trusted_headers()
+    with snapshot_overlay(root, files, header_directories, header_files) as overlay:
+        return _cpp_analysis(root, files, version, source_root, header_directories, header_files, header_error, overlay)
+
+
+def _cpp_analysis(root, files, version, source_root, header_directories, header_files, header_error, overlay):
     import tree_sitter_c
     import tree_sitter_cpp
     from clang import cindex
     from tree_sitter import Language, Parser
 
-    result = Analysis(tools={"cpp": "tree-sitter/0.25.2 + libclang/18.1.1"})
+    result = Analysis(tools={"cpp": "tree-sitter/0.25.2 + libclang/18.1.1 + snapshot-config/2"})
+    if not any(Path(path).suffix in {".c", ".h", ".cc", ".cpp", ".cxx", ".hpp", ".hh"} for path in files):
+        return result
+    configurations, notes = compiler_configurations(root, files, source_root)
+    for path, message in notes:
+        result.diagnostics.append(Diagnostic(category="configuration", path=path, message=message))
+    if header_error:
+        result.diagnostics.append(Diagnostic(category="missing_dependency", message=header_error))
     native_symbols: dict[str, list[Entity]] = {}
     pending: list[tuple[Call, str, bool]] = []
     by_location: dict[tuple[str, int], Entity] = {}
@@ -302,36 +319,6 @@ def cpp_analysis(root: Path, files: dict[str, str], version: str) -> Analysis:
         cindex.CursorKind.DESTRUCTOR,
         cindex.CursorKind.FUNCTION_TEMPLATE,
     }
-    unsafe_includes = False
-    for include_path, include_text in files.items():
-        if Path(include_path).suffix not in {".c", ".h", ".cc", ".cpp", ".cxx", ".hpp", ".hh"}:
-            continue
-        # Clang has no snapshot-only filesystem API. Reject unverified includes before native parsing.
-        normalized = include_text.replace("\\\r\n", "").replace("\\\n", "")
-        for line in normalized.splitlines():
-            directive = re.match(r"\s*#\s*(include(?:_next)?|import)\b(.*)", line)
-            if not directive:
-                continue
-            literal = re.fullmatch(r'\s*["<]([^">]+)[">]\s*(?://.*)?', directive.group(2))
-            name = literal.group(1) if literal else ""
-            candidates = [(root / Path(include_path).parent / name).resolve(), (root / name).resolve()]
-            verified = (
-                literal
-                and directive.group(1) == "include"
-                and all(candidate.is_relative_to(root.resolve()) for candidate in candidates)
-            )
-            verified = verified and any(
-                candidate.relative_to(root.resolve()).as_posix() in files for candidate in candidates
-            )
-            if not verified:
-                unsafe_includes = True
-                result.diagnostics.append(
-                    Diagnostic(
-                        category="missing_dependency",
-                        path=include_path,
-                        message="包含文件无法在快照内验证，原型保留语法索引并跳过该批 libclang 语义解析。",
-                    )
-                )
     for path, text in files.items():
         if Path(path).suffix not in {".c", ".h", ".cc", ".cpp", ".cxx", ".hpp", ".hh"}:
             continue
@@ -434,7 +421,33 @@ def cpp_analysis(root: Path, files: dict[str, str], version: str) -> Analysis:
                 syntax(child, parents, condition)
 
         syntax(parsed.root_node, [])
-        if unsafe_includes:
+    # All entities must exist before parsing translation units that include other project files.
+    for path, text in files.items():
+        if Path(path).suffix not in {".c", ".h", ".cc", ".cpp", ".cxx", ".hpp", ".hh"}:
+            continue
+        language = "c" if Path(path).suffix == ".c" else "cpp"
+        choices = configurations.get(path, [([], [root], 0)])
+        if len(choices) > 1:
+            result.diagnostics.append(Diagnostic(category="condition_unknown", path=path,
+                message="该文件有多个编译配置，尚未消除配置歧义；保留语法实体，不确认调用。"))
+            continue
+        configured_arguments, includes, _ = choices[0]
+        visited, pending_paths, unsafe = set(), [path], False
+        while pending_paths:
+            checked = pending_paths.pop()
+            if checked in visited:
+                continue
+            visited.add(checked)
+            dependencies, problems = verify_includes(root, files, checked, includes, header_directories, header_files)
+            pending_paths.extend(dependencies)
+            for message in problems:
+                if message.startswith("包含文件 "):
+                    # An inactive platform branch may mention an unavailable header.
+                    # The closed VFS prevents reads; let Clang report only active missing headers.
+                    continue
+                unsafe = True
+                result.diagnostics.append(Diagnostic(category="missing_dependency", path=checked, message=message))
+        if unsafe:
             continue
         try:
             unit = cindex.Index.create().parse(
@@ -446,7 +459,12 @@ def cpp_analysis(root: Path, files: dict[str, str], version: str) -> Analysis:
                     "-nostdinc",
                     "-nostdinc++",
                     "-I" + str(root),
+                    "--target=x86_64-w64-windows-gnu",
+                    *[argument for directory in header_directories for argument in ("-isystem", str(directory))],
+                    *configured_arguments,
+                    "-ivfsoverlay", str(overlay),
                 ],
+                unsaved_files=[(str(root / included), value) for included, value in files.items()],
                 options=cindex.TranslationUnit.PARSE_DETAILED_PROCESSING_RECORD,
             )
         except cindex.TranslationUnitLoadError:
@@ -454,8 +472,10 @@ def cpp_analysis(root: Path, files: dict[str, str], version: str) -> Analysis:
                 Diagnostic(category="parse_failed", path=path, message="libclang 无法解析该文件。")
             )
             continue
+        native_errors = False
         for diagnostic in unit.diagnostics:
             if diagnostic.severity >= cindex.Diagnostic.Error:
+                native_errors = True
                 result.diagnostics.append(
                     Diagnostic(
                         category="missing_dependency",
@@ -464,17 +484,24 @@ def cpp_analysis(root: Path, files: dict[str, str], version: str) -> Analysis:
                         message=diagnostic.spelling,
                     )
                 )
+        if native_errors:
+            continue  # Recovery ASTs cannot establish unique targets in an incomplete unit.
 
-        def local_path(cursor):
-            if not cursor.location.file:
-                return None
+        @lru_cache(maxsize=4096)
+        def relative_native_path(filename):
             try:
-                return Path(cursor.location.file.name).resolve().relative_to(root.resolve()).as_posix()
+                return Path(filename).resolve().relative_to(root).as_posix()
             except ValueError:
                 return None
 
+        def local_path(cursor):
+            filename = cursor.location.file
+            return relative_native_path(filename.name) if filename else None
+
         def native(cursor, active_scope: str | None = None):
             cursor_path = local_path(cursor)
+            if cursor.location.file and not cursor_path:
+                return  # Trusted declarations are not project entities, calls or model input.
             if cursor_path and cursor_path not in files:
                 return
             if cursor.kind in function_kinds and cursor.is_definition() and cursor_path:
@@ -596,10 +623,10 @@ def typescript_analysis(root: Path, files: dict[str, str], version: str) -> Anal
         return Analysis(diagnostics=[Diagnostic(category="parse_failed", message=str(error))])
 
 
-def analyze(root: Path, files: dict[str, str], version: str) -> Analysis:
+def analyze(root: Path, files: dict[str, str], version: str, source_root: str | None = None) -> Analysis:
     results = [
         python_analysis(files, version),
-        cpp_analysis(root, files, version),
+        cpp_analysis(root, files, version, source_root),
         typescript_analysis(root, files, version),
     ]
     combined = Analysis()

@@ -1,4 +1,13 @@
 {
+  "clang_headers": {
+    "version": "LLVM 18.1.8 / llvm-mingw 20240619",
+    "url": "https://github.com/mstorsjo/llvm-mingw/releases/download/20240619/llvm-mingw-20240619-ucrt-x86_64.zip",
+    "sha256": "810703594a7e3eea03385b5329c7ea3bd65f5e496b44cf1b68c17ff436d265e7",
+    "verification": "https://github.com/mstorsjo/llvm-mingw/releases/tag/20240619",
+    "sha256_source": "从维护者官方 HTTPS 发布下载后计算并固定；该旧发布未提供独立上游摘要，不能称为上游签名验证。",
+    "source": "https://github.com/mstorsjo/llvm-mingw/tree/20240619",
+    "role": "仅复制可信 C/C++ 系统声明与许可证，不包含或运行编译器、链接器和目标库。"
+  },
   "node": {
     "version": "24.16.0",
     "url": "https://nodejs.org/dist/v24.16.0/node-v24.16.0-win-x64.zip",

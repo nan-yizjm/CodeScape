@@ -15,7 +15,7 @@ def main():
     request = json.loads(sys.stdin.read())
     root = Path(request["root"])
     files = read_snapshot(root, request["manifest"])
-    result = analyze(root, files, request["version"])
+    result = analyze(root, files, request["version"], request["manifest"].get("source"))
     sys.stdout.write(result.model_dump_json())
 
 

@@ -10,6 +10,7 @@ from pathlib import Path
 from .analyzers import digest
 
 SOURCE_EXTENSIONS = {".py", ".c", ".h", ".cpp", ".cc", ".cxx", ".hpp", ".hh", ".ts", ".tsx"}
+METADATA_NAMES = {"compile_commands.json", "tsconfig.json", "package.json", "pyproject.toml", "README.md", "CMakeLists.txt"}
 EXCLUDED_DIRECTORIES = {".git", ".venv", "node_modules", "__pycache__", "dist", "build", ".cache", ".runtime"}
 SECRET_EXTENSIONS = {".pem", ".key", ".p12", ".pfx"}
 OPTIONAL_DIRECTORIES = {"tests", "test", "examples", "example", "vendor", "third_party"}
@@ -92,7 +93,7 @@ def create_snapshot(
             if matches_scope(relative, excludes):
                 manifest["excluded"].append({"path": relative, "reason": "用户排除"})
                 continue
-            if file.suffix.lower() not in SOURCE_EXTENSIONS:
+            if file.suffix.lower() not in SOURCE_EXTENSIONS and name not in METADATA_NAMES:
                 continue
             if any(part in OPTIONAL_DIRECTORIES for part in file.relative_to(source).parts[:-1]) and not matches_scope(relative, includes):
                 manifest["excluded"].append({"path": relative, "reason": "默认排除测试、示例或第三方源码，可明确包含"})
@@ -113,7 +114,8 @@ def create_snapshot(
             destination = target / relative
             destination.parent.mkdir(parents=True, exist_ok=True)
             destination.write_bytes(raw)
-            manifest["files"][relative] = {"hash": digest(raw), "size": len(raw), "text": text}
+            manifest["files"][relative] = {"hash": digest(raw), "size": len(raw), "text": text,
+                "kind": "source" if file.suffix.lower() in SOURCE_EXTENSIONS else "metadata"}
     manifest["hash"] = digest(
         json.dumps({key: value["hash"] for key, value in manifest["files"].items()}, sort_keys=True)
     )

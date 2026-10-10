@@ -29,8 +29,8 @@ def main():
     files = {
         "owned.py": 'raise RuntimeError("仅用于静态读取，不得执行")\ndef target(): return 1\ndef caller(): return target()\n',
         "owned.ts": 'throw new Error("仅用于静态读取，不得执行");\nexport function tsTarget(){return 1;}\nexport function tsCaller(){return tsTarget();}\n',
-        "owned.c": 'int cTarget(void){return 1;}\nint cCaller(void){return cTarget();}\n',
-        "owned.cpp": 'int cppTarget(){return 1;}\nint cppCaller(){return cppTarget();}\n',
+        "owned.c": '#include <stddef.h>\nint cTarget(void){return 1;}\nint cCaller(void){return cTarget();}\n',
+        "owned.cpp": '#include <vector>\nint cppTarget(){return 1;}\nint cppCaller(){std::vector<int> v{1};return cppTarget()+v[0];}\n',
     }
     for path, text in files.items():
         (source / path).write_text(text, encoding="utf-8", newline="")

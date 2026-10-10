@@ -13,7 +13,7 @@ from pathlib import Path, PurePosixPath
 from urllib.parse import urlsplit
 
 from .models import ImportRequest
-from .snapshots import SOURCE_EXTENSIONS, create_snapshot, read_snapshot
+from .snapshots import METADATA_NAMES, SOURCE_EXTENSIONS, create_snapshot, read_snapshot
 
 PUBLIC_GIT_HOSTS = {"github.com", "gitlab.com", "bitbucket.org", "codeberg.org"}
 PROXY_DNS_NETWORKS = (ipaddress.ip_network("198.18.0.0/15"), ipaddress.ip_network("2001:2::/48"))
@@ -122,7 +122,7 @@ def export_git(url: str, staging: Path) -> tuple[Path, dict]:
             if mode not in {b"100644", b"100755"} or kind != b"blob":
                 excluded.append({"path": relative, "reason": "未读取符号链接或 Git 子模块"})
                 continue
-            if PurePosixPath(relative).suffix.lower() not in SOURCE_EXTENSIONS:
+            if PurePosixPath(relative).suffix.lower() not in SOURCE_EXTENSIONS and parts[-1] not in METADATA_NAMES:
                 continue
             destination = source.joinpath(*parts)
             if not destination.resolve().is_relative_to(source.resolve()):

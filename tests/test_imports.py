@@ -113,7 +113,8 @@ def test_bare_object_export_does_not_checkout_follow_links_or_fetch_lfs(tmp_path
     lfs = b"version https://git-lfs.github.com/spec/v1\noid sha256:example\nsize 100\n"
     stream = b"commit refs/heads/main\ncommitter Test <test@example.invalid> 1 +0000\ndata 4\nTEST\n"
     for mode, name, raw in [("100644", "main.py", data), ("120000", "link.py", b"../../private.py"),
-                            ("100644", "lfs.ts", lfs)]:
+                            ("100644", "lfs.ts", lfs), ("100644", "compile_commands.json", b"[]"),
+                            ("100644", "README.md", b"owned metadata"), ("100755", "install.ps1", b"must never execute")]:
         stream += f"M {mode} inline {name}\ndata {len(raw)}\n".encode() + raw + b"\n"
     stream += b"\ndone\n"
     subprocess.run(git_command("--git-dir", str(repository), "fast-import", "--quiet"),
@@ -140,3 +141,6 @@ def test_bare_object_export_does_not_checkout_follow_links_or_fetch_lfs(tmp_path
     assert origin["commit"] == commit and origin["default_branch"] == "main"
     assert {item["path"] for item in origin["excluded"]} == {"link.py", "lfs.ts"}
     assert not (source / ".git").exists()
+    assert (source / "compile_commands.json").read_bytes() == b"[]"
+    assert (source / "README.md").read_bytes() == b"owned metadata"
+    assert not (source / "install.ps1").exists()
