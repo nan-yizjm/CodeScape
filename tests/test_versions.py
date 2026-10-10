@@ -71,6 +71,72 @@ def test_cpp_ast_identity_preserves_format_but_resets_tokens(tmp_path):
     assert not learning_mapping(old, changed)[0]
 
 
+def test_cpp_parser_name_correction_requires_identical_snapshot_and_unique_definition(tmp_path):
+    files = {'owned.cpp':'namespace api { int target(){return 1;} }\n'}
+    (tmp_path/'owned.cpp').write_text(files['owned.cpp'],encoding='utf-8')
+    old = cpp_analysis(tmp_path,files,'old')
+    new = cpp_analysis(tmp_path,files,'new')
+    old.entities[0].qualified_name = 'incorrect_return_type api::target'
+    assert not learning_mapping(old,new)[0]
+    mapping, report = learning_mapping(old,new,same_snapshot=True)
+    assert mapping == {old.entities[0].id:new.entities[0].id}
+    assert '解析名称修正' in report['mapping'][0]['reason']
+    for field,value in [('implementation_hash','changed'),('signature_key','changed')]:
+        changed = new.model_copy(deep=True)
+        setattr(changed.entities[0],field,value)
+        assert not learning_mapping(old,changed,same_snapshot=True)[0]
+    changed = new.model_copy(deep=True)
+    changed.entities[0].location.start_byte += 1
+    assert not learning_mapping(old,changed,same_snapshot=True)[0]
+    ambiguous = old.model_copy(deep=True)
+    ambiguous.entities.append(old.entities[0].model_copy(update={'id':'duplicate'}))
+    assert not learning_mapping(ambiguous,new,same_snapshot=True)[0]
+    # 同一旧身份有多个源码范围，逐项匹配不能复用上一个候选。
+    old_multiple = old.model_copy(deep=True)
+    new_multiple = new.model_copy(deep=True)
+    for analysis,suffix in [(old_multiple,'old2'),(new_multiple,'new2')]:
+        other = analysis.entities[0].model_copy(deep=True)
+        other.id = suffix
+        other.location.start_byte += 100
+        other.location.end_byte += 100
+        analysis.entities.append(other)
+    assert learning_mapping(old_multiple,new_multiple,same_snapshot=True)[0] == {
+        old.entities[0].id:new.entities[0].id,'old2':'new2'}
+
+
+def test_candidate_publication_keeps_learning_when_cpp_name_is_corrected(tmp_path,monkeypatch):
+    root,source = tmp_path/'data',tmp_path/'source'
+    source.mkdir()
+    text = 'namespace api { int target(){return 1;} }\n'
+    (source/'owned.cpp').write_bytes(text.encode('utf-8'))
+    async def fixed(self,analysis,files,**callbacks):
+        assert files['owned.cpp'] == text
+        return architecture(analysis),{}
+    monkeypatch.setattr(Provider,'architecture',fixed)
+    app = create_app(root,'test',architecture_runner=lambda provider,*args,**kwargs:provider.architecture(*args,**kwargs))
+    with TestClient(app) as client:
+        login(client,'test')
+        imported = client.post('/api/v1/imports',json={'path':str(source)}).json()['data']
+        url = f"/api/v1/projects/{imported['id']}"
+        old = wait_status(client,url,'indexed')
+        analysis = cpp_analysis(source,{'owned.cpp':text},old['version_id'])
+        entity = analysis.entities[0]
+        entity.qualified_name = 'incorrect_return_type api::target'
+        db = Database(root)
+        db.update(old['id'],result=analysis.model_dump(),architecture=architecture(analysis).model_dump(),status='ready')
+        assert client.put(url+'/learning/'+entity.id,json={'version_id':old['version_id'],
+            'state':'mastered','expected_revision':0}).status_code == 200
+        candidate = prepare(client,url)
+        client.post(url+'/consent',json={'accepted':True,'version_id':candidate['version_id']})
+        assert client.post(url+'/analyze',json={}).status_code == 200
+        result = wait_status(client,url,'ready')
+        current = next(item for item in result['analysis']['entities'] if item['qualified_name']=='api::target')
+        assert result['learning'][current['id']]['state'] == 'mastered'
+        assert result['migration_report']['kept_count'] == 1
+        assert (source/'owned.cpp').read_text(encoding='utf-8') == text
+        db.engine.dispose()
+
+
 def test_publish_latest_learning_old_source_and_reclaim(tmp_path, monkeypatch):
     root, source = tmp_path / "data", tmp_path / "source"
     source.mkdir()

@@ -1,0 +1,77 @@
+{
+  "日期": "2026-10-11",
+  "方式": "已经保存的固定 spdlog 同一快照解析结果，只读复核",
+  "旧工具": {
+    "python": "ast/3.12; conservative-bindings/1",
+    "cpp": "tree-sitter/0.25.2 + libclang/18.1.1 + snapshot-config/5"
+  },
+  "新工具": {
+    "python": "ast/3.12; conservative-bindings/1",
+    "cpp": "tree-sitter/0.25.2 + libclang/18.1.1 + snapshot-config/6"
+  },
+  "文件哈希完全一致": true,
+  "全部实体ID保持": 2147,
+  "仅旧身份策略可迁移": 273,
+  "同快照唯一声明策略可迁移": 1853,
+  "解析名称修正迁移": 1580,
+  "可见性修正": [
+    {
+      "旧名称": "FMT_CONSTEXPR static_format_result",
+      "新名称": "static_format_result",
+      "原因": "构造或析构",
+      "位置": {
+        "path": "include/spdlog/fmt/bundled/compile.h",
+        "start_line": 556,
+        "end_line": 560,
+        "start_byte": 19305,
+        "end_byte": 19542
+      }
+    }
+  ],
+  "歧义不迁移": [
+    {
+      "名称": "detail",
+      "位置": {
+        "path": "include/spdlog/fmt/bundled/color.h",
+        "start_line": 206,
+        "end_line": 233,
+        "start_byte": 9543,
+        "end_byte": 10492
+      }
+    },
+    {
+      "名称": "detail",
+      "位置": {
+        "path": "include/spdlog/fmt/bundled/color.h",
+        "start_line": 364,
+        "end_line": 495,
+        "start_byte": 14932,
+        "end_byte": 19508
+      }
+    },
+    {
+      "名称": "android_sink::android_log",
+      "位置": {
+        "path": "include/spdlog/sinks/android_sink.h",
+        "start_line": 76,
+        "end_line": 80,
+        "start_byte": 2430,
+        "end_byte": 2669
+      }
+    },
+    {
+      "名称": "android_sink::android_log",
+      "位置": {
+        "path": "include/spdlog/sinks/android_sink.h",
+        "start_line": 82,
+        "end_line": 86,
+        "start_byte": 2675,
+        "end_byte": 2922
+      }
+    }
+  ],
+  "固定响应集成检查": "test_versions.py 验证候选发布后 mastered 保持；不同快照、指纹、范围和歧义反例不迁移",
+  "真实模型请求": 0,
+  "执行目标代码": false,
+  "边界": "只覆盖同一快照及唯一范围/声明/实现指纹；不按名称猜测任意改名迁移"
+}

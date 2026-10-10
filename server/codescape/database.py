@@ -280,7 +280,10 @@ class Database:
                 raise ValueError("候选产物尚未安全保存，未发布。")
             value = candidate["value"]
             mapping, report = learning_mapping(Analysis.model_validate(old["result"] or {}),
-                                               Analysis.model_validate(value["result"]))
+                                               Analysis.model_validate(value["result"]),
+                same_snapshot=bool(old["snapshot"].get('hash'))
+                and old["snapshot"].get('hash') == value["snapshot"].get('hash')
+                and old["snapshot"].get('scope_hash') == value["snapshot"].get('scope_hash'))
             old_architecture = Architecture.model_validate(old["architecture"]) if old["architecture"] else None
             new_architecture = Architecture.model_validate(architecture)
             modules = module_mapping(old_architecture, new_architecture, mapping)
