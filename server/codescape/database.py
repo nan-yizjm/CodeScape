@@ -45,6 +45,7 @@ class Database:
             Column("architecture", JSON),
             Column("error", String),
             Column("demo", Integer, nullable=False, default=0),
+            Column("lifecycle", String, nullable=False, default="active", server_default="active"),
         )
         self.learning = Table(
             "prototype_learning",
@@ -88,6 +89,13 @@ class Database:
             Column("created_at", String, nullable=False),
             Column("value", JSON, nullable=False),
         )
+        self.operations = Table("operations", metadata,
+            Column("id", String, primary_key=True), Column("project_id", String, nullable=False),
+            Column("kind", String, nullable=False), Column("status", String, nullable=False),
+            Column("phase", String, nullable=False), Column("detail", String, nullable=False),
+            Column("created_at", String, nullable=False), Column("updated_at", String, nullable=False))
+        self.app_metadata = Table("application_metadata", metadata, Column("key", String, primary_key=True),
+                                  Column("value", JSON, nullable=False))
         try:
             migrate_database(root, metadata)
         except Exception:
@@ -101,6 +109,63 @@ class Database:
                 self.versions.c.status.in_(["draft", "paused", "failed"])
             ).order_by(self.versions.c.created_at.desc())).mappings().first()
             return dict(row) if row else None
+
+    def metadata_value(self, key: str, value=None):
+        with self.engine.begin() as connection:
+            previous = connection.execute(select(self.app_metadata.c.value).where(self.app_metadata.c.key == key)).first()
+            if value is None:
+                return previous[0] if previous else None
+            if previous:
+                connection.execute(self.app_metadata.update().where(self.app_metadata.c.key == key).values(value=value))
+            else:
+                connection.execute(self.app_metadata.insert().values(key=key, value=value))
+            return value
+
+    def operation(self, operation_id: str) -> dict | None:
+        with self.engine.connect() as connection:
+            row = connection.execute(select(self.operations).where(self.operations.c.id == operation_id)).mappings().first()
+            return dict(row) if row else None
+
+    def delete_operation(self, project_id: str) -> dict | None:
+        with self.engine.connect() as connection:
+            row = connection.execute(select(self.operations).where(self.operations.c.project_id == project_id,
+                self.operations.c.kind == "project_delete").order_by(self.operations.c.created_at.desc())).mappings().first()
+            return dict(row) if row else None
+
+    def begin_delete(self, project_id: str) -> dict:
+        import uuid
+        with self.engine.begin() as connection:
+            connection.exec_driver_sql("BEGIN IMMEDIATE")
+            project = connection.execute(select(self.projects).where(self.projects.c.id == project_id)).mappings().one_or_none()
+            previous = connection.execute(select(self.operations).where(self.operations.c.project_id == project_id,
+                self.operations.c.kind == "project_delete")).mappings().first()
+            if previous:
+                return dict(previous)
+            if not project:
+                raise ValueError("项目不存在。")
+            value = {"id": str(uuid.uuid4()), "project_id": project_id, "kind": "project_delete", "status": "pending",
+                     "phase": "cancel", "detail": "准备停止本项目任务", "created_at": now(), "updated_at": now()}
+            connection.execute(self.projects.update().where(self.projects.c.id == project_id).values(lifecycle="deleting"))
+            connection.execute(self.operations.insert().values(**value))
+            return value
+
+    def update_operation(self, operation_id: str, **value):
+        with self.engine.begin() as connection:
+            connection.execute(self.operations.update().where(self.operations.c.id == operation_id).values(**value, updated_at=now()))
+
+    def pending_deletes(self) -> list[dict]:
+        with self.engine.connect() as connection:
+            return [dict(row) for row in connection.execute(select(self.operations).where(
+                self.operations.c.kind == "project_delete", self.operations.c.status != "completed")).mappings()]
+
+    def finish_delete(self, operation_id: str, project_id: str):
+        with self.engine.begin() as connection:
+            connection.exec_driver_sql("BEGIN IMMEDIATE")
+            for table in [self.learning, self.sessions, self.analysis_tasks, self.jobs, self.versions]:
+                connection.execute(table.delete().where(table.c.project_id == project_id))
+            connection.execute(self.projects.delete().where(self.projects.c.id == project_id))
+            connection.execute(self.operations.update().where(self.operations.c.id == operation_id).values(
+                status="completed", phase="complete", detail="软件内项目数据已永久删除", updated_at=now()))
 
     def reclaimable_versions(self) -> list[dict]:
         with self.engine.connect() as connection:

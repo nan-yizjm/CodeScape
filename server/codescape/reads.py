@@ -41,6 +41,10 @@ class VersionReads:
             self.revoked.add(project)
             self.leases = {key: expiry for key, expiry in self.leases.items() if key[1] != project}
 
+    def project_busy(self, project: str) -> bool:
+        with self.lock:
+            return any(key[0] == project and count for key, count in self.readers.items())
+
     @contextmanager
     def read(self, project: str, version: str):
         key = project, version

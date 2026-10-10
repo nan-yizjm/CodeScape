@@ -103,6 +103,10 @@ class ImportRequest(Contract):
     includes: list[str] = Field(default_factory=list)
 
 
+class ProjectDeleteRequest(Contract):
+    confirm: bool = Field(strict=True)
+
+
 class AISettings(Contract):
     base_url: str = "https://api.deepseek.com"
     model: str = ""

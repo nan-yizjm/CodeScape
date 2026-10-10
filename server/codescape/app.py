@@ -19,6 +19,7 @@ from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 
 from .analyzers import REPOSITORY, analyze, stable_id
 from .database import Database, now
+from .deletion import ProjectDeletion
 from .imports import ImportService, remove_staging
 from .learning import learning_units
 from .lifecycle import ClientLifetime
@@ -30,6 +31,7 @@ from .models import (
     LearningRequest,
     Module,
     Overview,
+    ProjectDeleteRequest,
     SessionRequest,
 )
 from .provider import Provider, ProviderError, validate_architecture
@@ -57,6 +59,7 @@ def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=
     closing = False
     run_lock = asyncio.Lock()
     queue = TaskQueue(database, run_lock)
+    deletion = ProjectDeletion(root, database, queue, reads)
     consents_path = root / "consents.json"
 
     def issue_nonce() -> str:
@@ -76,6 +79,8 @@ def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=
         project = database.get(project_id)
         if not project:
             raise HTTPException(404, "项目不存在。")
+        if project.get("lifecycle", "active") != "active":
+            raise HTTPException(410, {"code": "PROJECT_DELETING", "message": "项目正在删除或等待重试，不能继续读写。"})
         return project
 
     def envelope(data):
@@ -94,7 +99,7 @@ def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=
             "name": project["name"],
             "source": project["source"],
             "created_at": project["created_at"],
-            "status": project["status"],
+            "status": project.get("lifecycle") if project.get("lifecycle", "active") != "active" else project["status"],
             "version_id": project["version_id"],
             "demo": bool(project["demo"]),
             "error": project["error"],
@@ -106,6 +111,8 @@ def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=
             "has_architecture": bool(project["architecture"]),
             "analysis_progress": database.analysis_progress(project["id"]),
             "origin": project["snapshot"].get("origin", {"kind": "local"}),
+            "lifecycle": project.get("lifecycle", "active"),
+            "delete_operation": database.delete_operation(project["id"]) if project.get("lifecycle", "active") != "active" else None,
         }
         if full:
             candidate = database.candidate(project["id"])
@@ -134,7 +141,10 @@ def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=
         return response
 
     def seed():
+        if database.metadata_value("seed_initialized"):
+            return
         if any(project["demo"] for project in database.list_projects()):
+            database.metadata_value("seed_initialized", True)
             return
         project_id = str(uuid.uuid4())
         version_id = str(uuid.uuid4())
@@ -189,11 +199,14 @@ def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=
                 "demo": 1,
             }
         )
+        database.metadata_value("seed_initialized", True)
 
     @asynccontextmanager
     async def lifespan(_):
         imports.cleanup()
         seed()
+        for operation in database.pending_deletes():
+            deletion.start(operation["project_id"])
         app.state.ready_event.set()
         async def watch_clients():
             nonlocal closing
@@ -213,6 +226,7 @@ def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=
             monitor.cancel()
             await asyncio.gather(monitor, return_exceptions=True)
         await queue.shutdown()
+        await deletion.shutdown()
         database.engine.dispose()
 
     def cleanup_versions():
@@ -223,7 +237,7 @@ def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=
 
     def reclaim_version(version):
         project = database.get(version["project_id"])
-        if not project or project["version_id"] == version["id"]:
+        if not project or project.get("lifecycle", "active") != "active" or project["version_id"] == version["id"]:
             return
         manifest = version["value"].get("snapshot")
         if not manifest or project["snapshot"]["id"] == manifest["id"]:
@@ -387,6 +401,24 @@ def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=
     async def project(project_id: str):
         return envelope(public(get_project(project_id), True))
 
+    @app.delete("/api/v1/projects/{project_id}", status_code=202)
+    async def delete_project(project_id: str, body: ProjectDeleteRequest):
+        if body.confirm is not True:
+            raise HTTPException(422, "需要明确确认永久删除软件内项目数据。")
+        if not database.get(project_id) and not database.delete_operation(project_id):
+            raise HTTPException(404, "项目不存在。")
+        try:
+            return envelope(deletion.start(project_id))
+        except ValueError:
+            raise HTTPException(409, "项目删除状态已经改变，请刷新。") from None
+
+    @app.get("/api/v1/operations/{operation_id}")
+    async def operation(operation_id: str):
+        value = database.operation(operation_id)
+        if not value:
+            raise HTTPException(404, "操作不存在。")
+        return envelope(value)
+
     async def index_project(project_id: str, candidate_id: str | None = None):
         project = get_project(project_id)
         if candidate_id:
@@ -531,6 +563,8 @@ def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=
 
     @app.get("/api/v1/projects/{project_id}/files/{file_id}")
     async def file(project_id: str, file_id: str, version_id: str, request: Request):
+        if project_id in reads.revoked:
+            raise HTTPException(410, {"code": "PROJECT_DELETING", "message": "项目已开始删除，不能继续读取。"})
         with reads.read(project_id, version_id):
             project = get_project(project_id)
             if version_id != project["version_id"]:

@@ -86,3 +86,19 @@ def test_missing_current_schema_table_is_not_silently_recreated(tmp_path):
         Database(tmp_path)
     with sqlite3.connect(tmp_path / "app.db") as connection:
         assert not connection.execute("SELECT name FROM sqlite_master WHERE name='prototype_learning'").fetchall()
+
+
+def test_schema_one_upgrade_adds_delete_lifecycle_without_losing_learning(tmp_path):
+    legacy(tmp_path)
+    with sqlite3.connect(tmp_path / "app.db") as connection:
+        connection.execute("DROP TABLE operations")
+        connection.execute("DROP TABLE application_metadata")
+        connection.execute("ALTER TABLE prototype_projects DROP COLUMN lifecycle")
+        connection.execute("CREATE TABLE alembic_version (version_num VARCHAR(32) PRIMARY KEY)")
+        connection.execute("INSERT INTO alembic_version VALUES ('cs_0001')")
+        connection.execute("PRAGMA user_version=1")
+    upgraded = Database(tmp_path)
+    assert upgraded.get("p")["lifecycle"] == "active"
+    assert upgraded.states("p")["f"]["state"] == "mastered"
+    assert upgraded.operation("missing") is None
+    upgraded.engine.dispose()

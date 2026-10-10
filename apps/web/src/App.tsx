@@ -1,7 +1,7 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, ArrowRight, BookOpen, Boxes, ChevronRight, Code2, Download, FolderOpen, GitBranch,
   Info, Layers3, Plus, Settings2, ShieldCheck, Sparkles, X, Check, AlertTriangle, Circle, FileCode2,
-  Activity, Braces, ExternalLink, ArrowUpRight, Maximize2, Minimize2, ListOrdered, Pause, Play, Square, ArrowUp, ArrowDown } from 'lucide-react';
+  Activity, Braces, ExternalLink, ArrowUpRight, Maximize2, Minimize2, ListOrdered, Pause, Play, Square, ArrowUp, ArrowDown, Trash2 } from 'lucide-react';
 import type { Viewport } from '@xyflow/react';
 import { api, ApiError, bootstrap, keepalive, pageClientId } from './api';
 import { OverviewPanel } from './OverviewPanel';
@@ -12,7 +12,7 @@ const Canvas = lazy(() => import('./Canvas').then(module => ({ default: module.C
 const SourceReader = lazy(() => import('./SourceReader').then(module => ({ default: module.SourceReader })));
 
 const statuses: Record<string, string> = { ready: '可以探索', indexed: '静态索引就绪', indexing: '正在解析',
-  queued: '等待解析', waiting: '等待主动启动', analyzing: 'AI 分析中', paused: '分析已暂停', failed: '解析失败', cancelled: '任务已取消' };
+  queued: '等待解析', waiting: '等待主动启动', analyzing: 'AI 分析中', paused: '分析已暂停', failed: '解析失败', cancelled: '任务已取消', deleting:'正在删除', delete_failed:'删除失败，可重试' };
 const taskLabels: Record<string, string> = { waiting: '等待启动', running: '运行中', paused: '已暂停',
   cancelled: '已取消', completed: '已完成', failed: '失败' };
 const stateLabels = { not_started: '未开始', in_progress: '学习中', mastered: '已掌握', not_applicable: '不适用' };
@@ -29,7 +29,9 @@ export default function App() {
   const [source, setSource] = useState<SourceFile | null>(null);
   const [expandedEvidence, setExpandedEvidence] = useState<Record<string, boolean>>({});
   const [viewports, setViewports] = useState<Record<string, Viewport>>({});
-  const [modal, setModal] = useState<'import' | 'settings' | 'consent' | 'tasks' | null>(null);
+  const [modal, setModal] = useState<'import' | 'settings' | 'consent' | 'tasks' | 'delete' | null>(null);
+  const [deletionTarget, setDeletionTarget] = useState<Project | null>(null);
+  const [deleteOperation, setDeleteOperation] = useState<{id:string; status:string; detail:string} | null>(null);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [busy, setBusy] = useState(false);
@@ -65,6 +67,33 @@ export default function App() {
     const [nextProjects, nextTasks] = await Promise.all([api<Project[]>('/projects'), api<AnalysisTask[]>('/tasks')]);
     setProjects(nextProjects); setAnalysisTasks(nextTasks);
   }
+  async function deleteProject() {
+    if (!deletionTarget) return;
+    setBusy(true); setError('');
+    try {
+      const operation = await api<{id:string; status:string; detail:string}>(`/projects/${deletionTarget.id}`, {confirm:true}, 'DELETE');
+      setDeleteOperation(operation); setModal(null);
+      if (project?.id === deletionTarget.id) {setProject(null);setPanels([]);}
+      setDeletionTarget(null); await refresh();
+    } catch (problem) {setError((problem as Error).message);}
+    finally {setBusy(false);}
+  }
+  useEffect(() => {
+    if (!deleteOperation) return;
+    let active = true;
+    const check = async () => {
+      try {
+        const operation = await api<{id:string; status:string; detail:string}>(`/operations/${deleteOperation.id}`);
+        if (!active) return;
+        if (operation.status === 'completed' || operation.status === 'failed') {
+          setDeleteOperation(null); await refresh();
+          if (operation.status === 'completed') setNotice('软件内项目数据已永久删除。'); else setError(operation.detail);
+        }
+      } catch (problem) {if (active) setError((problem as Error).message);}
+    };
+    void check(); const timer = setInterval(() => void check(), 2000);
+    return () => {active=false;clearInterval(timer);};
+  }, [deleteOperation?.id]);
   async function taskAction(task: AnalysisTask, action: 'start' | 'pause' | 'cancel') {
     setBusy(true); setError('');
     try {
@@ -168,7 +197,9 @@ export default function App() {
     const timer = setInterval(() => {
       api<Project[]>('/projects').then(next => {
         setProjects(next);
-        if (project && next.some(item => item.id === project.id && item.version_id !== project.version_id)) {
+        if (project && !next.some(item => item.id === project.id)) {
+          setProject(null); setPanels([]); setNotice('这个学习项目已被删除。');
+        } else if (project && next.some(item => item.id === project.id && item.version_id !== project.version_id)) {
           void openProject(project.id); setNotice('新版本已发布，已切换到对应图与源码。');
         }
       }).catch(() => {});
@@ -457,7 +488,7 @@ export default function App() {
           <div className="library-heading"><div className="library-intro"><div className="eyebrow"><span className="eyebrow-dot" />你的代码学习空间</div><h1>看见结构，<br />读懂代码<span className="heading-period">。</span></h1><p>从项目全景到一行源码，让每一次探索都有迹可循。</p><div className="hero-actions"><button className="primary-button" onClick={() => beginImport()} disabled={!authorized}><Plus size={17} />导入项目<ArrowUpRight size={17} /></button><span>本地优先 · 自由探索</span></div></div><LibraryArtwork /></div>
           <div className="library-summary"><div className="summary-metric"><strong>{String(projects.length).padStart(2, '0')}</strong><span>学习项目<small>本地项目</small></span></div><div className="summary-metric"><strong>{projects.reduce((sum, item) => sum + item.file_count, 0)}</strong><span>源码文件<small>静态快照</small></span></div><div className="summary-metric"><strong>{projects.reduce((sum, item) => sum + item.function_count, 0)}</strong><span>已识别函数<small>可探索实体</small></span></div><span className="summary-end"><ShieldCheck size={15} />数据在本机，关系有出处</span></div>
           <div className="section-heading"><div><h2>你的项目</h2><span className="section-count">{String(projects.length).padStart(2, '0')}</span></div><span>按最近导入排序</span></div>
-          <div className="project-grid">{projects.map((item, index) => <button className="project-card" key={item.id} onClick={() => void openProject(item.id)}><div className="card-top"><span className="card-number">{String(index + 1).padStart(2, '0')}<span> / 项目</span></span><span className={`pill ${item.status === 'ready' ? 'ready' : ''}`}><span />{statuses[item.status] || item.status}</span></div><span className="project-icon"><GitBranch size={24} /></span><h3>{item.name}</h3><p className="card-source" title={item.source}>{item.source}</p><div className="language-chips">{item.languages.map(language => <span key={language}>{language === 'python' ? 'Python' : language === 'typescript' ? 'TypeScript' : language === 'cpp' ? 'C++' : 'C'}</span>)}{item.demo && <span className="sample-chip">预置样例</span>}</div><div className="card-stats"><span><FileCode2 size={14} />{item.file_count} 个文件</span><span><Braces size={14} />{item.function_count} 个函数</span></div><div className="learning-progress"><span style={{ width: `${item.progress.total ? item.progress.mastered / item.progress.total * 100 : 0}%` }} /></div><div className="card-footer"><span>{item.progress.total ? <><strong>{item.progress.mastered}</strong> / {item.progress.total} 已掌握</> : '暂无可统计学习内容'}</span><span className="card-open"><ArrowUpRight size={17} /></span></div></button>)}
+          <div className="project-grid">{projects.map((item, index) => <div className="project-card-shell" key={item.id}><button className="project-card" disabled={item.lifecycle === 'deleting' || item.lifecycle === 'delete_failed'} onClick={() => void openProject(item.id)}><div className="card-top"><span className="card-number">{String(index + 1).padStart(2, '0')}<span> / 项目</span></span><span className={`pill ${item.status === 'ready' ? 'ready' : ''}`}><span />{statuses[item.status] || item.status}</span></div><span className="project-icon"><GitBranch size={24} /></span><h3>{item.name}</h3><p className="card-source" title={item.source}>{item.source}</p><div className="language-chips">{item.languages.map(language => <span key={language}>{language === 'python' ? 'Python' : language === 'typescript' ? 'TypeScript' : language === 'cpp' ? 'C++' : 'C'}</span>)}{item.demo && <span className="sample-chip">预置样例</span>}</div><div className="card-stats"><span><FileCode2 size={14} />{item.file_count} 个文件</span><span><Braces size={14} />{item.function_count} 个函数</span></div><div className="learning-progress"><span style={{ width: `${item.progress.total ? item.progress.mastered / item.progress.total * 100 : 0}%` }} /></div><div className="card-footer"><span>{item.progress.total ? <><strong>{item.progress.mastered}</strong> / {item.progress.total} 已掌握</> : '暂无可统计学习内容'}</span><span className="card-open"><ArrowUpRight size={17} /></span></div></button><button className="project-delete-button" aria-label={`${item.lifecycle === 'delete_failed' ? '重试删除' : '删除项目'} ${item.name}`} disabled={item.lifecycle === 'deleting'} onClick={() => {setError('');setDeletionTarget(item);setModal('delete');}}><Trash2 size={16}/></button></div>)}
             <button aria-label="添加项目" className="add-project-card" onClick={() => beginImport()}><span><Plus size={24} /></span><strong>下一个项目，<br />新的视野。</strong><p>导入本地源码，开始你的探索</p><span className="add-project-action">添加项目<ArrowUpRight size={15} /></span></button>
           </div>
           <div className="prototype-note"><Info size={17} /><div><strong>关于这个开发预览</strong><p>预置模块由人工划分，调用来自静态解析。导入自己的项目后，可授权 AI 生成架构。</p></div><span>M0 开发预览</span></div><div className="library-footer"><span>复杂的代码，也可以有清晰的轮廓。</span><span>CODESCAPE / 源境</span></div>
@@ -502,7 +533,8 @@ export default function App() {
       </main>
     </div>
     {notice && <div className="toast" role="status"><Check size={16} />{notice}</div>}
-    {modal && <div className="modal-backdrop" onClick={event => { if (event.target === event.currentTarget && !busy) setModal(null); }}><section ref={modalRef} className={`modal ${modal === 'tasks' ? 'task-modal' : ''}`} role="dialog" aria-modal="true" aria-label={{ import: '导入项目', settings: 'AI 服务设置', consent: '源码上传授权', tasks: '分析任务' }[modal]}><div className="modal-heading"><span className="modal-icon">{modal === 'import' ? <FolderOpen size={22} /> : modal === 'settings' ? <Settings2 size={22} /> : modal === 'tasks' ? <ListOrdered size={22} /> : <ShieldCheck size={22} />}</span><button className="tiny-icon" aria-label="关闭对话框" onClick={() => !busy && setModal(null)}><X size={19} /></button></div>{error && <div className="modal-error" role="alert"><AlertTriangle size={15} />{error}</div>}
+    {modal && <div className="modal-backdrop" onClick={event => { if (event.target === event.currentTarget && !busy) setModal(null); }}><section ref={modalRef} className={`modal ${modal === 'tasks' ? 'task-modal' : ''}`} role="dialog" aria-modal="true" aria-label={{ import: '导入项目', settings: 'AI 服务设置', consent: '源码上传授权', tasks: '分析任务', delete: '永久删除学习项目' }[modal]}><div className="modal-heading"><span className="modal-icon">{modal === 'import' ? <FolderOpen size={22} /> : modal === 'settings' ? <Settings2 size={22} /> : modal === 'tasks' ? <ListOrdered size={22} /> : modal === 'delete' ? <Trash2 size={22}/> : <ShieldCheck size={22} />}</span><button className="tiny-icon" aria-label="关闭对话框" onClick={() => !busy && setModal(null)}><X size={19} /></button></div>{error && <div className="modal-error" role="alert"><AlertTriangle size={15} />{error}</div>}
+      {modal === 'delete' && deletionTarget && <><h2>{deletionTarget.lifecycle === 'delete_failed' ? '重试删除学习项目' : '永久删除学习项目'}</h2><p>确认删除「{deletionTarget.name}」在 CodeScape 保存的分析结果、源码快照、学习进度、探索记录和关联任务。正在运行的该项目任务会被取消。</p><div className="privacy-note"><AlertTriangle size={17}/>此操作无法撤销。原始源码目录和其他学习项目不会被删除。</div><div className="modal-actions"><button className="secondary-button" disabled={busy} onClick={() => setModal(null)}>取消</button><button className="primary-button danger" disabled={busy} onClick={() => void deleteProject()}>{busy ? '正在提交…' : '确认永久删除'}</button></div></>}
       {modal === 'tasks' && <><h2>安排你的分析</h2><p>同时运行一个任务。完成后留在当前结果，下一项由你主动启动。</p>
         <div className="task-list">{analysisTasks.filter(task => ['waiting', 'running', 'paused'].includes(task.status)).map(task => {
           const waiting = analysisTasks.filter(item => item.status === 'waiting');

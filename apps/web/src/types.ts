@@ -16,6 +16,7 @@ export type Module = { id: string; parent_id: string | null; name: string; summa
   code_paths: string[]; incomplete: boolean };
 export type Overview = { introduction: string; capabilities: string[]; principle: string; limitations: string[]; synthesized?: boolean; analysis_notes?: string[] };
 export type Project = { id: string; name: string; source: string; created_at: string; status: string;
+  lifecycle?: string; delete_operation?: {id:string; status:string; detail:string} | null;
   version_id: string; demo: boolean; error: string | null; function_count: number; file_count: number;
   progress: { mastered: number; total: number }; languages: string[]; diagnostic_count: number;
   has_architecture: boolean; analysis_progress?: { phase: string; completed: number; total: number; detail: string } | null };

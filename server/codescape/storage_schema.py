@@ -9,8 +9,9 @@ from alembic import command
 from alembic.config import Config
 from sqlalchemy import create_engine, inspect
 
-SCHEMA_VERSION = 1
-SCHEMA_REVISION = "cs_0001"
+SCHEMA_VERSION = 2
+SCHEMA_REVISION = "cs_0002"
+KNOWN_REVISIONS = {"cs_0001": 1, "cs_0002": 2}
 _migration_lock = threading.RLock()
 
 
@@ -48,7 +49,7 @@ def migrate_database(root: Path, metadata):
             raise StorageError("数据库文件不在应用数据目录内，已停止启动。")
         existing = path.exists()
         version, revision, tables = check_database(path) if existing else (0, None, set())
-        if version > SCHEMA_VERSION or revision not in {None, SCHEMA_REVISION}:
+        if version > SCHEMA_VERSION or revision not in {None, *KNOWN_REVISIONS}:
             raise StorageError("数据库来自更新版本的 CodeScape，请使用相应版本；不会自动降级。")
         if version == SCHEMA_VERSION:
             if revision != SCHEMA_REVISION:
@@ -59,7 +60,8 @@ def migrate_database(root: Path, metadata):
             finally:
                 engine.dispose()
             return
-        if revision is not None or tables - set(metadata.tables) - {"alembic_version", "sqlite_sequence"}:
+        if ((version == 0 and revision is not None) or (version and KNOWN_REVISIONS.get(revision) != version)
+                or tables - set(metadata.tables) - {"alembic_version", "sqlite_sequence"}):
             raise StorageError("无法识别旧数据库结构，已停止升级；原数据保持不变。")
         backup = None
         if existing:
@@ -76,7 +78,7 @@ def migrate_database(root: Path, metadata):
         engine = create_engine(f"sqlite:///{path.as_posix()}")
         try:
             # Old prototype tables must have their known columns before any DDL.
-            validate_tables(engine, metadata, existing_only=True)
+            validate_tables(engine, metadata, existing_only=True, previous_version=version)
             config = Config()
             config.set_main_option("script_location", str(Path(__file__).with_name("migrations")))
             config.attributes["metadata"] = metadata
@@ -116,7 +118,7 @@ def migrate_database(root: Path, metadata):
                     continue
 
 
-def validate_tables(bind, metadata, existing_only=False):
+def validate_tables(bind, metadata, existing_only=False, previous_version=SCHEMA_VERSION):
     inspector = inspect(bind)
     available = set(inspector.get_table_names())
     for name, table in metadata.tables.items():
@@ -125,5 +127,8 @@ def validate_tables(bind, metadata, existing_only=False):
                 continue
             raise StorageError("数据库缺少预期数据表，已停止启动。")
         actual = {column["name"] for column in inspector.get_columns(name)}
-        if not {column.name for column in table.columns}.issubset(actual):
+        expected = {column.name for column in table.columns}
+        if existing_only and previous_version < 2 and name == "prototype_projects":
+            expected.discard("lifecycle")
+        if not expected.issubset(actual):
             raise StorageError("数据库字段与预期不一致，已停止升级。")

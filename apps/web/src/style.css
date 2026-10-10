@@ -369,6 +369,13 @@ h1 { font-size: 29px; font-weight: 650; line-height: 1.25; letter-spacing: -1px;
 .map-node.external-node { border: 1px dashed var(--node-accent); background: var(--node-bg); }
 .edge-evidence-label { position: absolute; pointer-events: all; padding: 4px 7px; border: 1px solid #dfe3eb; border-radius: 7px; background: #f8f9fd; color: #626b78; font-size: 10px; cursor: pointer; white-space: nowrap; }
 .edge-evidence-label:hover, .edge-evidence-label:focus-visible { color: #19243b; border-color: #9ca9c0; outline: 2px solid #dce4f5; outline-offset: 2px; }
+.project-card-shell { position: relative; min-width: 0; }
+.project-card-shell .project-card { width: 100%; height: 100%; }
+.project-card-shell .card-open { margin-right: 34px; }
+.project-delete-button { position: absolute; right: 20px; bottom: 17px; width: 30px; height: 30px; display: grid; place-items: center; border: 1px solid #e5e5e5; border-radius: 9px; background: #fff; color: #777; cursor: pointer; }
+.project-delete-button:hover { color: #ab3844; border-color: #e7bdc2; background: #fff7f8; }
+.project-delete-button:disabled { opacity: .4; cursor: default; }
+.primary-button.danger { background: #9f3440; }
 .module-container { background: linear-gradient(145deg, #ffffffb3, #ffffff35), var(--node-bg); border-style: solid; border-width: 1.5px; padding: 22px 25px; }
 .module-container .node-hit-area { height: 140px; bottom: auto; }
 .module-container > p { max-width: 460px; height: 26px; -webkit-line-clamp: 1; }
