@@ -53,6 +53,9 @@ def python_analysis(files: dict[str, str], version: str) -> Analysis:
             )
             continue
         imports[path] = {}
+        result.file_hashes[path] = digest(ast.dump(tree, include_attributes=False))
+        if tree.body:
+            result.readable_paths.append(path)
         unstable[path] = set()
 
         def module_bindings(item: ast.AST) -> None:
@@ -347,6 +350,9 @@ def cpp_analysis(root: Path, files: dict[str, str], version: str) -> Analysis:
                 return [node.type, node_bytes(node).decode()]
             children = [value for child in node.children if (value := semantic_tree(child)) is not None]
             return [node.type, children if children else node_bytes(node).decode()]
+        result.file_hashes[path] = digest(json.dumps(semantic_tree(parsed.root_node)))
+        if any(child.type != "comment" for child in parsed.root_node.named_children):
+            result.readable_paths.append(path)
         if parsed.root_node.has_error:
             result.diagnostics.append(
                 Diagnostic(category="parse_failed", path=path, message="部分语法无法识别。")
@@ -602,6 +608,8 @@ def analyze(root: Path, files: dict[str, str], version: str) -> Analysis:
         combined.calls += result.calls
         combined.diagnostics += result.diagnostics
         combined.tools.update(result.tools)
+        combined.file_hashes.update(result.file_hashes)
+        combined.readable_paths.extend(result.readable_paths)
     for entity in combined.entities:
         entity.unresolved_count = sum(
             call.caller_scope_id == entity.scope_id and call.resolution in {"unresolved", "excluded_indirect"}

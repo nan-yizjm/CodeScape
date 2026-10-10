@@ -6,6 +6,7 @@ from pathlib import Path
 
 from sqlalchemy import JSON, Column, Integer, MetaData, String, Table, create_engine, event, select
 
+from .learning import learning_units, module_learning_mapping
 from .migration import learning_mapping, module_mapping
 from .models import Analysis, Architecture
 
@@ -147,8 +148,39 @@ class Database:
             value = candidate["value"]
             mapping, report = learning_mapping(Analysis.model_validate(old["result"] or {}),
                                                Analysis.model_validate(value["result"]))
-            modules = module_mapping(Architecture.model_validate(old["architecture"]) if old["architecture"] else None,
-                                     Architecture.model_validate(architecture), mapping)
+            old_architecture = Architecture.model_validate(old["architecture"]) if old["architecture"] else None
+            new_architecture = Architecture.model_validate(architecture)
+            modules = module_mapping(old_architecture, new_architecture, mapping)
+            module_map = module_learning_mapping(old_architecture, new_architecture,
+                Analysis.model_validate(old["result"] or {}), Analysis.model_validate(value["result"]),
+                old["snapshot"], value["snapshot"])
+            previous_modules = [unit for unit in learning_units(Analysis.model_validate(old["result"] or {}),
+                                old_architecture, old["snapshot"]["files"]) if unit["kind"] == "module"]
+            new_modules = [unit for unit in learning_units(Analysis.model_validate(value["result"]),
+                           new_architecture, value["snapshot"]["files"]) if unit["kind"] == "module"]
+            mapping.update(module_map)
+            report["module_learning"] = {"kept_count": len(module_map),
+                "reset_or_added_count": len(new_modules) - len(module_map),
+                "removed_or_changed_count": len(previous_modules) - len(module_map)}
+            old_leaf_by_id = {module.id: module for module in old_architecture.modules} if old_architecture else {}
+            new_leaf_by_id = {module.id: module for module in new_architecture.modules}
+            matched_old = set(module_map)
+            for unit in new_modules:
+                module = new_leaf_by_id[unit["source_id"]]
+                candidates = [before for before in previous_modules
+                              if old_leaf_by_id[before["source_id"]].name == module.name and
+                              set(old_leaf_by_id[before["source_id"]].code_paths) == set(module.code_paths)]
+                old_id = candidates[0]["id"] if len(candidates) == 1 else None
+                kept = unit["id"] in module_map.values()
+                report["mapping"].append({"new_id": unit["id"], "old_id": old_id, "kept": kept,
+                    "reason": "代码集合、职责归属与指纹一致" if kept else "模块内容、职责归属变化或匹配不唯一"})
+                if old_id:
+                    matched_old.add(old_id)
+                report["kept_count"] += int(kept)
+                report["reset_count"] += int(not kept and old_id is not None)
+                report["added_count"] += int(old_id is None)
+            report["removed_count"] += len({unit["id"] for unit in previous_modules} - matched_old)
+            modules.update({old_id.removeprefix("module:"): new_id.removeprefix("module:") for old_id, new_id in module_map.items()})
             # Read the latest learning state inside the publication transaction.
             states = list(connection.execute(select(self.learning).where(self.learning.c.project_id == project_id)).mappings())
             old["learning"] = {row["entity_id"]: {"state": row["state"], "revision": row["revision"]} for row in states}

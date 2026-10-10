@@ -1,4 +1,4 @@
-import type { LearningState, Module, Point, ProjectDetail, Projection, ProjectionNode, Relation } from './types';
+import type { AggregateState, Module, Point, ProjectDetail, Projection, ProjectionNode, Relation } from './types';
 
 export const modulePalette = [
   { background: '#edf2ff', border: '#cbd7f5', accent: '#405ea9' },
@@ -222,10 +222,26 @@ export function abstractModules(modules: Module[]): Module[] {
   return compactAbstractChildren(result);
 }
 
-export function aggregateState(states: LearningState[]): LearningState {
-  if (!states.length || states.every(state => state === 'not_started')) return 'not_started';
+export function aggregateState(values: AggregateState[]): AggregateState {
+  const states = values.filter(state => state !== 'not_applicable');
+  if (!states.length) return 'not_applicable';
+  if (states.every(state => state === 'not_started')) return 'not_started';
   if (states.every(state => state === 'mastered')) return 'mastered';
   return 'in_progress';
+}
+
+export function moduleLearningIds(module: Module, project: ProjectDetail, modules = project.architecture?.modules || []): string[] {
+  const children = modules.filter(child => child.parent_id === module.id);
+  if (children.length) return [...new Set(children.flatMap(child => moduleLearningIds(child, project, modules)))];
+  const visible = new Set(project.analysis.entities.filter(entity => entity.visible).map(entity => entity.id));
+  const functions = module.entity_ids.filter(id => visible.has(id));
+  if (functions.length) return functions;
+  const id = project.learning_entities?.find(unit => unit.kind === 'module' && unit.source_id === module.id)?.id;
+  return id ? [id] : [];
+}
+
+export function moduleLearningState(module: Module, project: ProjectDetail, modules = project.architecture?.modules || []): AggregateState {
+  return aggregateState(moduleLearningIds(module, project, modules).map(id => project.learning[id]?.state || 'not_started'));
 }
 
 export function projectGraph(project: ProjectDetail, focus: string | null, options: { expandedModuleId?: string | null; showOtherModules?: boolean } = {}): Projection {
@@ -306,7 +322,7 @@ export function projectGraph(project: ProjectDetail, focus: string | null, optio
   const moduleNodes: ProjectionNode[] = displayed.map(module => {
     const entityIds = moduleEntities(module, modules);
     return { id: module.id, label: module.name, description: module.summary, kind: 'module', module,
-      count: entityIds.length, state: aggregateState(entityIds.map(id => project.learning[id]?.state || 'not_started')),
+      count: entityIds.length, state: moduleLearningState(module, project, modules),
       incomplete: module.incomplete, sibling: functions && siblings.some(item => item.id === module.id),
       external: functions && module.id !== active.id && !siblings.some(item => item.id === module.id), tone: modules.indexOf(module),
       parentId: !functions && module.parent_id && displayed.some(item => item.id === module.parent_id) ? module.parent_id : undefined,
@@ -402,7 +418,7 @@ export function exportSvg(projection: Projection, title: string): string {
       <text x="${node.x + 20}" y="${node.y + 52}" font-size="16" font-weight="600" fill="#202020">${escapeXml(node.label)}</text>
       <text x="${node.x + 20}" y="${node.y + 80}" font-size="13" fill="#666666">${description}</text>
       ${node.kind === 'module' && node.internalRelationCount ? `<text x="${node.x + 20}" y="${node.y + 132}" font-size="10" fill="${palette.accent}">内部依赖 ${node.internalRelationCount}</text>` : ''}
-      <text x="${node.x + node.width - 20}" y="${node.y + (node.container ? 115 : node.height - 15)}" text-anchor="end" font-size="10" fill="#555555">${node.state === 'mastered' ? '已掌握' : node.state === 'in_progress' ? '学习中' : '未开始'}</text>
+      <text x="${node.x + node.width - 20}" y="${node.y + (node.container ? 115 : node.height - 15)}" text-anchor="end" font-size="10" fill="#555555">${node.state === 'mastered' ? '已掌握' : node.state === 'in_progress' ? '学习中' : node.state === 'not_applicable' ? '不适用' : '未开始'}</text>
       ${node.incomplete ? `<text x="${node.x + node.width - 22}" y="${node.y + 24}" fill="#9c6b32">!</text>` : ''}</g>`;
   }).join('');
   return `<?xml version="1.0" encoding="UTF-8"?><svg xmlns="http://www.w3.org/2000/svg" viewBox="${left} ${top} ${right - left} ${bottom - top}" role="img"><title>${escapeXml(title)}</title><defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 Z" fill="#929292"/></marker></defs><rect x="${left}" y="${top}" width="${right - left}" height="${bottom - top}" fill="#fafafa"/><g font-family="Microsoft YaHei, PingFang SC, sans-serif">${shapes}${edges}</g></svg>`;

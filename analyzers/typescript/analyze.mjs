@@ -37,7 +37,7 @@ for (const source of program.getSourceFiles()) {
   }
   bindings(source);
 }
-const result = {entities: [], scopes: [], calls: [], diagnostics: [], tools: {typescript: `compiler-api/${ts.version}`}};
+const result = {entities: [], scopes: [], calls: [], diagnostics: [], file_hashes: {}, readable_paths: [], tools: {typescript: `compiler-api/${ts.version}`}};
 const ids = new Map();
 const calls = [];
 const makeId = (...items) => crypto.createHash('sha256').update([input.version, ...items].join(':')).digest('hex').slice(0, 32);
@@ -103,6 +103,8 @@ for (const source of program.getSourceFiles()) {
     ts.forEachChild(node, child => visit(child, scopeId, names, nested));
   }
   visit(source, rootId, [], false);
+  result.file_hashes[relative] = crypto.createHash('sha256').update(JSON.stringify(semanticTree(source, source))).digest('hex');
+  if (source.statements.length) result.readable_paths.push(relative);
   for (const diagnostic of program.getSyntacticDiagnostics(source)) result.diagnostics.push({
     category: 'parse_failed', path: relative,
     line: source.getLineAndCharacterOfPosition(diagnostic.start || 0).line + 1,

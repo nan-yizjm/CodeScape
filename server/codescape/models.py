@@ -67,6 +67,8 @@ class Analysis(Contract):
     calls: list[Call] = Field(default_factory=list)
     diagnostics: list[Diagnostic] = Field(default_factory=list)
     tools: dict[str, str] = Field(default_factory=dict)
+    file_hashes: dict[str, str] = Field(default_factory=dict)
+    readable_paths: list[str] = Field(default_factory=list)
 
 
 class Module(Contract):

@@ -20,6 +20,7 @@ from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from .analyzers import REPOSITORY, analyze, stable_id
 from .database import Database, now
 from .imports import ImportService, remove_staging
+from .learning import learning_units
 from .lifecycle import ClientLifetime
 from .models import (
     AISettings,
@@ -81,9 +82,11 @@ def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=
     def public(project: dict, full: bool = False):
         analysis = Analysis.model_validate(project["result"]) if project["result"] else Analysis()
         visible = [entity for entity in analysis.entities if entity.visible]
+        architecture = Architecture.model_validate(project["architecture"]) if project["architecture"] else None
+        units = learning_units(analysis, architecture, project["snapshot"]["files"])
         states = database.states(project["id"])
-        total = len(visible)
-        mastered = sum(states.get(entity.id, {}).get("state") == "mastered" for entity in visible)
+        total = len(units)
+        mastered = sum(states.get(unit["id"], {}).get("state") == "mastered" for unit in units)
         response = {
             "id": project["id"],
             "name": project["name"],
@@ -93,7 +96,7 @@ def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=
             "version_id": project["version_id"],
             "demo": bool(project["demo"]),
             "error": project["error"],
-            "function_count": total,
+            "function_count": len(visible),
             "file_count": len(project["snapshot"]["files"]),
             "progress": {"mastered": mastered, "total": total},
             "languages": sorted({entity.language for entity in visible}),
@@ -113,6 +116,7 @@ def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=
                         path: stable_id(project["version_id"], path) for path in project["snapshot"]["files"]
                     },
                     "learning": states,
+                    "learning_entities": units,
                     "candidate": {"version_id": candidate["id"], "status": candidate["status"],
                                   "file_count": len(candidate["value"]["snapshot"]["files"]),
                                   "origin": candidate["value"]["snapshot"].get("origin", {}),
@@ -522,8 +526,9 @@ def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=
         if body.version_id != project["version_id"]:
             raise HTTPException(409, "学习状态版本已经改变，请刷新。")
         result = Analysis.model_validate(project["result"] or {})
-        if not any(entity.id == entity_id and entity.visible for entity in result.entities):
-            raise HTTPException(422, "该对象不是可学习的函数。")
+        architecture = Architecture.model_validate(project["architecture"]) if project["architecture"] else None
+        if not any(unit["id"] == entity_id for unit in learning_units(result, architecture, project["snapshot"]["files"])):
+            raise HTTPException(422, "该对象不可学习；父模块、空模块和不完整占位不能手动标记。")
         try:
             state = database.set_learning(
                 project_id, entity_id, body.version_id, body.state, body.expected_revision

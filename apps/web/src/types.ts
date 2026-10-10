@@ -1,4 +1,5 @@
 export type LearningState = 'not_started' | 'in_progress' | 'mastered';
+export type AggregateState = LearningState | 'not_applicable';
 export type AnalysisTask = { id: string; project_id: string; project_name: string; kind: 'index' | 'architecture' | 'reanalysis';
   status: string; position: number; version_id: string; created_at: string; updated_at: string; detail: string;
   progress: { phase: string; completed: number; total: number; detail: string } | null };
@@ -24,6 +25,7 @@ export type ProjectDetail = Project & { file_ids: Record<string, string>; analys
   tools: Record<string, string> };
   architecture: { modules: Module[]; overview: Overview } | null;
   learning: Record<string, { state: LearningState; revision: number }>;
+  learning_entities?: {id: string; kind: 'function' | 'module'; source_id: string}[];
   candidate?: { version_id: string; status: string; file_count: number; excluded: {path: string; reason: string}[]; origin: {commit?: string} } | null;
   migration_report?: { kept_count: number; reset_count: number; added_count: number; removed_count: number } | null;
   scope: { excluded: { path: string; reason: string }[]; snapshot_id: string; includes?: string[]; excludes?: string[] } };
@@ -31,9 +33,9 @@ export type SourceFile = { path: string; text: string; version_id: string; hash:
 export type Point = { x: number; y: number };
 export type Relation = { id: string; from: string; to: string; label: string; calls: Call[]; points?: Point[] };
 export type Panel = { kind: 'overview' } | { kind: 'module'; module: Module } | { kind: 'function'; entity: Entity }
-  | { kind: 'relation'; relation: Relation } | { kind: 'source'; entity: Entity; location: Location }
+  | { kind: 'relation'; relation: Relation } | { kind: 'source'; entity?: Entity; location: Location }
   | { kind: 'diagnostics' };
 export type ProjectionNode = { id: string; label: string; description: string; kind: 'module' | 'function';
-  entity?: Entity; module?: Module; count: number; state: LearningState; incomplete: boolean; external: boolean;
+  entity?: Entity; module?: Module; count: number; state: AggregateState; incomplete: boolean; external: boolean;
   tone?: number; sibling?: boolean; parentId?: string; container?: boolean; canExpand?: boolean; expanded?: boolean; internalRelationCount?: number; shownCount?: number; x: number; y: number; width: number; height: number };
 export type Projection = { nodes: ProjectionNode[]; relations: Relation[]; hiddenModuleCount?: number; otherModuleCount?: number; abstraction?: boolean };

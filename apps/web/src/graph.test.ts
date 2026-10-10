@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { abstractModules, aggregateState, edgePath, exportSvg, projectGraph } from './graph';
+import { abstractModules, aggregateState, edgePath, exportSvg, moduleLearningState, projectGraph } from './graph';
 import { layoutCompound, layoutHierarchy, verticalFallback } from './layout';
 import ELK from 'elkjs/lib/elk.bundled.js';
 import type { ProjectDetail, ProjectionNode } from './types';
@@ -339,9 +339,25 @@ describe('基于证据生成图形', () => {
     expect(grouped.every(module => !/采集与信源\s*\d+$/.test(module.name))).toBe(true);
   });
   it('聚合状态涵盖空模块和混合掌握情况', () => {
-    expect(aggregateState([])).toBe('not_started');
+    expect(aggregateState([])).toBe('not_applicable');
+    expect(aggregateState(['not_applicable', 'mastered'])).toBe('mastered');
     expect(aggregateState(['mastered', 'not_started'])).toBe('in_progress');
     expect(aggregateState(['mastered', 'mastered'])).toBe('mastered');
+  });
+  it('无函数可信叶模块可学习，父级排除占位和空集合', () => {
+    const project = fixture();
+    project.architecture!.modules = [
+      {id: 'parent', parent_id: null, name: '配置域', summary: '管理配置', entity_ids: [], code_paths: ['a.py'], incomplete: false},
+      {id: 'configuration', parent_id: 'parent', name: '配置', summary: '加载配置', entity_ids: [], code_paths: ['a.py'], incomplete: false},
+      {id: 'unknown', parent_id: 'parent', name: '未知', summary: '待复核', entity_ids: [], code_paths: ['a.py'], incomplete: true},
+    ];
+    project.learning_entities = [{id: 'module:configuration', kind: 'module', source_id: 'configuration'}];
+    project.learning['module:configuration'] = {state: 'mastered', revision: 1};
+    expect(moduleLearningState(project.architecture!.modules[0], project)).toBe('mastered');
+    expect(moduleLearningState(project.architecture!.modules[2], project)).toBe('not_applicable');
+    expect(projectGraph(project, null).nodes[0].state).toBe('mastered');
+    project.learning_entities = [];
+    expect(moduleLearningState(project.architecture!.modules[0], project)).toBe('not_applicable');
   });
   it('导出包含画布外节点并转义不可信文本', () => {
     const nodes: ProjectionNode[] = projectGraph(fixture(), 'm').nodes.map((node, index) => ({ ...node,
