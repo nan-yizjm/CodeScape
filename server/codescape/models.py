@@ -53,6 +53,8 @@ class Call(Contract):
     resolution: Literal["confirmed", "unresolved", "excluded_indirect", "external"] = "unresolved"
     spelling_location: Location | None = None
     expansion_location: Location | None = None
+    kind: Literal["direct", "interface"] = "direct"
+    interface_evidence: list[Location] = Field(default_factory=list)
     origin: Literal["static", "ai_source_judgment"] = "static"
     reason: str = ""
     target_name: str | None = None

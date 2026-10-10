@@ -23,6 +23,11 @@ button { transition: background .18s, color .18s, border-color .18s, box-shadow 
 h1, h2, h3, p { margin: 0; }
 svg { flex-shrink: 0; }
 small { font-size: 12px; color: var(--muted); }
+.resource-error { display:grid; place-items:center; width:100%; min-height:220px; padding:28px; }
+.resource-error.full-page { min-height:100vh; }
+.resource-error-card { max-width:440px; display:grid; gap:18px; padding:32px; border:1px solid var(--line); border-radius:24px; background:#fff; box-shadow:0 12px 40px #20202008; }
+.resource-error-card p { color:var(--muted); line-height:1.8; }
+.resource-error-card button { justify-self:start; }
 code { font-family: 'Cascadia Code', Consolas, monospace; font-size: 13px; }
 input, textarea { width: 100%; border: 1px solid var(--line-strong); border-radius: 8px; background: #fff; padding: 12px 13px; color: var(--ink); }
 input::placeholder, textarea::placeholder { color: #aaa; }

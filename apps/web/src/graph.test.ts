@@ -427,4 +427,18 @@ describe('基于证据生成图形', () => {
     expect(svg).not.toContain('<script>');
     expect(svg).toContain('项目 &amp; 标题');
   });
+
+  it('跨语言接口只投影模块协作，不冒充同模块直接函数调用', () => {
+    const project = fixture();
+    project.analysis.calls = [{...project.analysis.calls[0],kind:'interface',interface_evidence:[project.analysis.entities[0].location]}];
+    const base = project.architecture!.modules[0];
+    project.architecture!.modules = [{...base,id:'python',entity_ids:['f']},{...base,id:'native',entity_ids:['g']}];
+    expect(projectGraph(project,null).relations).toHaveLength(1);
+    expect(projectGraph(project,'python').nodes.find(node=>node.id==='f')?.external).toBe(false);
+    const peerView = projectGraph(project,'python',{showOtherModules:true});
+    expect(peerView.relations.map(relation=>[relation.from,relation.to])).toEqual([['python','native']]);
+    project.architecture!.modules = [{...base,entity_ids:['f','g']}];
+    expect(projectGraph(project,'m').relations).toHaveLength(0);
+    expect(projectGraph(project,'m').nodes.filter(node=>node.kind==='function')).toHaveLength(2);
+  });
 });

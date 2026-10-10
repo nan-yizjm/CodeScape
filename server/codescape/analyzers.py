@@ -451,6 +451,7 @@ def _cpp_analysis(root, files, version, source_root, header_directories, header_
                     parts[-1].startswith("~")
                     or bool(parents and name == parents[-1])
                     or (len(parts) > 1 and parts[-1] == parts[-2])
+                    or name == 'PYBIND11_MODULE'
                 )
                 signature = node_bytes(declarator).decode() if declarator else name
                 entity = Entity(
@@ -463,7 +464,7 @@ def _cpp_analysis(root, files, version, source_root, header_directories, header_
                     location=location,
                     scope_id=stable_id(entity_id, "scope"),
                     visible=not hidden,
-                    hidden_reason="构造或析构" if hidden else None,
+                    hidden_reason=("宏注册入口" if name == 'PYBIND11_MODULE' else "构造或析构") if hidden else None,
                     implementation_hash=digest(json.dumps(semantic_tree(implementation))),
                     condition=condition,
                 )
@@ -814,4 +815,11 @@ def analyze(root: Path, files: dict[str, str], version: str, source_root: str | 
             call.caller_scope_id == entity.scope_id and call.resolution in {"unresolved", "excluded_indirect"}
             for call in combined.calls
         )
+    from .bridges import pybind_interfaces
+    combined.calls.extend(pybind_interfaces(files,combined))
+    families = {'python' if Path(path).suffix == '.py' else 'typescript' if Path(path).suffix in {'.ts','.tsx'}
+        else 'native' for path in combined.readable_paths}
+    if len(families) > 1:
+        combined.diagnostics.append(Diagnostic(category='interface_boundary',message=
+            '跨语言接口当前仅确认受限 pybind11 显式注册契约；其他机制、动态加载及运行时行为未确认，不按同名或字符串猜测关联。'))
     return combined

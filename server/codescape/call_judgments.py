@@ -26,7 +26,7 @@ def validate_judgments(architecture, analysis, allowed_calls, files, supplied):
                 or call.caller_scope_id not in scopes or not judgment.reason.strip()):
             raise ValueError("调用判断引用错误或重复")
         seen.add(call.id)
-        if call.resolution not in {"confirmed", "unresolved"}:
+        if call.kind != 'direct' or call.resolution not in {"confirmed", "unresolved"}:
             raise ValueError("间接调用或范围外目标不能升级为直接调用")
         if call.expansion_location and not call.spelling_location:
             raise ValueError("宏调用缺少唯一拼写位置，不能升级为直接调用")

@@ -297,7 +297,7 @@ export function projectGraph(project: ProjectDetail, focus: string | null, optio
   const siblings = functions ? modules.filter(module => module.id !== active.id && module.parent_id === active.parent_id) : [];
   const contextModules = siblings;
   // 函数层始终只展示当前模块的实现，跨模块调用使用存在性标记。
-  const crossModuleCallers = new Set(project.analysis.calls.filter(call => call.resolution === 'confirmed' &&
+  const crossModuleCallers = new Set(project.analysis.calls.filter(call => call.kind !== 'interface' && call.resolution === 'confirmed' &&
     call.target_id && !active?.entity_ids.includes(call.target_id) &&
     sourceModules.some(module => module.entity_ids.includes(call.target_id!))).map(call => call.caller_scope_id));
   const functionNodes: ProjectionNode[] = functionExpanded ? visible.filter(entity => active.entity_ids.includes(entity.id)).map(entity => ({
@@ -366,22 +366,31 @@ export function projectGraph(project: ProjectDetail, focus: string | null, optio
     return path ? pathOwners.get(path) || undefined : undefined;
   };
   const grouped = new Map<string, Relation>();
+  const nodeRecords = new Map(nodes.map(node=>[node.id,node]));
+  const moduleBoundary = (id: string | undefined) => {
+    const node = id ? nodeRecords.get(id) : undefined;
+    return node?.kind === 'function' ? node.parentId : id;
+  };
   const internalRelationCounts = new Map<string, number>();
   for (const call of project.analysis.calls) {
     if (call.resolution !== 'confirmed' || !call.target_id) continue;
     const fromEntity = scopes.get(call.caller_scope_id);
-    const from = functions ? fromEntity && owner.get(fromEntity) : scopeOwner(call.caller_scope_id);
+    const from = functions && call.kind !== 'interface' ? fromEntity && owner.get(fromEntity) :
+      call.kind === 'interface' ? moduleBoundary(scopeOwner(call.caller_scope_id)) : scopeOwner(call.caller_scope_id);
     const target = allEntities.get(call.target_id);
-    const to = owner.get(call.target_id) || (!functions && target ? scopeOwner(target.scope_id) : undefined);
+    const concreteTarget = owner.get(call.target_id) || (!functions && target ? scopeOwner(target.scope_id) : undefined);
+    const to = call.kind === 'interface' ? moduleBoundary(concreteTarget) : concreteTarget;
+    if (functions && call.kind === 'interface' && from === to) continue;
     // In a compact source-domain overview, retain a self-loop as an honest
     // signal that the visible domain contains internal dependencies. The
     // concrete module/function view continues to hide same-module calls.
     if (!from || !to || (!functions && from === to && !abstracted)) continue;
-    if (functions && !active.entity_ids.includes(fromEntity || '') && !active.entity_ids.includes(call.target_id)) continue;
+    if (functions && call.kind !== 'interface' && !active.entity_ids.includes(fromEntity || '') && !active.entity_ids.includes(call.target_id)) continue;
     const key = `${from}->${to}`;
-    const label = functions ? '' : from === to ? '域内依赖' : '调用协作';
+    const label = call.kind === 'interface' && from !== to ? '接口协作' : functions ? '' : from === to ? '域内依赖' : '调用协作';
     if (!grouped.has(key)) grouped.set(key, { id: key, from, to, label, calls: [] });
     grouped.get(key)!.calls.push(call);
+    if (grouped.get(key)!.calls.some(item=>item.kind==='interface') && grouped.get(key)!.calls.some(item=>item.kind!=='interface')) grouped.get(key)!.label='协作关系';
     if (from === to) internalRelationCounts.set(from, (internalRelationCounts.get(from) || 0) + 1);
   }
   const selections = project.architecture?.primary_dependencies || [];
@@ -459,7 +468,7 @@ export function exportSvg(projection: Projection, title: string): string {
     const from = byId.get(relation.from)!, to = byId.get(relation.to)!;
     const path = edgePath(from, to, relation.points);
     const label = from.kind === 'module' && to.kind === 'module' ? relationLabelPoint(relation.points) : undefined;
-    return `<path d="${path}" fill="none" stroke="#f8f9fd" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/><path data-relation-id="${escapeXml(relation.id)}" d="${path}" fill="none" stroke="#929292" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow)"/>${label ? `<rect x="${label.x - 27}" y="${label.y - 10}" width="54" height="20" rx="7" fill="#f8f9fd" stroke="#dfe3eb"/><text x="${label.x}" y="${label.y + 4}" text-anchor="middle" font-size="10" fill="#626b78">调用协作</text>` : ''}`;
+    return `<path d="${path}" fill="none" stroke="#f8f9fd" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/><path data-relation-id="${escapeXml(relation.id)}" d="${path}" fill="none" stroke="#929292" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow)"/>${label ? `<rect x="${label.x - 27}" y="${label.y - 10}" width="54" height="20" rx="7" fill="#f8f9fd" stroke="#dfe3eb"/><text x="${label.x}" y="${label.y + 4}" text-anchor="middle" font-size="10" fill="#626b78">${escapeXml(relation.label || '调用协作')}</text>` : ''}`;
   }).join('');
   const textLines = (text: string, width: number, fontSize: number, limit: number): string[] => {
     const lines: string[] = []; let line = '', used = 0;

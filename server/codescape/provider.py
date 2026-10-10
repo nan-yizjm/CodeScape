@@ -23,7 +23,7 @@ from .security import CredentialStore
 
 MAX_CONTEXT_CHARS = 180_000
 BATCH_TARGET_CHARS = 150_000
-PIPELINE_VERSION = "architecture/2-explanations/1-reads/1-judgments/1-dependencies/1-cpp-config/4"
+PIPELINE_VERSION = "architecture/2-explanations/1-reads/1-judgments/1-dependencies/1-cpp-config/4-interfaces/1"
 ProgressCallback = Callable[[int, int, str], Awaitable[None]]
 BatchCallback = Callable[[int, int, Architecture], Awaitable[None]]
 
@@ -363,6 +363,7 @@ class Provider:
         ]
         payload = {
             "entities": [entity.model_dump() for entity in local_entities],
+            "relation_policy": "kind=interface 是有注册与使用双侧源码依据的模块接口契约；不属于普通直接函数调用，不得重写成 call_judgment。其他关系保留其静态或 AI 判断来源。",
             "related_entities": related,
             "scopes": [scope.model_dump() for scope in local_scopes],
             "calls": [call.model_dump() for call in calls],

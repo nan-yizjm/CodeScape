@@ -1049,6 +1049,9 @@ def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=
         target = (dist / path).resolve()
         if target.is_relative_to(dist.resolve()) and target.is_file():
             return FileResponse(target)
+        if path.startswith('assets/'):
+            return JSONResponse({'message':'页面资源已更新，请刷新后重试。'},status_code=404,
+                headers={'Cache-Control':'no-store'})
         if (dist / "index.html").exists():
             return FileResponse(dist / "index.html")
         return JSONResponse({"message": "前端尚未构建，请先执行 npm run build。"}, status_code=503)

@@ -45,7 +45,7 @@ function RoutedEdge(props: EdgeProps) {
     {labelPoint && from.kind === 'module' && to.kind === 'module' && <EdgeLabelRenderer><button
       className="edge-evidence-label nodrag nopan" aria-label={`查看 ${from.label} → ${to.label} 调用证据`}
       style={{opacity: dimmed ? .2 : 1, transform: `translate(-50%, -50%) translate(${labelPoint.x}px, ${labelPoint.y}px)`}}
-      onClick={event => {event.stopPropagation(); (props.data?.open as (() => void))();}}>调用协作</button></EdgeLabelRenderer>}</>;
+      onClick={event => {event.stopPropagation(); (props.data?.open as (() => void))();}}>{String(props.data?.label || '调用协作')}</button></EdgeLabelRenderer>}</>;
 }
 
 const nodeTypes = { map: MapNode };
@@ -199,7 +199,7 @@ export function Canvas({ projection, onNode, onInfo, onRelation, onLayout, onVie
     const byId = new Map(positioned.map(node => [node.id, node]));
     return (layout?.relations || []).filter(relation => relation.from !== relation.to || byId.get(relation.from)?.kind === 'function').map(relation => ({ id: relation.id, source: relation.from, target: relation.to,
       ariaLabel: `${byId.get(relation.from)?.label} → ${byId.get(relation.to)?.label}，查看调用证据`,
-      type: 'routed', markerEnd: { type: MarkerType.ArrowClosed, color: '#89919d' }, data: { from: byId.get(relation.from), to: byId.get(relation.to), points: relation.points, dimmed: !!preview && relation.from !== preview.id && relation.to !== preview.id,
+      type: 'routed', markerEnd: { type: MarkerType.ArrowClosed, color: '#89919d' }, data: { from: byId.get(relation.from), to: byId.get(relation.to), points: relation.points, label: projection.relations.find(item=>item.id===relation.id)?.label || relation.label, dimmed: !!preview && relation.from !== preview.id && relation.to !== preview.id,
         open: () => onRelation(projection.relations.find(item => item.id === relation.id) || relation) } }));
   }, [positioned, layout, projection, onRelation, preview?.id]);
   if (!layout || layoutStructure !== structure) return <div className="canvas-loading"><span className="spinner" />正在组织架构布局…</div>;
@@ -211,7 +211,7 @@ export function Canvas({ projection, onNode, onInfo, onRelation, onLayout, onVie
     onMoveEnd={(_, value) => onViewport(value)} deleteKeyCode={null} colorMode="light" ariaLabelConfig={{ 'controls.ariaLabel': '画布控制', 'controls.zoomIn.ariaLabel': '放大', 'controls.zoomOut.ariaLabel': '缩小', 'controls.fitView.ariaLabel': '适应画布' }}>
     <Background color="#dedede" gap={22} size={.8} /><Controls showInteractive={false} fitViewOptions={fitOptions} />
     <ReadingScale nodes={positioned} initialReading={!viewport && nodes.length>200} />
-    <Panel position="top-left"><div className="graph-view-options">{projection.nodes.some(node => node.kind === 'function') ? <span>函数调用图 · 全部确认调用</span> : <>
+    <Panel position="top-left"><div className="graph-view-options">{projection.nodes.some(node => node.kind === 'function') ? <span>{projection.relations.some(relation => relation.label === '接口协作' || relation.label === '协作关系') ? '函数与接口关系' : '函数调用图'} · 全部确认关系</span> : <>
       <label htmlFor="dependency-mode">依赖</label><select id="dependency-mode" value={dependencyMode} onChange={event => onDependencyMode(event.target.value as 'primary' | 'all')}><option value="primary">主要协作</option><option value="all">全部确认依赖</option></select>
       <span>{projection.hiddenRelationCount ? `隐藏 ${projection.hiddenRelationCount} 条` : projection.primaryFallback ? '未筛选 · 全部显示' : '全部可见'}</span></>}</div></Panel>
     {preview && <div className="module-hover-preview" role="status"><strong>{preview.label}</strong><p>{preview.description}</p><small>直接关联 {new Set(projection.relations.filter(item => item.from !== item.to && (item.from === preview.id || item.to === preview.id)).map(item => item.from === preview.id ? item.to : item.from)).size} 个模块{projection.hiddenRelationCount ? ' · 基于当前筛选' : ''}</small></div>}

@@ -27,6 +27,13 @@ def client(tmp_path):
         yield value
 
 
+def test_missing_asset_does_not_return_successful_spa_html(client):
+    response = client.get('/assets/not-existing-preview-resource.js')
+    assert response.status_code == 404
+    assert response.headers['cache-control'] == 'no-store'
+    assert response.headers['content-type'].startswith('application/json')
+
+
 def test_auth_origin_csrf_and_nonce(tmp_path):
     with TestClient(create_app(tmp_path, "nonce")) as client:
         assert client.get("/api/v1/projects").status_code == 401
