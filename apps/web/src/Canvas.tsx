@@ -34,11 +34,14 @@ function RoutedEdge(props: EdgeProps) {
   const from = props.data?.from as ProjectionNode | undefined, to = props.data?.to as ProjectionNode | undefined;
   if (!from || !to) return null;
   const internal = from.id === to.id;
-  return <BaseEdge id={props.id} path={edgePath(from, to, props.data?.points as Point[] | undefined)} markerEnd={props.markerEnd} style={{ stroke: internal ? '#b9c0ca' : '#89919d', strokeWidth: internal ? 1.2 : 1.5, strokeDasharray: internal ? '4 4' : undefined, opacity: internal ? .72 : .9 }} interactionWidth={12} />;
+  const path = edgePath(from, to, props.data?.points as Point[] | undefined);
+  return <><path d={path} fill="none" stroke="#f8f9fd" strokeWidth={6} strokeLinecap="round" strokeLinejoin="round" pointerEvents="none" />
+    <BaseEdge id={props.id} path={path} markerEnd={props.markerEnd} style={{ stroke: internal ? '#b9c0ca' : '#89919d', strokeWidth: internal ? 1.2 : 1.5, strokeLinecap: 'round', strokeLinejoin: 'round', strokeDasharray: internal ? '4 4' : undefined, opacity: internal ? .72 : .9 }} interactionWidth={12} /></>;
 }
 
 const nodeTypes = { map: MapNode };
 const edgeTypes = { routed: RoutedEdge };
+const fitOptions = { padding: { top: '76px', bottom: '64px', left: '48px', right: '32px' }, maxZoom: 1 } as const;
 
 function ReadingScale({ nodes }: { nodes: ProjectionNode[] }) {
   const { setViewport, getViewport, viewportInitialized } = useReactFlow();
@@ -63,8 +66,8 @@ function ReadingScale({ nodes }: { nodes: ProjectionNode[] }) {
       pending = requestAnimationFrame(() => {
         const minX = Math.min(...nodes.map(node => node.x)), maxX = Math.max(...nodes.map(node => node.x + node.width));
         const minY = Math.min(...nodes.map(node => node.y)), maxY = Math.max(...nodes.map(node => node.y + node.height));
-        const zoom = Math.max(.08, Math.min(1, width / (maxX - minX) * .85, height / (maxY - minY) * .85));
-        void setViewport({ x: width / 2 - (minX + maxX) / 2 * zoom, y: height / 2 - (minY + maxY) / 2 * zoom, zoom },
+        const zoom = Math.max(.08, Math.min(1, Math.max(1, width - 80) / (maxX - minX), Math.max(1, height - 140) / (maxY - minY)));
+        void setViewport({ x: width / 2 + 8 - (minX + maxX) / 2 * zoom, y: height / 2 + 6 - (minY + maxY) / 2 * zoom, zoom },
           { duration: resized && !matchMedia('(prefers-reduced-motion: reduce)').matches ? 250 : 0 });
       });
     });
@@ -109,7 +112,7 @@ export function Canvas({ projection, onNode, onInfo, onRelation, onLayout, onVie
         });
       }
       const result = await elk.layout<ElkNode>({ id: 'root', layoutOptions: { ...orthogonalOptions, 'elk.padding': '[top=0,left=0,bottom=0,right=0]' },
-        children: boxes.map(box => ({ ...box, layoutOptions: { 'elk.portConstraints': 'FIXED_ORDER' }, ports: edges.flatMap(edge => [
+        children: boxes.map(box => ({ ...box, layoutOptions: { 'elk.portConstraints': 'FIXED_SIDE' }, ports: edges.flatMap(edge => [
           ...(edge.from === box.id ? [{ id: `${edge.id}:out`, width: 0, height: 0, layoutOptions: { 'elk.port.side': 'SOUTH' } }] : []),
           ...(edge.to === box.id ? [{ id: `${edge.id}:in`, width: 0, height: 0, layoutOptions: { 'elk.port.side': 'NORTH' } }] : []),
         ]) })), edges: edges.map(edge => ({ id: edge.id, sources: [`${edge.id}:out`], targets: [`${edge.id}:in`] })) });
@@ -147,10 +150,10 @@ export function Canvas({ projection, onNode, onInfo, onRelation, onLayout, onVie
   if (!layout || layoutStructure !== structure) return <div className="canvas-loading"><span className="spinner" />正在组织架构布局…</div>;
   return <ReactFlowProvider><ReactFlow key={structure} nodes={nodes} edges={edges} nodeTypes={nodeTypes} edgeTypes={edgeTypes}
     onNodeClick={(_, node) => onNode(node.data.node)} onEdgeClick={(_, edge) => { const relation = projection.relations.find(item => item.id === edge.id); if (relation) onRelation(relation); }}
-    fitView={!viewport} defaultViewport={viewport} fitViewOptions={{ padding: .18, maxZoom: 1 }}
+    fitView={!viewport} defaultViewport={viewport} fitViewOptions={fitOptions}
     nodesDraggable={false} nodesConnectable={false} nodesFocusable={false} elementsSelectable={false} minZoom={.08} maxZoom={2}
     onMoveEnd={(_, value) => onViewport(value)} deleteKeyCode={null} colorMode="light" ariaLabelConfig={{ 'controls.ariaLabel': '画布控制', 'controls.zoomIn.ariaLabel': '放大', 'controls.zoomOut.ariaLabel': '缩小', 'controls.fitView.ariaLabel': '适应画布' }}>
-    <Background color="#dedede" gap={22} size={.8} /><Controls showInteractive={false} />
+    <Background color="#dedede" gap={22} size={.8} /><Controls showInteractive={false} fitViewOptions={fitOptions} />
     <ReadingScale nodes={positioned} />
     <div className="canvas-label"><span className="canvas-label-dot" />{projection.nodes.some(node => node.kind === 'function') ? '函数调用图' : '语义模块图'}</div>
     <div className="canvas-legend"><span><Circle size={9} />未开始</span><span><span className="learning-dot" />学习中</span><span><Check size={12} />已掌握</span></div>

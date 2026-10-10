@@ -1,10 +1,12 @@
 import type { Point, Projection, ProjectionNode } from './types';
 import type { ElkNode } from 'elkjs/lib/elk-api';
+import { routeDependencies } from './routing';
 
 export const orthogonalOptions = {
   'elk.algorithm': 'layered', 'elk.direction': 'DOWN', 'elk.edgeRouting': 'ORTHOGONAL',
   'elk.spacing.nodeNode': '64', 'elk.spacing.edgeEdge': '18', 'elk.layered.spacing.edgeEdgeBetweenLayers': '18',
   'elk.layered.spacing.nodeNodeBetweenLayers': '96', 'elk.layered.mergeEdges': 'false',
+  'elk.layered.mergeHierarchyEdges': 'false',
 };
 
 /** Route cross-container edges with their real endpoints in one compound graph. */
@@ -14,7 +16,7 @@ export async function layoutCompound(projection: Projection, arrange: (graph: El
   function children(parentId?: string): ElkNode[] {
     return projection.nodes.filter(node => node.parentId === parentId).map(node => ({
       id: node.id, width: node.width, height: node.height,
-      layoutOptions: { ...orthogonalOptions, 'elk.portConstraints': 'FIXED_ORDER',
+      layoutOptions: { ...orthogonalOptions, 'elk.portConstraints': 'FIXED_SIDE',
         'elk.padding': node.container ? '[top=164,left=32,bottom=32,right=32]' : '[top=0,left=0,bottom=0,right=0]' },
       ports: edges.flatMap(edge => [
         ...(edge.from === node.id ? [{ id: `${edge.id}:out`, width: 0, height: 0, layoutOptions: { 'elk.port.side': 'SOUTH' } }] : []),
@@ -39,10 +41,10 @@ export async function layoutCompound(projection: Projection, arrange: (graph: El
       points: edge.sections?.flatMap(section => [section.startPoint, ...(section.bendPoints || []), section.endPoint]) || [] });
   }
   visit(result, { x: 0, y: 0 });
-  return { ...projection, nodes: projection.nodes.map(node => positioned.get(node.id)!), relations: projection.relations.map(edge => {
+  return routeDependencies({ ...projection, nodes: projection.nodes.map(node => positioned.get(node.id)!), relations: projection.relations.map(edge => {
     const route = routed.get(edge.id), container = route && positioned.get(route.container);
     return { ...edge, points: route?.points.map(point => ({ x: point.x + (container?.x || 0), y: point.y + (container?.y || 0) })) };
-  }) };
+  }) });
 }
 
 type Box = { id: string; width: number; height: number; x?: number; y?: number };

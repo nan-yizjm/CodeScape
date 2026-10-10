@@ -47,7 +47,7 @@ export default function App() {
   const activeModule = modules.find(module => module.id === focus);
   const projection = useMemo(() => project ? projectGraph(project, focus, { expandedModuleId: expandedModule, showOtherModules }) : { nodes: [], relations: [] }, [project, focus, expandedModule, showOtherModules]);
   const isFunctions = !!activeModule && !modules.some(module => module.parent_id === focus);
-  const viewportKey = `${isFunctions ? 'grouped-functions' : 'vertical'}:${focus || 'root'}:${expandedModule || 'collapsed'}:${showOtherModules ? 'all' : 'focused'}:v2`;
+  const viewportKey = `${isFunctions ? 'grouped-functions' : 'vertical'}:${focus || 'root'}:${expandedModule || 'collapsed'}:${showOtherModules ? 'all' : 'focused'}:v3`;
   const confirmedCount = project?.analysis.calls.filter(call => call.resolution === 'confirmed').length || 0;
 
   async function refresh() { setProjects(await api<Project[]>('/projects')); }

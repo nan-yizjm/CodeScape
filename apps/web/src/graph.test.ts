@@ -226,6 +226,42 @@ describe('基于证据生成图形', () => {
       expect(edge.points!.at(-1)!.y).toBe(target.y);
     }
   });
+  it('多路跨层汇入和扇出分别走线，没有斜线、共线重叠或穿卡片', async () => {
+    const base = projectGraph(fixture(), 'm').nodes[0];
+    const box = (id: string, parentId?: string): ProjectionNode => ({ ...base, id, parentId, container: id === 'routes', width: 300, height: 204 });
+    const nodes = [box('routes'), ...['management', 'collection', 'publication', 'presentation', 'intelligence'].map(id => box(id, 'routes')), box('http'), box('app')];
+    const pairs = [['publication', 'collection'], ['collection', 'management'], ['publication', 'http'], ['collection', 'http'], ['intelligence', 'http'],
+      ['app', 'publication'], ['app', 'management'], ['app', 'collection'], ['app', 'presentation'], ['app', 'intelligence']];
+    const relations = pairs.map(([from, to]) => ({ id: `${from}->${to}`, from, to, label: '', calls: [] }));
+    const elk = new ELK();
+    const view = await layoutCompound({ nodes, relations }, graph => elk.layout(graph));
+    expect(view.relations.map(edge => edge.id)).toEqual(relations.map(edge => edge.id));
+    const segments = view.relations.flatMap(edge => edge.points!.slice(1).map((b, index) => ({ a: edge.points![index], b, edge })));
+    for (const { a, b, edge } of segments) {
+      expect(a.x === b.x || a.y === b.y).toBe(true);
+      for (const node of view.nodes.filter(node => !node.container)) {
+        const inside = a.x === b.x ? a.x > node.x && a.x < node.x + node.width && Math.max(a.y, b.y) > node.y && Math.min(a.y, b.y) < node.y + node.height
+          : a.y > node.y && a.y < node.y + node.height && Math.max(a.x, b.x) > node.x && Math.min(a.x, b.x) < node.x + node.width;
+        expect(inside, `${edge.id} 穿过 ${node.id}`).toBe(false);
+      }
+      for (const other of segments.filter(item => item.edge.id !== edge.id)) {
+        const sameVertical = a.x === b.x && other.a.x === other.b.x && a.x === other.a.x;
+        const sameHorizontal = a.y === b.y && other.a.y === other.b.y && a.y === other.a.y;
+        const overlap = sameVertical ? Math.min(Math.max(a.y, b.y), Math.max(other.a.y, other.b.y)) > Math.max(Math.min(a.y, b.y), Math.min(other.a.y, other.b.y))
+          : sameHorizontal && Math.min(Math.max(a.x, b.x), Math.max(other.a.x, other.b.x)) > Math.max(Math.min(a.x, b.x), Math.min(other.a.x, other.b.x));
+        expect(overlap, `${edge.id} 与 ${other.edge.id} 重叠`).toBe(false);
+        if (a.x === b.x && other.a.x === other.b.x && Math.min(Math.max(a.y, b.y), Math.max(other.a.y, other.b.y)) > Math.max(Math.min(a.y, b.y), Math.min(other.a.y, other.b.y))) {
+          expect(Math.abs(a.x - other.a.x), `${edge.id} 与 ${other.edge.id}: ${JSON.stringify({ a, b, other })}`).toBeGreaterThanOrEqual(18);
+        }
+        if (a.y === b.y && other.a.y === other.b.y && Math.min(Math.max(a.x, b.x), Math.max(other.a.x, other.b.x)) > Math.max(Math.min(a.x, b.x), Math.min(other.a.x, other.b.x))) {
+          expect(Math.abs(a.y - other.a.y), `${edge.id} 与 ${other.edge.id}: ${JSON.stringify({ a, b, other })}`).toBeGreaterThanOrEqual(18);
+        }
+      }
+    }
+    const again = await layoutCompound({ nodes, relations }, graph => elk.layout(graph));
+    expect(again.relations.map(edge => edge.points)).toEqual(view.relations.map(edge => edge.points));
+    for (const edge of view.relations) expect(exportSvg(view, '多路连线')).toContain(edgePath(view.nodes.find(node => node.id === edge.from)!, view.nodes.find(node => node.id === edge.to)!, edge.points));
+  });
   it('抽象总览保留内部依赖计数及原始证据', () => {
     const project = fixture();
     const base = project.architecture!.modules[0];

@@ -341,7 +341,8 @@ export function exportSvg(projection: Projection, title: string): string {
   const byId = new Map(nodes.map(node => [node.id, node]));
   const edges = projection.relations.filter(relation => relation.from !== relation.to || byId.get(relation.from)?.kind === 'function').map(relation => {
     const from = byId.get(relation.from)!, to = byId.get(relation.to)!;
-    return `<path d="${edgePath(from, to, relation.points)}" fill="none" stroke="#929292" stroke-width="1.6" marker-end="url(#arrow)"/>`;
+    const path = edgePath(from, to, relation.points);
+    return `<path d="${path}" fill="none" stroke="#f8f9fd" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/><path d="${path}" fill="none" stroke="#929292" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow)"/>`;
   }).join('');
   const shapes = nodes.map(node => {
     const palette = nodePalette(node);
