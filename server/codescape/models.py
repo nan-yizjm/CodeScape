@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 class Contract(BaseModel):
@@ -119,8 +119,54 @@ class LearningRequest(Contract):
     expected_revision: int = Field(ge=0)
 
 
+class SavedViewport(Contract):
+    x: float = Field(allow_inf_nan=False)
+    y: float = Field(allow_inf_nan=False)
+    zoom: float = Field(gt=0, le=10, allow_inf_nan=False)
+
+
+class SavedScroll(Contract):
+    top: float = Field(ge=0, le=1_000_000_000, allow_inf_nan=False)
+    left: float = Field(default=0, ge=0, le=1_000_000_000, allow_inf_nan=False)
+    line: int | None = Field(default=None, ge=1)
+
+
+class SavedPanel(Contract):
+    kind: Literal["overview", "module", "function", "relation", "source", "diagnostics"]
+    module_id: str | None = None
+    entity_id: str | None = None
+    relation_id: str | None = None
+    from_id: str | None = None
+    to_id: str | None = None
+    call_ids: list[str] = Field(default_factory=list, max_length=50_000)
+    location: Location | None = None
+    scroll: SavedScroll | None = None
+
+    @model_validator(mode="after")
+    def references(self):
+        if ((self.kind == "module" and not self.module_id)
+                or (self.kind == "function" and not self.entity_id)
+                or (self.kind == "source" and not self.location)
+                or (self.kind == "relation" and not all((self.relation_id, self.from_id, self.to_id)))):
+            raise ValueError("探索面板缺少必要引用")
+        return self
+
+
+class NavigationOrigin(Contract):
+    focus: str | None = None
+    expanded: str | None = None
+    siblings: bool = False
+
+
 class SessionRequest(Contract):
     version_id: str
     focus_id: str | None = None
-    panel: dict | None = None
-    viewport: dict | None = None
+    panel: None = None
+    viewport: dict[str, SavedViewport] | None = Field(default=None, max_length=5000)
+    expected_revision: int = Field(default=0, ge=0)
+    expanded_id: str | None = None
+    show_other_modules: bool = False
+    function_origin: NavigationOrigin | None = None
+    panels: list[SavedPanel] = Field(default_factory=list, max_length=20)
+    expanded_evidence: dict[str, bool] = Field(default_factory=dict, max_length=5000)
+    panel_width: int = Field(default=420, ge=320, le=650)

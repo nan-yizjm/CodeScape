@@ -6,8 +6,10 @@ import type { Viewport } from '@xyflow/react';
 import { api, ApiError, bootstrap, keepalive, pageClientId } from './api';
 import { OverviewPanel } from './OverviewPanel';
 import { RequestUsage } from './RequestUsage';
+import {panelKey, restorePanels, serializePanels, type SessionValue} from './exploration';
+import {useSessionSaver} from './useSessionSaver';
 import { abstractModules, exportSvg, moduleEntities, moduleLearningState, projectGraph } from './graph';
-import type { AnalysisTask, Entity, ImportPreview, LearningState, Panel, Project, ProjectDetail, Projection, ProjectionNode, SourceFile } from './types';
+import type { AnalysisTask, Entity, ImportPreview, LearningState, Panel, Project, ProjectDetail, Projection, ProjectionNode, SourceFile, ScrollPosition } from './types';
 
 const Canvas = lazy(() => import('./Canvas').then(module => ({ default: module.Canvas })));
 const SourceReader = lazy(() => import('./SourceReader').then(module => ({ default: module.SourceReader })));
@@ -55,7 +57,8 @@ export default function App() {
   modalBusy.current = busy;
   const layout = useRef<Projection | null>(null);
   const functionOrigin = useRef<{ focus: string | null; expanded: string | null; siblings: boolean } | null>(null);
-  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const opening = useRef(0);
+  const panelContent = useRef<HTMLDivElement>(null);
   const panel = panels.at(-1);
   const modules = project?.architecture?.modules || [];
   const activeModule = modules.find(module => module.id === focus);
@@ -63,6 +66,24 @@ export default function App() {
   const isFunctions = !!activeModule && !modules.some(module => module.parent_id === focus);
   const viewportKey = `${isFunctions ? 'grouped-functions' : 'vertical'}:${focus || 'root'}:${expandedModule || 'collapsed'}:${showOtherModules ? 'all' : 'focused'}:v4`;
   const confirmedCount = project?.analysis.calls.filter(call => call.resolution === 'confirmed').length || 0;
+  const session = useSessionSaver(project, {focus_id:focus, expanded_id:expandedModule, show_other_modules:showOtherModules,
+    function_origin:functionOrigin.current, viewport:viewports, panels:serializePanels(panels),
+    expanded_evidence:expandedEvidence, panel_width:Math.round(width)}, id=> {
+      void openProject(id); setNotice('新版本已发布，已恢复当前架构。');
+    });
+  const activePanelKey = panel ? panelKey(panel) : '';
+  useEffect(()=> {
+    if (panelContent.current) panelContent.current.scrollTop = panel?.scroll?.top || 0;
+  },[activePanelKey, project?.version_id,session.epoch]);
+
+  function panelScroll(identity: string, scroll: ScrollPosition) {
+    if (!project || projectRef.current?.id !== project.id || projectRef.current.version_id !== project.version_id) return;
+    setPanels(current=>current.map(item=>panelKey(item) === identity ? {...item,scroll} : item));
+  }
+  async function leaveProject() {
+    opening.current += 1;
+    await session.flush(); sessionStorage.removeItem('codescape-active-project'); setProject(null); setPanels([]);
+  }
 
   async function refresh() {
     const [nextProjects, nextTasks] = await Promise.all([api<Project[]>('/projects'), api<AnalysisTask[]>('/tasks')]);
@@ -162,7 +183,10 @@ export default function App() {
     catch (problem) { setError((problem as Error).message); }
   }
   useEffect(() => {
-    bootstrap().then(async () => { setAuthorized(true); await refresh(); setSettings(await api('/settings/ai')); })
+    bootstrap().then(async () => { setAuthorized(true); await refresh(); setSettings(await api('/settings/ai'));
+      const previous = sessionStorage.getItem('codescape-active-project');
+      if (previous) await openProject(previous);
+    })
       .catch(problem => setError(problem.message));
   }, []);
   useEffect(() => {
@@ -265,42 +289,38 @@ export default function App() {
         } else setError(problem.message);
       });
     return () => { active = false; };
-  }, [project?.id, project?.version_id, panel]);
+  }, [project?.id, project?.version_id, panel?.kind, panel?.kind === 'source' ? `${panel.location.path}:${panel.location.start_line}:${panel.location.end_line}` : '',session.epoch]);
 
   async function openProject(id: string) {
-    if (saveTimer.current) clearTimeout(saveTimer.current);
-    functionOrigin.current = null;
-    setError(''); setSource(null); setPanels([]); setViewports({}); setExpandedModule(null); setShowOtherModules(false); layout.current = null;
+    const ticket = ++opening.current;
+    await session.flush();
+    setError('');
     try {
       const detail = await api<ProjectDetail>(`/projects/${id}`);
-      const saved = await api<{ focus_id: string | null; viewport: Record<string, Viewport> | null } | null>(`/projects/${id}/session`);
+      const saved = await api<SessionValue | null>(`/projects/${id}/session`);
+      if (ticket !== opening.current) return;
       const savedFocus = saved?.focus_id && detail.architecture?.modules.some(module => module.id === saved.focus_id) ? saved.focus_id : null;
+      const navigation = abstractModules(detail.architecture?.modules || []);
+      const valid = (value: string | null | undefined) => value && navigation.some(module=>module.id === value) ? value : null;
+      const origin = saved?.function_origin;
+      functionOrigin.current = origin ? {focus:valid(origin.focus), expanded:valid(origin.expanded), siblings:origin.siblings} : null;
+      session.initialize(id, detail.version_id, saved?.revision || 0);
+      setSource(null); layout.current = null;
       setProject(detail);
-      setFocus(savedFocus); setExpandedModule(savedFocus);
+      setFocus(savedFocus); setExpandedModule(valid(saved?.expanded_id) || savedFocus);
+      setShowOtherModules(saved?.show_other_modules || false);
       setViewports(saved?.viewport || {});
+      setPanels(restorePanels(saved?.panels || [],detail)); setExpandedEvidence(saved?.expanded_evidence || {});
+      setWidth(saved?.panel_width || 420);
+      sessionStorage.setItem('codescape-active-project',id);
     } catch (problem) { setError((problem as Error).message); }
-  }
-
-  function saveSession(nextFocus: string | null, nextViewports = viewports) {
-    if (!project) return;
-    if (saveTimer.current) clearTimeout(saveTimer.current);
-    const projectId = project.id, versionId = project.version_id;
-    saveTimer.current = setTimeout(() => {
-      api(`/projects/${projectId}/session`, { version_id: versionId, focus_id: nextFocus,
-        viewport: nextViewports, panel: null }, 'PUT').catch(problem => {
-          if (projectRef.current?.id !== projectId || projectRef.current.version_id !== versionId) return;
-          if (problem instanceof ApiError && problem.code === 'VERSION_CHANGED') {
-            void openProject(projectId); setNotice('新版本已发布，已恢复当前架构。');
-          } else setError(problem.message);
-        });
-    }, 500);
   }
 
   function changeFocus(next: string | null) {
     if (next && !modules.some(module => module.id === next) && abstractModules(modules).some(module => module.id === next)) {
       functionOrigin.current = null;
       setPanels([]); setFocus(null); setExpandedModule(next); setShowOtherModules(false);
-      layout.current = null; saveSession(null);
+      layout.current = null;
       return;
     }
     if (next !== focus) {
@@ -314,9 +334,9 @@ export default function App() {
     setPanels([]);
     setExpandedModule(null); setShowOtherModules(false);
     if (next === focus) return;
-    setFocus(next); setExpandedModule(next); layout.current = null; saveSession(next);
+    setFocus(next); setExpandedModule(next); layout.current = null;
   }
-  function pushPanel(next: Panel) { setPanels(current => [...current.slice(-19), next]); }
+  function pushPanel(next: Panel) { setPanels(current => current.at(-1) && panelKey(current.at(-1)!) === panelKey(next) ? current : [...current.slice(-19), next]); }
   async function sourcePanel(entity: Entity, location = entity.location) {
     if (!project) return;
     setSource(null); pushPanel({ kind: 'source', entity, location });
@@ -337,7 +357,7 @@ export default function App() {
           setFocus(origin?.focus || null);
           setExpandedModule(origin ? origin.expanded : parentId);
           setShowOtherModules(origin?.siblings || false);
-          setPanels([]); layout.current = null; saveSession(origin?.focus || null);
+          setPanels([]); layout.current = null;
           functionOrigin.current = null;
           return;
         }
@@ -471,14 +491,14 @@ export default function App() {
 
   return <div ref={shellRef} className={`app-shell ${fullscreen ? 'is-fullscreen' : ''}`}>
     <header className="app-header">
-      <button className="brand" onClick={() => { setProject(null); setPanels([]); }} aria-label="返回项目学习库"><span className="brand-symbol"><Layers3 size={22} /></span><span>CodeScape<span className="brand-cn">源境</span></span></button>
+      <button className="brand" onClick={() => void leaveProject()} aria-label="返回项目学习库"><span className="brand-symbol"><Layers3 size={22} /></span><span>CodeScape<span className="brand-cn">源境</span></span></button>
       <div className="header-center"><span className="status-dot" />本地工作空间<span className="header-divider" />M0 开发预览</div>
       <div className="header-actions"><span className="local-badge"><ShieldCheck size={13} /> 数据本地保存</span><button className="icon-button task-trigger" aria-label="分析任务" title="分析任务" onClick={() => { setError(''); setModal('tasks'); }}><ListOrdered size={19} />{analysisTasks.some(task => task.status === 'running') && <span className="task-active-dot" />}</button><button className="icon-button" aria-label="AI 服务设置" onClick={() => void openSettings()}><Settings2 size={19} /></button></div>
     </header>
     <div className="app-body">
       <aside className="sidebar">
         <div className="sidebar-heading"><span>学习空间</span><span className="mini-label">工作空间</span></div>
-        <button aria-label="项目学习库" title="项目学习库" className={`sidebar-nav ${!project ? 'active' : ''}`} onClick={() => { setProject(null); setPanels([]); }}><BookOpen size={18} />项目学习库<span className="nav-count">{projects.length}</span></button>
+        <button aria-label="项目学习库" title="项目学习库" className={`sidebar-nav ${!project ? 'active' : ''}`} onClick={() => void leaveProject()}><BookOpen size={18} />项目学习库<span className="nav-count">{projects.length}</span></button>
         <div className="project-list-label">最近的项目<button className="tiny-icon" aria-label="导入项目" onClick={() => beginImport()}><Plus size={15} /></button></div>
         <div className="sidebar-projects">{projects.map(item => <button key={item.id} aria-label={`打开项目 ${item.name}`} title={item.name} className={`sidebar-project ${project?.id === item.id ? 'selected' : ''}`} onClick={() => void openProject(item.id)}><span className="small-project-icon"><Code2 size={15} /></span><span><strong>{item.name}</strong><small>{item.status === 'analyzing' && item.analysis_progress?.total ? `AI 分析 ${item.analysis_progress.completed}/${item.analysis_progress.total} 批` : item.demo ? '预置验证样例' : item.languages.join(' / ') || statuses[item.status]}</small></span>{item.status === 'analyzing' || item.status === 'indexing' ? <span className="spinner small" /> : <ChevronRight size={13} />}</button>)}</div>
         <div className="sidebar-bottom"><div className="quiet-note"><Braces size={16} /><strong>从全景，深入源码</strong><p>每条关系都有出处。每次探索都能继续。</p></div><div className="connection"><span className="status-dot" />{settings.has_key ? 'AI 服务已配置' : 'AI 服务待配置'}<span>v0.1.0</span></div></div>
@@ -494,17 +514,18 @@ export default function App() {
           </div>
           <div className="prototype-note"><Info size={17} /><div><strong>关于这个开发预览</strong><p>预置模块由人工划分，调用来自静态解析。导入自己的项目后，可授权 AI 生成架构。</p></div><span>M0 开发预览</span></div><div className="library-footer"><span>复杂的代码，也可以有清晰的轮廓。</span><span>CODESCAPE / 源境</span></div>
         </div> : <>
-          <div className="workspace-toolbar"><div className="breadcrumbs"><button onClick={() => { setProject(null); setPanels([]); }}>学习库</button><ChevronRight size={14} /><button className={!focus ? 'current' : ''} onClick={() => changeFocus(null)}>{project.name}</button>{breadcrumb.map(module => <span className="breadcrumb-item" key={module.id}><ChevronRight size={14} /><button className={focus === module.id ? 'current' : ''} onClick={() => changeFocus(module.id)}>{module.name}</button></span>)}</div><div className="toolbar-actions"><button onClick={() => pushPanel({ kind: 'overview' })} disabled={!project.architecture}><BookOpen size={15} />项目概览</button><button onClick={download} disabled={!project.architecture}><Download size={15} />导出 SVG</button>{project.status === 'paused' && project.error && <button className="secondary-button" onClick={() => void retryAI()} disabled={busy}><Sparkles size={14} />重新开始分批分析</button>}<button className="ai-button" onClick={() => { if (project.architecture && !project.candidate) beginImport(true); else { setError(''); setModal('consent'); } }} disabled={!project.file_count || ['indexing', 'queued', 'failed', 'analyzing'].includes(project.status)}><Sparkles size={14} />{project.status === 'analyzing' ? 'AI 分析中' : 'AI 架构分析'}</button></div></div>
+          <div className="workspace-toolbar"><div className="breadcrumbs"><button onClick={() => void leaveProject()}>学习库</button><ChevronRight size={14} /><button className={!focus ? 'current' : ''} onClick={() => changeFocus(null)}>{project.name}</button>{breadcrumb.map(module => <span className="breadcrumb-item" key={module.id}><ChevronRight size={14} /><button className={focus === module.id ? 'current' : ''} onClick={() => changeFocus(module.id)}>{module.name}</button></span>)}</div><div className="toolbar-actions"><button onClick={() => pushPanel({ kind: 'overview' })} disabled={!project.architecture}><BookOpen size={15} />项目概览</button><button onClick={download} disabled={!project.architecture}><Download size={15} />导出 SVG</button>{project.status === 'paused' && project.error && <button className="secondary-button" onClick={() => void retryAI()} disabled={busy}><Sparkles size={14} />重新开始分批分析</button>}<button className="ai-button" onClick={() => { if (project.architecture && !project.candidate) beginImport(true); else { setError(''); setModal('consent'); } }} disabled={!project.file_count || ['indexing', 'queued', 'failed', 'analyzing'].includes(project.status)}><Sparkles size={14} />{project.status === 'analyzing' ? 'AI 分析中' : 'AI 架构分析'}</button></div></div>
           <div className="module-navigation"><div className="module-selector"><Layers3 size={15} /><label htmlFor="module-switch">切换模块</label><select id="module-switch" value={focus || ''} onChange={event => changeFocus(event.target.value || null)} disabled={!modules.length}><option value="">全部模块 · 架构全景</option>{moduleOrder.map(module => <option key={module.id} value={module.id}>{'　'.repeat(module.depth)}{module.depth ? '↳ ' : ''}{module.name}</option>)}</select></div><span className="architecture-hint">{isFunctions ? '当前模块展开函数 · 可显示同级模块' : expandedModule ? '当前层级已展开 · 再次点击即可收起' : projection.abstraction ? '点击代码域逐层展开 · 信息按钮查看职责' : '点击模块展开子模块 · 信息按钮查看职责'}</span>{projection.otherModuleCount ? <button className="secondary-button compact-button" onClick={() => setShowOtherModules(current => !current)}>{showOtherModules ? '隐藏同层模块' : `显示其他模块（${projection.otherModuleCount}）`}</button> : null}<button className="fullscreen-button" onClick={() => void toggleFullscreen()} aria-label={fullscreen ? '退出全屏' : '全屏查看架构'}>{fullscreen ? <Minimize2 size={15} /> : <Maximize2 size={15} />}{fullscreen ? '退出全屏' : '全屏查看'}<kbd>{fullscreen ? 'Esc' : '↗'}</kbd></button></div>
           <div className="workspace-heading" key={focus || 'root'}><div><div className="eyebrow">{isFunctions ? '函数结构 · 深入源码' : '语义架构 · 全景探索'}</div><h1>{activeModule?.name || '项目全景'}<span className="view-tag">{isFunctions ? '函数视图' : '模块视图'}</span></h1><p>{activeModule?.summary || '理解主要模块的分工，以及它们如何协作。'}</p></div><div className="workspace-stats"><span><strong>{project.function_count}</strong>函数</span><span><strong>{confirmedCount}</strong>已识别调用</span><span><strong>{project.progress.mastered}<small> / {project.progress.total}</small></strong>已掌握</span></div></div>
           <div className="version-controls"><button className="text-button" disabled={busy || analysisTasks.some(task => task.project_id === project.id && ['running', 'waiting', 'paused'].includes(task.status))} onClick={() => beginImport(true)}>重新扫描并分析</button>{project.candidate && <span>独立候选已就绪 · 旧结果保持可读</span>}{project.migration_report && <span>学习迁移：保留 {project.migration_report.kept_count} · 重置 {project.migration_report.reset_count} · 新增 {project.migration_report.added_count} · 移除 {project.migration_report.removed_count}</span>}</div>
           <div className="graph-meta"><div>{project.demo && <span className="sample-label"><Circle size={9} />预置验证样例</span>}<span><ShieldCheck size={12} />绑定只读源码快照</span><span>{project.status === 'analyzing' ? <><span className="spinner small" />{analysisHint}{batchProgress?.total ? `（${batchProgress.completed}/${batchProgress.total} 批）` : ''}</> : project.demo && project.architecture?.overview.limitations.some(value => value.includes('人工预置')) ? '模块人工预置 · 调用静态提取' : statuses[project.status]}</span></div><button onClick={() => pushPanel({ kind: 'diagnostics' })}><AlertTriangle size={12} />范围与局限{project.diagnostic_count > 0 && <b>{project.diagnostic_count}</b>}</button></div>
+          <div className={`exploration-save ${session.status}`} role="status">{({saved:'探索记录已保存',pending:'探索记录待保存',saving:'正在保存探索记录',conflict:'其他页面已更新探索记录，本页未覆盖',error:'探索记录保存未确认'})[session.status]}{['conflict','error'].includes(session.status) && <button className="text-button" onClick={()=>void openProject(project.id)}>载入已保存记录</button>}</div>
           <div className="exploration">
             <div className="graph-container">
               {project.architecture ? projection.nodes.length ? <Suspense fallback={<div className="canvas-loading"><span className="spinner" />正在准备探索画布…</div>}><Canvas key={`${project.id}:${focus || 'root'}:${expandedModule || 'collapsed'}:${showOtherModules ? 'all' : 'focused'}`} projection={projection} onNode={onNode}
                 onInfo={node => pushPanel(node.kind === 'module' ? { kind: 'module', module: node.module! } : { kind: 'function', entity: node.entity! })}
                 onRelation={relation => pushPanel({ kind: 'relation', relation })} onLayout={value => { layout.current = value; }}
-                viewport={viewports[viewportKey]} onViewport={value => { const next = { ...viewports, [viewportKey]: value }; setViewports(next); saveSession(focus, next); }} /></Suspense>
+                viewport={viewports[viewportKey]} onViewport={value => { const next = { ...viewports, [viewportKey]: value }; setViewports(next); }} /></Suspense>
                 : <div className="empty-state"><Boxes size={32} /><h3>此模块没有可展示函数</h3><p>实现可能位于顶层代码或其他隐藏作用域，详情中保留源码依据。</p><button className="secondary-button" onClick={() => activeModule && pushPanel({ kind: 'module', module: activeModule })}>查看模块详情</button></div>
                 : <div className="empty-state"><span className="large-empty-icon"><Sparkles size={30} /></span><h3>{['indexing', 'queued'].includes(project.status) ? '正在建立静态源码索引' : project.status === 'failed' ? '静态索引未完成' : project.status === 'analyzing' ? '正在分批理解项目架构' : '源码已就绪，下一步理解架构'}</h3><p>{project.status === 'analyzing' ? `${analysisHint}${batchProgress?.total ? ` · 已完成 ${batchProgress.completed}/${batchProgress.total} 批` : ''}` : '静态索引不会被当作语义架构。授权后，AI 将基于当前快照归纳模块职责与整体工作原理；超大项目会自动拆成受控批次。'}</p>{project.status === 'indexed' && <button className="primary-button" onClick={() => { setError(''); setModal('consent'); }}><Sparkles size={15} />开始 AI 架构分析</button>}{project.status === 'failed' && <button className="primary-button" disabled={busy} onClick={() => void retryIndex()}>重试静态索引</button>}{project.status === 'paused' && <button className="primary-button" disabled={busy} onClick={() => void retryAI()}>{busy ? <span className="spinner" /> : <Sparkles size={15} />}重新开始分批分析</button>}{project.error && <p className="inline-error">{project.error}</p>}</div>}
               <div className="canvas-caption"><span>{isFunctions ? '点击函数阅读源码 · 点击连线查看证据' : projection.abstraction ? '点击代码域逐层展开 · 再次点击收起 · 信息按钮查看职责' : '点击父模块展开 · 再次点击收起 · 信息按钮查看职责'}</span><span>{projection.nodes.length} 节点 <span className="caption-dot">·</span> {projection.relations.filter(relation => relation.from !== relation.to).length} 条协作线{projection.relations.some(relation => relation.from === relation.to) ? ` · ${projection.relations.filter(relation => relation.from === relation.to).length} 个内部依赖` : ''}</span></div>
@@ -516,8 +537,8 @@ export default function App() {
               const finish = () => { document.removeEventListener('pointermove', move); document.removeEventListener('pointerup', finish); };
               document.addEventListener('pointermove', move); document.addEventListener('pointerup', finish);
             }} /><aside className="detail-panel" style={{ width }}>
-              <div className="panel-header"><div>{panel.kind === 'source' ? <FileCode2 size={17} /> : panel.kind === 'relation' ? <GitBranch size={17} /> : <Info size={17} />}<strong>{{ overview: '项目概览', module: '模块详情', function: '函数详情', relation: '关系证据', source: '源码阅读', diagnostics: '范围与局限' }[panel.kind]}</strong></div><div>{panels.length > 1 && <button className="tiny-icon" aria-label="返回之前的面板" onClick={() => setPanels(current => current.slice(0, -1))}><ArrowLeft size={16} /></button>}<button className="tiny-icon" aria-label="关闭辅助面板" onClick={() => setPanels([])}><X size={17} /></button></div></div>
-              {panel.kind === 'source' ? <><div className="source-file-heading"><span>{panel.location.path}</span><small>L{panel.location.start_line}–{panel.location.end_line} · 只读快照</small></div>{source ? <Suspense fallback={<div className="canvas-loading">正在准备源码阅读器…</div>}><SourceReader file={source} location={panel.location} /></Suspense> : <div className="canvas-loading">正在读取匹配版本的源码…</div>}<div className="source-bottom"><ShieldCheck size={12} />原始仓库不会被修改</div></> : <div className="panel-content">
+              <div className="panel-header"><div>{panel.kind === 'source' ? <FileCode2 size={17} /> : panel.kind === 'relation' ? <GitBranch size={17} /> : <Info size={17} />}<strong>{{ overview: '项目概览', module: '模块详情', function: '函数详情', relation: '关系证据', source: '源码阅读', diagnostics: '范围与局限' }[panel.kind]}</strong></div><div>{panels.length > 1 && <button className="tiny-icon" aria-label="返回之前的面板" onClick={() => setPanels(current => current.slice(0, -1))}><ArrowLeft size={16} /></button>}<button className="tiny-icon" aria-label="关闭辅助面板" onClick={() => setPanels(current => current.slice(0, -1))}><X size={17} /></button></div></div>
+              {panel.kind === 'source' ? <><div className="source-file-heading"><span>{panel.location.path}</span><small>L{panel.location.start_line}–{panel.location.end_line} · 只读快照</small></div>{source ? <Suspense fallback={<div className="canvas-loading">正在准备源码阅读器…</div>}><SourceReader key={`${activePanelKey}:${session.epoch}`} file={source} location={panel.location} position={panel.scroll} onPosition={position=>panelScroll(activePanelKey,position)} /></Suspense> : <div className="canvas-loading">正在读取匹配版本的源码…</div>}<div className="source-bottom"><ShieldCheck size={12} />原始仓库不会被修改</div></> : <div className="panel-content" tabIndex={0} role="region" aria-label="详情阅读区域" ref={panelContent} onScroll={event=>panelScroll(activePanelKey,{top:event.currentTarget.scrollTop,left:0})}>
                 {panel.kind === 'overview' && project.architecture && <OverviewPanel key={project.id} project={project} onUpdate={updated => setProject(current => current?.id === updated.id ? updated : current)} onExplore={changeFocus} />}
                 {panel.kind === 'module' && <><div className="panel-kicker">逻辑模块</div><h2>{panel.module.name}</h2><p className="lead">{panel.module.summary}</p><div className="detail-stat-row"><span>{moduleEntities(panel.module, modules).length} 个函数</span><span>{stateLabels[moduleLearningState(panel.module, project, modules)]}</span></div><h3>真实代码范围</h3>{panel.module.code_paths.map(path => <button className="source-reference" key={path} onClick={() => filePanel(path)}><FileCode2 size={14} /><span>{path}</span><ExternalLink size={14} /></button>)}{project.learning_entities?.some(unit => unit.kind === 'module' && unit.source_id === panel.module.id) && <><h3>学习状态</h3><p>本模块以可读源码和职责作为学习内容。</p><div className="learning-buttons">{(['not_started', 'in_progress', 'mastered'] as const).map(state => { const id = project.learning_entities!.find(unit => unit.kind === 'module' && unit.source_id === panel.module.id)!.id; return <button key={state} className={(project.learning[id]?.state || 'not_started') === state ? 'selected' : ''} onClick={() => void learning({id}, state)}>{stateLabels[state]}</button>; })}</div></>}{moduleEntities(panel.module, modules).length > 0 && <h3>模块中的函数</h3>}{project.analysis.entities.filter(entity => moduleEntities(panel.module, modules).includes(entity.id)).map(entity => <button className="entity-row" key={entity.id} onClick={() => void sourcePanel(entity)}><Braces size={14} /><span>{entity.name}</span><ExternalLink size={12} /></button>)}{moduleEntities(panel.module, modules).length > 0 && <button className="secondary-button wide" onClick={() => changeFocus(panel.module.id)}>进入模块<ArrowRight size={15} /></button>}</>}
                 {panel.kind === 'function' && <><div className="panel-kicker">源码实体</div><h2 className="code-title">{panel.entity.name}</h2><pre className="signature">{panel.entity.signature}</pre><h3>源码位置</h3><button className="source-reference" onClick={() => void sourcePanel(panel.entity)}><FileCode2 size={15} /><span>{panel.entity.location.path}<small>第 {panel.entity.location.start_line}–{panel.entity.location.end_line} 行</small></span><ExternalLink size={14} /></button><h3>学习状态</h3><div className="learning-buttons">{(['not_started', 'in_progress', 'mastered'] as const).map(state => <button key={state} className={project.learning[panel.entity.id]?.state === state || !project.learning[panel.entity.id] && state === 'not_started' ? 'selected' : ''} onClick={() => void learning(panel.entity, state)}>{stateLabels[state]}</button>)}</div>{panel.entity.unresolved_count > 0 && <div className="diagnostic-box"><AlertTriangle size={16} /><p>此函数有 {panel.entity.unresolved_count} 处未解析或间接调用；画布没有绘制猜测边。</p></div>}<h3>相关解析信息</h3><p>语言：{panel.entity.language}</p><p>限定名：<code>{panel.entity.qualified_name}</code></p>{panel.entity.condition && <p>条件：{panel.entity.condition}</p>}</>}

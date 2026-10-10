@@ -33,9 +33,10 @@ export type ProjectDetail = Project & { file_ids: Record<string, string>; analys
 export type SourceFile = { path: string; text: string; version_id: string; hash: string };
 export type Point = { x: number; y: number };
 export type Relation = { id: string; from: string; to: string; label: string; calls: Call[]; points?: Point[] };
-export type Panel = { kind: 'overview' } | { kind: 'module'; module: Module } | { kind: 'function'; entity: Entity }
+export type ScrollPosition = {top: number; left: number; line?: number};
+export type Panel = ({ kind: 'overview' } | { kind: 'module'; module: Module } | { kind: 'function'; entity: Entity }
   | { kind: 'relation'; relation: Relation } | { kind: 'source'; entity?: Entity; location: Location }
-  | { kind: 'diagnostics' };
+  | { kind: 'diagnostics' }) & {scroll?: ScrollPosition};
 export type ProjectionNode = { id: string; label: string; description: string; kind: 'module' | 'function';
   entity?: Entity; module?: Module; count: number; state: AggregateState; incomplete: boolean; external: boolean;
   tone?: number; sibling?: boolean; parentId?: string; container?: boolean; canExpand?: boolean; expanded?: boolean; internalRelationCount?: number; shownCount?: number; x: number; y: number; width: number; height: number };

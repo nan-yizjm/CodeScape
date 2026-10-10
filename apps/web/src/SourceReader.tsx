@@ -5,10 +5,13 @@ import { syntaxHighlighting, defaultHighlightStyle } from '@codemirror/language'
 import { python } from '@codemirror/lang-python';
 import { cpp } from '@codemirror/lang-cpp';
 import { javascript } from '@codemirror/lang-javascript';
-import type { SourceFile, Location } from './types';
+import type { SourceFile, Location, ScrollPosition } from './types';
 
-export function SourceReader({ file, location }: { file: SourceFile; location: Location }) {
+export function SourceReader({ file, location, position, onPosition }: { file: SourceFile; location: Location;
+  position?: ScrollPosition; onPosition?: (position: ScrollPosition)=>void }) {
   const element = useRef<HTMLDivElement>(null);
+  const reporter = useRef(onPosition); reporter.current = onPosition;
+  const initialPosition = useRef(position);
   useEffect(() => {
     if (!element.current) return;
     const language = file.path.endsWith('.py') ? python() : /\.(tsx?|jsx?)$/.test(file.path) ? javascript({ typescript: true }) : cpp();
@@ -23,8 +26,30 @@ export function SourceReader({ file, location }: { file: SourceFile; location: L
         '.cm-content': { padding: '18px 0' }, '.cm-gutters': { background: '#fafafa', border: 'none', color: '#777777' },
         '.cm-line': { paddingLeft: '12px' }, '&.cm-focused': { outline: 'none' } }),
     ] }) });
+    view.scrollDOM.tabIndex = 0;
+    view.scrollDOM.setAttribute('role','region');
+    view.scrollDOM.setAttribute('aria-label','只读源码滚动区域');
     view.dispatch({ effects: EditorView.scrollIntoView(start, { y: 'center' }) });
-    return () => view.destroy();
+    let restoring = true;
+    let secondFrame = 0;
+    const frame = requestAnimationFrame(()=> {
+      const saved = initialPosition.current;
+      if (saved?.line) view.dispatch({effects:EditorView.scrollIntoView(view.state.doc.line(Math.min(saved.line,view.state.doc.lines)).from,{y:'start'})});
+      secondFrame = requestAnimationFrame(()=> {
+        if (saved) {view.scrollDOM.scrollTop = saved.top; view.scrollDOM.scrollLeft = saved.left;}
+        restoring = false;
+      });
+    });
+    const changed = () => {
+      if (restoring) return;
+      reporter.current?.({top:view.scrollDOM.scrollTop,left:view.scrollDOM.scrollLeft,
+        line:view.state.doc.lineAt(view.lineBlockAtHeight(view.scrollDOM.scrollTop).from).number});
+    };
+    view.scrollDOM.addEventListener('scroll',changed);
+    return () => {
+      changed(); cancelAnimationFrame(frame); cancelAnimationFrame(secondFrame);
+      view.scrollDOM.removeEventListener('scroll',changed); view.destroy();
+    };
   }, [file, location]);
   return <div className="source-reader" ref={element} />;
 }

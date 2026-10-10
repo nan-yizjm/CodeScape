@@ -620,7 +620,17 @@ def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=
         project = get_project(project_id)
         if body.version_id != project["version_id"]:
             raise version_error(project, "探索版本已失效，请刷新到当前架构。")
-        return envelope(database.session(project_id, body.model_dump()))
+        from .sessions import validate_session
+        try:
+            value = body.model_dump()
+            validate_session(value, project)
+            return envelope(database.session(project_id, value))
+        except ValueError as error:
+            if str(error) == "VERSION_CHANGED":
+                raise version_error(get_project(project_id), "探索版本已失效，请刷新到当前架构。") from None
+            if str(error) == "SESSION_CONFLICT":
+                raise HTTPException(409, {"code": "SESSION_CONFLICT", "message": "其他页面已保存新的探索记录，请载入已保存记录；本页未覆盖它。"}) from None
+            raise HTTPException(422, "探索记录包含不属于当前快照的引用。") from None
 
     @app.get("/api/v1/settings/ai")
     async def settings():

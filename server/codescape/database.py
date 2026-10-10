@@ -281,8 +281,8 @@ class Database:
                 architecture=architecture, status="ready", error=None))
             session = connection.execute(select(self.sessions.c.value).where(self.sessions.c.project_id == project_id)).scalar()
             if session:
-                session.update(version_id=version_id, focus_id=modules.get(session.get("focus_id")),
-                               viewport=None, panel=None)
+                from .sessions import migrate_session
+                session = migrate_session(session, old, value, modules, mapping, version_id)
                 connection.execute(self.sessions.update().where(self.sessions.c.project_id == project_id).values(value=session))
             connection.execute(self.jobs.update().where(self.jobs.c.id == job_id)
                                .values(status="completed", detail="新版本已发布，学习状态已迁移", updated_at=now()))
@@ -404,9 +404,19 @@ class Database:
 
     def session(self, project_id: str, value: dict | None = None) -> dict | None:
         with self.engine.begin() as connection:
+            if value is not None:
+                connection.exec_driver_sql("BEGIN IMMEDIATE")
             query = select(self.sessions).where(self.sessions.c.project_id == project_id)
             old = connection.execute(query).mappings().first()
             if value is not None:
+                version = connection.execute(select(self.projects.c.version_id).where(self.projects.c.id == project_id)).scalar()
+                if version != value["version_id"]:
+                    raise ValueError("VERSION_CHANGED")
+                actual = old["value"].get("revision", 0) if old else 0
+                if value.get("expected_revision", 0) != actual:
+                    raise ValueError("SESSION_CONFLICT")
+                value = {key: item for key, item in value.items() if key != "expected_revision"}
+                value["revision"] = actual + 1
                 if old:
                     connection.execute(
                         self.sessions.update()
