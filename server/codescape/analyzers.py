@@ -283,7 +283,7 @@ def cpp_analysis(root: Path, files: dict[str, str], version: str) -> Analysis:
     from clang import cindex
     from tree_sitter import Language, Parser
 
-    result = Analysis(tools={"cpp": "tree-sitter/0.26 + libclang/18.1.1"})
+    result = Analysis(tools={"cpp": "tree-sitter/0.25.2 + libclang/18.1.1"})
     native_symbols: dict[str, list[Entity]] = {}
     pending: list[tuple[Call, str, bool]] = []
     by_location: dict[tuple[str, int], Entity] = {}
@@ -329,7 +329,11 @@ def cpp_analysis(root: Path, files: dict[str, str], version: str) -> Analysis:
             continue
         language = "c" if Path(path).suffix == ".c" else "cpp"
         parser = Parser(Language(tree_sitter_c.language() if language == "c" else tree_sitter_cpp.language()))
-        parsed = parser.parse(text.encode())
+        source_bytes = text.encode()
+        parsed = parser.parse(source_bytes)
+
+        def node_bytes(node) -> bytes:
+            return source_bytes[node.start_byte : node.end_byte]
         if parsed.root_node.has_error:
             result.diagnostics.append(
                 Diagnostic(category="parse_failed", path=path, message="部分语法无法识别。")
@@ -338,8 +342,8 @@ def cpp_analysis(root: Path, files: dict[str, str], version: str) -> Analysis:
         def syntax(node, parents: list[str], condition: str | None = None):
             if node.type in ("preproc_if", "preproc_ifdef"):
                 condition_node = node.child_by_field_name("condition") or node.child_by_field_name("name")
-                expression = condition_node.text.decode() if condition_node else "未知条件"
-                if node.text.startswith(b"#ifndef"):
+                expression = node_bytes(condition_node).decode() if condition_node else "未知条件"
+                if node_bytes(node).startswith(b"#ifndef"):
                     expression = f"!({expression})"
                 condition = f"({condition}) && ({expression})" if condition else expression
                 result.diagnostics.append(
@@ -352,10 +356,10 @@ def cpp_analysis(root: Path, files: dict[str, str], version: str) -> Analysis:
                 )
             if node.type in ("preproc_else", "preproc_elif"):
                 expression = node.child_by_field_name("condition")
-                condition = f"!({condition})" + (f" && ({expression.text.decode()})" if expression else "")
+                condition = f"!({condition})" + (f" && ({node_bytes(expression).decode()})" if expression else "")
             if node.type in ("class_specifier", "struct_specifier", "namespace_definition"):
                 named = node.child_by_field_name("name")
-                parents = parents + ([named.text.decode()] if named else [])
+                parents = parents + ([node_bytes(named).decode()] if named else [])
             if node.type == "function_definition":
                 declarator = node.child_by_field_name("declarator")
                 current = declarator
@@ -367,7 +371,7 @@ def cpp_analysis(root: Path, files: dict[str, str], version: str) -> Analysis:
                     "destructor_name",
                 }:
                     current = current.child_by_field_name("declarator")
-                name = current.text.decode() if current else "<unresolved>"
+                name = node_bytes(current).decode() if current else "<unresolved>"
                 line = node.start_point.row + 1
                 location = Location(
                     path=path,
@@ -383,7 +387,7 @@ def cpp_analysis(root: Path, files: dict[str, str], version: str) -> Analysis:
                     or bool(parents and name == parents[-1])
                     or (len(parts) > 1 and parts[-1] == parts[-2])
                 )
-                signature = declarator.text.decode() if declarator else name
+                signature = node_bytes(declarator).decode() if declarator else name
                 entity = Entity(
                     id=entity_id,
                     name=name,
@@ -394,7 +398,7 @@ def cpp_analysis(root: Path, files: dict[str, str], version: str) -> Analysis:
                     scope_id=stable_id(entity_id, "scope"),
                     visible=not hidden,
                     hidden_reason="构造或析构" if hidden else None,
-                    implementation_hash=digest(node.text),
+                    implementation_hash=digest(node_bytes(node)),
                     condition=condition,
                 )
                 if (path, node.start_byte) not in by_location:

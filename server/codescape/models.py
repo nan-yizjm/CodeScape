@@ -93,8 +93,11 @@ class Architecture(Contract):
 
 
 class ImportRequest(Contract):
-    path: str = Field(min_length=1, max_length=4096)
+    path: str | None = Field(default=None, max_length=4096)
+    url: str | None = Field(default=None, max_length=2048)
+    preview_id: str | None = None
     excludes: list[str] = Field(default_factory=list)
+    includes: list[str] = Field(default_factory=list)
 
 
 class AISettings(Contract):

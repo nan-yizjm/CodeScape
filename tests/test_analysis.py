@@ -64,6 +64,23 @@ def test_cpp_direct_callback_constructor_lambda_and_conditions(tmp_path: Path):
     assert any(call.resolution == "excluded_indirect" for call in result.calls)
 
 
+def test_cpp_large_tree_positions_survive_entity_allocation(tmp_path: Path):
+    # The Windows 0.26.0 binding crashed on repeated node position access after
+    # Pydantic allocation. Keep this workload independent of a fetched repository.
+    text = '#include "unavailable.h"\r\n' + ''.join(
+        f'/* 中文 {i} */\r\nint function_{i}(int x) {{ return x + {i}; }}\r\n'
+        for i in range(350)
+    )
+    result = cpp_analysis(tmp_path, {"large.c": text}, "v1")
+    assert len(result.entities) == 350
+    encoded = text.encode()
+    for entity in result.entities:
+        source = encoded[entity.location.start_byte : entity.location.end_byte]
+        assert source.startswith(f'int {entity.name}('.encode())
+        assert entity.location.end_line == entity.location.start_line
+    assert any(item.category == "missing_dependency" for item in result.diagnostics)
+
+
 def test_cpp_external_include_never_enters_native_parser(tmp_path: Path, monkeypatch):
     from clang import cindex
 

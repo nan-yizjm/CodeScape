@@ -9,7 +9,7 @@ dependencies = [
   "pydantic>=2.10,<3",
   "httpx>=0.28,<1",
   "sqlalchemy>=2.0,<3",
-  "tree-sitter>=0.25,<0.27",
+  "tree-sitter==0.25.2",
   "tree-sitter-c>=0.23,<0.25",
   "tree-sitter-cpp>=0.23,<0.25",
   "libclang>=18,<19",

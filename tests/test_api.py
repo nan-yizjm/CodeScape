@@ -75,6 +75,33 @@ def test_endpoint_change_invalidates_consent(client):
     assert client.post(url + "/analyze", json={}).status_code == 403
 
 
+def test_retry_index_uses_existing_snapshot(client, tmp_path, monkeypatch):
+    from codescape.database import Database
+    source = tmp_path / "retry-source"
+    source.mkdir()
+    (source / "x.py").write_text("def original(): pass", encoding="utf-8")
+    project = client.post("/api/v1/imports", json={"path": str(source)}).json()["data"]
+    url = f"/api/v1/projects/{project['id']}"
+    for _ in range(100):
+        detail = client.get(url).json()["data"]
+        if detail["status"] == "indexed":
+            break
+        time.sleep(0.02)
+    db = Database(tmp_path)
+    db.update(project["id"], result=None, status="failed", error="解析中断")
+    db.engine.dispose()
+    (source / "x.py").write_text("def changed(): pass", encoding="utf-8")
+    assert client.post(url + "/index", json={}).status_code == 200
+    for _ in range(100):
+        detail = client.get(url).json()["data"]
+        if detail["status"] == "indexed":
+            break
+        time.sleep(0.02)
+    assert detail["status"] == "indexed"
+    assert [entity["name"] for entity in detail["analysis"]["entities"]] == ["original"]
+    assert client.post(url + "/index", json={}).status_code == 409
+
+
 def test_local_import_worker_handles_chinese_json_and_does_not_execute(client, tmp_path):
     source = tmp_path / "源码样例"
     source.mkdir()
@@ -93,6 +120,33 @@ def test_local_import_worker_handles_chinese_json_and_does_not_execute(client, t
     assert project["function_count"] == 1
     assert project["architecture"] is None
     assert (source / "main.py").read_bytes() == contents.encode()
+
+
+def test_import_preview_requires_confirmation_and_uses_scanned_snapshot(client, tmp_path):
+    source = tmp_path / "预览样例"
+    source.mkdir()
+    original = "def original(): pass\r\n"
+    (source / "a.py").write_bytes(original.encode("utf-8"))
+    before = len(client.get("/api/v1/projects").json()["data"])
+    preview = client.post("/api/v1/imports/preview", json={"path": str(source)}).json()["data"]
+    assert preview["file_count"] == 1 and preview["files"] == ["a.py"]
+    assert len(client.get("/api/v1/projects").json()["data"]) == before
+    (source / "a.py").write_text("raise RuntimeError('不执行新源码')", encoding="utf-8")
+    assert client.post("/api/v1/imports", json={"preview_id": preview["preview_id"], "excludes": ["a.py"]}).status_code == 400
+    response = client.post("/api/v1/imports", json={"preview_id": preview["preview_id"]})
+    assert response.status_code == 200
+    project = response.json()["data"]
+    assert project["origin"]["kind"] == "local"
+    assert client.post("/api/v1/imports", json={"preview_id": preview["preview_id"]}).status_code == 400
+    deadline = time.monotonic() + 5
+    while time.monotonic() < deadline:
+        detail = client.get(f"/api/v1/projects/{project['id']}").json()["data"]
+        if detail["status"] == "indexed":
+            break
+        time.sleep(0.05)
+    file_id = detail["file_ids"]["a.py"]
+    saved = client.get(f"/api/v1/projects/{project['id']}/files/{file_id}?version_id={project['version_id']}").json()["data"]
+    assert saved["text"] == original
 
 
 def test_connection_test_contains_no_source(tmp_path, monkeypatch):

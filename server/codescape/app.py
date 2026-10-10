@@ -16,6 +16,7 @@ from fastapi.responses import FileResponse, JSONResponse
 
 from .analyzers import REPOSITORY, analyze, stable_id
 from .database import Database, now
+from .imports import ImportService
 from .models import (
     AISettings,
     Analysis,
@@ -36,6 +37,7 @@ def create_app(root: Path | None = None, nonce: str | None = None) -> FastAPI:
     database = Database(root)
     database.recover_interrupted()
     provider = Provider(root)
+    imports = ImportService(root)
     bootstrap_nonce = nonce or secrets.token_urlsafe(32)
     session_token = secrets.token_urlsafe(32)
     csrf_token = secrets.token_urlsafe(32)
@@ -77,6 +79,7 @@ def create_app(root: Path | None = None, nonce: str | None = None) -> FastAPI:
             "diagnostic_count": len(analysis.diagnostics),
             "has_architecture": bool(project["architecture"]),
             "analysis_progress": database.analysis_progress(project["id"]),
+            "origin": project["snapshot"].get("origin", {"kind": "local"}),
         }
         if full:
             response.update(
@@ -154,6 +157,7 @@ def create_app(root: Path | None = None, nonce: str | None = None) -> FastAPI:
 
     @asynccontextmanager
     async def lifespan(_):
+        imports.cleanup()
         seed()
         yield
         for task in tasks:
@@ -278,32 +282,62 @@ def create_app(root: Path | None = None, nonce: str | None = None) -> FastAPI:
         except Exception as error:
             database.update(project_id, status="failed", error=str(error)[:300])
 
+    @app.post("/api/v1/imports/preview")
+    async def preview_import(body: ImportRequest):
+        try:
+            return envelope(await asyncio.to_thread(imports.preview, body))
+        except (OSError, ValueError) as error:
+            raise HTTPException(400, str(error)) from None
+
+    @app.post("/api/v1/projects/{project_id}/index")
+    async def retry_index(project_id: str):
+        project = get_project(project_id)
+        if project["result"] or project["status"] not in {"failed", "indexed"}:
+            raise HTTPException(409, "当前项目不需要重新建立静态索引。")
+        if run_lock.locked():
+            raise HTTPException(409, "已有任务运行，请等待后主动重试。")
+        await run_lock.acquire()
+        database.update(project_id, status="indexing", error=None)
+
+        async def work():
+            try:
+                await index_project(project_id)
+            finally:
+                run_lock.release()
+
+        task = asyncio.create_task(work())
+        tasks.add(task)
+        task.add_done_callback(tasks.discard)
+        return envelope({"status": "indexing"})
+
     @app.post("/api/v1/imports")
     async def import_local(body: ImportRequest):
-        source = Path(body.path)
-        if not source.is_absolute() or not source.is_dir():
-            raise HTTPException(400, "请输入存在的本地源码目录绝对路径。")
         project_id = str(uuid.uuid4())
         project_root = root / "projects" / project_id
         try:
-            manifest = await asyncio.to_thread(create_snapshot, source, project_root, body.excludes)
-            if not manifest["files"]:
-                raise ValueError("当前范围没有支持的 UTF-8 源码文件。")
+            if body.preview_id:
+                if body.path or body.url or body.excludes or body.includes:
+                    raise ValueError("确认导入必须使用已扫描的范围；调整范围后请重新扫描。")
+                preview_id = body.preview_id
+            else:
+                preview_id = (await asyncio.to_thread(imports.preview, body))["preview_id"]
+            imported = await asyncio.to_thread(imports.consume, preview_id, project_id)
+            manifest = imported["manifest"]
         except (OSError, ValueError) as error:
             if project_root.exists() and project_root.resolve().is_relative_to((root / "projects").resolve()):
                 shutil.rmtree(project_root)
             raise HTTPException(400, str(error)) from None
         existing = {item["name"] for item in database.list_projects()}
-        name = source.name
+        name = imported["name"]
         count = 2
         while name in existing:
-            name = f"{source.name} ({count})"
+            name = f"{imported['name']} ({count})"
             count += 1
         database.insert(
             {
                 "id": project_id,
                 "name": name,
-                "source": str(source),
+                "source": imported["source"],
                 "created_at": now(),
                 "status": "queued",
                 "snapshot": manifest,

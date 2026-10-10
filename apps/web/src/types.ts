@@ -1,4 +1,7 @@
 export type LearningState = 'not_started' | 'in_progress' | 'mastered';
+export type ImportPreview = { preview_id: string; name: string; source: string; file_count: number; size: number;
+  files: string[]; excluded: { path: string; reason: string }[];
+  origin: { kind: string; default_branch?: string; commit?: string } };
 export type Location = { path: string; start_line: number; end_line: number; start_byte: number; end_byte: number };
 export type Entity = { id: string; name: string; qualified_name: string; signature: string; language: string;
   location: Location; scope_id: string; visible: boolean; hidden_reason: string | null; explanation: string | null;
