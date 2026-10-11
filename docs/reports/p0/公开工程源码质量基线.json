@@ -73,7 +73,7 @@
   ],
   "状态": "账户恢复可用后已开始真实重测；历史HTTP402记录保留。实际进度见公开工程真实评测进度.json，结构发布不代表质量或用户验收通过。",
   "本轮新增源码质量复核": {
-    "spdlog": "异常包装宏造成sink_it_尾部遗漏已修复；新的实际模型解释仍把未知异常重新抛出的分支概括成异常不会中断，待重测。",
+    "spdlog": "异常包装宏造成sink_it_尾部遗漏已修复；explanations/2实际重测的sink_it_/flush_保留完整范围与未提供宏定义的异常行为未知，不再无条件承诺不中断。只记两函数抽查改善。",
     "flask": "实际重测已正确区分FLASK_SKIP_DOTENV与get_load_dotenv返回含义，并保留send_from_directory的**kwargs语义。",
     "hiredis": "实际重测的redisReaderGetReply保留reply/r->reply/r->fn/freeObject联合保护，redisReaderFeed保留maxbuf非零前提。",
     "边界": "当前仅选定函数复核，不代表完整范围质量通过。"

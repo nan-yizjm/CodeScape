@@ -1,0 +1,40 @@
+{
+  "日期": "2026-10-11",
+  "性质": "只读核对新真实评测的实际流水线时序；不改检查点或请求账本",
+  "异常要求修订写入时间UTC": "2026-10-11T05:05:28.676478+00:00",
+  "样本": [
+    {
+      "样本": "hiredis-c",
+      "已记录流水线": "architecture/2-explanations/1-reads/1-judgments/1-dependencies/1-cpp-config/8-interfaces/1-facts/1-index/2-ts-bindings/2-python-declarations/1",
+      "首个实际架构请求ID": "51d86413-f4dc-4885-a536-6e686fbb194f",
+      "首请求时间UTC": "2026-10-11T05:04:19.529455+00:00",
+      "请求payload_sha256": "d1e9f086e98043ec7ca1464662dd7322febb2955f0c85f9530bfe6bff71f13d6",
+      "首请求发生在新提示要求写入之前": true
+    },
+    {
+      "样本": "flask-python",
+      "已记录流水线": "architecture/2-explanations/1-reads/1-judgments/1-dependencies/1-cpp-config/8-interfaces/1-facts/1-index/2-ts-bindings/2-python-declarations/1",
+      "首个实际架构请求ID": "cb234588-5d5e-444e-afe5-a28102666564",
+      "首请求时间UTC": "2026-10-11T05:04:07.320447+00:00",
+      "请求payload_sha256": "cfaa4d8d672c873da16b3b12b757ba1e0ae1c537bddffd11cf20772d53190cd5",
+      "首请求发生在新提示要求写入之前": true
+    },
+    {
+      "样本": "zod-typescript",
+      "已记录流水线": "architecture/2-explanations/1-reads/1-judgments/1-dependencies/1-cpp-config/8-interfaces/1-facts/1-index/2-ts-bindings/2-python-declarations/1",
+      "首个实际架构请求ID": "a2beadcf-463f-40df-b5e7-f218301346b1",
+      "首请求时间UTC": "2026-10-11T05:01:43.131027+00:00",
+      "请求payload_sha256": "a44634da98ebc267e5d3f92ff5beaccd564c85517f800f60c8c00fee26afc3d6",
+      "首请求发生在新提示要求写入之前": true
+    },
+    {
+      "样本": "spdlog-cpp",
+      "已记录流水线": "architecture/2-explanations/2-reads/1-judgments/1-dependencies/1-cpp-config/8-interfaces/1-facts/1-index/2-ts-bindings/2-python-declarations/1",
+      "首个实际架构请求ID": "85f08a2c-c741-4d5f-854a-038724444075",
+      "首请求时间UTC": "2026-10-11T05:13:43.294327+00:00",
+      "请求payload_sha256": "2c1c2e05500bd228f2b68e056c68d6e28f3b03afeffa822d36023eff3f4d85ac",
+      "首请求发生在新提示要求写入之前": false
+    }
+  ],
+  "说明": "三个explanations/1工作进程首个模型请求在新要求写入前已经生成，进程持续使用原已加载架构提示；spdlog新完整请求在写入后开始并记录explanations/2。不同版本结果分别保留，不混标。"
+}
