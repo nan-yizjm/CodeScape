@@ -1,0 +1,45 @@
+{
+  "核对时间UTC": "2026-10-11T06:01:01.736335+00:00",
+  "Commit": "d6c93f38a08b4ea0f8ffcfd7f7857307d5d5c3fa",
+  "快照hash": "d4586f715383197a4fccb3ccc33326112d0d5f8441eb5d02fbb79ab7ea70245d",
+  "原报告": "spdlog修订后产品静态索引验证.json",
+  "原报告sha256": "2d6986676fd81148b0a3322fd4406ff862731042c5784957dc547873b47c0652",
+  "固定Commit归因": {
+    "报告": "spdlog-cpp-full真实模型验证.json",
+    "报告sha256": "ac3167dd8e1ad3c3b7371f422322a2a9504ac7448eaa178e49cbe8ab47155ceb",
+    "实际快照hash与文件集合一致": true
+  },
+  "流水线": "architecture/3-explanations/3-reads/1-judgments/2-dependencies/1-cpp-config/8-interfaces/1-facts/2-index/3-ts-bindings/2-python-declarations/1",
+  "完整解析时间上限秒": 120,
+  "实际总耗时秒": 106.133,
+  "文件数": 102,
+  "可见函数数": 534,
+  "已确认调用数": 0,
+  "回退": false,
+  "实际边界诊断": [],
+  "所有诊断分类": {
+    "syntax_recovery": 84,
+    "parse_failed": 146,
+    "condition_unknown": 236,
+    "symbol_name_unresolved": 58,
+    "configuration": 1,
+    "missing_dependency": 115,
+    "unresolved_call": 2279
+  },
+  "工具": {
+    "python": "ast/3.12; conservative-bindings/1; type-declarations/1",
+    "cpp": "tree-sitter/0.25.2 + libclang/18.1.1 + snapshot-config/8"
+  },
+  "完整尾部作用域": true,
+  "源码字节未变": true,
+  "旧项目与结果逐项不变": true,
+  "执行目标代码": false,
+  "模型请求": 0,
+  "上传源码": false,
+  "静态索引制品": {
+    "path": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\.runtime\\index-diagnostics-validation\\ab39a136-cb3e-4a39-95d6-f0113a290352\\analysis.json",
+    "sha256": "e4b4fa40a91bf963dcbaf3ff1451f2e03f0bb361862cefe3f616dc127a63c473",
+    "bytes": 2926500
+  },
+  "边界": "仅记录本次新解析的已观察原因，不倒推历史原因；语法回退不作为原生确认或完成AI架构。"
+}

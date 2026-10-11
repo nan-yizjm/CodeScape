@@ -3,8 +3,8 @@
   "platform": "Windows-11-10.0.26200-SP0",
   "architecture": "AMD64",
   "executable": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\.runtime\\packaging\\dist\\CodeScape\\CodeScape.exe",
-  "executable_sha256": "3ee3d304a24ba9f6f2cd5a31cd1c65e331233141eb936c52a1b2437266c4b636",
-  "data_root": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\output\\windows-bundle-validation\\a9ca1d4d-07e3-4308-8b0b-284d95bf268e",
+  "executable_sha256": "386cbfd57210ba6f59c12621a3ec1b7da58097b0bdf814c63989f8ea1cb1705c",
+  "data_root": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\output\\windows-bundle-validation\\18b3c126-1171-41ed-a7d6-9b8f1f459794",
   "developer_path_removed": true,
   "duplicate_launch_reused": true,
   "static_sample_functions": 8,
@@ -34,7 +34,7 @@
     "model_requests": 0,
     "tools": {
       "python": "ast/3.12; conservative-bindings/1; type-declarations/1",
-      "cpp": "tree-sitter/0.25.2 + libclang/18.1.1 + snapshot-config/8"
+      "cpp": "tree-sitter/0.25.2 + libclang/18.1.1 + snapshot-config/8 + native-diagnostics/1"
     }
   },
   "public_git_import": "本次未验证",

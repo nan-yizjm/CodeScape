@@ -37,7 +37,7 @@ def main():
     assert manifest['hash'] == public['实际快照hash']
     assert set(manifest['files']) == set(public['实际文件'])
     assert previous['Commit'] == 'd6c93f38a08b4ea0f8ffcfd7f7857307d5d5c3fa'
-    assert not any('bundled/fmt' in path for path in manifest['files'])
+    assert not any('/fmt/bundled/' in path for path in manifest['files'])
     before = {name: hashlib.sha256((snapshot / name).read_bytes()).hexdigest() for name in manifest['files']}
     destination = repository / '.runtime/index-diagnostics-validation' / str(uuid.uuid4())
     destination.mkdir(parents=True, exist_ok=False)
