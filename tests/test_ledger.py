@@ -256,6 +256,9 @@ def test_source_feedback_contains_only_trusted_ids_and_numeric_ranges():
         ('secret-value', 40), [('secret-range', 30)]))
     assert 'secret-' not in unsafe
     assert validation_feedback(ValueError('secret-error')) == '模型结果不满足校验契约。'
+    allowed = validation_feedback(SourceContractError('讲解实体不唯一或不属于当前范围。', None,
+        allowed_identifiers=[identifier, 'secret-input']))
+    assert identifier in allowed and 'allowed_entity_ids' in allowed and 'secret-input' not in allowed
 
 
 def test_transport_and_repairs_never_exceed_six_sends(tmp_path, monkeypatch):

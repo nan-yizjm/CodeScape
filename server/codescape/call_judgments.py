@@ -60,8 +60,11 @@ def validate_judgments(architecture, analysis, allowed_calls, files, supplied):
                 if cursor > location.end_line:
                     return True
             return False
-        if not contains(call.location) or not contains(target.location):
-            raise SourceContractError("调用判断必须提供具体调用位置和完整目标实现", target.id,
+        if not contains(call.location):
+            raise SourceContractError("调用判断依据没有覆盖完整调用位置", call.id,
+                (call.location.start_line, call.location.end_line), supplied.get(call.location.path, []))
+        if not contains(target.location):
+            raise SourceContractError("调用判断依据没有覆盖完整目标实现", target.id,
                 (target.location.start_line, target.location.end_line), supplied.get(target.location.path, []))
 
 

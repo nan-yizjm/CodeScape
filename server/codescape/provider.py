@@ -28,7 +28,7 @@ from .validation import SourceContractError
 MAX_CONTEXT_CHARS = 180_000
 BATCH_TARGET_CHARS = 150_000
 BATCH_MAX_ENTITIES = 12
-PIPELINE_VERSION = "architecture/2-explanations/1-reads/1-judgments/1-dependencies/1-cpp-config/7-interfaces/1-facts/1-index/2-ts-bindings/2"
+PIPELINE_VERSION = "architecture/2-explanations/1-reads/1-judgments/1-dependencies/1-cpp-config/7-interfaces/1-facts/1-index/2-ts-bindings/2-python-declarations/1"
 ProgressCallback = Callable[[int, int, str], Awaitable[None]]
 BatchCallback = Callable[[int, int, Architecture], Awaitable[None]]
 
@@ -44,6 +44,7 @@ SAFE_VALIDATION_MESSAGES = {
     "静态已知的动态语义不能升级为直接调用", "调用表达式与目标实现名称不对应",
     "跨语言接口不能仅按同名确认为直接函数调用", "条件编译适用性未确认，不能升级调用",
     "调用判断依据未提供或超出快照", "调用判断必须提供具体调用位置和完整目标实现",
+    "调用判断依据没有覆盖完整调用位置", "调用判断依据没有覆盖完整目标实现",
     "主要依赖必须引用当前上下文中已确认的真实调用，并说明核心协作理由。",
     "递归聚合说明与源码事实冲突：非叶分支从 0 累加子项，没有另加当前项；不得称为全部节点计数。",
 }
@@ -77,6 +78,9 @@ def validation_feedback(error: ValueError) -> str:
         if safe_range(error.implementation_lines):
             details['implementation_lines'] = error.implementation_lines
         details['supplied_lines'] = [bounds for bounds in error.supplied_lines[:8] if safe_range(bounds)]
+        if error.allowed_identifiers:
+            details['allowed_entity_ids'] = [value for value in error.allowed_identifiers[:16]
+                if isinstance(value, str) and re.fullmatch(r'[a-f0-9-]{16,36}', value)]
         return message + '。已知索引依据：' + json.dumps(details, ensure_ascii=False)
     return message
 
@@ -343,6 +347,8 @@ class Provider:
             "不得将静态依赖假称为已运行的执行顺序。不要列函数名、文件路径、框架参数和底层术语。"
             "不要使用‘本批源码’、‘本次批次’；不能凭名字猜测用途，证据不足就明确限定范围。"
             "只写已确认能力，保留关键缺口，不声称完整运行时行为。不要推荐阅读路线。"
+            "‘安全’或 safe 名称、返回失败包装不等于任何情况下都不抛异常；材料没有明确穷尽异常边界时，"
+            "只介绍成功/失败结果形式，不承诺永不异常。异常边界必须与同步/异步及条件限定一起保留。"
             "压缩说明时必须保留会改变行为的限定：若只有一个方向、同步变体或特定条件下覆盖参数、"
             "抛异常或启用快速路径，不能把它概括为所有变体都如此。仅共享职责可以合并，行为差异不得省略成错误共同结论。"
             "limitations 简短说明最重要的范围局限，每项不超过 100 字，常规细节不重复。"
@@ -691,6 +697,8 @@ class Provider:
             "实际分支、表达式和返回值优先于注释或名称；说明递归统计时核对基例与累加，区分叶节点数量与全部节点数量。"
             "source_facts 为受限静态递推事实，优先核对；非叶分支从0累加子项且不另加当前项时，只计叶项，不包含所有内部节点。"
             "区分从输入读取的值和硬编码常量，不能将固定深度说成从输入读取；区分返回配置字典和返回校验布尔值。"
+            "描述条件分支时保留影响行为的联合前提，包括可空参数检查、零值关闭配置与短路求值；"
+            "受非空检查保护的解引用或写入不能描述成无条件操作。篇幅不足时概述该分支，不省掉关键保护条件。"
             "同一模块中的相似包装函数也要逐个核对参数和分支：显式覆盖参数与原样透传、正向与反向、"
             "同步与异步、抛异常与返回失败值不可混为一谈；某一个变体设置的常量不能外推到所有变体。"
             "模块 summary 先概括共同职责，再用简短语句说明会改变行为的差异；证据不足时保留差异未知。"
@@ -702,6 +710,9 @@ class Provider:
             "candidate_entities 只提供定位信息，不能凭同名确认，必须已提供目标源码或主动补读完整实现。"
             "related_entities 也只是定位索引；调用或目标实现不在 file_ranges 内时，不能直接引用其行号作为已读依据。"
             "先通过 read_requests 补读再确认；不需要补充直接调用时省略 call_judgments，静态确认关系仍完整保留。"
+            "已确认的 calls 不需要重复提交同目标判断；优先保留静态证明，只对确需补充或冲突的调用给出可选判断。"
+            "完整目标实现指 target.location 的 start_line 到 end_line 全部范围；只引用函数头、关键分支或调用行不够。"
+            "若修复反馈仍缺完整依据，省略该可选 call_judgment，保留模块/讲解及原静态关系，不反复提交相同无效判断。"
             "间接调用、参数/变量回调、虚调用、动态分派、装饰器改写、目标歧义或互斥编译条件不能确认；证据不足时省略判断。"
             "与静态确认冲突须如实提供依据，系统会保留未解析，不会覆盖成另一条确定边。"
             "缺少相关实现时可输出 read_requests，最多3轮，每轮最多4项。code 只接受当前快照文件的行范围（每项最多200行/20000字）；"
@@ -939,7 +950,8 @@ def validate_architecture(
     expected = expected_entity_ids if expected_entity_ids is not None else {entity.id for entity in analysis.entities if entity.visible}
     explained = [note.entity_id for note in architecture.explanations]
     if len(explained) != len(set(explained)) or not set(explained).issubset(expected):
-        raise ValueError("讲解实体不唯一或不属于当前范围。")
+        raise SourceContractError("讲解实体不唯一或不属于当前范围。", None,
+            allowed_identifiers=sorted(expected))
     if any(ref.path not in paths for note in architecture.explanations for ref in note.evidence):
         raise ValueError("讲解源码依据超出当前范围。")
     entity_paths = {entity.id: entity.location.path for entity in analysis.entities if entity.visible}

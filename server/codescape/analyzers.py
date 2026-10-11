@@ -36,7 +36,7 @@ def position(path: str, text: str, node: ast.AST) -> Location:
 
 
 def python_analysis(files: dict[str, str], version: str) -> Analysis:
-    result = Analysis(tools={"python": "ast/3.12; conservative-bindings/1"})
+    result = Analysis(tools={"python": "ast/3.12; conservative-bindings/1; type-declarations/1"})
     symbols: dict[tuple[str, str], list[Entity]] = {}
     imports: dict[str, dict[str, tuple[str, str | None]]] = {}
     unstable: dict[str, set[str]] = {}
@@ -89,6 +89,39 @@ def python_analysis(files: dict[str, str], version: str) -> Analysis:
                 for descendant in ast.walk(node):
                     if isinstance(descendant, ast.Name) and isinstance(descendant.ctx, ast.Store):
                         unstable[path].add(descendant.id)
+        declaration_shadows = {node.name for node in tree.body
+                               if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef))}
+        mutated_imports = {node.value.id for node in ast.walk(tree)
+                           if isinstance(node, ast.Attribute) and isinstance(node.ctx, (ast.Store, ast.Del))
+                           and isinstance(node.value, ast.Name)}
+
+        def placeholder_body(node):
+            if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                return False
+            body = node.body[1:] if node.body and isinstance(node.body[0], ast.Expr) and isinstance(
+                node.body[0].value, ast.Constant) and isinstance(node.body[0].value.value, str) else node.body
+            return bool(body) and all(isinstance(item, ast.Pass) or isinstance(item, ast.Expr)
+                and isinstance(item.value, ast.Constant) and item.value.value is Ellipsis for item in body)
+
+        def imported_name(expression, shadowed):
+            root = expression.value if isinstance(expression, ast.Attribute) else expression
+            if not isinstance(root, ast.Name) or root.id in unstable[path] | declaration_shadows | mutated_imports | shadowed:
+                return None, None
+            module, name = imports[path].get(root.id, (None, None))
+            if isinstance(expression, ast.Attribute):
+                return (module, expression.attr) if name is None else (None, None)
+            return module, name
+
+        def declaration_reason(node, shadowed, protocol):
+            if not placeholder_body(node):
+                return None
+            for decorator in node.decorator_list:
+                module, name = imported_name(decorator, shadowed)
+                if module in {'typing', 'typing_extensions'} and name == 'overload':
+                    return '类型重载声明'
+                if module == 'abc' and name == 'abstractmethod':
+                    return '抽象方法声明'
+            return '接口方法声明' if protocol else None
         root_id = stable_id(version, path, "module")
         result.scopes.append(
             Scope(
@@ -106,7 +139,8 @@ def python_analysis(files: dict[str, str], version: str) -> Analysis:
         )
 
         def visit(
-            node: ast.AST, scope_id: str, names: list[str], in_function: bool, local_names: set[str]
+            node: ast.AST, scope_id: str, names: list[str], in_function: bool, local_names: set[str],
+            protocol: bool = False,
         ) -> None:
             if isinstance(node, ast.ClassDef):
                 for expression in (
@@ -123,8 +157,18 @@ def python_analysis(files: dict[str, str], version: str) -> Analysis:
                         location=position(path, text, node),
                     )
                 )
+                class_bindings = {child.name for child in node.body
+                                  if isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef))}
                 for child in node.body:
-                    visit(child, class_id, names + [node.name], in_function, set())
+                    if isinstance(child, (ast.Assign, ast.AnnAssign, ast.Import, ast.ImportFrom)):
+                        class_bindings.update(item.id for item in ast.walk(child)
+                                              if isinstance(item, ast.Name) and isinstance(item.ctx, ast.Store))
+                        if isinstance(child, (ast.Import, ast.ImportFrom)):
+                            class_bindings.update(alias.asname or alias.name.split('.')[0] for alias in child.names)
+                protocol_class = any(imported_name(base, local_names) in {
+                    ('typing', 'Protocol'), ('typing_extensions', 'Protocol')} for base in node.bases)
+                for child in node.body:
+                    visit(child, class_id, names + [node.name], in_function, class_bindings, protocol_class)
                 return
             if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.Lambda)):
                 for expression in (
@@ -137,7 +181,8 @@ def python_analysis(files: dict[str, str], version: str) -> Analysis:
                 qualified = ".".join(names + [name])
                 entity_id = stable_id(version, path, qualified, node.lineno, node.col_offset)
                 child_scope = stable_id(entity_id, "scope")
-                hidden = isinstance(node, ast.Lambda) or in_function
+                declaration = declaration_reason(node, local_names, protocol)
+                hidden = isinstance(node, ast.Lambda) or in_function or declaration
                 result.scopes.append(
                     Scope(
                         id=child_scope,
@@ -165,6 +210,8 @@ def python_analysis(files: dict[str, str], version: str) -> Analysis:
                     if isinstance(node, ast.Lambda)
                     else "嵌套局部函数"
                     if in_function
+                    else declaration
+                    if declaration
                     else None,
                     implementation_hash=digest(ast.dump(node, include_attributes=False)),
                 )
@@ -245,7 +292,7 @@ def python_analysis(files: dict[str, str], version: str) -> Analysis:
                 result.calls.append(call)
                 pending.append((call, path, names, local_names))
             for child in ast.iter_child_nodes(node):
-                visit(child, scope_id, names, in_function, local_names)
+                visit(child, scope_id, names, in_function, local_names, protocol)
 
         for node in tree.body:
             visit(node, root_id, [], False, set())

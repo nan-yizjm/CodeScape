@@ -3,8 +3,9 @@ from __future__ import annotations
 
 
 class SourceContractError(ValueError):
-    def __init__(self, message, identifier, implementation_lines=None, supplied_lines=None):
+    def __init__(self, message, identifier, implementation_lines=None, supplied_lines=None, allowed_identifiers=None):
         super().__init__(message)
         self.identifier = identifier
         self.implementation_lines = implementation_lines
         self.supplied_lines = supplied_lines or []
+        self.allowed_identifiers = allowed_identifiers or []

@@ -37,6 +37,23 @@ def test_source_judgment_preserves_real_scope_and_static_input():
     assert next(entity for entity in result.entities if entity.name == "render").unresolved_count == 0
 
 
+@pytest.mark.parametrize('missing', ['call', 'target'])
+def test_range_feedback_identifies_the_missing_side(missing):
+    from codescape.validation import SourceContractError
+    files, analysis, call, architecture, ranges = fixture()
+    target=next(e for e in analysis.entities if e.id==architecture.call_judgments[0].target_id)
+    evidence=architecture.call_judgments[0].evidence
+    if missing=='call':
+        evidence[0].start_line=evidence[0].end_line=5
+    else:
+        evidence[1].end_line=3
+    with pytest.raises(SourceContractError) as caught:
+        validate_judgments(architecture,analysis,{call.id},files,ranges)
+    location=call.location if missing=='call' else target.location
+    assert caught.value.identifier==(call.id if missing=='call' else target.id)
+    assert caught.value.implementation_lines==(location.start_line,location.end_line)
+
+
 @pytest.mark.parametrize("change,expected", [("unknown_call", "引用错误"), ("unknown_target", "引用错误"),
     ("indirect", "间接调用"), ("external", "范围外"), ("dynamic", "动态语义"), ("missing_code", "未提供"),
     ("partial_target", "完整目标"), ("wrong_name", "名称不对应"), ("condition", "条件编译")])

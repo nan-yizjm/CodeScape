@@ -1,0 +1,22 @@
+{
+  "日期": "2026-10-11",
+  "样本": "hiredis-c",
+  "性质": "只读索引对照后仅迁移隔离评测检查点版本，不改模型批次内容",
+  "耗时秒": 10.33,
+  "索引除工具版本外完全相同": true,
+  "变化字段": [],
+  "旧工具": {
+    "python": "ast/3.12; conservative-bindings/1",
+    "cpp": "tree-sitter/0.25.2 + libclang/18.1.1 + snapshot-config/6"
+  },
+  "新工具": {
+    "cpp": "tree-sitter/0.25.2 + libclang/18.1.1 + snapshot-config/7"
+  },
+  "原源码未变": true,
+  "正常聚合派生未解析数量已核对": true,
+  "保留完成批次": 24,
+  "原检查点归档": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\.runtime\\public-model-validation\\ea41564b-3998-45c0-a8bc-17b660a8e87a\\checkpoint-history\\3056512e-051c-4a6f-9898-1f9b8b214bf6.json",
+  "原流水线": "architecture/2-explanations/1-reads/1-judgments/1-dependencies/1-cpp-config/6-interfaces/1-facts/1-index/2-ts-bindings/2",
+  "新流水线": "architecture/2-explanations/1-reads/1-judgments/1-dependencies/1-cpp-config/7-interfaces/1-facts/1-index/2-ts-bindings/2",
+  "边界": "仅此固定快照的逐字段相等证明；不能用于spdlog或其他未经对照的工程，不是模型质量通过"
+}
