@@ -11,6 +11,7 @@ from functools import lru_cache
 from pathlib import Path
 
 from .cpp_environment import compiler_configurations, snapshot_overlay, trusted_headers, verify_includes
+from .cpp_syntax import recover_parse, recovery_macros
 from .models import Analysis, Call, Diagnostic, Entity, Location, Scope
 from .runtime import executable, resource_root
 
@@ -302,7 +303,7 @@ def _cpp_analysis(root, files, version, source_root, header_directories, header_
     from clang import cindex
     from tree_sitter import Language, Parser
 
-    result = Analysis(tools={"cpp": "tree-sitter/0.25.2 + libclang/18.1.1 + snapshot-config/6"})
+    result = Analysis(tools={"cpp": "tree-sitter/0.25.2 + libclang/18.1.1 + snapshot-config/7"})
     if syntax_only:
         result.tools['cpp'] += ' + syntax-fallback/1'
     if not any(Path(path).suffix in {".c", ".h", ".cc", ".cpp", ".cxx", ".hpp", ".hh"} for path in files):
@@ -328,6 +329,7 @@ def _cpp_analysis(root, files, version, source_root, header_directories, header_
         cindex.CursorKind.DESTRUCTOR,
         cindex.CursorKind.FUNCTION_TEMPLATE,
     }
+    syntax_macros = recovery_macros(files)
     for path, text in files.items():
         if Path(path).suffix not in {".c", ".h", ".cc", ".cpp", ".cxx", ".hpp", ".hh"}:
             continue
@@ -335,6 +337,14 @@ def _cpp_analysis(root, files, version, source_root, header_directories, header_
         parser = Parser(Language(tree_sitter_c.language() if language == "c" else tree_sitter_cpp.language()))
         source_bytes = text.encode()
         parsed = parser.parse(source_bytes)
+        original_parsed = parsed
+        recovered = namespace_recovered = False
+        if language == 'cpp':
+            parsed, recovered, namespace_recovered = recover_parse(parser, parsed, source_bytes, syntax_macros)
+        if recovered:
+            result.diagnostics.append(Diagnostic(category='syntax_recovery', path=path,
+                message='仅在内存语法视图忽略已知导出注解和命名空间包装宏以恢复声明；'
+                        '源码位置与原字节不变，宏命名空间名称待原生定义确认，不以此证明调用绑定。'))
         module_scope = stable_id(version, path, "module")
         result.scopes.append(Scope(id=module_scope, kind="module", name=path,
             location=Location(path=path,start_line=1,end_line=max(1,len(text.splitlines())),
@@ -376,10 +386,10 @@ def _cpp_analysis(root, files, version, source_root, header_directories, header_
                 return [node.type, node_bytes(node).decode()]
             children = [value for child in node.children if (value := semantic_tree(child)) is not None]
             return [node.type, children if children else node_bytes(node).decode()]
-        result.file_hashes[path] = digest(json.dumps(semantic_tree(parsed.root_node)))
+        result.file_hashes[path] = digest(json.dumps(semantic_tree(original_parsed.root_node)))
         if any(child.type != "comment" for child in parsed.root_node.named_children):
             result.readable_paths.append(path)
-        if parsed.root_node.has_error:
+        if original_parsed.root_node.has_error:
             result.diagnostics.append(
                 Diagnostic(category="parse_failed", path=path, message="部分语法无法识别。")
             )
@@ -430,6 +440,16 @@ def _cpp_analysis(root, files, version, source_root, header_directories, header_
                 parents = parents + ([node_bytes(named).decode()] if named else [])
             if node.type == "function_definition":
                 declarator = node.child_by_field_name("declarator")
+                probe = declarator
+                while probe and probe.type != 'function_declarator':
+                    probe = probe.child_by_field_name('declarator')
+                if probe is None:
+                    result.diagnostics.append(Diagnostic(category='parse_failed',path=path,
+                        line=node.start_point.row+1,
+                        message='语法恢复节点没有函数声明结构，未当作函数或调用所属作用域。'))
+                    for child in node.children:
+                        syntax(child, parents, condition, scope)
+                    return
                 current = declarator
                 while current and current.type not in {
                     "identifier",
@@ -517,7 +537,7 @@ def _cpp_analysis(root, files, version, source_root, header_directories, header_
             for child in node.children:
                 syntax(child, parents, condition, scope)
 
-        syntax(parsed.root_node, [])
+        syntax(parsed.root_node, ['<宏命名空间待确认>'] if namespace_recovered else [])
     entities_by_path = {}
     for entity in result.entities:
         entities_by_path.setdefault(entity.location.path,[]).append(entity)

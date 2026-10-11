@@ -1,0 +1,20 @@
+{
+  "日期": "2026-10-11",
+  "Commit": "d6c93f38a08b4ea0f8ffcfd7f7857307d5d5c3fa",
+  "文件数": 102,
+  "性质": "只读语法恢复，未请求模型，非整体质量验收",
+  "执行目标代码": false,
+  "耗时秒": 1.38,
+  "可见函数": 524,
+  "logger.h可见函数": 34,
+  "logger.h隐藏结构": 5,
+  "类误当函数": false,
+  "恢复诊断数": 84,
+  "确定调用": 0,
+  "源码字节未变": true,
+  "静态索引制品": {
+    "path": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\.runtime\\public-model-validation\\spdlog-syntax7-analysis.json",
+    "sha256": "f21402d48aee136b9be3eb5c4fd1ad61f6419ea8afd40d3b409a13236b1ad089"
+  },
+  "旧模型索引边界": "正在运行的旧完整分析使用cpp-config/6，不能当作此修订的质量验收"
+}

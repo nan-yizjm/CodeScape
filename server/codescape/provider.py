@@ -28,7 +28,7 @@ from .validation import SourceContractError
 MAX_CONTEXT_CHARS = 180_000
 BATCH_TARGET_CHARS = 150_000
 BATCH_MAX_ENTITIES = 12
-PIPELINE_VERSION = "architecture/2-explanations/1-reads/1-judgments/1-dependencies/1-cpp-config/6-interfaces/1-facts/1-index/2-ts-bindings/2"
+PIPELINE_VERSION = "architecture/2-explanations/1-reads/1-judgments/1-dependencies/1-cpp-config/7-interfaces/1-facts/1-index/2-ts-bindings/2"
 ProgressCallback = Callable[[int, int, str], Awaitable[None]]
 BatchCallback = Callable[[int, int, Architecture], Awaitable[None]]
 
@@ -343,6 +343,8 @@ class Provider:
             "不得将静态依赖假称为已运行的执行顺序。不要列函数名、文件路径、框架参数和底层术语。"
             "不要使用‘本批源码’、‘本次批次’；不能凭名字猜测用途，证据不足就明确限定范围。"
             "只写已确认能力，保留关键缺口，不声称完整运行时行为。不要推荐阅读路线。"
+            "压缩说明时必须保留会改变行为的限定：若只有一个方向、同步变体或特定条件下覆盖参数、"
+            "抛异常或启用快速路径，不能把它概括为所有变体都如此。仅共享职责可以合并，行为差异不得省略成错误共同结论。"
             "limitations 简短说明最重要的范围局限，每项不超过 100 字，常规细节不重复。"
             "batch_notes 是历史分批分析记录；‘本批未包含’不等于全局未分析，"
             "请结合全部模块消除这种局部限制，只保留全局仍成立的缺口。"
@@ -676,6 +678,9 @@ class Provider:
             "限制本批输出长度不改变源码范围或函数归属集合，也不删除静态已确认调用。"
             "无可见函数但有实际顶层代码、配置或类实现的范围，也应按职责生成有 code_paths 证据的叶模块；"
             "不得创造函数实体，不能把纯注释或未知占位当作已完成模块。缺乏职责依据时标记 incomplete。"
+            "entities 只是函数图允许显示的实体，不是本批全部分析范围。files 内的变量持有函数、匿名作用域、"
+            "类方法和顶层逻辑仍须归纳重要职责，可加入现有模块说明或 code_paths 有依据的无 entity_ids 模块；"
+            "不要因为不显示为函数节点就忽略其功能，也不能据此声称已提供的完整文件片段未被分析。"
             "id 使用 m1 等稳定本次局部标识。只有实际代码依据的模块，code_paths 引用给定文件。"
             "overview 用通俗中文说明用途、核心能力、工作原理和局限。简介最多160字，原理最多240字，"
             "能力最多5项、每项最多40字；不要堆砌函数名、文件路径和实现参数，不能宣称完整运行时行为。"
@@ -686,7 +691,12 @@ class Provider:
             "实际分支、表达式和返回值优先于注释或名称；说明递归统计时核对基例与累加，区分叶节点数量与全部节点数量。"
             "source_facts 为受限静态递推事实，优先核对；非叶分支从0累加子项且不另加当前项时，只计叶项，不包含所有内部节点。"
             "区分从输入读取的值和硬编码常量，不能将固定深度说成从输入读取；区分返回配置字典和返回校验布尔值。"
+            "同一模块中的相似包装函数也要逐个核对参数和分支：显式覆盖参数与原样透传、正向与反向、"
+            "同步与异步、抛异常与返回失败值不可混为一谈；某一个变体设置的常量不能外推到所有变体。"
+            "模块 summary 先概括共同职责，再用简短语句说明会改变行为的差异；证据不足时保留差异未知。"
             "reason 解释绑定依据即可，不重复编造行号；准确位置只在 evidence 中引用。"
+            "若在 reason 中提到调用所在函数或包装器名称，必须核对调用行与 caller_scope_id；"
+            "不要用相似名称替换真实作用域，匿名作用域内的调用不能归到外层可见函数。"
             "可选 call_judgments 只判断已给出的具体调用：必须是直接调用，引用真实 call_id 和 target_id，"
             "reason 说明名称/作用域/绑定如何对应，evidence 同时包含完整调用位置、目标实现和必要的绑定依据。"
             "candidate_entities 只提供定位信息，不能凭同名确认，必须已提供目标源码或主动补读完整实现。"
