@@ -28,7 +28,7 @@ from .validation import SourceContractError
 MAX_CONTEXT_CHARS = 180_000
 BATCH_TARGET_CHARS = 150_000
 BATCH_MAX_ENTITIES = 12
-PIPELINE_VERSION = "architecture/2-explanations/3-reads/1-judgments/2-dependencies/1-cpp-config/8-interfaces/1-facts/2-index/2-ts-bindings/2-python-declarations/1"
+PIPELINE_VERSION = "architecture/3-explanations/3-reads/1-judgments/2-dependencies/1-cpp-config/8-interfaces/1-facts/2-index/2-ts-bindings/2-python-declarations/1"
 ProgressCallback = Callable[[int, int, str], Awaitable[None]]
 BatchCallback = Callable[[int, int, Architecture], Awaitable[None]]
 
@@ -87,6 +87,11 @@ def validation_feedback(error: ValueError) -> str:
             details['repair_action'] = ('从 call_judgments 中移除该可选判断，保留原始调用的未确认状态；'
                                         '不能通过改写理由、补充同名实现或假定编译配置来升级。'
                                         '继续提供其余模块、函数讲解与有依据的判断。')
+        if message == "函数归属不唯一或与真实实体不一致。":
+            details['repair_action'] = ('把 allowed_entity_ids 中每个本批函数恰好分配到一个有职责依据的叶模块；'
+                                        '父模块 entity_ids 为空。只使用本批 entities 的原始ID，'
+                                        '不要把候选目标、相关函数或补读实体加入本批归属集合。'
+                                        '保留有依据的职责与讲解；不能用虚构实体填补缺口。')
         return message + '。已知索引依据：' + json.dumps(details, ensure_ascii=False)
     return message
 
@@ -750,11 +755,19 @@ class Provider:
                 raise ProviderError(f"源码批次仍超过上下文保护上限：{paths}。请缩小该批次范围。")
             system = system_prefix + f"本次是第 {index}/{len(batches)} 批，只能为本批 entities 中的函数分配模块。"
             await self._progress(on_progress, index - 1, len(batches), f"正在分析第 {index}/{len(batches)} 批 · {len(batch_files)} 个文件")
+            assignment_repair_requested = False
             def checked_batch(document):
+                nonlocal assignment_repair_requested
                 if isinstance(document, dict) and document.get("type") == "json_object":
                     document = {key: value for key, value in document.items() if key != "type"}
                 architecture = Architecture.model_validate(document)
                 architecture.overview.synthesized = False
+                assigned = [identifier for module in architecture.modules for identifier in module.entity_ids]
+                if (not assignment_repair_requested
+                        and (len(assigned) != len(set(assigned)) or set(assigned) != expected)):
+                    assignment_repair_requested = True
+                    raise SourceContractError("函数归属不唯一或与真实实体不一致。", None,
+                                              allowed_identifiers=sorted(expected))
                 repair_batch_architecture(architecture, analysis, expected, set(batch_files))
                 validate_architecture(architecture, analysis, set(batch_files), expected_entity_ids=expected)
                 return architecture

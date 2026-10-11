@@ -1,0 +1,114 @@
+{
+  "日期": "2026-10-11",
+  "样本": "flask-python",
+  "Commit": "d086db856be187255b8ec61ef409357393020f32",
+  "模型流水线": "architecture/2-explanations/1-reads/1-judgments/1-dependencies/1-cpp-config/8-interfaces/1-facts/1-index/2-ts-bindings/2-python-declarations/1",
+  "报告": "flask-python-full真实模型验证.json",
+  "报告sha256": "1222581ad29db6f094d78de29d31ad374e1bef6936a4f5b776d7ee1b5e6878a5",
+  "性质": "已发布真实结果对固定公开源码的开发代理复核，不执行代码、不调用模型",
+  "核心能力": "Flask文件响应辅助把应用上下文参数交给文件发送包装器",
+  "实际关系": {
+    "id": "55f93f69-0b04-5e59-9459-909d9ad3ba3f",
+    "caller_scope_id": "64523d90-0d38-50ec-afb8-eef126345f40",
+    "target_id": "593375ec-fbd6-59d2-ba67-44151e0fba77",
+    "expression": "_prepare_send_file_kwargs",
+    "location": {
+      "path": "src/flask/helpers.py",
+      "start_line": 529,
+      "end_line": 539,
+      "start_byte": 19496,
+      "end_byte": 19851
+    },
+    "resolution": "confirmed",
+    "spelling_location": null,
+    "expansion_location": null,
+    "kind": "direct",
+    "interface_evidence": [],
+    "origin": "static",
+    "reason": "词法绑定指向分析范围内唯一实现，无已知重赋值或装饰器改写。",
+    "target_name": "_prepare_send_file_kwargs",
+    "judgment_evidence": []
+  },
+  "调用方": {
+    "id": "7e5f0b7e-1cc7-5488-b525-772b9fd350b1",
+    "函数": "send_file",
+    "真实作用域": "64523d90-0d38-50ec-afb8-eef126345f40",
+    "位置": {
+      "path": "src/flask/helpers.py",
+      "start_line": 417,
+      "end_line": 540,
+      "start_byte": 14586,
+      "end_byte": 19857
+    }
+  },
+  "目标": {
+    "id": "593375ec-fbd6-59d2-ba67-44151e0fba77",
+    "函数": "_prepare_send_file_kwargs",
+    "位置": {
+      "path": "src/flask/helpers.py",
+      "start_line": 402,
+      "end_line": 414,
+      "start_byte": 14156,
+      "end_byte": 14583
+    }
+  },
+  "模块归属": [
+    {
+      "id": "m53",
+      "parent_id": null,
+      "name": "文件发送",
+      "summary": "把路径或二进制文件对象作为响应发送：先由辅助函数注入 Flask 上下文相关参数（environ、USE_X_SENDFILE、response_class、root_path 及 max_age 回退），再委托 Werkzeug 实现。",
+      "entity_ids": [
+        "593375ec-fbd6-59d2-ba67-44151e0fba77",
+        "7e5f0b7e-1cc7-5488-b525-772b9fd350b1"
+      ],
+      "code_paths": [
+        "src/flask/helpers.py"
+      ],
+      "incomplete": false
+    }
+  ],
+  "实际主要协作选择": [
+    {
+      "call_ids": [
+        "55f93f69-0b04-5e59-9459-909d9ad3ba3f"
+      ],
+      "reason": "send_file 在返回前调用同文件的 _prepare_send_file_kwargs，用 Flask 上下文参数（environ、USE_X_SENDFILE、response_class、root_path、max_age 回退）补全后交给 Werkzeug 发送文件，是该核心能力的关键内部协作。"
+    }
+  ],
+  "源码片段": [
+    {
+      "角色": "调用",
+      "位置": {
+        "path": "src/flask/helpers.py",
+        "start_line": 529,
+        "end_line": 539,
+        "start_byte": 19496,
+        "end_byte": 19851
+      },
+      "源码": "        **_prepare_send_file_kwargs(\n            path_or_file=path_or_file,\n            environ=request.environ,\n            mimetype=mimetype,\n            as_attachment=as_attachment,\n            download_name=download_name,\n            conditional=conditional,\n            etag=etag,\n            last_modified=last_modified,\n            max_age=max_age,\n        )"
+    },
+    {
+      "角色": "目标完整实现",
+      "位置": {
+        "path": "src/flask/helpers.py",
+        "start_line": 402,
+        "end_line": 414,
+        "start_byte": 14156,
+        "end_byte": 14583
+      },
+      "源码": "def _prepare_send_file_kwargs(**kwargs: t.Any) -> dict[str, t.Any]:\n    ctx = app_ctx._get_current_object()\n\n    if kwargs.get(\"max_age\") is None:\n        kwargs[\"max_age\"] = ctx.app.get_send_file_max_age\n\n    kwargs.update(\n        environ=ctx.request.environ,\n        use_x_sendfile=ctx.app.config[\"USE_X_SENDFILE\"],\n        response_class=ctx.app.response_class,\n        _root_path=ctx.app.root_path,\n    )\n    return kwargs"
+    }
+  ],
+  "复核结论": "send_file源码529-539实际调用_prepare_send_file_kwargs，补齐environ、USE_X_SENDFILE、response_class、root_path等Flask上下文参数后交给Werkzeug；模型识别为关键内部协作，与预先基线一致。",
+  "边界": "只证明静态唯一实现、源码参数组织及实际模型选择，不执行目标、不证明Werkzeug内部或运行时行为；同一职责模块内协作可在内部依赖查看。",
+  "归属缺口定位": {
+    "待复核模块数": 2,
+    "待复核函数数": 22,
+    "按源码路径": {
+      "src/flask/app.py": 15,
+      "src/flask/sansio/scaffold.py": 7
+    }
+  },
+  "整体验收": "仍不通过：已有默认分支摘要错误和未完成归属；此核心协作抽查不代替全部语义质量与用户验收。"
+}
