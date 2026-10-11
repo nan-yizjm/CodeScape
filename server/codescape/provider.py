@@ -22,13 +22,13 @@ from .ledger import RequestLedger, ai_scope, known_usage, model_budget, model_un
 from .models import Analysis, Architecture, Module, Overview
 from .overview import ConciseOverview, overview_context
 from .security import CredentialStore
-from .semantic_facts import recursive_fold_facts, validate_fold_wording
+from .semantic_facts import defaulted_flag_facts, recursive_fold_facts, validate_fold_wording
 from .validation import SourceContractError
 
 MAX_CONTEXT_CHARS = 180_000
 BATCH_TARGET_CHARS = 150_000
 BATCH_MAX_ENTITIES = 12
-PIPELINE_VERSION = "architecture/2-explanations/2-reads/1-judgments/1-dependencies/1-cpp-config/8-interfaces/1-facts/1-index/2-ts-bindings/2-python-declarations/1"
+PIPELINE_VERSION = "architecture/2-explanations/3-reads/1-judgments/2-dependencies/1-cpp-config/8-interfaces/1-facts/2-index/2-ts-bindings/2-python-declarations/1"
 ProgressCallback = Callable[[int, int, str], Awaitable[None]]
 BatchCallback = Callable[[int, int, Architecture], Awaitable[None]]
 
@@ -81,6 +81,12 @@ def validation_feedback(error: ValueError) -> str:
         if error.allowed_identifiers:
             details['allowed_entity_ids'] = [value for value in error.allowed_identifiers[:16]
                 if isinstance(value, str) and re.fullmatch(r'[a-f0-9-]{16,36}', value)]
+        if isinstance(error.target_identifier, str) and re.fullmatch(r'[a-f0-9-]{16,36}', error.target_identifier):
+            details['target_id'] = error.target_identifier
+        if message == "条件编译适用性未确认，不能升级调用":
+            details['repair_action'] = ('从 call_judgments 中移除该可选判断，保留原始调用的未确认状态；'
+                                        '不能通过改写理由、补充同名实现或假定编译配置来升级。'
+                                        '继续提供其余模块、函数讲解与有依据的判断。')
         return message + '。已知索引依据：' + json.dumps(details, ensure_ascii=False)
     return message
 
@@ -452,7 +458,9 @@ class Provider:
             "files": files,
             "file_ranges": {path: {"start_line": start, "end_line": end} for path, (start, end) in ranges.items()},
             "diagnostics": diagnostics,
-            "source_facts": [fact for fact in recursive_fold_facts(analysis, {path:text for path,text in files.items() if ranges[path][0] == 1}).values() if fact['entity_id'] in local_ids],
+            "source_facts": [fact for extractor in (recursive_fold_facts, defaulted_flag_facts)
+                             for fact in extractor(analysis, {path:text for path,text in files.items() if ranges[path][0] == 1}).values()
+                             if fact['entity_id'] in local_ids],
         }
         return json.dumps(payload, ensure_ascii=False, separators=(',', ':')), local_ids
 
@@ -695,7 +703,8 @@ class Provider:
             "行号使用原文件绝对行号和 JSON 整数；file_ranges 给出本批片段原始范围。讲解依据必须在对应 entity.location 实现内。"
             "禁止添加 schema 未定义的状态、思考过程、说明字段；缺少依据时应补读或省略该讲解，不制造不存在的行号。"
             "实际分支、表达式和返回值优先于注释或名称；说明递归统计时核对基例与累加，区分叶节点数量与全部节点数量。"
-            "source_facts 为受限静态递推事实，优先核对；非叶分支从0累加子项且不另加当前项时，只计叶项，不包含所有内部节点。"
+            "source_facts 为受限源码事实，优先核对并保留每项边界；递推分支从0累加子项且不另加当前项时，只计叶项。"
+            "defaulted_flag_branch 区分假值读取结果返回参数默认值与非假值分支的比较表达式；不能把后者说成全部输入的唯一条件。"
             "区分从输入读取的值和硬编码常量，不能将固定深度说成从输入读取；区分返回配置字典和返回校验布尔值。"
             "描述条件分支时保留影响行为的联合前提，包括可空参数检查、零值关闭配置与短路求值；"
             "受非空检查保护的解引用或写入不能描述成无条件操作。篇幅不足时概述该分支，不省掉关键保护条件。"
@@ -707,6 +716,8 @@ class Provider:
             "同一模块中的相似包装函数也要逐个核对参数和分支：显式覆盖参数与原样透传、正向与反向、"
             "同步与异步、抛异常与返回失败值不可混为一谈；某一个变体设置的常量不能外推到所有变体。"
             "模块 summary 先概括共同职责，再用简短语句说明会改变行为的差异；证据不足时保留差异未知。"
+            "函数讲解、模块摘要和概览都必须保留改变行为的默认值、未设置/空值、失败回退与覆盖条件。"
+            "尤其不能在模块摘要里用‘只有/仅当/总是’省掉函数详情已保留的默认分支；篇幅有限就概述职责，不写错误的唯一条件。"
             "reason 解释绑定依据即可，不重复编造行号；准确位置只在 evidence 中引用。"
             "若在 reason 中提到调用所在函数或包装器名称，必须核对调用行与 caller_scope_id；"
             "不要用相似名称替换真实作用域，匿名作用域内的调用不能归到外层可见函数。"

@@ -43,7 +43,9 @@ def validate_judgments(architecture, analysis, allowed_calls, files, supplied):
         if family(source_suffix) != family(target_suffix):
             raise ValueError("跨语言接口不能仅按同名确认为直接函数调用")
         if target.condition and (not caller or target.condition != caller.condition):
-            raise ValueError("条件编译适用性未确认，不能升级调用")
+            raise SourceContractError("条件编译适用性未确认，不能升级调用", call.id,
+                (call.location.start_line, call.location.end_line), supplied.get(call.location.path, []),
+                target_identifier=target.id)
         for ref in judgment.evidence:
             if (ref.path not in files or ref.end_line > len(files[ref.path].splitlines())
                     or not any(start <= ref.start_line <= ref.end_line <= end for start, end in supplied.get(ref.path, []))):

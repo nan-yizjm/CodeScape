@@ -101,6 +101,40 @@ def test_static_ai_disagreement_removes_edge_and_keeps_both_targets():
     assert call.resolution == "confirmed" and call.target_id == other.id
 
 
+def test_conditional_repair_identifies_optional_judgment_without_admitting_it(tmp_path, monkeypatch):
+    from codescape.provider import validation_feedback
+    from codescape.validation import SourceContractError
+
+    files, analysis, call, architecture, ranges = fixture()
+    target = next(entity for entity in analysis.entities if entity.name == 'encode')
+    target.condition = 'defined(UNKNOWN_BUILD_OPTION)'
+    with pytest.raises(SourceContractError) as caught:
+        validate_judgments(architecture, analysis, {call.id}, files, ranges)
+    feedback = validation_feedback(caught.value)
+    assert call.id in feedback and target.id in feedback and '移除该可选判断' in feedback
+    assert 'UNKNOWN_BUILD_OPTION' not in feedback
+    assert call.resolution == 'unresolved' and call.target_id is None
+
+    provider = Provider(tmp_path)
+    requests = []
+    repaired = architecture.model_copy(deep=True)
+    repaired.call_judgments = []
+
+    async def fixed(system, payload, **kwargs):
+        requests.append(system)
+        if len(requests) == 1:
+            return architecture.model_dump(), {}
+        assert call.id in system and target.id in system and '移除该可选判断' in system
+        return repaired.model_dump(), {}
+
+    monkeypatch.setattr(provider, 'request', fixed)
+    result, _ = asyncio.run(provider.architecture(analysis, files))
+    assert len(requests) == 2 and not result.call_judgments
+    assert result.modules == architecture.modules
+    retained = reconcile_judgments(analysis, result)
+    assert next(item for item in retained.calls if item.id == call.id).resolution == 'unresolved'
+
+
 def test_ai_agreement_does_not_relabel_static_confirmation():
     files, analysis, call, architecture, ranges = fixture()
     target = next(entity for entity in analysis.entities if entity.name == "encode")

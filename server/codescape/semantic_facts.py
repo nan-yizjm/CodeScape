@@ -1,8 +1,77 @@
-"""受限 Python 递归聚合的源码事实；不是执行器或通用语义证明。"""
+"""受限 Python 显式分支与递归聚合的源码事实；不是执行器或通用语义证明。"""
 from __future__ import annotations
 
 import ast
 import re
+
+
+def defaulted_flag_facts(analysis, files):
+    """Describe a small, complete source pattern without importing its environment reader."""
+    facts = {}
+    entities = {(item.location.path, item.location.start_line): item for item in analysis.entities
+                if item.visible and item.language == 'python'}
+    for path, text in files.items():
+        if not path.endswith('.py'):
+            continue
+        try:
+            tree = ast.parse(text)
+        except SyntaxError:
+            continue
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.FunctionDef) or node.decorator_list:
+                continue
+            entity = entities.get((path, node.lineno))
+            if not entity or node.end_lineno != entity.location.end_line:
+                continue
+            body = list(node.body)
+            if body and isinstance(body[0], ast.Expr) and isinstance(body[0].value, ast.Constant) and isinstance(body[0].value.value, str):
+                body.pop(0)
+            if len(body) != 3:
+                continue
+            assigned, branch, returned = body
+            if not (isinstance(assigned, ast.Assign) and len(assigned.targets) == 1
+                    and isinstance(assigned.targets[0], ast.Name) and isinstance(assigned.value, ast.Call)
+                    and isinstance(branch, ast.If) and not branch.orelse
+                    and isinstance(branch.test, ast.UnaryOp) and isinstance(branch.test.op, ast.Not)
+                    and isinstance(branch.test.operand, ast.Name)
+                    and branch.test.operand.id == assigned.targets[0].id and len(branch.body) == 1
+                    and isinstance(branch.body[0], ast.Return) and isinstance(branch.body[0].value, ast.Name)
+                    and isinstance(returned, ast.Return) and isinstance(returned.value, ast.Compare)
+                    and len(returned.value.ops) == 1 and isinstance(returned.value.ops[0], (ast.In, ast.NotIn))
+                    and len(returned.value.comparators) == 1):
+                continue
+            reader = assigned.value
+            if not (isinstance(reader.func, ast.Attribute) and reader.func.attr == 'get'
+                    and isinstance(reader.func.value, ast.Attribute) and reader.func.value.attr == 'environ'
+                    and isinstance(reader.func.value.value, ast.Name) and len(reader.args) == 1
+                    and isinstance(reader.args[0], ast.Constant) and isinstance(reader.args[0].value, str)
+                    and not reader.keywords):
+                continue
+            tested = returned.value.left
+            choices = returned.value.comparators[0]
+            if not (isinstance(tested, ast.Call) and isinstance(tested.func, ast.Attribute)
+                    and tested.func.attr == 'lower' and isinstance(tested.func.value, ast.Name)
+                    and tested.func.value.id == assigned.targets[0].id and not tested.args and not tested.keywords
+                    and isinstance(choices, (ast.Tuple, ast.List, ast.Set)) and choices.elts
+                    and all(isinstance(item, ast.Constant) and isinstance(item.value, str) for item in choices.elts)):
+                continue
+            parameter = branch.body[0].value.id
+            arguments = [*node.args.posonlyargs, *node.args.args]
+            defaults = {arg.arg: value for arg, value in zip(arguments[-len(node.args.defaults):], node.args.defaults)}
+            defaults.update({arg.arg: value for arg, value in zip(node.args.kwonlyargs, node.args.kw_defaults)})
+            default = defaults.get(parameter)
+            if (parameter == assigned.targets[0].id or not isinstance(default, ast.Constant)
+                    or type(default.value) is not bool):
+                continue
+            facts[entity.id] = {'entity_id': entity.id, 'name': entity.name, 'kind': 'defaulted_flag_branch',
+                'read_expression': ast.unparse(reader), 'flag_name': reader.args[0].value,
+                'falsey_returns_parameter': parameter, 'omitted_parameter_default': default.value,
+                'truthy_result_expression': ast.unparse(returned.value),
+                'interpretation': f'函数本体读取结果为假值时返回参数 {parameter}；省略该参数时默认值为 {default.value}。'
+                                  '非假值分支返回所列比较表达式，不能将它描述为全部输入的唯一返回条件。',
+                'boundary': '只证明提供源码中的显式分支，不执行导入，不证明读取器绑定或外部调用不会异常。',
+                'path': path, 'start_line': node.lineno, 'end_line': node.end_lineno}
+    return facts
 
 
 def recursive_fold_facts(analysis, files):

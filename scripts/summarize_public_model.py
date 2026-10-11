@@ -118,6 +118,8 @@ def main():
                  if balance_path.exists() else None)
     summary['外部阻塞'] = ('账户只读核对已恢复可用，已开始新修订真实重测；历史HTTP402检查点保留，实际进度见各样本记录。'
                          if available is True else
+                         '官方账户只读查询确认暂不可调用，不重试收费任务；各样本的暂停原因和已发布状态见实际记录。'
+                         if available is False else
                          '四个完整范围均因官方HTTP402余额不足暂停；检查点和历史报告保留，当前不继续重试收费任务。'
                          if all(balances) else '具体错误及在途状态见各样本实际记录；此前HTTP402记录完整保留。')
     summary['验收结论'] = ('修订后的四个完整范围均因HTTP402暂停，完整质量、范围对照与用户验收未完成；'

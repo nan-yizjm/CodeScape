@@ -253,7 +253,7 @@ def test_source_feedback_contains_only_trusted_ids_and_numeric_ranges():
     feedback = validation_feedback(SourceContractError('函数讲解缺少实现自身的依据', identifier, (20, 40), [(20, 30)]))
     assert identifier in feedback and '[20, 40]' in feedback and '[20, 30]' in feedback
     unsafe = validation_feedback(SourceContractError('函数讲解缺少实现自身的依据', 'secret-key',
-        ('secret-value', 40), [('secret-range', 30)]))
+        ('secret-value', 40), [('secret-range', 30)], target_identifier='secret-target'))
     assert 'secret-' not in unsafe
     assert validation_feedback(ValueError('secret-error')) == '模型结果不满足校验契约。'
     allowed = validation_feedback(SourceContractError('讲解实体不唯一或不属于当前范围。', None,
