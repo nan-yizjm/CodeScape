@@ -225,6 +225,39 @@ def test_structured_repairs_share_budget_and_account_schema_failure(tmp_path, mo
     database.engine.dispose()
 
 
+def test_repair_feedback_identifies_contract_fields_without_echoing_inputs(tmp_path, monkeypatch):
+    from codescape.models import Module
+    calls = []
+    def handler(request):
+        payload = json.loads(request.content)
+        calls.append(payload)
+        value = {'id': 'm', 'name': 'secret-value', 'secret-field': 'secret-input'} if len(calls) == 1 else {
+            'id': 'm', 'name': '模块', 'summary': '处理输入。'}
+        return httpx.Response(200, json=document(json.dumps(value), {'total_tokens': 5}))
+    database, provider, ledger = configured(tmp_path, monkeypatch, handler)
+    result, _ = asyncio.run(provider.structured('schema', 'context', Module.model_validate))
+    assert result.summary == '处理输入。'
+    feedback = calls[1]['messages'][0]['content']
+    assert 'summary: missing' in feedback and '未知字段: extra_forbidden' in feedback
+    saved = (tmp_path / 'validation-errors.jsonl').read_text(encoding='utf-8')
+    for secret in ['secret-value', 'secret-field', 'secret-input']:
+        assert secret not in feedback and secret not in saved
+    assert json.loads(saved)['request_id'] in {record['id'] for record in ledger.summary()['records']}
+    database.engine.dispose()
+
+
+def test_source_feedback_contains_only_trusted_ids_and_numeric_ranges():
+    from codescape.provider import validation_feedback
+    from codescape.validation import SourceContractError
+    identifier = 'a' * 32
+    feedback = validation_feedback(SourceContractError('函数讲解缺少实现自身的依据', identifier, (20, 40), [(20, 30)]))
+    assert identifier in feedback and '[20, 40]' in feedback and '[20, 30]' in feedback
+    unsafe = validation_feedback(SourceContractError('函数讲解缺少实现自身的依据', 'secret-key',
+        ('secret-value', 40), [('secret-range', 30)]))
+    assert 'secret-' not in unsafe
+    assert validation_feedback(ValueError('secret-error')) == '模型结果不满足校验契约。'
+
+
 def test_transport_and_repairs_never_exceed_six_sends(tmp_path, monkeypatch):
     calls = []
     def handler(request):

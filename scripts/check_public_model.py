@@ -53,6 +53,11 @@ def main():
         assert previous['状态']=='分析暂停' and previous['Commit']==selected['commit']
         destination.with_name(destination.stem+'-'+str(uuid.uuid4())+'.json').write_text(
             json.dumps(previous,ensure_ascii=False,indent=2),encoding='utf-8')
+        checkpoint = root/'projects'/previous['project_id']/'architecture-checkpoint.json'
+        if checkpoint.exists():
+            history = root/'checkpoint-history'
+            history.mkdir(exist_ok=True)
+            shutil.copyfile(checkpoint,history/(str(uuid.uuid4())+'.json'))
     source = root/'owned-source'
     source.mkdir(parents=True,exist_ok=bool(previous))
     narrow = {'hiredis-c':['read.c','read.h'],'spdlog-cpp':['include/spdlog/logger-inl.h','include/spdlog/logger.h'],
@@ -143,6 +148,8 @@ def main():
             record['已知total_tokens'] = sum((row.get('usage') or {}).get('total_tokens',0) for row in rows)
             record['未知用量请求'] = sum(row.get('usage') is None for row in rows)
             record['费用'] = None
+            diagnostics = root/'validation-errors.jsonl'
+            record['脱敏校验记录'] = [json.loads(line) for line in diagnostics.read_text(encoding='utf-8').splitlines()] if diagnostics.exists() else []
             record['边界'] = '真实官方模型，固定响应与质量复核分开；尚未代表用户验收；价格未知不记零费用。'
             save()
             print(json.dumps({key:record[key] for key in ['样本','范围','状态','请求状态','已知total_tokens','未知用量请求']},ensure_ascii=False),flush=True)

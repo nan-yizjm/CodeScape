@@ -15,6 +15,7 @@ from .models import (
     Overview,
     PrimaryDependency,
 )
+from .validation import SourceContractError
 
 
 class ReadRequest(Contract):
@@ -105,7 +106,9 @@ def validate_explanations(architecture, analysis, expected, files, ranges):
             lines = files.get(ref.path, "").splitlines()
             if (ref.end_line > len(lines) or ref.end_line - ref.start_line >= 200
                     or not any(start <= ref.start_line <= ref.end_line <= end for start, end in ranges.get(ref.path, []))):
-                raise ValueError("讲解引用未提供的源码位置")
+                raise SourceContractError("讲解引用未提供的源码位置", entity.id,
+                    (entity.location.start_line, entity.location.end_line), ranges.get(entity.location.path, []))
             own_evidence |= ref.path == entity.location.path and entity.location.start_line <= ref.start_line <= ref.end_line <= entity.location.end_line
         if not own_evidence:
-            raise ValueError("函数讲解缺少实现自身的依据")
+            raise SourceContractError("函数讲解缺少实现自身的依据", entity.id,
+                (entity.location.start_line, entity.location.end_line), ranges.get(entity.location.path, []))

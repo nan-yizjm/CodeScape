@@ -5,6 +5,7 @@ import re
 from pathlib import PurePosixPath
 
 from .models import Diagnostic
+from .validation import SourceContractError
 
 
 def callable_name(expression):
@@ -46,7 +47,8 @@ def validate_judgments(architecture, analysis, allowed_calls, files, supplied):
         for ref in judgment.evidence:
             if (ref.path not in files or ref.end_line > len(files[ref.path].splitlines())
                     or not any(start <= ref.start_line <= ref.end_line <= end for start, end in supplied.get(ref.path, []))):
-                raise ValueError("调用判断依据未提供或超出快照")
+                raise SourceContractError("调用判断依据未提供或超出快照", call.id,
+                    (call.location.start_line, call.location.end_line), supplied.get(call.location.path, []))
         def contains(location):
             cursor = location.start_line
             for start, end in sorted((ref.start_line, ref.end_line) for ref in judgment.evidence if ref.path == location.path):
@@ -59,7 +61,8 @@ def validate_judgments(architecture, analysis, allowed_calls, files, supplied):
                     return True
             return False
         if not contains(call.location) or not contains(target.location):
-            raise ValueError("调用判断必须提供具体调用位置和完整目标实现")
+            raise SourceContractError("调用判断必须提供具体调用位置和完整目标实现", target.id,
+                (target.location.start_line, target.location.end_line), supplied.get(target.location.path, []))
 
 
 def reconcile_judgments(analysis, architecture):

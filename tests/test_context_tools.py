@@ -118,6 +118,51 @@ def test_many_functions_plan_smaller_units_without_losing_entities(tmp_path):
     assert set().union(*ids) == {entity.id for entity in analysis.entities if entity.visible}
 
 
+def test_unnameable_call_does_not_collect_every_anonymous_candidate(tmp_path):
+    from codescape.models import Call, Entity, Location, Scope
+    analysis = python_analysis({'local.py':'def visible(): return 1'},'v')
+    location = Location(path='other.py',start_line=1,end_line=1,start_byte=0,end_byte=20)
+    analysis.scopes.append(Scope(id='hidden-scope',kind='lambda',name='<anonymous>',location=location))
+    analysis.entities.append(Entity(id='hidden',name='<anonymous>',qualified_name='<anonymous>',signature='lambda x:',
+        language='python',location=location,scope_id='hidden-scope',visible=False,hidden_reason='匿名函数',implementation_hash='fixed'))
+    analysis.calls.append(Call(id='computed',caller_scope_id=analysis.scopes[0].id,expression='callbacks[index]',
+        location=Location(path='local.py',start_line=1,end_line=1,start_byte=0,end_byte=15),resolution='unresolved',origin='static'))
+    text,_ = Provider(tmp_path)._context(analysis,{'local.py':'def visible(): return 1'})
+    assert json.loads(text)['candidate_entities']==[]
+    assert len(json.loads(text)['unresolved_calls'])==1
+
+
+def test_line_batch_keeps_local_and_incoming_calls_without_unrelated_file_tail(tmp_path):
+    from codescape.models import Diagnostic
+    files = {'a.py':'def first(): return 1\ndef second(): return first()\ndef third(): return second()\n'}
+    analysis = python_analysis(files,'v')
+    analysis.diagnostics.extend([Diagnostic(category='unresolved_call',path='a.py',line=3,message='文件尾部调用'),
+        Diagnostic(category='configuration',path='a.py',message='全文件配置边界')])
+    text,ids = Provider(tmp_path)._context(analysis,{'a.py':files['a.py'].splitlines()[0]}, {'a.py':(1,1)})
+    context = json.loads(text)
+    assert len(ids)==1
+    assert [call['location']['start_line'] for call in context['calls']]==[2]
+    assert [item['category'] for item in context['diagnostics']]==['configuration']
+
+
+def test_relation_heavy_units_refine_whole_functions_and_preserve_source(tmp_path, monkeypatch):
+    import codescape.provider as implementation
+    files = {'a.py': '\n'.join(f'def f{i}(): return {i}' for i in range(12)) + '\n'}
+    analysis = python_analysis(files, 'v')
+    monkeypatch.setattr(implementation, 'BATCH_TARGET_CHARS', 6000)
+    monkeypatch.setattr(implementation, 'MAX_CONTEXT_CHARS', 8000)
+    provider = Provider(tmp_path)
+    batches = provider._plan_batches(analysis, files)
+    assert len(batches) > 1
+    assert ''.join(batch['a.py'] for batch, _ in batches) == files['a.py']
+    assigned = []
+    for batch, ranges in batches:
+        context, identifiers = provider._context(analysis, batch, ranges)
+        assert len(context) <= 8000
+        assigned.extend(identifiers)
+    assert len(assigned) == len(set(assigned)) == 12
+
+
 def test_function_details_load_prepublished_explanations_without_model(tmp_path, monkeypatch):
     from codescape.app import create_app
     from fastapi.testclient import TestClient

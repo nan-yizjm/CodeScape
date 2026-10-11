@@ -4,6 +4,7 @@ import asyncio
 import inspect
 import json
 import math
+import re
 import uuid
 from collections.abc import Awaitable, Callable
 from datetime import UTC, datetime
@@ -12,6 +13,7 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 import httpx
+from pydantic import ValidationError
 
 from .call_judgments import callable_name, reconcile_judgments, validate_judgments
 from .context_tools import ArchitectureReply, SnapshotTools, validate_explanations
@@ -21,6 +23,7 @@ from .models import Analysis, Architecture, Module, Overview
 from .overview import ConciseOverview, overview_context
 from .security import CredentialStore
 from .semantic_facts import recursive_fold_facts, validate_fold_wording
+from .validation import SourceContractError
 
 MAX_CONTEXT_CHARS = 180_000
 BATCH_TARGET_CHARS = 150_000
@@ -28,6 +31,54 @@ BATCH_MAX_ENTITIES = 12
 PIPELINE_VERSION = "architecture/2-explanations/1-reads/1-judgments/1-dependencies/1-cpp-config/6-interfaces/1-facts/1-index/2-ts-bindings/2"
 ProgressCallback = Callable[[int, int, str], Awaitable[None]]
 BatchCallback = Callable[[int, int, Architecture], Awaitable[None]]
+
+SAFE_VALIDATION_MESSAGES = {
+    "缺少项目概览", "补读参数错误", "补读超出当前授权快照", "补读范围超过保护上限", "补读片段超过保护上限",
+    "实体不属于当前快照", "调用不属于当前确认集", "诊断补读不接受外部标识", "补读总量超过保护上限",
+    "函数讲解引用错误", "讲解引用未提供的源码位置", "函数讲解缺少实现自身的依据", "重复补读没有新增依据",
+    "架构至少需要一个真实模块。", "模块 ID 重复。", "讲解实体不唯一或不属于当前范围。",
+    "讲解源码依据超出当前范围。", "模块缺少名称或职责。", "模块缺少有效源码依据。", "父模块不能直接拥有函数。",
+    "模块源码依据没有覆盖所归属的函数。", "模块层级包含环或无效父节点。", "函数归属不唯一或与真实实体不一致。",
+    "项目概览未达到发布条件。", "概览条目过长", "概览仍为批次描述", "调用判断引用错误或重复",
+    "间接调用或范围外目标不能升级为直接调用", "宏调用缺少唯一拼写位置，不能升级为直接调用",
+    "静态已知的动态语义不能升级为直接调用", "调用表达式与目标实现名称不对应",
+    "跨语言接口不能仅按同名确认为直接函数调用", "条件编译适用性未确认，不能升级调用",
+    "调用判断依据未提供或超出快照", "调用判断必须提供具体调用位置和完整目标实现",
+    "主要依赖必须引用当前上下文中已确认的真实调用，并说明核心协作理由。",
+    "递归聚合说明与源码事实冲突：非叶分支从 0 累加子项，没有另加当前项；不得称为全部节点计数。",
+}
+SAFE_VALIDATION_FIELDS = {
+    "modules", "overview", "explanations", "call_judgments", "primary_dependencies", "read_requests",
+    "id", "name", "description", "parent_id", "entity_ids", "code_paths", "incomplete", "introduction",
+    "principle", "capabilities", "limitations", "analysis_notes", "synthesized", "entity_id", "summary",
+    "details", "evidence", "path", "start_line", "end_line", "call_id", "target_id", "reason", "call_ids",
+    "kind", "reference", "ids",
+}
+
+
+def validation_feedback(error: ValueError) -> str:
+    """Return trusted contract diagnostics only, excluding inputs, arbitrary keys and error context."""
+    if isinstance(error, ValidationError):
+        problems = []
+        for item in error.errors(include_input=False, include_url=False, include_context=False)[:8]:
+            location = '.'.join(str(part) if isinstance(part, int) or part in SAFE_VALIDATION_FIELDS
+                                else '未知字段' for part in item['loc'])
+            problems.append(f"{location}: {item['type']}")
+        return "字段校验失败：" + '；'.join(problems)
+    message = str(error)
+    if message not in SAFE_VALIDATION_MESSAGES:
+        return '模型结果不满足校验契约。'
+    if isinstance(error, SourceContractError):
+        details = {}
+        if isinstance(error.identifier, str) and re.fullmatch(r'[a-f0-9-]{16,36}', error.identifier):
+            details['entity_or_call_id'] = error.identifier
+        def safe_range(value):
+            return isinstance(value, (tuple, list)) and len(value) == 2 and all(type(n) is int and n > 0 for n in value)
+        if safe_range(error.implementation_lines):
+            details['implementation_lines'] = error.implementation_lines
+        details['supplied_lines'] = [bounds for bounds in error.supplied_lines[:8] if safe_range(bounds)]
+        return message + '。已知索引依据：' + json.dumps(details, ensure_ascii=False)
+    return message
 
 
 def retry_after(value: str | None) -> float | None:
@@ -245,7 +296,15 @@ class Provider:
                         return validator(document), usage_total
                     except ValueError as error:
                         # Only application-authored feedback is echoed; never arbitrary validation input.
-                        feedback = str(error) if str(error).startswith('递归聚合说明与源码事实冲突：') else ''
+                        feedback = validation_feedback(error)
+                        diagnostic = {'time': datetime.now(UTC).isoformat(), 'request_id': budget.last_request,
+                                      'feedback': feedback}
+                        try:
+                            self.root.mkdir(parents=True, exist_ok=True)
+                            with (self.root / 'validation-errors.jsonl').open('a', encoding='utf-8') as stream:
+                                stream.write(json.dumps(diagnostic, ensure_ascii=False) + '\n')
+                        except OSError:
+                            pass
                         if budget.last_request:
                             from .database import Database
                             database = self.database or Database(self.root)
@@ -334,8 +393,6 @@ class Provider:
             and entity.location.start_line <= ranges[entity.location.path][1]
         ]
         local_ids = {entity.id for entity in local_entities}
-        scope_paths = {scope.id: scope.location.path for scope in analysis.scopes}
-        scope_paths.update({entity.scope_id: entity.location.path for entity in analysis.entities})
         local_scopes = [
             scope for scope in analysis.scopes
             if scope.location.path in ranges
@@ -345,7 +402,10 @@ class Provider:
         calls = [
             call for call in analysis.calls
             if call.resolution == "confirmed"
-            and (scope_paths.get(call.caller_scope_id) in ranges or call.target_id in local_ids)
+            and (call.location.path in ranges
+                and ranges[call.location.path][0] <= call.location.start_line
+                and call.location.end_line <= ranges[call.location.path][1]
+                or call.target_id in local_ids)
         ]
         related_ids = {
             call.target_id for call in calls if call.target_id and call.target_id not in local_ids
@@ -359,13 +419,14 @@ class Provider:
             for entity in analysis.entities if entity.id in related_ids
         ]
         diagnostics = [
-            item.model_dump() for item in analysis.diagnostics
-            if item.path is None or item.path in ranges
+            item.model_dump(exclude_none=True) for item in analysis.diagnostics
+            if item.path is None or item.path in ranges and (item.line is None
+                or ranges[item.path][0] <= item.line <= ranges[item.path][1])
         ]
         unresolved = [call for call in analysis.calls if call.resolution == "unresolved"
             and call.location.path in ranges and ranges[call.location.path][0] <= call.location.start_line
             and call.location.end_line <= ranges[call.location.path][1]]
-        names = {callable_name(call.expression) for call in unresolved}
+        names = {name for call in unresolved if (name := callable_name(call.expression))}
         candidates = [
             {"id": entity.id, "name": entity.name, "qualified_name": entity.qualified_name,
              "signature": entity.signature, "location": entity.location.model_dump(), "condition": entity.condition}
@@ -373,19 +434,19 @@ class Provider:
             and callable_name(entity.name) in names
         ]
         payload = {
-            "entities": [entity.model_dump() for entity in local_entities],
-            "relation_policy": "kind=interface 是有注册与使用双侧源码依据的模块接口契约；不属于普通直接函数调用，不得重写成 call_judgment。其他关系保留其静态或 AI 判断来源。",
+            "entities": [entity.model_dump(exclude_none=True) for entity in local_entities],
+            "relation_policy": "calls 均为已确认关系；省略默认 kind 时为 direct，省略 origin 时为 static。kind=interface 是有注册与使用双侧源码依据的模块接口契约，不属于普通直接调用，不得重写为 call_judgment。",
             "related_entities": related,
-            "scopes": [scope.model_dump() for scope in local_scopes],
-            "calls": [call.model_dump() for call in calls],
-            "unresolved_calls": [call.model_dump() for call in unresolved],
+            "scopes": [scope.model_dump(exclude_none=True) for scope in local_scopes],
+            "calls": [call.model_dump(exclude_none=True, exclude_defaults=True) for call in calls],
+            "unresolved_calls": [call.model_dump(exclude_none=True, exclude_defaults=True) for call in unresolved],
             "candidate_entities": candidates,
             "files": files,
             "file_ranges": {path: {"start_line": start, "end_line": end} for path, (start, end) in ranges.items()},
             "diagnostics": diagnostics,
             "source_facts": [fact for fact in recursive_fold_facts(analysis, {path:text for path,text in files.items() if ranges[path][0] == 1}).values() if fact['entity_id'] in local_ids],
         }
-        return json.dumps(payload, ensure_ascii=False), local_ids
+        return json.dumps(payload, ensure_ascii=False, separators=(',', ':')), local_ids
 
     def _plan_batches(self, analysis: Analysis, files: dict[str, str]) -> list[tuple[dict[str, str], dict[str, tuple[int, int]]]]:
         units: list[tuple[str, str, int, int]] = []
@@ -413,6 +474,25 @@ class Provider:
                     end += 1
                 units.append((path, "".join(lines[start:end]), start + 1, end))
                 start = end
+        # The source length alone misses large relation indexes. Refine those
+        # units using the actual serialized context, preferring whole functions.
+        pending = list(reversed(units))
+        units = []
+        while pending:
+            path, text, start, end = pending.pop()
+            context, _ = self._context(analysis, {path: text}, {path: (start, end)})
+            if len(context) <= MAX_CONTEXT_CHARS or start == end:
+                units.append((path, text, start, end))
+                continue
+            entities = [item for item in analysis.entities if item.visible and item.location.path == path]
+            boundaries = {item.location.start_line for item in entities if start < item.location.start_line <= end}
+            safe = [line for line in boundaries if not any(item.location.start_line < line <= item.location.end_line
+                                                          for item in entities)]
+            cut = min(safe, key=lambda line: (abs(line - (start + end) / 2), line)) if safe else (start + end + 1) // 2
+            lines = text.splitlines(keepends=True)
+            offset = cut - start
+            pending.extend([(path, ''.join(lines[offset:]), cut, end),
+                            (path, ''.join(lines[:offset]), start, cut - 1)])
         batches: list[tuple[dict[str, str], dict[str, tuple[int, int]]]] = []
         current_files: dict[str, str] = {}
         current_ranges: dict[str, tuple[int, int]] = {}
@@ -601,6 +681,8 @@ class Provider:
             "能力最多5项、每项最多40字；不要堆砌函数名、文件路径和实现参数，不能宣称完整运行时行为。"
             "为本批每个可见函数生成 explanations：summary 用一句中文说明功能，details 简述输入、关键处理、输出及代码可见边界，"
             "evidence 至少引用该函数实现内部真实行范围。不要重复空泛说明，不能凭函数名猜测。"
+            "行号使用原文件绝对行号和 JSON 整数；file_ranges 给出本批片段原始范围。讲解依据必须在对应 entity.location 实现内。"
+            "禁止添加 schema 未定义的状态、思考过程、说明字段；缺少依据时应补读或省略该讲解，不制造不存在的行号。"
             "实际分支、表达式和返回值优先于注释或名称；说明递归统计时核对基例与累加，区分叶节点数量与全部节点数量。"
             "source_facts 为受限静态递推事实，优先核对；非叶分支从0累加子项且不另加当前项时，只计叶项，不包含所有内部节点。"
             "区分从输入读取的值和硬编码常量，不能将固定深度说成从输入读取；区分返回配置字典和返回校验布尔值。"
@@ -608,6 +690,8 @@ class Provider:
             "可选 call_judgments 只判断已给出的具体调用：必须是直接调用，引用真实 call_id 和 target_id，"
             "reason 说明名称/作用域/绑定如何对应，evidence 同时包含完整调用位置、目标实现和必要的绑定依据。"
             "candidate_entities 只提供定位信息，不能凭同名确认，必须已提供目标源码或主动补读完整实现。"
+            "related_entities 也只是定位索引；调用或目标实现不在 file_ranges 内时，不能直接引用其行号作为已读依据。"
+            "先通过 read_requests 补读再确认；不需要补充直接调用时省略 call_judgments，静态确认关系仍完整保留。"
             "间接调用、参数/变量回调、虚调用、动态分派、装饰器改写、目标歧义或互斥编译条件不能确认；证据不足时省略判断。"
             "与静态确认冲突须如实提供依据，系统会保留未解析，不会覆盖成另一条确定边。"
             "缺少相关实现时可输出 read_requests，最多3轮，每轮最多4项。code 只接受当前快照文件的行范围（每项最多200行/20000字）；"
@@ -715,6 +799,19 @@ def merge_architectures(
         for module in result.modules:
             if module.parent_id and module.parent_id in keys:
                 merged[keys[module.id]].parent_id = merged[keys[module.parent_id]].id
+    owners: dict[str, Module] = {}
+    conflicting_entities: set[str] = set()
+    for module in merged.values():
+        retained = []
+        for identifier in module.entity_ids:
+            if identifier in owners:
+                conflicting_entities.add(identifier)
+                owners[identifier].incomplete = True
+                module.incomplete = True
+            else:
+                owners[identifier] = module
+                retained.append(identifier)
+        module.entity_ids = retained
     capabilities = list(dict.fromkeys(capability for result in results for capability in result.overview.capabilities))
     limitations = list(dict.fromkeys(limit for result in results for limit in result.overview.limitations))
     limitations.append(f"源码范围由 {batch_count} 批受控上下文完成归纳，跨批次模块边界可能需要人工复核。")
@@ -728,6 +825,8 @@ def merge_architectures(
             capabilities=capabilities[:20],
             principle="；".join(dict.fromkeys(result.overview.principle for result in results)),
             limitations=limitations,
+            analysis_notes=[f"{len(conflicting_entities)} 个跨批次函数存在不同模块归属，暂保留首次归属；相关模块标记未完成，待复核。"]
+            if conflicting_entities else [],
         ),
     )
     validate_architecture(architecture, analysis, paths, expected_entity_ids=expected_entity_ids)

@@ -495,3 +495,17 @@ def test_checkpoint_alignment_merges_dynamic_subbatches(tmp_path):
     assert {entity_id for module in aligned[0].modules for entity_id in module.entity_ids} == {
         entity.id for entity in by_path["a.py"]
     }
+
+
+def test_checkpoint_overlap_retains_one_owner_and_marks_uncertainty(tmp_path):
+    files = {'a.py': 'def long_function(): return 1\n'}
+    analysis = python_analysis(files, 'v')
+    identifier = analysis.entities[0].id
+    overview = Overview(introduction='项目', capabilities=['能力'], principle='原理', limitations=[])
+    completed = [Architecture(modules=[Module(id='m', name=name, summary='职责',
+        entity_ids=[identifier], code_paths=['a.py'])], overview=overview) for name in ['前段职责', '后段职责']]
+    aligned = Provider(tmp_path)._align_completed_batches(completed, [(files, {'a.py': (1, 1)})], analysis)
+    assert len(aligned) == 1
+    assert [entity_id for module in aligned[0].modules for entity_id in module.entity_ids] == [identifier]
+    assert all(module.incomplete for module in aligned[0].modules)
+    assert any('不同模块归属' in note for note in aligned[0].overview.analysis_notes)
