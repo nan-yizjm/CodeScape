@@ -46,22 +46,24 @@
       "错误": "服务余额不足。",
       "进度": {
         "phase": "paused",
-        "completed": 8,
+        "completed": 41,
         "total": 49,
         "detail": "服务余额不足。"
       },
       "请求状态": {
-        "success": 9,
-        "failed": 14
+        "success": 43,
+        "failed": 23
       },
-      "已知total_tokens": 932840,
-      "未知用量请求": 1,
+      "已知total_tokens": 2173144,
+      "未知用量请求": 2,
       "原快照字节未变": true,
       "修订后本地批次检查": {
         "批次数": 49,
         "最大上下文字符": 79449,
         "超过180000字符": 0,
-        "仅静态规划": true
+        "仅静态规划": true,
+        "规划流水线": "architecture/2-explanations/1-reads/1-judgments/1-dependencies/1-cpp-config/7-interfaces/1-facts/1-index/2-ts-bindings/2-python-declarations/1",
+        "索引sha256": "4064cb10771fd04c8d08fc6f3e28f3dbdf59fefa22b4dc379a355b597ccd8766"
       }
     },
     "spdlog-cpp": {
@@ -171,25 +173,27 @@
         "src/stdout_sinks.cpp"
       ],
       "状态": "分析暂停",
-      "错误": "模型输出未通过结构校验，已用完有限修复次数；已有结果和检查点保留。",
+      "错误": "服务余额不足。",
       "进度": {
         "phase": "paused",
-        "completed": 7,
-        "total": 68,
-        "detail": "模型输出未通过结构校验，已用完有限修复次数；已有结果和检查点保留。"
+        "completed": 19,
+        "total": 51,
+        "detail": "服务余额不足。"
       },
       "请求状态": {
-        "success": 7,
-        "failed": 10
+        "failed": 10,
+        "success": 19
       },
-      "已知total_tokens": 700525,
-      "未知用量请求": 0,
+      "已知total_tokens": 841167,
+      "未知用量请求": 1,
       "原快照字节未变": true,
       "修订后本地批次检查": {
-        "批次数": 68,
-        "最大上下文字符": 146767,
+        "批次数": 51,
+        "最大上下文字符": 145933,
         "超过180000字符": 0,
-        "仅静态规划": true
+        "仅静态规划": true,
+        "规划流水线": "architecture/2-explanations/1-reads/1-judgments/1-dependencies/1-cpp-config/7-interfaces/1-facts/1-index/2-ts-bindings/2-python-declarations/1",
+        "索引sha256": "666b65a3fbfbc88a546dc2cf8775bae4f4c31c1c01683019ab9b7c3a7d379046"
       }
     },
     "flask-python": {
@@ -227,22 +231,24 @@
       "错误": "服务余额不足。",
       "进度": {
         "phase": "paused",
-        "completed": 13,
-        "total": 35,
+        "completed": 5,
+        "total": 33,
         "detail": "服务余额不足。"
       },
       "请求状态": {
-        "success": 13,
-        "failed": 8
+        "failed": 3,
+        "success": 5
       },
-      "已知total_tokens": 462610,
+      "已知total_tokens": 201594,
       "未知用量请求": 1,
       "原快照字节未变": true,
       "修订后本地批次检查": {
-        "批次数": 35,
+        "批次数": 33,
         "最大上下文字符": 51704,
         "超过180000字符": 0,
-        "仅静态规划": true
+        "仅静态规划": true,
+        "规划流水线": "architecture/2-explanations/1-reads/1-judgments/1-dependencies/1-cpp-config/7-interfaces/1-facts/1-index/2-ts-bindings/2-python-declarations/1",
+        "索引sha256": "0125456bb5bc525c31ee87e3c0ec8ce125b87ad05696c2c33714f3a1fd2ef94d"
       }
     },
     "zod-typescript": {
@@ -364,28 +370,30 @@
       "错误": "服务余额不足。",
       "进度": {
         "phase": "paused",
-        "completed": 2,
+        "completed": 37,
         "total": 76,
         "detail": "服务余额不足。"
       },
       "请求状态": {
-        "failed": 4,
-        "success": 2
+        "failed": 14,
+        "success": 39
       },
-      "已知total_tokens": 198623,
-      "未知用量请求": 1,
+      "已知total_tokens": 1539798,
+      "未知用量请求": 2,
       "原快照字节未变": true,
       "修订后本地批次检查": {
         "批次数": 76,
         "最大上下文字符": 159051,
         "超过180000字符": 0,
-        "仅静态规划": true
+        "仅静态规划": true,
+        "规划流水线": "architecture/2-explanations/1-reads/1-judgments/1-dependencies/1-cpp-config/7-interfaces/1-facts/1-index/2-ts-bindings/2-python-declarations/1",
+        "索引sha256": "ff3e19c1313d48354298194b1835ee1987ed669c598c357b4590c25121a16220"
       }
     }
   },
   "缩小范围": {
     "zod-typescript": {
-      "状态": "结构通过；源码质量部分通过，有一项模块说明错误",
+      "状态": "修订后本轮抽样通过；完整范围对照未完成",
       "实际文件": [
         "packages/zod/src/v4/core/parse.ts"
       ],
@@ -401,17 +409,171 @@
         "源码结论": "_encode 在 198–205 行明确设置 backward；_decode 在 216–222 行透传 _ctx，没有统一设置 backward；同样差异存在于异步和安全变体。",
         "判定": "不能将 encode 与 decode 都概括为设置 backward；保留原结果，需真实模型修订后重测。"
       },
-      "全范围对照": "未完成，不计为通过"
+      "全范围对照": "未完成，不计为通过",
+      "最新重测": {
+        "Commit": "0b216ef674e297ebe41d8bf902262e56f8755822",
+        "实际文件": [
+          "packages/zod/src/v4/core/parse.ts"
+        ],
+        "状态": "结构检查通过，待源码质量复核",
+        "错误": null,
+        "进度": {
+          "phase": "completed",
+          "completed": 1,
+          "total": 1,
+          "detail": "分批分析完成"
+        },
+        "请求状态": {
+          "success": 3
+        },
+        "已知total_tokens": 34028,
+        "未知用量请求": 0,
+        "原快照字节未变": true
+      },
+      "重测源码复核": {
+        "结果": "部分通过，尚有质量问题，不计为范围对照通过",
+        "已知total_tokens": 25073,
+        "正确抽样": [
+          "finalizeParams 两键返回与空值回退",
+          "failure 惰性错误构造、getter/setter 释放引用",
+          "validateFallback 同步与 abortEarly 覆盖、两分支、Promise 异常、布尔返回"
+        ],
+        "问题": [
+          {
+            "类型": "重要职责缺失",
+            "模型结果": "只有解析参数/失败结果与验证回退两个模块；概览限定为三个辅助函数",
+            "源码结论": "本次实际提供完整 parse.ts；其中解析、异步、安全解析以及编解码包装也应解释，不能因隐藏作用域不显示为函数节点而忽略"
+          },
+          {
+            "类型": "关系说明名称错误",
+            "call_id": "66555f3b228b581d6a7b57e7893358f1",
+            "模型说明": "在 _decode 包装内调用 finalizeParams(fn, _params)",
+            "源码结论": "parse.ts:202 位于 _encode 的 fn 内层箭头；_decode 对应调用在219行。目标和位置真实，不代表自然语言说明全部准确。"
+          }
+        ],
+        "处理": "原报告和架构已保留；通用归纳与作用域提示已进一步修订，需新请求重测，不修改原AI文字伪装通过。"
+      },
+      "最新源码复核": {
+        "状态": "本轮抽样通过，完整范围对照未完成",
+        "依据": "模块仅编码方向设为backward，解码透传；202与219调用说明分别正确；最终概览不再承诺安全解析永不抛异常，三个辅助函数说明与已读源码一致",
+        "报告": "zod-typescript-narrow真实模型验证.json",
+        "边界": "开发代理定性抽查，未执行目标代码，不代表所有自然语言无误或用户验收"
+      },
+      "历史首轮说明": "原状态、正确/错误抽样与首轮30,626 tokens属于历史报告，最新状态/账本和源码复核见最新重测/最新源码复核。"
     },
-    "其他三个样本": "账户余额恢复后开展，尚未请求"
+    "hiredis-c": {
+      "最新重测": {
+        "Commit": "058ebcdf36c5b05b759c613564fb958ec363c90f",
+        "实际文件": [
+          "read.c",
+          "read.h"
+        ],
+        "状态": "分析暂停",
+        "错误": "服务余额不足。",
+        "进度": {
+          "phase": "paused",
+          "completed": 0,
+          "total": 2,
+          "detail": "服务余额不足。"
+        },
+        "请求状态": {
+          "failed": 2
+        },
+        "已知total_tokens": 41088,
+        "未知用量请求": 1,
+        "原快照字节未变": true
+      },
+      "源码复核": {
+        "状态": "历史结构发布有两项实质说明缺口；修订后重测因余额不足暂停，不计质量通过",
+        "历史成功报告": "hiredis-c-narrow真实模型验证-4cfae54b-4f08-4e6c-b293-2a8caf4b5b26.json",
+        "正确抽样": [
+          "readLine查找行结束与读取器分配基本符合源码"
+        ],
+        "问题": [
+          "GetReply遗漏输出指针非空才写入的保护条件",
+          "Feed遗漏maxbuf非零才启用缓冲上限的联合条件"
+        ],
+        "源码位置": [
+          "read.c:822",
+          "read.c:799"
+        ],
+        "处理": "通用保护条件归纳提示已修订；最新重测0/2批暂停，原AI文字未改写。"
+      }
+    },
+    "flask-python": {
+      "最新重测": {
+        "Commit": "d086db856be187255b8ec61ef409357393020f32",
+        "实际文件": [
+          "src/flask/helpers.py"
+        ],
+        "状态": "结构检查通过，待源码质量复核",
+        "错误": null,
+        "进度": {
+          "phase": "completed",
+          "completed": 1,
+          "total": 1,
+          "detail": "分批分析完成"
+        },
+        "请求状态": {
+          "success": 3
+        },
+        "已知total_tokens": 48164,
+        "未知用量请求": 0,
+        "原快照字节未变": true
+      },
+      "源码复核": {
+        "状态": "主要抽样改善，仍需措辞复核及完整范围对照",
+        "依据": "两个文件发送入口均经_prepare_send_file_kwargs加工后转发，19个真实可见函数全部有讲解，声明不进入学习分母",
+        "措辞风险": "send_from_directory详情写_prepare_send_file_kwargs(kwargs)，源码实际使用**kwargs；结果未手动改写。",
+        "历史错误": "前一轮模块将目录发送参数说成原样透传，原报告保留",
+        "边界": "仅开发代理抽样，源码路径与调用身份校验不等于自然语言全正确"
+      }
+    },
+    "spdlog-cpp": {
+      "最新重测": {
+        "Commit": "d6c93f38a08b4ea0f8ffcfd7f7857307d5d5c3fa",
+        "实际文件": [
+          "include/spdlog/common.h",
+          "include/spdlog/logger-inl.h",
+          "include/spdlog/logger.h",
+          "include/spdlog/namespace.h"
+        ],
+        "状态": "结构检查通过，待源码质量复核",
+        "错误": null,
+        "进度": {
+          "phase": "completed",
+          "completed": 1,
+          "total": 1,
+          "detail": "分批分析完成"
+        },
+        "请求状态": {
+          "success": 8,
+          "failed": 2
+        },
+        "已知total_tokens": 224671,
+        "未知用量请求": 0,
+        "原快照字节未变": true
+      },
+      "源码复核": {
+        "状态": "三项函数抽样符合源码，完整范围对照未完成",
+        "依据": [
+          "flush委托flush_，不把虚分派确认成直接调用",
+          "flush_level使用relaxed原子加载",
+          "should_flush_比较阈值并排除level::off"
+        ],
+        "边界": "58个可见函数均有讲解；未逐条人工审完全部讲解；缺少外部依赖与宏配置的未解析关系明确保留"
+      }
+    }
   },
   "账本汇总": {
-    "去重请求数": 69,
-    "已知total_tokens": 2325224,
-    "缺少用量请求数": 3,
+    "去重请求数": 267,
+    "已知total_tokens": 7619057,
+    "缺少用量请求数": 8,
+    "在途请求数": 0,
     "费用": null,
-    "说明": "包括 HTTP 200 后结构失败、截断和修复请求；缺少官方价格不估算费用，HTTP 402 缺少用量不记零。"
+    "说明": "包含历史失败、截断、修复及重新评测，按请求ID去重；在途属于尚未返回用量，未知不记零，缺少价格不估算费用。"
   },
-  "外部阻塞": "三个样本收到官方 HTTP 402 余额不足，未继续无意义重试；spdlog 已用完本单元结构修复预算，保留检查点。",
-  "验收结论": "四工程完整质量、范围对照和用户验收均未通过；不能宣称 P0 完成。"
+  "外部阻塞": "四个完整范围均因官方HTTP402余额不足暂停；检查点和历史报告保留，当前不继续重试收费任务。",
+  "验收结论": "修订后的四个完整范围和Hiredis缩小范围因HTTP402暂停；spdlog/Zod部分源码抽样通过，Flask仍有措辞风险。全范围质量、范围对照和用户验收未完成，不宣称全部P0通过。",
+  "汇总时间UTC": "2026-10-11T03:28:14.906296+00:00"
 }

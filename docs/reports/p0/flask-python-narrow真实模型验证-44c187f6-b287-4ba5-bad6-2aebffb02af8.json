@@ -1,0 +1,630 @@
+{
+  "日期": "2026-10-11",
+  "样本": "flask-python",
+  "Commit": "d086db856be187255b8ec61ef409357393020f32",
+  "范围": "缩小范围",
+  "授权": "用户允许四个固定公开样本真实评测",
+  "接收端": "https://api.deepseek.com",
+  "模型": "deepseek-flash",
+  "流水线": "architecture/2-explanations/1-reads/1-judgments/1-dependencies/1-cpp-config/7-interfaces/1-facts/1-index/2-ts-bindings/2",
+  "数据目录": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\.runtime\\public-model-validation\\09295a01-8ff8-49d7-97f2-b757d53138fa",
+  "原始快照hash": "05de006763cb3d83f9ef72708e199156697402cb13031070f51225a50852b8c7",
+  "实际文件": [
+    "src/flask/helpers.py"
+  ],
+  "状态": "结构检查通过，待源码质量复核",
+  "执行目标代码": false,
+  "进度": {
+    "phase": "completed",
+    "completed": 1,
+    "total": 1,
+    "detail": "分批分析完成"
+  },
+  "耗时秒": 116.62,
+  "project_id": "e79316b3-6230-43fc-85b8-51be9162eebd",
+  "version_id": "2dc74865-c87c-46f5-9a41-ce28e74d8059",
+  "实际快照hash": "ad5bdcc28670e5b0b4123226504abb578cf8deb4fcb4c1ff163b063f1748827a",
+  "scope_hash": "64d8fef1eca2d21c0868fb5cb2988d0e4d169bafe184ba5bc3727938f0682e93",
+  "错误": null,
+  "architecture": {
+    "modules": [
+      {
+        "id": "m1",
+        "parent_id": null,
+        "name": "环境开关读取",
+        "summary": "从环境变量读取调试模式与 dotenv 加载开关，返回布尔值，无上下文依赖。",
+        "entity_ids": [
+          "322c73b1-2669-5a29-b0b6-76355fc4f5b3",
+          "3b789a03-e785-5681-be6e-1a9ad7a70ff4"
+        ],
+        "code_paths": [
+          "src/flask/helpers.py"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "m2",
+        "parent_id": null,
+        "name": "流式上下文包装",
+        "summary": "包装生成器或生成器函数，使迭代期间仍能访问请求/应用上下文；重载签名只用于类型检查，实际实现负责上下文断言、哨兵推进与关闭底层迭代器。",
+        "entity_ids": [
+          "e680b783-5801-57a5-ae43-d0351896d880",
+          "3d94eb66-a047-5876-95a3-32b28dfb35e7",
+          "0ae5250a-506b-5f3e-93c7-73fd8caf38bf"
+        ],
+        "code_paths": [
+          "src/flask/helpers.py"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "m3",
+        "parent_id": null,
+        "name": "响应构造与 URL 生成",
+        "summary": "把视图返回值转成响应对象，以及按端点生成 URL，均委托 current_app 的对应能力。",
+        "entity_ids": [
+          "8e8dccde-0018-5928-8b1a-231abdfc192f",
+          "0639c387-220b-516d-b809-f95dcc17e4b0"
+        ],
+        "code_paths": [
+          "src/flask/helpers.py"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "m4",
+        "parent_id": null,
+        "name": "重定向与请求中止",
+        "summary": "生成重定向响应或抛出 HTTP 异常：有活动应用上下文时优先走应用自定义实现，否则回退 Werkzeug 默认实现。",
+        "entity_ids": [
+          "5d48cd95-d0b1-5648-b5b7-0678997539e2",
+          "1a92659c-c7c9-5e8e-a17d-07441d23298f"
+        ],
+        "code_paths": [
+          "src/flask/helpers.py"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "m5",
+        "parent_id": null,
+        "name": "模板宏访问",
+        "summary": "按模板名与属性名取出模板导出的宏或变量，供 Python 代码调用。",
+        "entity_ids": [
+          "348a5fa2-1fbf-5b2c-be6e-e87199765418"
+        ],
+        "code_paths": [
+          "src/flask/helpers.py"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "m6",
+        "parent_id": null,
+        "name": "闪现消息存取",
+        "summary": "在 session 与请求级缓存之间存取闪现消息并发送消息信号；两者区别在于 flash 写入并广播，get_flashed_messages 读取、缓存并按类别过滤。",
+        "entity_ids": [
+          "d3661d6a-e1c8-53b8-a02c-faa4e79b7344",
+          "27a063bf-ed4f-5d3d-96a5-31ca1ebcdd50"
+        ],
+        "code_paths": [
+          "src/flask/helpers.py"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "m7",
+        "parent_id": null,
+        "name": "文件响应辅助",
+        "summary": "_prepare_send_file_kwargs 把当前应用上下文与配置（max_age、environ、USE_X_SENDFILE、response_class、root_path）注入参数，send_file 用其转发给 Werkzeug 发送文件；send_from_directory 则先限定目录再委托，kwargs 原样透传。",
+        "entity_ids": [
+          "4c0c67ba-9b65-5e00-9430-2a4ffab916e4",
+          "6db682cd-fe3c-5755-a1df-dae105760fbf",
+          "711ec613-4ae3-58d7-b5b4-5f2f65d5f110"
+        ],
+        "code_paths": [
+          "src/flask/helpers.py"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "m8",
+        "parent_id": null,
+        "name": "根路径与蓝图名解析",
+        "summary": "get_root_path 按已导入模块、导入加载器、实际导入三级回退定位包或模块所在目录，全部失败时回退到当前工作目录、命名空间包时抛 RuntimeError；_split_blueprint_path 按点号递归拆分蓝图名并带 @cache 缓存。",
+        "entity_ids": [
+          "72983f2d-96b7-573d-88c9-365e2060a7fa",
+          "f870edff-d713-5e6c-b53d-a972f2f8db95"
+        ],
+        "code_paths": [
+          "src/flask/helpers.py"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "m9",
+        "parent_id": null,
+        "name": "清理错误收集上下文管理器",
+        "summary": "_CollectErrors 在 __exit__ 中记录并吞掉抛出的异常，使清理流程继续，之后由 raise_any 以 BaseExceptionGroup 统一抛出；__enter__ 不返回自身。",
+        "entity_ids": [
+          "c0d688ca-e63a-53e3-852c-a1f27e83b7ce",
+          "3035b5ed-20a1-5e7d-878f-ec8509ce96fb",
+          "aba47209-deca-5767-ba05-57bf0dd645b3",
+          "caba9eba-9900-59a1-96f7-831e4049ac38"
+        ],
+        "code_paths": [
+          "src/flask/helpers.py"
+        ],
+        "incomplete": false
+      }
+    ],
+    "overview": {
+      "introduction": "这是一个 Python Web 框架的助手层，面向应用开发者，集中处理响应与链接生成、重定向、一次性提示消息、文件发送、流式上下文保持和路径解析等常见任务，减少重复样板代码。",
+      "capabilities": [
+        "生成响应与链接，并处理重定向或请求中止。",
+        "在会话中写入、缓存、过滤并读取一次性提示消息。",
+        "把文件或目录内容封装为响应，并注入缓存与发送配置。",
+        "包装流式生成器，使其迭代期间仍能访问请求或应用上下文。",
+        "从模板中取出宏或变量，供 Python 代码调用。"
+      ],
+      "principle": "输入视图返回值、端点、消息、文件路径、生成器或环境开关后，助手层读取当前应用/请求上下文与配置，完成响应与链接生成、重定向、消息读写、文件封装、上下文保持或异常收集；重定向与中止优先走应用自定义实现，否则回退底层默认实现。缺失必要上下文或会话时会报错，流式上下文保持只在调用时已有上下文才可用。",
+      "limitations": [
+        "只覆盖这组助手能力，框架其余部分不在范围内；未记录已确认的模块间协作，组合行为未做运行验证。",
+        "依赖活动应用或请求上下文、会话的能力，在缺少时会报错，不能作为无上下文通用工具使用。",
+        "流式上下文保持只在调用时已有上下文才生效；调用时没有上下文，迭代中会报错。",
+        "文件发送假定传入路径可信；目录安全、404 与发送细节交给底层库，助手层不校验。",
+        "路径定位依赖运行环境，命名空间包等情况下会失败；名称拆分逻辑在缓存下仍无法确认递归目标。"
+      ],
+      "synthesized": true,
+      "analysis_notes": [
+        "url_for、make_response、get_template_attribute、flash 依赖活动应用上下文，缺失时会报错",
+        "stream_with_context 只在调用时已有上下文才可用，否则迭代中抛 RuntimeError",
+        "flash/get_flashed_messages 依赖 session，无会话时不可用",
+        "响应体开始发送后无法再设置头部与 Cookie，流式生成器中修改 session 无效",
+        "仅覆盖本批 helpers.py 片段，其余 helpers 实现未分析",
+        "_split_blueprint_path 的递归自调用因 @cache 无法确认目标",
+        "send_file 假定文件路径可信，代码本身不做安全校验",
+        "目录安全拼接、404 与发送细节均依赖 Werkzeug 内部行为",
+        "get_root_path 的工作目录回退依赖运行环境",
+        "源码范围由 2 批受控上下文完成归纳，跨批次模块边界可能需要人工复核。"
+      ]
+    },
+    "explanations": [
+      {
+        "entity_id": "322c73b1-2669-5a29-b0b6-76355fc4f5b3",
+        "summary": "读取 FLASK_DEBUG 环境变量，判断是否应开启调试模式。",
+        "details": "读取 os.environ 的 FLASK_DEBUG；未设置时 val 为 None，布尔表达式短路返回 False，即默认关闭；值的小写形式落在 {\"0\", \"false\", \"no\"} 时同样返回 False，其余非空字符串返回 True。只做环境变量判断，不读取应用配置，也不区分大小写以外的写法。",
+        "evidence": [
+          {
+            "path": "src/flask/helpers.py",
+            "start_line": 32,
+            "end_line": 33
+          }
+        ]
+      },
+      {
+        "entity_id": "3b789a03-e785-5681-be6e-1a9ad7a70ff4",
+        "summary": "依据 FLASK_SKIP_DOTENV 判断是否加载默认 dotenv 文件。",
+        "details": "读取 FLASK_SKIP_DOTENV；未设置或为空字符串时返回调用方传入的 default（默认 True，即加载）。否则返回 val.lower() in (\"0\", \"false\", \"no\")：显式设为 0/false/no 时返回 True 表示仍然加载，其他非空值返回 False 表示跳过，语义与 get_debug_flag 的零值判断相反。",
+        "evidence": [
+          {
+            "path": "src/flask/helpers.py",
+            "start_line": 43,
+            "end_line": 48
+          }
+        ]
+      },
+      {
+        "entity_id": "e680b783-5801-57a5-ae43-d0351896d880",
+        "summary": "声明输入为迭代器时返回迭代器的重载类型签名。",
+        "details": "这是 typing 重载声明，函数体为省略号，运行时不会作为实际实现被调用，仅向类型检查器说明传入可迭代对象时返回同类型迭代器；真实行为由第 63 行起的非重载实现承担。",
+        "evidence": [
+          {
+            "path": "src/flask/helpers.py",
+            "start_line": 52,
+            "end_line": 54
+          }
+        ]
+      },
+      {
+        "entity_id": "3d94eb66-a047-5876-95a3-32b28dfb35e7",
+        "summary": "声明输入为生成器函数时返回装饰器的重载类型签名。",
+        "details": "同样是 typing 重载声明，函数体为省略号，描述传入可调用对象时返回接收迭代器并返回迭代器的装饰器；不产生运行时行为，实际分支判断和包装逻辑在非重载实现中。",
+        "evidence": [
+          {
+            "path": "src/flask/helpers.py",
+            "start_line": 58,
+            "end_line": 60
+          }
+        ]
+      },
+      {
+        "entity_id": "0ae5250a-506b-5f3e-93c7-73fd8caf38bf",
+        "summary": "包装生成器或生成器函数，使其迭代时运行在捕获的请求/应用上下文中。",
+        "details": "先用 iter() 尝试取得迭代器，抛出 TypeError 时判定输入是函数：定义 decorator 调用原函数后递归调用 stream_with_context，并用 update_wrapper 复制元数据后返回。可迭代分支定义内部 generator：若 _cv_app.get(None) 为 None 则抛 RuntimeError，否则在 with ctx 中先 yield None 作哨兵，再 yield from gen，finally 中检测并调用 gen.close()。最后把 generator() 推进到哨兵位置并返回，使后续迭代保持上下文。",
+        "evidence": [
+          {
+            "path": "src/flask/helpers.py",
+            "start_line": 118,
+            "end_line": 124
+          },
+          {
+            "path": "src/flask/helpers.py",
+            "start_line": 126,
+            "end_line": 141
+          },
+          {
+            "path": "src/flask/helpers.py",
+            "start_line": 142,
+            "end_line": 148
+          }
+        ]
+      },
+      {
+        "entity_id": "8e8dccde-0018-5928-8b1a-231abdfc192f",
+        "summary": "把视图返回值转换为响应对象，便于附加头部。",
+        "details": "无参数时返回 current_app.response_class() 创建的空响应；恰好一个参数时把 args 解包为 args[0]；随后统一调用 current_app.make_response(args)，多个参数时以元组传入交给应用处理。函数本身不做内容协商，依赖活动应用上下文。",
+        "evidence": [
+          {
+            "path": "src/flask/helpers.py",
+            "start_line": 193,
+            "end_line": 197
+          }
+        ]
+      },
+      {
+        "entity_id": "0639c387-220b-516d-b809-f95dcc17e4b0",
+        "summary": "生成指定端点的 URL，并透传锚点、方法、协议与外链选项。",
+        "details": "把 endpoint 位置参数与关键字专用参数 _anchor、_method、_scheme、_external 显式传给 current_app.url_for，其余 **values 原样透传作为 URL 变量或查询参数；函数本身不构建 URL，需要活动应用或请求上下文，否则 current_app 代理会报错。",
+        "evidence": [
+          {
+            "path": "src/flask/helpers.py",
+            "start_line": 200,
+            "end_line": 208
+          },
+          {
+            "path": "src/flask/helpers.py",
+            "start_line": 244,
+            "end_line": 251
+          }
+        ]
+      },
+      {
+        "entity_id": "5d48cd95-d0b1-5648-b5b7-0678997539e2",
+        "summary": "生成重定向响应，有应用上下文时优先使用应用的 redirect。",
+        "details": "通过 _cv_app.get(None) 判断上下文：有上下文时返回 ctx.app.redirect(location, code=code)，此分支不传递 Response 参数，由应用使用自身 response_class；无上下文时退回 _wz_redirect(location, code=code, Response=Response)。code 默认 303。",
+        "evidence": [
+          {
+            "path": "src/flask/helpers.py",
+            "start_line": 274,
+            "end_line": 277
+          }
+        ]
+      },
+      {
+        "entity_id": "1a92659c-c7c9-5e8e-a17d-07441d23298f",
+        "summary": "按状态码抛出 HTTP 异常，有上下文时交给应用的 aborter。",
+        "details": "若 _cv_app.get(None) 不为 None，则调用 ctx.app.aborter(code, *args, **kwargs)，该调用没有 return，依赖 aborter 抛异常终止流程；随后仍会执行 _wz_abort(code, *args, **kwargs)，因此若替代 aborter 未抛异常，异常会由 Werkzeug 默认实现抛出。返回类型标注为 NoReturn。",
+        "evidence": [
+          {
+            "path": "src/flask/helpers.py",
+            "start_line": 298,
+            "end_line": 301
+          }
+        ]
+      },
+      {
+        "entity_id": "348a5fa2-1fbf-5b2c-be6e-e87199765418",
+        "summary": "从模板模块中取出宏或变量，供 Python 代码调用。",
+        "details": "通过 current_app.jinja_env.get_template(template_name) 取得模板，再由 .module 拿模板模块，最后用 getattr 按 attribute 取属性并返回。模板不存在或属性缺失时分别由 Jinja 环境和 getattr 抛出异常，需要活动应用上下文提供 jinja_env。",
+        "evidence": [
+          {
+            "path": "src/flask/helpers.py",
+            "start_line": 323,
+            "end_line": 323
+          }
+        ]
+      },
+      {
+        "entity_id": "d3661d6a-e1c8-53b8-a02c-faa4e79b7344",
+        "summary": "把带类别的消息写入会话，并发送 message_flashed 信号。",
+        "details": "先 session.get(\"_flashes\", []) 取出列表，append((category, message)) 后整体写回 session，避免外部存储型会话中可变结构不同步；再取 current_app._get_current_object() 作为发送者，用 app.ensure_sync 作为 _async_wrapper 发送 message_flashed，并附带 message 与 category。无返回值，依赖 session 与应用上下文。",
+        "evidence": [
+          {
+            "path": "src/flask/helpers.py",
+            "start_line": 349,
+            "end_line": 357
+          }
+        ]
+      },
+      {
+        "entity_id": "27a063bf-ed4f-5d3d-96a5-31ca1ebcdd50",
+        "summary": "取出本次请求缓存的闪现消息，可按类别过滤，或以带类别元组返回。",
+        "details": "先读 app_ctx._flashes；为 None 时从 session.pop(\"_flashes\") 取值（会话中不存在则用空列表）并写回 app_ctx._flashes，使同一请求内重复调用返回相同结果。category_filter 非空时用 filter 加 lambda 只保留类别命中的消息；with_categories 为 False 时用列表推导只返回消息文本，否则返回 (category, message) 列表。不会在无会话时工作。",
+        "evidence": [
+          {
+            "path": "src/flask/helpers.py",
+            "start_line": 391,
+            "end_line": 399
+          }
+        ]
+      },
+      {
+        "entity_id": "4c0c67ba-9b65-5e00-9430-2a4ffab916e4",
+        "summary": "把当前应用上下文和配置转换成 Werkzeug 发送文件所需的参数字典",
+        "details": "先通过 app_ctx._get_current_object() 取当前应用上下文；若 kwargs 中 max_age 为 None，则写入 ctx.app.get_send_file_max_age 函数本身，供 Werkzeug 按文件名惰性求值。随后 kwargs.update 覆盖式写入 environ（取自 ctx.request.environ，会覆盖调用方传入的同名值）、use_x_sendfile（app.config[\"USE_X_SENDFILE\"]）、response_class 与 _root_path（app.root_path），最后返回同一个字典。函数不校验参数、不设默认值，缺少应用上下文时会由上下文代理抛错。",
+        "evidence": [
+          {
+            "path": "src/flask/helpers.py",
+            "start_line": 402,
+            "end_line": 414
+          }
+        ]
+      },
+      {
+        "entity_id": "6db682cd-fe3c-5755-a1df-dae105760fbf",
+        "summary": "公开的文件发送接口，组装 Flask 上下文参数后委托 Werkzeug 发送",
+        "details": "实现位于长文档字符串之后：用 **_prepare_send_file_kwargs(path_or_file=path_or_file, environ=request.environ, mimetype, as_attachment, download_name, conditional, etag, last_modified, max_age) 组装参数，再把这些参数展开传给 werkzeug.utils.send_file 并直接返回其结果，返回处带 type: ignore 注释。函数自身无分支与校验，路径被假定为可信；文件不存在、MIME 推断、条件请求或 X-Sendfile 等行为由 Werkzeug 内部决定。",
+        "evidence": [
+          {
+            "path": "src/flask/helpers.py",
+            "start_line": 417,
+            "end_line": 420
+          },
+          {
+            "path": "src/flask/helpers.py",
+            "start_line": 528,
+            "end_line": 540
+          }
+        ]
+      },
+      {
+        "entity_id": "711ec613-4ae3-58d7-b5b4-5f2f65d5f110",
+        "summary": "在指定目录下安全地发送文件，目录与路径交由 Werkzeug 处理",
+        "details": "不解析或拼接路径，直接把 directory、path 与 **_prepare_send_file_kwargs(**kwargs) 的结果传给 werkzeug.utils.send_from_directory 并返回。kwargs 原样透传，本函数不额外设置 max_age、etag 等默认值；目录边界校验、safe_join 与文件不存在时的 404 均由 Werkzeug 负责，函数本身没有分支和异常处理。",
+        "evidence": [
+          {
+            "path": "src/flask/helpers.py",
+            "start_line": 543,
+            "end_line": 547
+          },
+          {
+            "path": "src/flask/helpers.py",
+            "start_line": 582,
+            "end_line": 584
+          }
+        ]
+      },
+      {
+        "entity_id": "72983f2d-96b7-573d-88c9-365e2060a7fa",
+        "summary": "定位包或模块所在根目录，失败时回退到当前工作目录",
+        "details": "先查 sys.modules：模块已导入且 __file__ 非空时，返回其绝对路径所在目录。否则调用 importlib.util.find_spec，捕获 ImportError/ValueError 把 loader 置为 None，spec 为 None 时抛 ValueError 走同一分支；loader 为空时返回 os.getcwd()。loader 有 get_filename 时调用它取文件路径，否则先 __import__ 再从 sys.modules 取 __file__，仍为 None 则抛 RuntimeError；成功时返回 filepath 绝对路径所在目录。",
+        "evidence": [
+          {
+            "path": "src/flask/helpers.py",
+            "start_line": 596,
+            "end_line": 600
+          },
+          {
+            "path": "src/flask/helpers.py",
+            "start_line": 603,
+            "end_line": 617
+          },
+          {
+            "path": "src/flask/helpers.py",
+            "start_line": 619,
+            "end_line": 641
+          }
+        ]
+      },
+      {
+        "entity_id": "f870edff-d713-5e6c-b53d-a972f2f8db95",
+        "summary": "按点号递归拆分蓝图名，返回自身及各级父级名称列表",
+        "details": "以 [name] 初始化结果列表；仅当 name 中存在 '.' 时，对 name.rpartition('.')[0] 递归调用自身并把返回列表 extend 到结果中，最后返回该列表。结果包含传入名字以及逐级去掉末尾段后的各父级名字，代码未检测循环。函数带 @cache 装饰器，相同输入复用结果，也因此递归自调用无法静态确认目标。",
+        "evidence": [
+          {
+            "path": "src/flask/helpers.py",
+            "start_line": 645,
+            "end_line": 651
+          }
+        ]
+      },
+      {
+        "entity_id": "c0d688ca-e63a-53e3-852c-a1f27e83b7ce",
+        "summary": "初始化错误列表为空",
+        "details": "无参数，仅把实例属性 errors 设为空列表，供后续 __exit__ 追加异常、raise_any 读取；没有其它副作用或校验。",
+        "evidence": [
+          {
+            "path": "src/flask/helpers.py",
+            "start_line": 659,
+            "end_line": 660
+          }
+        ]
+      },
+      {
+        "entity_id": "3035b5ed-20a1-5e7d-878f-ec8509ce96fb",
+        "summary": "进入上下文时不做任何事，返回 None",
+        "details": "函数体只有 pass，因此返回值为 None；with 语句的 as 目标得到 None，而不是上下文对象本身，调用方只能通过外部变量引用该实例。",
+        "evidence": [
+          {
+            "path": "src/flask/helpers.py",
+            "start_line": 662,
+            "end_line": 663
+          }
+        ]
+      },
+      {
+        "entity_id": "aba47209-deca-5767-ba05-57bf0dd645b3",
+        "summary": "退出上下文时记录异常并返回 True 以吞掉异常",
+        "details": "接收异常三元组；当 exc_val 不为 None 时把它追加到 self.errors，随后无条件返回 True，表示异常已被处理，使外层清理流程继续而不中断。函数不区分异常类型，也不读取 exc_type 或 exc_tb，被吞掉的异常需要另行调用 raise_any 才会重新抛出。",
+        "evidence": [
+          {
+            "path": "src/flask/helpers.py",
+            "start_line": 665,
+            "end_line": 674
+          }
+        ]
+      },
+      {
+        "entity_id": "caba9eba-9900-59a1-96f7-831e4049ac38",
+        "summary": "若已收集到错误，则以异常组形式统一抛出",
+        "details": "检查 self.errors 是否非空：非空时用传入的 message 和全部已收集异常构造并抛出 BaseExceptionGroup；列表为空时不抛错，函数隐式返回 None。它不会清空列表，重复调用会再次抛出同一批异常。",
+        "evidence": [
+          {
+            "path": "src/flask/helpers.py",
+            "start_line": 676,
+            "end_line": 679
+          }
+        ]
+      }
+    ],
+    "call_judgments": [
+      {
+        "call_id": "08abe643-4d16-568c-8418-7b6d2e572fe9",
+        "target_id": "4c0c67ba-9b65-5e00-9430-2a4ffab916e4",
+        "reason": "调用点位于 send_file 函数体内的 return 语句中，以 _prepare_send_file_kwargs(...) 形式传入 path_or_file、environ、mimetype 等参数，名称在模块作用域内绑定到本批唯一实现，无重赋值或装饰器改写，因此该调用确定指向 _prepare_send_file_kwargs。",
+        "evidence": [
+          {
+            "path": "src/flask/helpers.py",
+            "start_line": 528,
+            "end_line": 539
+          },
+          {
+            "path": "src/flask/helpers.py",
+            "start_line": 402,
+            "end_line": 414
+          }
+        ]
+      },
+      {
+        "call_id": "016e171a-45e3-5f90-9216-32efbc8aba13",
+        "target_id": "4c0c67ba-9b65-5e00-9430-2a4ffab916e4",
+        "reason": "调用点位于 send_from_directory 函数体的返回表达式中，以 **_prepare_send_file_kwargs(**kwargs) 把调用方 kwargs 原样透传；该名称同样绑定到模块内唯一实现，且被调用函数未加装饰器，绑定明确。",
+        "evidence": [
+          {
+            "path": "src/flask/helpers.py",
+            "start_line": 582,
+            "end_line": 584
+          },
+          {
+            "path": "src/flask/helpers.py",
+            "start_line": 402,
+            "end_line": 414
+          }
+        ]
+      }
+    ],
+    "primary_dependencies": [
+      {
+        "call_ids": [
+          "08abe643-4d16-568c-8418-7b6d2e572fe9",
+          "016e171a-45e3-5f90-9216-32efbc8aba13"
+        ],
+        "reason": "两个公开文件发送入口自身不构造 Werkzeug 参数，其 Flask 特有行为（max_age 默认取应用配置、environ 取当前请求、USE_X_SENDFILE、response_class、root_path）完全依赖 _prepare_send_file_kwargs 组装，因此这两条直接调用是该能力的核心协作。"
+      }
+    ]
+  },
+  "原快照字节未变": true,
+  "请求账本": [
+    {
+      "id": "ead14d60-f263-46c1-a23b-9df543a15a5b",
+      "project_id": "e79316b3-6230-43fc-85b8-51be9162eebd",
+      "version_id": "2dc74865-c87c-46f5-9a41-ce28e74d8059",
+      "job_id": "fb24ee9e-dd67-440a-bb4b-762af5151bc6",
+      "unit_id": "cd6c2a82-4c75-4ad3-84e9-431e7d64cb2d",
+      "attempt": 1,
+      "phase": "architecture",
+      "recipient": "https://api.deepseek.com",
+      "model": "deepseek-flash",
+      "status": "success",
+      "created_at": "2026-10-11T03:07:02.705806+00:00",
+      "sent_at": "2026-10-11T03:07:02.741500+00:00",
+      "finished_at": "2026-10-11T03:07:56.119835+00:00",
+      "payload_hash": "8fdb5a7432b1621d5fa8c9d9152afeb89de7d63642cd006ba961dca23792e742",
+      "source_chars": 14156,
+      "usage": {
+        "prompt_tokens": 11267,
+        "completion_tokens": 14391,
+        "total_tokens": 25658,
+        "prompt_cache_hit_tokens": 2304,
+        "prompt_cache_miss_tokens": 8963
+      },
+      "cost": null,
+      "currency": null,
+      "price_snapshot": null,
+      "http_status": 200,
+      "error_code": null
+    },
+    {
+      "id": "89b53603-eda5-4bd6-bc24-a0fd972f6fe8",
+      "project_id": "e79316b3-6230-43fc-85b8-51be9162eebd",
+      "version_id": "2dc74865-c87c-46f5-9a41-ce28e74d8059",
+      "job_id": "fb24ee9e-dd67-440a-bb4b-762af5151bc6",
+      "unit_id": "30c4a288-1bf2-4e97-bd39-27dca404a016",
+      "attempt": 1,
+      "phase": "architecture",
+      "recipient": "https://api.deepseek.com",
+      "model": "deepseek-flash",
+      "status": "success",
+      "created_at": "2026-10-11T03:07:56.133389+00:00",
+      "sent_at": "2026-10-11T03:07:56.144593+00:00",
+      "finished_at": "2026-10-11T03:08:33.044180+00:00",
+      "payload_hash": "066dd33f16977390c1c200d71532b164775a8e6c9ccbe57c3f4ed425dc21e6a5",
+      "source_chars": 10355,
+      "usage": {
+        "prompt_tokens": 9118,
+        "completion_tokens": 9404,
+        "total_tokens": 18522,
+        "prompt_cache_hit_tokens": 2304,
+        "prompt_cache_miss_tokens": 6814
+      },
+      "cost": null,
+      "currency": null,
+      "price_snapshot": null,
+      "http_status": 200,
+      "error_code": null
+    },
+    {
+      "id": "38046305-501e-441d-bcaf-78700f2ccba7",
+      "project_id": "e79316b3-6230-43fc-85b8-51be9162eebd",
+      "version_id": "2dc74865-c87c-46f5-9a41-ce28e74d8059",
+      "job_id": "fb24ee9e-dd67-440a-bb4b-762af5151bc6",
+      "unit_id": "a5654b44-dae0-493c-a0a4-d3becbd5e5b2",
+      "attempt": 1,
+      "phase": "overview",
+      "recipient": "https://api.deepseek.com",
+      "model": "deepseek-flash",
+      "status": "success",
+      "created_at": "2026-10-11T03:08:33.066706+00:00",
+      "sent_at": "2026-10-11T03:08:33.076437+00:00",
+      "finished_at": "2026-10-11T03:08:55.924982+00:00",
+      "payload_hash": "a6dba4984a7e2e6320ced37872328e520b1571cec300da2a0753d03b587fcb73",
+      "source_chars": 0,
+      "usage": {
+        "prompt_tokens": 1519,
+        "completion_tokens": 4376,
+        "total_tokens": 5895,
+        "prompt_cache_hit_tokens": 384,
+        "prompt_cache_miss_tokens": 1135
+      },
+      "cost": null,
+      "currency": null,
+      "price_snapshot": null,
+      "http_status": 200,
+      "error_code": null
+    }
+  ],
+  "请求状态": {
+    "success": 3
+  },
+  "已知total_tokens": 50075,
+  "未知用量请求": 0,
+  "费用": null,
+  "脱敏校验记录": [],
+  "边界": "真实官方模型，固定响应与质量复核分开；尚未代表用户验收；价格未知不记零费用。",
+  "静态索引制品": {
+    "path": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\.runtime\\public-model-validation\\09295a01-8ff8-49d7-97f2-b757d53138fa\\validation-artifacts\\ec638fca285fabf8bb5c31c82288318081f026adede275dcdcc01ed065f20ebc.json",
+    "sha256": "ec638fca285fabf8bb5c31c82288318081f026adede275dcdcc01ed065f20ebc",
+    "bytes": 85150
+  }
+}

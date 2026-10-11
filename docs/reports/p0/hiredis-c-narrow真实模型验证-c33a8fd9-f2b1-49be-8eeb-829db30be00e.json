@@ -1,0 +1,248 @@
+{
+  "日期": "2026-10-11",
+  "样本": "hiredis-c",
+  "Commit": "058ebcdf36c5b05b759c613564fb958ec363c90f",
+  "范围": "缩小范围",
+  "授权": "用户允许四个固定公开样本真实评测",
+  "接收端": "https://api.deepseek.com",
+  "模型": "deepseek-flash",
+  "流水线": "architecture/2-explanations/1-reads/1-judgments/1-dependencies/1-cpp-config/7-interfaces/1-facts/1-index/2-ts-bindings/2",
+  "数据目录": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\.runtime\\public-model-validation\\91b1b03c-7fb4-40fd-a1d9-10b1e8119160",
+  "原始快照hash": "7240fe218f0552729c0343bf54f244013ed1ba2dd982d34f49e4bb421cbb39a2",
+  "实际文件": [
+    "read.c",
+    "read.h"
+  ],
+  "状态": "分析暂停",
+  "执行目标代码": false,
+  "进度": {
+    "phase": "paused",
+    "completed": 1,
+    "total": 2,
+    "detail": "模型输出未通过结构校验，已用完有限修复次数；已有结果和检查点保留。"
+  },
+  "耗时秒": 265.31,
+  "project_id": "a26892fc-db02-43e0-87c5-ed28a32a4c3c",
+  "version_id": "8f3f6df6-1ef4-4162-b4a1-ee9cdcb214a9",
+  "实际快照hash": "8fd5570b3b8949d0839981e7e5e07a8e4563809c4c6d5820abe4aa081a70a78c",
+  "scope_hash": "64d8fef1eca2d21c0868fb5cb2988d0e4d169bafe184ba5bc3727938f0682e93",
+  "错误": "模型输出未通过结构校验，已用完有限修复次数；已有结果和检查点保留。",
+  "architecture": null,
+  "原快照字节未变": true,
+  "请求账本": [
+    {
+      "id": "3b5ca719-1857-4c04-8b16-d536554115b2",
+      "project_id": "a26892fc-db02-43e0-87c5-ed28a32a4c3c",
+      "version_id": "8f3f6df6-1ef4-4162-b4a1-ee9cdcb214a9",
+      "job_id": "821b0971-6abe-4393-b7a7-bae02027d69f",
+      "unit_id": "a786e900-5c2d-46d7-aef1-58c45e172717",
+      "attempt": 1,
+      "phase": "architecture",
+      "recipient": "https://api.deepseek.com",
+      "model": "deepseek-flash",
+      "status": "failed",
+      "created_at": "2026-10-11T03:06:12.210173+00:00",
+      "sent_at": "2026-10-11T03:06:12.251227+00:00",
+      "finished_at": "2026-10-11T03:07:00.260882+00:00",
+      "payload_hash": "72f497835e1b64f24fd1ed3e5882bc6b83cce7c8bdc118c463e6de43a6e90c5a",
+      "source_chars": 18221,
+      "usage": {
+        "prompt_tokens": 23938,
+        "completion_tokens": 11614,
+        "total_tokens": 35552,
+        "prompt_cache_hit_tokens": 2304,
+        "prompt_cache_miss_tokens": 21634
+      },
+      "cost": null,
+      "currency": null,
+      "price_snapshot": null,
+      "http_status": 200,
+      "error_code": "SCHEMA_INVALID"
+    },
+    {
+      "id": "f809b83e-64b6-4e2e-abc0-766bfc4541ea",
+      "project_id": "a26892fc-db02-43e0-87c5-ed28a32a4c3c",
+      "version_id": "8f3f6df6-1ef4-4162-b4a1-ee9cdcb214a9",
+      "job_id": "821b0971-6abe-4393-b7a7-bae02027d69f",
+      "unit_id": "a786e900-5c2d-46d7-aef1-58c45e172717",
+      "attempt": 2,
+      "phase": "repair",
+      "recipient": "https://api.deepseek.com",
+      "model": "deepseek-flash",
+      "status": "failed",
+      "created_at": "2026-10-11T03:07:00.264073+00:00",
+      "sent_at": "2026-10-11T03:07:00.272827+00:00",
+      "finished_at": "2026-10-11T03:07:46.952520+00:00",
+      "payload_hash": "1b74dce3788514ac670a2fe82d4d902643c80fb83d27450f9f3de57ec321bb73",
+      "source_chars": 18221,
+      "usage": {
+        "prompt_tokens": 23963,
+        "completion_tokens": 11043,
+        "total_tokens": 35006,
+        "prompt_cache_hit_tokens": 2304,
+        "prompt_cache_miss_tokens": 21659
+      },
+      "cost": null,
+      "currency": null,
+      "price_snapshot": null,
+      "http_status": 200,
+      "error_code": "SCHEMA_INVALID"
+    },
+    {
+      "id": "dbc6b4f7-6d67-4cf1-92fe-63f6a4b4172d",
+      "project_id": "a26892fc-db02-43e0-87c5-ed28a32a4c3c",
+      "version_id": "8f3f6df6-1ef4-4162-b4a1-ee9cdcb214a9",
+      "job_id": "821b0971-6abe-4393-b7a7-bae02027d69f",
+      "unit_id": "a786e900-5c2d-46d7-aef1-58c45e172717",
+      "attempt": 3,
+      "phase": "repair",
+      "recipient": "https://api.deepseek.com",
+      "model": "deepseek-flash",
+      "status": "success",
+      "created_at": "2026-10-11T03:07:46.956187+00:00",
+      "sent_at": "2026-10-11T03:07:46.966111+00:00",
+      "finished_at": "2026-10-11T03:08:20.788209+00:00",
+      "payload_hash": "1b74dce3788514ac670a2fe82d4d902643c80fb83d27450f9f3de57ec321bb73",
+      "source_chars": 18221,
+      "usage": {
+        "prompt_tokens": 23963,
+        "completion_tokens": 8684,
+        "total_tokens": 32647,
+        "prompt_cache_hit_tokens": 23808,
+        "prompt_cache_miss_tokens": 155
+      },
+      "cost": null,
+      "currency": null,
+      "price_snapshot": null,
+      "http_status": 200,
+      "error_code": null
+    },
+    {
+      "id": "78efad41-6245-4ba8-8ecb-83d0e422c91c",
+      "project_id": "a26892fc-db02-43e0-87c5-ed28a32a4c3c",
+      "version_id": "8f3f6df6-1ef4-4162-b4a1-ee9cdcb214a9",
+      "job_id": "821b0971-6abe-4393-b7a7-bae02027d69f",
+      "unit_id": "f1d9791b-d154-41b4-bc14-dccf42052fd8",
+      "attempt": 1,
+      "phase": "architecture",
+      "recipient": "https://api.deepseek.com",
+      "model": "deepseek-flash",
+      "status": "failed",
+      "created_at": "2026-10-11T03:08:20.800770+00:00",
+      "sent_at": "2026-10-11T03:08:20.822423+00:00",
+      "finished_at": "2026-10-11T03:08:46.094001+00:00",
+      "payload_hash": "55114c6a9963abadf4fd98ea5ed956226a3256ca1338803d6edfa7da49e24d28",
+      "source_chars": 13949,
+      "usage": {
+        "prompt_tokens": 16691,
+        "completion_tokens": 5692,
+        "total_tokens": 22383,
+        "prompt_cache_hit_tokens": 2304,
+        "prompt_cache_miss_tokens": 14387
+      },
+      "cost": null,
+      "currency": null,
+      "price_snapshot": null,
+      "http_status": 200,
+      "error_code": "SCHEMA_INVALID"
+    },
+    {
+      "id": "655993d3-4eff-4dec-8a3a-fe61eb60c55e",
+      "project_id": "a26892fc-db02-43e0-87c5-ed28a32a4c3c",
+      "version_id": "8f3f6df6-1ef4-4162-b4a1-ee9cdcb214a9",
+      "job_id": "821b0971-6abe-4393-b7a7-bae02027d69f",
+      "unit_id": "f1d9791b-d154-41b4-bc14-dccf42052fd8",
+      "attempt": 2,
+      "phase": "repair",
+      "recipient": "https://api.deepseek.com",
+      "model": "deepseek-flash",
+      "status": "failed",
+      "created_at": "2026-10-11T03:08:46.098649+00:00",
+      "sent_at": "2026-10-11T03:08:46.109529+00:00",
+      "finished_at": "2026-10-11T03:09:25.874114+00:00",
+      "payload_hash": "f85f5f736b04c561e388f57dcc6b20ce8b79d2dea2068b5031ff0a23ba3c9077",
+      "source_chars": 13949,
+      "usage": {
+        "prompt_tokens": 16776,
+        "completion_tokens": 10326,
+        "total_tokens": 27102,
+        "prompt_cache_hit_tokens": 2304,
+        "prompt_cache_miss_tokens": 14472
+      },
+      "cost": null,
+      "currency": null,
+      "price_snapshot": null,
+      "http_status": 200,
+      "error_code": "SCHEMA_INVALID"
+    },
+    {
+      "id": "1a380897-15bd-4fa2-bfab-9064d2247014",
+      "project_id": "a26892fc-db02-43e0-87c5-ed28a32a4c3c",
+      "version_id": "8f3f6df6-1ef4-4162-b4a1-ee9cdcb214a9",
+      "job_id": "821b0971-6abe-4393-b7a7-bae02027d69f",
+      "unit_id": "f1d9791b-d154-41b4-bc14-dccf42052fd8",
+      "attempt": 3,
+      "phase": "repair",
+      "recipient": "https://api.deepseek.com",
+      "model": "deepseek-flash",
+      "status": "failed",
+      "created_at": "2026-10-11T03:09:25.878264+00:00",
+      "sent_at": "2026-10-11T03:09:25.888474+00:00",
+      "finished_at": "2026-10-11T03:10:34.029504+00:00",
+      "payload_hash": "f392b6b0163fbfe16103a30169d4fda421dacc863664c8189bc38df8fd0653a2",
+      "source_chars": 13949,
+      "usage": {
+        "prompt_tokens": 16718,
+        "completion_tokens": 18462,
+        "total_tokens": 35180,
+        "prompt_cache_hit_tokens": 2304,
+        "prompt_cache_miss_tokens": 14414
+      },
+      "cost": null,
+      "currency": null,
+      "price_snapshot": null,
+      "http_status": 200,
+      "error_code": "SCHEMA_INVALID"
+    }
+  ],
+  "请求状态": {
+    "failed": 5,
+    "success": 1
+  },
+  "已知total_tokens": 187870,
+  "未知用量请求": 0,
+  "费用": null,
+  "脱敏校验记录": [
+    {
+      "time": "2026-10-11T03:07:00.260344+00:00",
+      "request_id": "3b5ca719-1857-4c04-8b16-d536554115b2",
+      "feedback": "调用判断引用错误或重复"
+    },
+    {
+      "time": "2026-10-11T03:07:46.951993+00:00",
+      "request_id": "f809b83e-64b6-4e2e-abc0-766bfc4541ea",
+      "feedback": "调用判断引用错误或重复"
+    },
+    {
+      "time": "2026-10-11T03:08:46.093484+00:00",
+      "request_id": "78efad41-6245-4ba8-8ecb-83d0e422c91c",
+      "feedback": "调用判断必须提供具体调用位置和完整目标实现。已知索引依据：{\"entity_or_call_id\": \"8f112b84-e267-5ab7-983a-d1b341da3391\", \"implementation_lines\": [651, 734], \"supplied_lines\": [[553, 871]]}"
+    },
+    {
+      "time": "2026-10-11T03:09:25.873592+00:00",
+      "request_id": "655993d3-4eff-4dec-8a3a-fe61eb60c55e",
+      "feedback": "讲解实体不唯一或不属于当前范围。"
+    },
+    {
+      "time": "2026-10-11T03:10:34.028985+00:00",
+      "request_id": "1a380897-15bd-4fa2-bfab-9064d2247014",
+      "feedback": "讲解实体不唯一或不属于当前范围。"
+    }
+  ],
+  "边界": "真实官方模型，固定响应与质量复核分开；尚未代表用户验收；价格未知不记零费用。",
+  "静态索引制品": {
+    "path": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\.runtime\\public-model-validation\\91b1b03c-7fb4-40fd-a1d9-10b1e8119160\\validation-artifacts\\ac8d59e4fe82510810afa1e48cdc7103c8f5ef6bda4a621a180a257003ac902d.json",
+    "sha256": "ac8d59e4fe82510810afa1e48cdc7103c8f5ef6bda4a621a180a257003ac902d",
+    "bytes": 128436
+  }
+}

@@ -1,11 +1,15 @@
 """只读汇总公开工程评测进度；包含历史重测账本，不发起模型请求。"""
 from __future__ import annotations
 
+import hashlib
 import json
 import sqlite3
 from collections import Counter
 from datetime import UTC, datetime
 from pathlib import Path
+
+from codescape.models import Analysis
+from codescape.provider import Provider, PIPELINE_VERSION, MAX_CONTEXT_CHARS
 
 repository = Path(__file__).resolve().parents[1]
 reports = repository / 'docs/reports/p0'
@@ -67,9 +71,31 @@ def main():
                 '原快照字节未变': document.get('原快照字节未变'),
             }
             if scope == 'full':
-                old = summary['完整范围'][sample]
-                if '修订后本地批次检查' in old:
-                    item['修订后本地批次检查'] = old['修订后本地批次检查']
+                artifact = document.get('静态索引制品')
+                if artifact:
+                    root = Path(document['数据目录']).resolve(strict=True)
+                    path = Path(artifact['path']).resolve(strict=True)
+                    path.relative_to(root / 'validation-artifacts')
+                    raw = path.read_bytes()
+                    assert hashlib.sha256(raw).hexdigest() == artifact['sha256']
+                    analysis = Analysis.model_validate_json(raw)
+                    source = root / 'owned-source'
+                    files = {}
+                    for name in document['实际文件']:
+                        target = (source / name).resolve(strict=True)
+                        target.relative_to(source)
+                        files[name] = target.read_text(encoding='utf-8')
+                    # 仅计算本地上下文，不读取凭据、不重新解析源码、不调用模型。
+                    planner = Provider.__new__(Provider)
+                    batches = planner._plan_batches(analysis, files)
+                    sizes = [len(planner._context(analysis, files_, ranges)[0])
+                             for files_, ranges in batches]
+                    item['修订后本地批次检查'] = {
+                        '批次数': len(batches), '最大上下文字符': max(sizes, default=0),
+                        '超过180000字符': sum(size > MAX_CONTEXT_CHARS for size in sizes),
+                        '仅静态规划': True, '规划流水线': PIPELINE_VERSION,
+                        '索引sha256': artifact['sha256'],
+                    }
                 summary['完整范围'][sample] = item
             else:
                 old = summary['缩小范围'].setdefault(sample, {})
@@ -84,8 +110,12 @@ def main():
         '费用': None,
         '说明': '包含历史失败、截断、修复及重新评测，按请求ID去重；在途属于尚未返回用量，未知不记零，缺少价格不估算费用。',
     }
-    summary['外部阻塞'] = '具体错误及在途状态见各样本实际记录；此前HTTP402记录完整保留。'
-    summary['验收结论'] = '真实评测与源码质量复核进行中；结构发布不代表质量通过，不能宣称全部P0完成。'
+    balances = [value['错误'] == '服务余额不足。' for value in summary['完整范围'].values()]
+    summary['外部阻塞'] = ('四个完整范围均因官方HTTP402余额不足暂停；检查点和历史报告保留，当前不继续重试收费任务。'
+                         if all(balances) else '具体错误及在途状态见各样本实际记录；此前HTTP402记录完整保留。')
+    summary['验收结论'] = ('修订后的四个完整范围均因HTTP402暂停，完整质量、范围对照与用户验收未完成；'
+                       '缩小范围源码复核及历史缺陷见各样本记录，结构发布不代表质量通过。'
+                       if all(balances) else '真实评测与源码质量复核尚未完成；结构发布不代表质量通过，不能宣称全部P0完成。')
     temporary = destination.with_suffix('.tmp')
     temporary.write_text(json.dumps(summary, ensure_ascii=False, indent=2), encoding='utf-8')
     temporary.replace(destination)

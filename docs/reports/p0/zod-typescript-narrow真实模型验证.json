@@ -6,34 +6,33 @@
   "授权": "用户允许四个固定公开样本真实评测",
   "接收端": "https://api.deepseek.com",
   "模型": "deepseek-flash",
-  "流水线": "architecture/2-explanations/1-reads/1-judgments/1-dependencies/1-cpp-config/6-interfaces/1-facts/1-index/2-ts-bindings/2",
-  "数据目录": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\.runtime\\public-model-validation\\497f1811-9c52-49a7-b9ac-09c869b53f08",
+  "流水线": "architecture/2-explanations/1-reads/1-judgments/1-dependencies/1-cpp-config/7-interfaces/1-facts/1-index/2-ts-bindings/2",
+  "数据目录": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\.runtime\\public-model-validation\\616b5705-5765-4d16-bf9f-92694d34af79",
   "原始快照hash": "c179e795ed4cac054e4cc4ff09bfd53aeca57c44706f8eba1969db3400a39955",
   "实际文件": [
     "packages/zod/src/v4/core/parse.ts"
   ],
   "状态": "结构检查通过，待源码质量复核",
   "执行目标代码": false,
-  "进度": {
-    "phase": "completed",
-    "completed": 1,
-    "total": 1,
-    "detail": "分批分析完成"
-  },
-  "耗时秒": 56.42,
-  "project_id": "daec24ce-d024-4ce3-b01f-6051d1f3f176",
-  "version_id": "729361bd-7f18-4184-a643-b28aa4118232",
+  "恢复前已知total_tokens": 30301,
+  "project_id": "1d5a4942-09d4-44ba-9e99-b3804fd07641",
+  "version_id": "e4c6ded6-b832-4157-b2a2-b8362985bbfd",
   "实际快照hash": "eeeb84dfaee5bbbfc76dc5b618580c16108bc4804202bed4aedd1f8b6bc242c3",
   "scope_hash": "64d8fef1eca2d21c0868fb5cb2988d0e4d169bafe184ba5bc3727938f0682e93",
+  "概览重测状态码": 200,
+  "模块架构未变": true,
   "错误": null,
+  "耗时秒": 12.59,
   "architecture": {
     "modules": [
       {
         "id": "m1",
         "parent_id": null,
-        "name": "同步/异步解析入口",
-        "summary": "封装 schema._zod.run，提供 parse、parseAsync、safeParse、safeParseAsync 入口，并在同步入口拒绝 Promise。",
-        "entity_ids": [],
+        "name": "解析参数规范化",
+        "summary": "统一解析参数，保证 callee 与 Err 键始终存在。",
+        "entity_ids": [
+          "98077224999ecc57cf78c87601c210ea"
+        ],
         "code_paths": [
           "packages/zod/src/v4/core/parse.ts"
         ],
@@ -42,11 +41,9 @@
       {
         "id": "m2",
         "parent_id": null,
-        "name": "失败结果惰性构造",
-        "summary": "构造 success:false 的安全解析结果，error 字段在首次读取时才实例化错误对象。",
-        "entity_ids": [
-          "e7c1beb2dfb32d1ccc8e983cd77d6e5d"
-        ],
+        "name": "同步与异步解析核心",
+        "summary": "实现同步与异步解析核心：调用 schema._zod.run，按需等待 Promise；收集 issue 时用指定 Err 类构造错误并捕获调用栈，否则返回 value。",
+        "entity_ids": [],
         "code_paths": [
           "packages/zod/src/v4/core/parse.ts"
         ],
@@ -55,10 +52,10 @@
       {
         "id": "m3",
         "parent_id": null,
-        "name": "布尔校验与编译快速路径",
-        "summary": "validate/validateAsync 返回布尔判定；validate 先试编译 validator，未决时回退 validateFallback。",
+        "name": "安全解析与惰性错误",
+        "summary": "实现安全解析与惰性失败对象：safeParse/safeParseAsync 返回 success 包装，failure 在首次读取 error 时才构造 $ZodError 并释放原始 issues 与 ctx。",
         "entity_ids": [
-          "8d711cf7a148266ad000989c06e5de60"
+          "8a29555877e8de05274d0a01bdd98e05"
         ],
         "code_paths": [
           "packages/zod/src/v4/core/parse.ts"
@@ -68,11 +65,33 @@
       {
         "id": "m4",
         "parent_id": null,
-        "name": "编解码包装与参数归一化",
-        "summary": "encode/decode 及异步、安全变体把方向设为 backward 并转调解析入口，参数由 finalizeParams 统一形态。",
+        "name": "校验快速路径",
+        "summary": "实现 validate/validateAsync 布尔校验：同步优先用编译 validator，遇不确定 sentinel 时回退 validateFallback 完整解析；异步不设快速路径。",
         "entity_ids": [
-          "ce9223a7aef25c6cb30f1640d6fd4a08"
+          "f962304d0aa6d366e3488424e7a950cf"
         ],
+        "code_paths": [
+          "packages/zod/src/v4/core/parse.ts"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "m5",
+        "parent_id": null,
+        "name": "编解码包装",
+        "summary": "实现 encode/decode 同步与异步包装：仅有 encode 系列把 direction 设为 backward，所有变体都通过 finalizeParams 透传 callee 后转交 parse/parseAsync。",
+        "entity_ids": [],
+        "code_paths": [
+          "packages/zod/src/v4/core/parse.ts"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "m6",
+        "parent_id": null,
+        "name": "安全编解码包装",
+        "summary": "实现 safeEncode/safeDecode 同步与异步包装：encode 系列设置 direction=backward，其余参数原样转交 safeParse/safeParseAsync。",
+        "entity_ids": [],
         "code_paths": [
           "packages/zod/src/v4/core/parse.ts"
         ],
@@ -80,36 +99,40 @@
       }
     ],
     "overview": {
-      "introduction": "这是一个数据模式解析与校验工具的执行入口层，面向需要校验、转换输入数据的开发者。它把模式定义转化为同步或异步解析、安全返回结果、布尔校验和编解码能力。",
+      "introduction": "这是数据模式解析核心，面向需要校验输入并转换数据的开发者。它把同步与异步解析、成功/失败结果包装、布尔快速校验及编解码统一在一套参数规范下，减少重复处理错误与方向。",
       "capabilities": [
-        "同步与异步解析数据，同步入口遇到异步结果会拒绝。",
-        "安全解析返回成功或失败，错误对象在需要时才生成。",
-        "布尔校验先尝试编译后的快速判定，未决时回退通用校验。",
-        "按模式进行编解码，并提供异步与安全返回变体。"
+        "统一进行同步或异步的数据解析与错误收集",
+        "提供成功/失败结果包装，失败错误延迟构建",
+        "进行布尔式快速校验，同步优先走编译校验器",
+        "支持正向与反向的数据编解码转换",
+        "为编解码提供结果包装与异步变体"
       ],
-      "principle": "输入数据先统一参数形态，再按解析或反向编解码方向进入解析执行。同步入口只接受同步结果，异步入口处理异步；校验优先尝试编译快速判定，未决时回退。失败结果延迟生成错误，读取时才实例化。",
+      "principle": "输入先做统一参数规范化，确保内部调用目标与错误键存在；随后核心按模式执行校验，同步直接返回，异步则按需等待结果。出现问题时收集问题并构造错误，否则返回数据；结果包装把成功或失败交还给用户，失败错误在首次读取时才生成。布尔校验在同步下优先使用编译校验器，遇到不确定标记才回退完整解析，异步不设这条快速路径；编解码中仅编码方向被标为反向。",
       "limitations": [
-        "底层解析执行、错误对象构造、配置与堆栈捕获的实现不在已确认范围，无法说明完整运行时行为。",
-        "编译快速判定依赖编译器侧字符串标记一致，该一致性与正确性未确认。",
-        "未验证实际错误消息文本与运行时性能表现。",
-        "已解析范围未记录诊断；这不代表诊断不可用，也不代表运行验证成功。",
-        "失败结果延迟生成错误的具体内容尚未确认，只能确认其封装职责。"
+        "当前范围只覆盖解析核心，未覆盖其他解析入口或集合类型解析。",
+        "底层校验执行与错误格式化未展示，具体错误格式无法确认。",
+        "编译校验器的特殊标记与回退语义仅按现有分支推断，未获外部验证。",
+        "已解析但未记录诊断，不能据此认定运行时验证成功。",
+        "未穷尽同步与异步的异常边界，不能承诺结果包装在所有情况下都不抛异常。"
       ],
       "synthesized": true,
       "analysis_notes": [
-        "failure 的 getter/setter 会清空 issues 与 ctx，属源码可见的引用释放行为。",
-        "validateFallback 通过 COMPILE_FALLBACK 符号标记 ctx 以跳过嵌套快速路径。",
-        "schema._zod.run、util.finalizeIssue、core.config、captureStackTrace 定义在本文件之外，其实现未确认。",
-        "编译 sentinel 用 Symbol.for 字符串镜像，正确性依赖编译器侧字符串一致。",
-        "本批只归属三个顶层函数，lambda 包装器未作为实体逐一讲解。",
-        "未验证实际错误消息文本与运行时性能表现。"
+        "未确认调用（如 schema._zod.run、_safeParse(_Err) 等）因缺少目标实现未作 call_judgment，静态确认关系保持原样。",
+        "未展示 schema._zod.run、util.finalizeIssue 等外部实现，具体错误格式无法确认",
+        "编译校验器的 sentinel 与 fallbackRun 语义只能依据本文件分支推断",
+        "异步编译快速路径被有意省略，本片段不覆盖该场景",
+        "本片段只覆盖 core/parse.ts，未包含其他解析入口或集合类型解析",
+        "未展示底层校验执行与错误格式化实现，因此具体错误格式无法确认。",
+        "编译校验器的特殊标记与回退语义只能依据现有分支推断，未获外部验证。",
+        "覆盖范围限于解析核心，未包含其他解析入口或集合类型解析。",
+        "已解析但未记录诊断，不代表运行时验证成功。"
       ]
     },
     "explanations": [
       {
-        "entity_id": "ce9223a7aef25c6cb30f1640d6fd4a08",
-        "summary": "把传入的可选参数与默认 callee 合并，返回固定含 callee、Err 两个键的参数对象。",
-        "details": "入参为 callee（默认调用者）与可选 params。返回新对象：callee 取 params?.callee，缺失时回退到入参 callee；Err 取 params?.Err；两个键恒存在，注释说明是为让 _parse 的读取点只看到一种对象形态。无校验、无异常分支，也不访问 schema。",
+        "entity_id": "98077224999ecc57cf78c87601c210ea",
+        "summary": "统一解析参数，保证 callee 与 Err 键始终存在",
+        "details": "接收 callee 与可选 params，返回新对象：callee 取 params?.callee ?? callee，Err 取 params?.Err。无分支与异常，固定两键是为让 _parse 读取时对象形状一致。",
         "evidence": [
           {
             "path": "packages/zod/src/v4/core/parse.ts",
@@ -119,77 +142,35 @@
         ]
       },
       {
-        "entity_id": "e7c1beb2dfb32d1ccc8e983cd77d6e5d",
-        "summary": "构造 success:false 的结果对象，其 error 属性在被读取时才实例化 Zod 错误。",
-        "details": "入参为错误类 Err、原始 issues 与内部 ctx。返回对象固定 success:false 并带 error 访问器：getter 在未缓存时用 issues.map 经 util.finalizeIssue(iss, ctx, core.config()) 转换后 new Err(...)，随即把 issues、ctx 置为 undefined 以释放引用；setter 直接替换 error 并做同样清空。读取前不构造错误，读取后复用缓存。",
+        "entity_id": "8a29555877e8de05274d0a01bdd98e05",
+        "summary": "惰性构造安全解析失败结果，首次读取 error 时才建错",
+        "details": "接收 Err 构造器、raw issues 与内部 ctx，返回 success:false 对象。getter 首次读取时以 Err 包装 finalizeIssue 后的 issues，并清空 issues/ctx；setter 替换 error 时同样清空。",
         "evidence": [
           {
             "path": "packages/zod/src/v4/core/parse.ts",
             "start_line": 83,
             "end_line": 103
-          },
-          {
-            "path": "packages/zod/src/v4/core/parse.ts",
-            "start_line": 87,
-            "end_line": 95
-          },
-          {
-            "path": "packages/zod/src/v4/core/parse.ts",
-            "start_line": 96,
-            "end_line": 101
           }
         ]
       },
       {
-        "entity_id": "8d711cf7a148266ad000989c06e5de60",
-        "summary": "在编译快速路径未决时运行 schema，返回是否无 issue 的布尔结果。",
-        "details": "入参 schema、待校验 value 与可选 _ctx。先构造 ctx：无 _ctx 时为 {async:false, abortEarly:true}，否则浅拷贝并覆盖这两项。从 schema._zod.bag 取 fallbackRun，存在则置 COMPILE_FALLBACK 符号并调用 fallbackRun({value, issues:[]}, ctx)，否则回退 schema._zod.run；结果为 Promise 时抛 core.$ZodAsyncError。最终按 issues.length===0 返回布尔值，不构造错误对象。",
+        "entity_id": "f962304d0aa6d366e3488424e7a950cf",
+        "summary": "validate 的回退路径，跑完整解析并返回是否无 issue",
+        "details": "构造 async:false、abortEarly:true 的 ctx；有 bag.fallbackRun 时置 COMPILE_FALLBACK 后调用，否则用 schema._zod.run；结果为 Promise 抛 $ZodAsyncError，返回 issues.length === 0。",
         "evidence": [
           {
             "path": "packages/zod/src/v4/core/parse.ts",
             "start_line": 151,
             "end_line": 172
-          },
-          {
-            "path": "packages/zod/src/v4/core/parse.ts",
-            "start_line": 155,
-            "end_line": 163
-          },
-          {
-            "path": "packages/zod/src/v4/core/parse.ts",
-            "start_line": 164,
-            "end_line": 171
           }
         ]
       }
     ],
     "call_judgments": [
       {
-        "call_id": "43dfe48195142f3f1472b7a4ee29ed20",
-        "target_id": "8d711cf7a148266ad000989c06e5de60",
-        "reason": "第148行 validate 的返回语句以 validateFallback(schema, value, _ctx) 形式调用；同文件第151行存在唯一同名函数声明，实参个数与形参 (schema, value, _ctx?) 对应，模块作用域内无其它同名绑定或遮蔽，解析为直接调用。",
-        "evidence": [
-          {
-            "path": "packages/zod/src/v4/core/parse.ts",
-            "start_line": 148,
-            "end_line": 148
-          },
-          {
-            "path": "packages/zod/src/v4/core/parse.ts",
-            "start_line": 151,
-            "end_line": 172
-          },
-          {
-            "path": "packages/zod/src/v4/core/parse.ts",
-            "start_line": 137,
-            "end_line": 149
-          }
-        ]
-      },
-      {
-        "call_id": "4a2a703fb42160e3834f49c6628585d0",
-        "target_id": "e7c1beb2dfb32d1ccc8e983cd77d6e5d",
-        "reason": "第78行 _safeParse 返回的三元表达式在 issues 非空分支调用 failure(_Err, result.issues, ctx)；同文件第83行有唯一同名函数声明，形参 (Err, issues, ctx) 与实参匹配，作用域内无同名遮蔽，绑定唯一。",
+        "call_id": "ac68f5298545a1c6c324df2c911bd460",
+        "target_id": "8a29555877e8de05274d0a01bdd98e05",
+        "reason": "调用点位于 _safeParse 返回的 lambda 内、表达式为直接标识符 failure，编译器 API 指向本文件唯一 failure 实现；绑定依据为同模块函数声明与调用行。",
         "evidence": [
           {
             "path": "packages/zod/src/v4/core/parse.ts",
@@ -200,40 +181,30 @@
             "path": "packages/zod/src/v4/core/parse.ts",
             "start_line": 83,
             "end_line": 103
-          },
-          {
-            "path": "packages/zod/src/v4/core/parse.ts",
-            "start_line": 71,
-            "end_line": 79
           }
         ]
       },
       {
-        "call_id": "bf78007f836d6aed53d9cd3cea5cd367",
-        "target_id": "e7c1beb2dfb32d1ccc8e983cd77d6e5d",
-        "reason": "第116行 _safeParseAsync 在 issues 非空分支调用 failure(_Err, result.issues, ctx)，与第83行唯一同名函数定义的参数列表一致，模块内无其它 failure 绑定，属直接调用。",
+        "call_id": "a6f901f588bf1b7f0ffd98ab5b4ff5e9",
+        "target_id": "f962304d0aa6d366e3488424e7a950cf",
+        "reason": "调用点位于 validate 函数实现内（第 148 行），表达式为直接标识符 validateFallback，目标唯一实现为第 151-172 行。",
         "evidence": [
           {
             "path": "packages/zod/src/v4/core/parse.ts",
-            "start_line": 116,
-            "end_line": 116
+            "start_line": 148,
+            "end_line": 148
           },
           {
             "path": "packages/zod/src/v4/core/parse.ts",
-            "start_line": 83,
-            "end_line": 103
-          },
-          {
-            "path": "packages/zod/src/v4/core/parse.ts",
-            "start_line": 111,
-            "end_line": 117
+            "start_line": 151,
+            "end_line": 172
           }
         ]
       },
       {
-        "call_id": "b832ae1fc12d18dcf03bd0a879c5e8a0",
-        "target_id": "ce9223a7aef25c6cb30f1640d6fd4a08",
-        "reason": "第202行 _encode 包装器把 finalizeParams(fn, _params) 作为 parse 的第四参数传入；同名函数在同文件第10行声明且模块内唯一，实参 (fn, _params) 与形参 (callee, params) 对应，解析为直接调用。",
+        "call_id": "c6d6e29aee962504da5e9016b7917d69",
+        "target_id": "98077224999ecc57cf78c87601c210ea",
+        "reason": "调用点位于 _encode 返回的同步包装函数内（第 202 行），表达式 finalizeParams(fn, _params) 直接引用同模块函数声明。",
         "evidence": [
           {
             "path": "packages/zod/src/v4/core/parse.ts",
@@ -244,11 +215,23 @@
             "path": "packages/zod/src/v4/core/parse.ts",
             "start_line": 10,
             "end_line": 12
+          }
+        ]
+      },
+      {
+        "call_id": "2224583c9ca62effdb711b99843275f3",
+        "target_id": "98077224999ecc57cf78c87601c210ea",
+        "reason": "调用点位于 _decode 返回的同步包装函数内（第 219 行），表达式 finalizeParams(fn, _params) 直接引用同模块函数声明。",
+        "evidence": [
+          {
+            "path": "packages/zod/src/v4/core/parse.ts",
+            "start_line": 219,
+            "end_line": 219
           },
           {
             "path": "packages/zod/src/v4/core/parse.ts",
-            "start_line": 198,
-            "end_line": 205
+            "start_line": 10,
+            "end_line": 12
           }
         ]
       }
@@ -256,49 +239,52 @@
     "primary_dependencies": [
       {
         "call_ids": [
-          "43dfe48195142f3f1472b7a4ee29ed20"
+          "c6d6e29aee962504da5e9016b7917d69",
+          "2224583c9ca62effdb711b99843275f3",
+          "ef5b4478759e2609b1ca1b0ae2ab7443",
+          "2841789bde744fad6b88e699be355b77"
         ],
-        "reason": "validate 的编译快速路径只处理 validator 命中情形，未决或 definite 冲突时把判定交给 validateFallback，这是布尔校验语义完整性的关键协作。"
+        "reason": "编解码包装器通过 finalizeParams 将自身 callee 与调用方 Err 透传进解析核心，使错误栈和错误类在 encode/decode 及异步变体间保持一致。"
       },
       {
         "call_ids": [
-          "4a2a703fb42160e3834f49c6628585d0",
-          "bf78007f836d6aed53d9cd3cea5cd367"
+          "ac68f5298545a1c6c324df2c911bd460",
+          "99a9080edb2cf458c1102a4a23270c4b"
         ],
-        "reason": "同步与异步安全解析在 issues 非空时统一调用 failure 生成失败结果，使 error 构造延迟到首次读取，是 safeParse 语义的核心协作。"
+        "reason": "安全解析在存在 issue 时统一调用 failure，以惰性 getter 构造错误对象，避免成功路径承担错误构造开销。"
       },
       {
         "call_ids": [
-          "b832ae1fc12d18dcf03bd0a879c5e8a0"
+          "a6f901f588bf1b7f0ffd98ab5b4ff5e9"
         ],
-        "reason": "编解码包装器在转调 parse/parseAsync 前用 finalizeParams 归一化 callee 与 Err，保证错误实例类型与堆栈归属由外层 API 决定。"
+        "reason": "validate 在编译 validator 缺失或返回不确定 sentinel 时委派 validateFallback 完成完整解析，是快速路径之外的校验兜底。"
       }
     ]
   },
   "原快照字节未变": true,
   "请求账本": [
     {
-      "id": "8e25a495-a172-4e09-8fe3-23a2492dff91",
-      "project_id": "daec24ce-d024-4ce3-b01f-6051d1f3f176",
-      "version_id": "729361bd-7f18-4184-a643-b28aa4118232",
-      "job_id": "bd2f524d-4b6d-410b-ae17-90dcc889b3b4",
-      "unit_id": "9a74a7d7-5b8f-41d6-84d3-b6718722e6eb",
+      "id": "4007e5d3-08fa-428e-97c2-52b1ded33ff1",
+      "project_id": "1d5a4942-09d4-44ba-9e99-b3804fd07641",
+      "version_id": "e4c6ded6-b832-4157-b2a2-b8362985bbfd",
+      "job_id": "3410462a-1f0e-401a-8dd5-1e4a49091256",
+      "unit_id": "46624464-cc31-45e0-98c4-3289bd437ec9",
       "attempt": 1,
       "phase": "architecture",
       "recipient": "https://api.deepseek.com",
       "model": "deepseek-flash",
       "status": "success",
-      "created_at": "2026-10-11T02:36:12.044588+00:00",
-      "sent_at": "2026-10-11T02:36:12.078754+00:00",
-      "finished_at": "2026-10-11T02:36:48.903295+00:00",
-      "payload_hash": "09c8f2726368d4e30322b877392592ee739ac6a7abda098ad64ae65e68516d3f",
+      "created_at": "2026-10-11T02:59:39.792803+00:00",
+      "sent_at": "2026-10-11T02:59:39.829313+00:00",
+      "finished_at": "2026-10-11T03:00:27.523813+00:00",
+      "payload_hash": "d454486c58b0d87f1e67b404630449080b46ade75c54d542a76dfd6943723ffe",
       "source_chars": 12572,
       "usage": {
-        "prompt_tokens": 17706,
-        "completion_tokens": 8638,
-        "total_tokens": 26344,
-        "prompt_cache_hit_tokens": 1920,
-        "prompt_cache_miss_tokens": 15786
+        "prompt_tokens": 14794,
+        "completion_tokens": 12016,
+        "total_tokens": 26810,
+        "prompt_cache_hit_tokens": 128,
+        "prompt_cache_miss_tokens": 14666
       },
       "cost": null,
       "currency": null,
@@ -307,27 +293,56 @@
       "error_code": null
     },
     {
-      "id": "718e2cf8-7757-4a7c-8ae0-f1b77a19c205",
-      "project_id": "daec24ce-d024-4ce3-b01f-6051d1f3f176",
-      "version_id": "729361bd-7f18-4184-a643-b28aa4118232",
-      "job_id": "bd2f524d-4b6d-410b-ae17-90dcc889b3b4",
-      "unit_id": "a6c37527-26e3-44a2-9ea1-884cde34cb2c",
+      "id": "ef7f5c12-8d23-4ed6-8ede-1637e523ae49",
+      "project_id": "1d5a4942-09d4-44ba-9e99-b3804fd07641",
+      "version_id": "e4c6ded6-b832-4157-b2a2-b8362985bbfd",
+      "job_id": null,
+      "unit_id": "f18936e3-cdda-48f7-8108-2349201631ea",
       "attempt": 1,
       "phase": "overview",
       "recipient": "https://api.deepseek.com",
       "model": "deepseek-flash",
       "status": "success",
-      "created_at": "2026-10-11T02:36:48.922625+00:00",
-      "sent_at": "2026-10-11T02:36:48.941059+00:00",
-      "finished_at": "2026-10-11T02:37:04.110615+00:00",
-      "payload_hash": "2149fde4abebf64fb7ea62485eef70d088a9fe359efc21632e6c098104cf1329",
+      "created_at": "2026-10-11T03:07:56.557515+00:00",
+      "sent_at": "2026-10-11T03:07:56.597574+00:00",
+      "finished_at": "2026-10-11T03:08:07.996385+00:00",
+      "payload_hash": "cd74d87a115918f794b7ef1d714fecbb684566fb24e13c720b7ea6e349922fe7",
       "source_chars": 0,
       "usage": {
-        "prompt_tokens": 958,
-        "completion_tokens": 3324,
-        "total_tokens": 4282,
-        "prompt_cache_hit_tokens": 384,
-        "prompt_cache_miss_tokens": 574
+        "prompt_tokens": 1174,
+        "completion_tokens": 2317,
+        "total_tokens": 3491,
+        "prompt_cache_hit_tokens": 128,
+        "prompt_cache_miss_tokens": 1046
+      },
+      "cost": null,
+      "currency": null,
+      "price_snapshot": null,
+      "http_status": 200,
+      "error_code": null
+    },
+    {
+      "id": "6528d871-f1b0-4f74-946b-aff366f00c14",
+      "project_id": "1d5a4942-09d4-44ba-9e99-b3804fd07641",
+      "version_id": "e4c6ded6-b832-4157-b2a2-b8362985bbfd",
+      "job_id": null,
+      "unit_id": "9cff9dbd-b10f-4286-a6f0-8c82fbc53c36",
+      "attempt": 1,
+      "phase": "overview",
+      "recipient": "https://api.deepseek.com",
+      "model": "deepseek-flash",
+      "status": "success",
+      "created_at": "2026-10-11T03:12:56.750354+00:00",
+      "sent_at": "2026-10-11T03:12:56.791382+00:00",
+      "finished_at": "2026-10-11T03:13:09.221589+00:00",
+      "payload_hash": "175a9567a018c8acc186aa7cf1820b4b2722c61253f2739d746424af84f15229",
+      "source_chars": 0,
+      "usage": {
+        "prompt_tokens": 1219,
+        "completion_tokens": 2508,
+        "total_tokens": 3727,
+        "prompt_cache_hit_tokens": 128,
+        "prompt_cache_miss_tokens": 1091
       },
       "cost": null,
       "currency": null,
@@ -337,15 +352,16 @@
     }
   ],
   "请求状态": {
-    "success": 2
+    "success": 3
   },
-  "已知total_tokens": 30626,
+  "已知total_tokens": 34028,
   "未知用量请求": 0,
   "费用": null,
+  "脱敏校验记录": [],
   "边界": "真实官方模型，固定响应与质量复核分开；尚未代表用户验收；价格未知不记零费用。",
   "静态索引制品": {
-    "path": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\.runtime\\public-model-validation\\497f1811-9c52-49a7-b9ac-09c869b53f08\\validation-artifacts\\5728c461d4619be60c2b9daa11a52d67220468358d7093e91392f5a07f1f02dc.json",
-    "sha256": "5728c461d4619be60c2b9daa11a52d67220468358d7093e91392f5a07f1f02dc",
-    "bytes": 88482
+    "path": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\.runtime\\public-model-validation\\616b5705-5765-4d16-bf9f-92694d34af79\\validation-artifacts\\b678dc2e36d4e726037e98dd38b9259a692b49e1a18672155f2bba0e2bd3165d.json",
+    "sha256": "b678dc2e36d4e726037e98dd38b9259a692b49e1a18672155f2bba0e2bd3165d",
+    "bytes": 86436
   }
 }
