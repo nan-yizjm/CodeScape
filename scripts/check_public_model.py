@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import shutil
@@ -93,7 +94,19 @@ def main():
         record['恢复前已知total_tokens'] = previous.get('已知total_tokens')
     started = time.monotonic()
     def save():
-        destination.write_text(json.dumps(record,ensure_ascii=False,indent=2),encoding='utf-8')
+        document = dict(record)
+        if document.get('analysis') is not None:
+            raw = json.dumps(document.pop('analysis'),ensure_ascii=False,indent=2).encode('utf-8')
+            checksum = hashlib.sha256(raw).hexdigest()
+            artifacts = root/'validation-artifacts'
+            artifacts.mkdir(exist_ok=True)
+            artifact = artifacts/(checksum+'.json')
+            if artifact.exists():
+                assert artifact.read_bytes()==raw
+            else:
+                artifact.write_bytes(raw)
+            document['静态索引制品'] = {'path':str(artifact),'sha256':checksum,'bytes':len(raw)}
+        destination.write_text(json.dumps(document,ensure_ascii=False,indent=2),encoding='utf-8')
     def wait(client,url,terminal):
         previous = None
         while True:
