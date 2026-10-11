@@ -1,0 +1,258 @@
+{
+  "日期": "2026-10-11",
+  "方式": "先读源码建立预期，不从解析结果自动生成预期",
+  "Flask": {
+    "Commit": "d086db856be187255b8ec61ef409357393020f32",
+    "hash": "05de006763cb3d83f9ef72708e199156697402cb13031070f51225a50852b8c7",
+    "工具": {
+      "python": "ast/3.12; conservative-bindings/1"
+    },
+    "源码字节未变": true,
+    "调用基线": [
+      {
+        "文件": "src/flask/helpers.py",
+        "行": 529,
+        "表达式": "_prepare_send_file_kwargs",
+        "分类": "confirmed",
+        "目标": "_prepare_send_file_kwargs",
+        "真实作用域": {
+          "id": "6bb69f01-775a-5d5a-a0e3-2d2a9bfdb6eb",
+          "kind": "function",
+          "name": "send_file",
+          "location": {
+            "path": "src/flask/helpers.py",
+            "start_line": 417,
+            "end_line": 540,
+            "start_byte": 14586,
+            "end_byte": 19857
+          },
+          "parent_id": "2723ac78-6bf1-5ccb-b629-04570207e905"
+        },
+        "字节证据": "_prepare_send_file_kwargs(\n            path_or_file=path_or_file,\n            environ=request.environ,\n            mimetype=mimetype,\n            as_attachment=as_attachment,\n            download_name=download_name,\n            conditional=conditional,\n            etag=etag,\n            last_modified=last_modified,\n            max_age=max_age,\n        )"
+      },
+      {
+        "文件": "src/flask/app.py",
+        "行": 1016,
+        "表达式": "self.dispatch_request",
+        "分类": "excluded_indirect",
+        "目标": null,
+        "真实作用域": {
+          "id": "bb7dd4c5-376a-529a-a301-246f1bd9a370",
+          "kind": "function",
+          "name": "Flask.full_dispatch_request",
+          "location": {
+            "path": "src/flask/app.py",
+            "start_line": 992,
+            "end_line": 1019,
+            "start_byte": 39934,
+            "end_byte": 40987
+          },
+          "parent_id": "27990647-55ee-5a22-b2e0-ae8f9cbb56d3"
+        },
+        "字节证据": "self.dispatch_request(ctx)"
+      },
+      {
+        "文件": "src/flask/app.py",
+        "行": 1019,
+        "表达式": "self.finalize_request",
+        "分类": "excluded_indirect",
+        "目标": null,
+        "真实作用域": {
+          "id": "bb7dd4c5-376a-529a-a301-246f1bd9a370",
+          "kind": "function",
+          "name": "Flask.full_dispatch_request",
+          "location": {
+            "path": "src/flask/app.py",
+            "start_line": 992,
+            "end_line": 1019,
+            "start_byte": 39934,
+            "end_byte": 40987
+          },
+          "parent_id": "27990647-55ee-5a22-b2e0-ae8f9cbb56d3"
+        },
+        "字节证据": "self.finalize_request(ctx, rv)"
+      },
+      {
+        "文件": "src/flask/app.py",
+        "行": 1039,
+        "表达式": "self.make_response",
+        "分类": "excluded_indirect",
+        "目标": null,
+        "真实作用域": {
+          "id": "47b5cbe3-8ef5-5859-bbcb-1cec52ad43eb",
+          "kind": "function",
+          "name": "Flask.finalize_request",
+          "location": {
+            "path": "src/flask/app.py",
+            "start_line": 1021,
+            "end_line": 1051,
+            "start_byte": 40993,
+            "end_byte": 42213
+          },
+          "parent_id": "27990647-55ee-5a22-b2e0-ae8f9cbb56d3"
+        },
+        "字节证据": "self.make_response(rv)"
+      }
+    ]
+  },
+  "Zod": {
+    "Commit": "0b216ef674e297ebe41d8bf902262e56f8755822",
+    "hash": "c179e795ed4cac054e4cc4ff09bfd53aeca57c44706f8eba1969db3400a39955",
+    "工具": {
+      "typescript": "compiler-api/5.9.3; function-variables/2"
+    },
+    "源码字节未变": true,
+    "调用基线": [
+      {
+        "文件": "packages/zod/src/v4/classic/parse.ts",
+        "行": 13,
+        "表达式": "core._parse",
+        "分类": "excluded_indirect",
+        "目标": null,
+        "真实作用域": {
+          "id": "4894e736c1395af75b41e0e7eaab1647",
+          "kind": "module",
+          "name": "packages/zod/src/v4/classic/parse.ts",
+          "location": {
+            "path": "packages/zod/src/v4/classic/parse.ts",
+            "start_line": 1,
+            "end_line": 89,
+            "start_byte": 0,
+            "end_byte": 3565
+          },
+          "parent_id": null
+        },
+        "字节证据": "core._parse(ZodRealError)"
+      },
+      {
+        "文件": "packages/zod/src/v4/classic/parse.ts",
+        "行": 20,
+        "表达式": "core._parseAsync",
+        "分类": "excluded_indirect",
+        "目标": null,
+        "真实作用域": {
+          "id": "4894e736c1395af75b41e0e7eaab1647",
+          "kind": "module",
+          "name": "packages/zod/src/v4/classic/parse.ts",
+          "location": {
+            "path": "packages/zod/src/v4/classic/parse.ts",
+            "start_line": 1,
+            "end_line": 89,
+            "start_byte": 0,
+            "end_byte": 3565
+          },
+          "parent_id": null
+        },
+        "字节证据": "core._parseAsync(ZodRealError)"
+      },
+      {
+        "文件": "packages/zod/src/v4/classic/parse.ts",
+        "行": 27,
+        "表达式": "core._safeParse",
+        "分类": "excluded_indirect",
+        "目标": null,
+        "真实作用域": {
+          "id": "4894e736c1395af75b41e0e7eaab1647",
+          "kind": "module",
+          "name": "packages/zod/src/v4/classic/parse.ts",
+          "location": {
+            "path": "packages/zod/src/v4/classic/parse.ts",
+            "start_line": 1,
+            "end_line": 89,
+            "start_byte": 0,
+            "end_byte": 3565
+          },
+          "parent_id": null
+        },
+        "字节证据": "core._safeParse(ZodRealError)"
+      },
+      {
+        "文件": "packages/zod/src/v4/core/parse.ts",
+        "行": 25,
+        "表达式": "schema._zod.run",
+        "分类": "unresolved",
+        "目标": null,
+        "真实作用域": {
+          "id": "1f35d8a5a5da529dc945d50d5b1fbc57",
+          "kind": "lambda",
+          "name": "<anonymous>.<anonymous>",
+          "location": {
+            "path": "packages/zod/src/v4/core/parse.ts",
+            "start_line": 23,
+            "end_line": 35,
+            "start_byte": 898,
+            "end_byte": 1463
+          },
+          "parent_id": "fb4cfc184dd80bd4b637e5c6fa26906e"
+        },
+        "字节证据": "schema._zod.run({ value, issues: [] }, ctx)"
+      },
+      {
+        "文件": "packages/zod/src/v4/core/parse.ts",
+        "行": 30,
+        "表达式": "util.finalizeIssue",
+        "分类": "confirmed",
+        "目标": "finalizeIssue",
+        "真实作用域": {
+          "id": "05fd2a0a4accf5c73c8ee563d74ecfa6",
+          "kind": "lambda",
+          "name": "<anonymous>.<anonymous>.<anonymous>",
+          "location": {
+            "path": "packages/zod/src/v4/core/parse.ts",
+            "start_line": 30,
+            "end_line": 30,
+            "start_byte": 1272,
+            "end_byte": 1324
+          },
+          "parent_id": "1f35d8a5a5da529dc945d50d5b1fbc57"
+        },
+        "字节证据": "util.finalizeIssue(iss, ctx, core.config())"
+      },
+      {
+        "文件": "packages/zod/src/v4/core/parse.ts",
+        "行": 78,
+        "表达式": "failure",
+        "分类": "confirmed",
+        "目标": "failure",
+        "真实作用域": {
+          "id": "ca922fb70bddeb4a7c48092aa203fe1a",
+          "kind": "lambda",
+          "name": "<anonymous>.<anonymous>",
+          "location": {
+            "path": "packages/zod/src/v4/core/parse.ts",
+            "start_line": 71,
+            "end_line": 79,
+            "start_byte": 2754,
+            "end_byte": 3134
+          },
+          "parent_id": "0178416340cdc89338ce7b5379c69e37"
+        },
+        "字节证据": "failure(_Err, result.issues, ctx)"
+      },
+      {
+        "文件": "packages/zod/src/v4/core/parse.ts",
+        "行": 89,
+        "表达式": "util.finalizeIssue",
+        "分类": "confirmed",
+        "目标": "finalizeIssue",
+        "真实作用域": {
+          "id": "8bf1131c1d8f74abebfb837e2611f0db",
+          "kind": "lambda",
+          "name": "failure.error.<anonymous>",
+          "location": {
+            "path": "packages/zod/src/v4/core/parse.ts",
+            "start_line": 89,
+            "end_line": 89,
+            "start_byte": 3847,
+            "end_byte": 3899
+          },
+          "parent_id": "4104010b02b3a127cfdebd2b42525faa"
+        },
+        "字节证据": "util.finalizeIssue(iss, ctx, core.config())"
+      }
+    ]
+  },
+  "模型请求": 0,
+  "执行目标代码": false,
+  "边界": "仅这些调用/作用域抽样，不外推整体准确率或 AI 质量。"
+}

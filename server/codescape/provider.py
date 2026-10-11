@@ -24,7 +24,8 @@ from .semantic_facts import recursive_fold_facts, validate_fold_wording
 
 MAX_CONTEXT_CHARS = 180_000
 BATCH_TARGET_CHARS = 150_000
-PIPELINE_VERSION = "architecture/2-explanations/1-reads/1-judgments/1-dependencies/1-cpp-config/6-interfaces/1-facts/1-index/2"
+BATCH_MAX_ENTITIES = 12
+PIPELINE_VERSION = "architecture/2-explanations/1-reads/1-judgments/1-dependencies/1-cpp-config/6-interfaces/1-facts/1-index/2-ts-bindings/2"
 ProgressCallback = Callable[[int, int, str], Awaitable[None]]
 BatchCallback = Callable[[int, int, Architecture], Awaitable[None]]
 
@@ -134,6 +135,12 @@ class Provider:
             "max_tokens": max_tokens,
             "stream": False,
         }
+        # Official Flash defaults to thinking: its total generation budget must
+        # leave room for the final JSON, rather than spending the entire cap before it.
+        if config['base_url'].rstrip('/') in {'https://api.deepseek.com','https://api.deepseek.com/v1'} and config['model']=='deepseek-flash':
+            payload['thinking'] = {'type':'enabled'}
+            payload['reasoning_effort'] = 'high'
+            payload['max_tokens'] = max(max_tokens,32768)
         from .database import Database
         database = self.database or Database(self.root)
         ledger = RequestLedger(database)
@@ -385,7 +392,7 @@ class Provider:
         for path, text in files.items():
             lines = text.splitlines(keepends=True) or [""]
             probe, local_ids = self._context(analysis, {path: text})
-            if len(probe) <= BATCH_TARGET_CHARS and len(local_ids) <= 24:
+            if len(probe) <= BATCH_TARGET_CHARS and len(local_ids) <= BATCH_MAX_ENTITIES:
                 units.append((path, text, 1, len(lines)))
                 continue
             start = 0
@@ -399,7 +406,7 @@ class Provider:
                 count = 0
                 while end < len(lines) and (size + len(lines[end]) <= BATCH_TARGET_CHARS // 2 or end == start):
                     additions = starts.get(end + 1, 0)
-                    if count + additions > 24 and end > start:
+                    if count + additions > BATCH_MAX_ENTITIES and end > start:
                         break
                     count += additions
                     size += len(lines[end])
@@ -417,7 +424,7 @@ class Provider:
             candidate_files = {**current_files, path: text}
             candidate_ranges = {**current_ranges, path: (start, end)}
             context, candidate_ids = self._context(analysis, candidate_files, candidate_ranges)
-            if current_files and (len(context) > BATCH_TARGET_CHARS or len(candidate_ids) > 24):
+            if current_files and (len(context) > BATCH_TARGET_CHARS or len(candidate_ids) > BATCH_MAX_ENTITIES):
                 batches.append((current_files, current_ranges))
                 current_files = {path: text}
                 current_ranges = {path: (start, end)}
@@ -583,6 +590,10 @@ class Provider:
             "无法确定核心协作时可返回空数组，界面会显示全部确认关系，不凭空隐藏依赖。"
             "输出中文、客观、有代码依据的语义模块架构，不提供阅读顺序。模块可跨目录。"
             "每个本批列出的可见函数恰好归属一个叶模块，不能漏掉或创造实体。父模块 entity_ids 必须为空。"
+            "输出预算：explanations 每项 summary 最多40字，details 最多160字，先解释用途、关键分支和返回/异常边界，"
+            "不逐行重复源码。call_judgments 是可选补充，每批最多4项，只提交有充分证据的关键直接调用；"
+            "其他未解析调用继续保留未解析，不逐项列空结论。primary_dependencies 最多4项；"
+            "限制本批输出长度不改变源码范围或函数归属集合，也不删除静态已确认调用。"
             "无可见函数但有实际顶层代码、配置或类实现的范围，也应按职责生成有 code_paths 证据的叶模块；"
             "不得创造函数实体，不能把纯注释或未知占位当作已完成模块。缺乏职责依据时标记 incomplete。"
             "id 使用 m1 等稳定本次局部标识。只有实际代码依据的模块，code_paths 引用给定文件。"

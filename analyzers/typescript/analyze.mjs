@@ -37,7 +37,7 @@ for (const source of program.getSourceFiles()) {
   }
   bindings(source);
 }
-const result = {entities: [], scopes: [], calls: [], diagnostics: [], file_hashes: {}, readable_paths: [], tools: {typescript: `compiler-api/${ts.version}`}};
+const result = {entities: [], scopes: [], calls: [], diagnostics: [], file_hashes: {}, readable_paths: [], tools: {typescript: `compiler-api/${ts.version}; function-variables/2`}};
 const ids = new Map();
 const calls = [];
 const makeId = (...items) => crypto.createHash('sha256').update([input.version, ...items].join(':')).digest('hex').slice(0, 32);
@@ -123,7 +123,14 @@ for (const [call, resolvedDeclaration, node] of calls) {
   const dynamicMember = declaration && ts.isMethodDeclaration(declaration)
     && !declaration.modifiers?.some(modifier => modifier.kind === ts.SyntaxKind.StaticKeyword);
   const directBinding = !mutated.has(symbol) && symbol?.declarations?.some(item => ts.isFunctionDeclaration(item) || ts.isMethodDeclaration(item));
-  if (target && !directBinding) {
+  const functionVariable = symbol?.declarations?.some(item => {
+    if (!ts.isVariableDeclaration(item) || !inside(root, item.getSourceFile().fileName)) return false;
+    let initializer = item.initializer;
+    while (initializer && (ts.isParenthesizedExpression(initializer) || ts.isAsExpression(initializer)
+        || ts.isTypeAssertionExpression(initializer) || ts.isSatisfiesExpression(initializer))) initializer = initializer.expression;
+    return initializer && (ts.isArrowFunction(initializer) || ts.isFunctionExpression(initializer));
+  });
+  if (functionVariable || target && !directBinding) {
     call.resolution = 'excluded_indirect'; call.reason = '变量或参数持有的函数不作为直接调用。';
   } else if (target && target.visible && !hasDecorator && !dynamicMember && directBinding &&
       (ts.isFunctionDeclaration(declaration) || propertyCall && ts.isMethodDeclaration(declaration))) {

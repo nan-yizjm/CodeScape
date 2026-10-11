@@ -32,6 +32,26 @@ def document(content='{"connected":true}', usage=None):
     return {"choices": [{"message": {"content": content}, "finish_reason": "stop"}], **({"usage": usage} if usage is not None else {})}
 
 
+@pytest.mark.parametrize('endpoint,model,thinking',[
+    ('https://api.deepseek.com','deepseek-flash',True),
+    ('https://api.deepseek.com/v1','deepseek-flash',True),
+    ('https://example.invalid/v1','deepseek-flash',False),
+    ('https://api.deepseek.com','compatible-other',False)])
+def test_official_flash_reserves_thinking_budget_without_affecting_compatible_endpoints(tmp_path,monkeypatch,endpoint,model,thinking):
+    captured = []
+    def handler(request):
+        captured.append(json.loads(request.content))
+        return httpx.Response(200,json=document())
+    database,provider,_ = configured(tmp_path,monkeypatch,handler)
+    provider.configure(endpoint,model,None)
+    asyncio.run(provider.request('固定 JSON 验证','应用自有固定响应',8000))
+    payload = captured[0]
+    assert payload['max_tokens']==(32768 if thinking else 8000)
+    assert (payload.get('thinking'),payload.get('reasoning_effort')) == (
+        ({'type':'enabled'},'high') if thinking else (None,None))
+    database.engine.dispose()
+
+
 def test_receipt_has_scope_and_known_usage_but_no_sensitive_payload(tmp_path, monkeypatch):
     database, provider, ledger = configured(tmp_path, monkeypatch, lambda request:
         httpx.Response(200, json=document(usage={"prompt_tokens": 11, "completion_tokens": 4, "total_tokens": 15, "unsafe": "secret"})))

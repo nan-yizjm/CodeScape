@@ -137,6 +137,24 @@ def test_typescript_reassignment_and_overload(tmp_path):
     assert next(call for call in result.calls if call.expression == "overloaded").resolution == "confirmed"
 
 
+def test_typescript_typed_function_variables_through_barrel_are_indirect(tmp_path):
+    files = {
+        'factory.ts': 'type Factory = (x:number)=>()=>number; export const factory:Factory=x=>()=>x;\n'
+            'export const expression = function actual(x:number){return x;};\n'
+            'export const wrapped = ((x:number)=>x) satisfies ((x:number)=>number);\n',
+        'index.ts': 'export * from "./factory.js";',
+        'use.ts': 'import * as core from "./index.js"; import {factory as renamed} from "./index.js";\n'
+            'export function use(){core.factory(1);renamed(2);core.expression(3);core.wrapped(4);}\n',
+    }
+    for path,text in files.items():
+        (tmp_path/path).write_bytes(text.encode())
+    result = typescript_analysis(tmp_path,files,'v')
+    indirect = [call for call in result.calls if call.location.path=='use.ts']
+    assert len(indirect) == 4
+    assert all(call.resolution=='excluded_indirect' and call.target_id is None for call in indirect)
+    assert not any(entity.visible for entity in result.entities if entity.name=='<anonymous>')
+
+
 def test_cpp_missing_dependency_retains_calls_in_real_hidden_scopes(tmp_path):
     text = '#include "not_available.h"\nvoid target(){}\nvoid caller(){ target(); auto callback=[](){target();}; callback(); }\n'
     (tmp_path / 'owned.cpp').write_text(text,encoding='utf-8')

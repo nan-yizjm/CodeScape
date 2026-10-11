@@ -114,7 +114,7 @@ def test_many_functions_plan_smaller_units_without_losing_entities(tmp_path):
     provider = Provider(tmp_path)
     batches = provider._plan_batches(analysis, files)
     ids = [provider._context(analysis, batch, ranges)[1] for batch, ranges in batches]
-    assert len(batches) == 3 and all(len(group) <= 24 for group in ids)
+    assert len(batches) == 5 and all(len(group) <= 12 for group in ids)
     assert set().union(*ids) == {entity.id for entity in analysis.entities if entity.visible}
 
 

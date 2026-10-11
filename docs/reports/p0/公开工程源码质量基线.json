@@ -1,0 +1,45 @@
+{
+  "日期": "2026-10-11",
+  "性质": "开发代理预先阅读固定源码后建立的定性基线，不能代替用户验收",
+  "执行目标代码": false,
+  "样本": {
+    "hiredis-c": {
+      "Commit": "058ebcdf36c5b05b759c613564fb958ec363c90f",
+      "用途": "面向 C 程序的 Redis 客户端库，负责请求和回复处理，不是 Redis 服务端。",
+      "职责": ["连接与网络收发", "Redis 协议命令编码与回复解析", "异步事件循环适配", "可选 TLS 支持"],
+      "协作基线": "C与C++源码抽样基线.json 中 hiredis.c 的 redisReaderCreate 唯一调用 read.c 的 redisReaderCreateWithFunctions。",
+      "局限": "实际筛选范围不含测试、示例、构建产物；未执行真实 Redis 连接或 TLS 握手。"
+    },
+    "spdlog-cpp": {
+      "Commit": "d6c93f38a08b4ea0f8ffcfd7f7857307d5d5c3fa",
+      "用途": "为 C++ 程序提供日志记录能力。",
+      "职责": ["日志级别与 logger 接口", "格式化和输出 sink", "日志注册与配置", "异步队列与线程支持"],
+      "协作基线": "C与C++源码抽样基线.json 中 should_flush_ 调用 flush_level；flush 调用可重写 flush_ 保持间接，不当作唯一直接实现。",
+      "局限": "本次授权范围沿用初始规则，排除 bundled fmt；缺少依赖/编译配置的关系必须保留诊断，不能声称已验证全部编译分支。"
+    },
+    "flask-python": {
+      "Commit": "d086db856be187255b8ec61ef409357393020f32",
+      "用途": "帮助 Python 开发者构建 Web 应用的 WSGI 框架。",
+      "职责": ["应用和蓝图/路由组织", "请求上下文与分发", "响应、模板与 JSON 辅助", "会话和扩展接口"],
+      "源码位置": ["README.md", "src/flask/__init__.py", "src/flask/app.py:966-1051", "src/flask/helpers.py:402-541", "src/flask/sessions.py:323-350"],
+      "协作基线": "helpers.py:529 send_file 直接调用同文件 _prepare_send_file_kwargs。app.py 中 self.dispatch_request/finalize_request 等可被子类重写，不能仅凭 self 和同名确认唯一运行时目标。",
+      "局限": "未执行 HTTP 请求、应用视图或模板；外部 Werkzeug/Jinja 实现不在快照。"
+    },
+    "zod-typescript": {
+      "Commit": "0b216ef674e297ebe41d8bf902262e56f8755822",
+      "用途": "为 TypeScript/JavaScript 数据提供模式定义、运行时校验与解析能力。",
+      "职责": ["运行时模式与检查", "同步/异步解析及安全解析", "错误与 issue 整理", "classic/mini 接口及转换支持"],
+      "源码位置": ["packages/zod/src/v4/core/parse.ts:22-103", "packages/zod/src/v4/classic/parse.ts:8-33", "packages/zod/src/v4/core/util.ts:944"],
+      "协作基线": "core/parse.ts:30 的 map 箭头回调直接调用 util.finalizeIssue 和 core.config，归属内层箭头作用域；classic/parse.ts 的 core._parse 等目标为变量持有的箭头工厂，按 P0 标记间接调用。",
+      "局限": "类型声明不是运行时函数；safeParse 可在异步结果出现时抛错，不能概括成任何情况都不抛异常；只含 v4 筛选范围，README 链接未读取。"
+    }
+  },
+  "真实模型复核要求": [
+    "用途与上述基线无实质矛盾；完整范围与缩小范围分别说明当前覆盖及缺口",
+    "模块有源码职责依据，函数叶归属唯一，不把同目录当作同职责证明",
+    "至少一条核心协作有完整源码位置与真实作用域，间接调用不冒充确定边",
+    "抽查函数解释的分支、返回和异常行为；引用有效不等于解释准确",
+    "实际请求账本、失败/重试、未知用量及价格分别记录，固定响应不计作真实评测"
+  ],
+  "状态": "已准备复核基线，真实模型结果正在生成；不是已通过整体质量验收"
+}
