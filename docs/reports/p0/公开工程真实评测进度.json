@@ -47,16 +47,16 @@
       "错误": null,
       "进度": {
         "phase": "batching",
-        "completed": 4,
+        "completed": 12,
         "total": 49,
-        "detail": "正在分析第 5/49 批 · 3 个文件"
+        "detail": "正在分析第 13/49 批 · 1 个文件"
       },
       "请求状态": {
-        "success": 4,
-        "failed": 1,
+        "success": 12,
+        "failed": 2,
         "sent": 1
       },
-      "已知total_tokens": 140484,
+      "已知total_tokens": 422775,
       "未知用量请求": 1,
       "原快照字节未变": null
     },
@@ -166,31 +166,21 @@
         "src/spdlog.cpp",
         "src/stdout_sinks.cpp"
       ],
-      "模型流水线": "architecture/2-explanations/1-reads/1-judgments/1-dependencies/1-cpp-config/7-interfaces/1-facts/1-index/2-ts-bindings/2",
-      "状态": "分析暂停",
-      "错误": "服务余额不足。",
+      "模型流水线": "architecture/2-explanations/2-reads/1-judgments/1-dependencies/1-cpp-config/8-interfaces/1-facts/1-index/2-ts-bindings/2-python-declarations/1",
+      "状态": "进行中",
+      "错误": null,
       "进度": {
-        "phase": "paused",
-        "completed": 19,
-        "total": 51,
-        "detail": "服务余额不足。"
+        "phase": "batching",
+        "completed": 0,
+        "total": 53,
+        "detail": "正在分析第 1/53 批 · 5 个文件"
       },
       "请求状态": {
-        "failed": 10,
-        "success": 19
+        "sent": 1
       },
-      "已知total_tokens": 841167,
+      "已知total_tokens": 0,
       "未知用量请求": 1,
-      "原快照字节未变": true,
-      "修订后本地批次检查": {
-        "批次数": 51,
-        "最大上下文字符": 145933,
-        "超过180000字符": 0,
-        "仅静态规划": true,
-        "规划流水线": "architecture/2-explanations/2-reads/1-judgments/1-dependencies/1-cpp-config/8-interfaces/1-facts/1-index/2-ts-bindings/2-python-declarations/1",
-        "索引所属模型流水线": "architecture/2-explanations/1-reads/1-judgments/1-dependencies/1-cpp-config/7-interfaces/1-facts/1-index/2-ts-bindings/2",
-        "索引sha256": "666b65a3fbfbc88a546dc2cf8775bae4f4c31c1c01683019ab9b7c3a7d379046"
-      }
+      "原快照字节未变": null
     },
     "flask-python": {
       "Commit": "d086db856be187255b8ec61ef409357393020f32",
@@ -228,15 +218,16 @@
       "错误": null,
       "进度": {
         "phase": "batching",
-        "completed": 4,
+        "completed": 11,
         "total": 33,
-        "detail": "正在分析第 5/33 批 · 1 个文件"
+        "detail": "正在分析第 12/33 批 · 1 个文件"
       },
       "请求状态": {
-        "success": 4,
+        "success": 11,
+        "failed": 5,
         "sent": 1
       },
-      "已知total_tokens": 103612,
+      "已知total_tokens": 351072,
       "未知用量请求": 1,
       "原快照字节未变": null
     },
@@ -360,16 +351,16 @@
       "错误": null,
       "进度": {
         "phase": "batching",
-        "completed": 10,
+        "completed": 22,
         "total": 76,
-        "detail": "正在分析第 11/76 批 · 1 个文件"
+        "detail": "正在分析第 23/76 批 · 1 个文件"
       },
       "请求状态": {
-        "success": 10,
-        "failed": 1,
+        "success": 22,
+        "failed": 2,
         "sent": 1
       },
-      "已知total_tokens": 271940,
+      "已知total_tokens": 620127,
       "未知用量请求": 1,
       "原快照字节未变": null
     }
@@ -534,21 +525,21 @@
           "include/spdlog/namespace.h"
         ],
         "模型流水线": "architecture/2-explanations/2-reads/1-judgments/1-dependencies/1-cpp-config/8-interfaces/1-facts/1-index/2-ts-bindings/2-python-declarations/1",
-        "状态": "进行中",
+        "状态": "结构检查通过，待源码质量复核",
         "错误": null,
         "进度": {
-          "phase": "batching",
+          "phase": "completed",
           "completed": 1,
-          "total": 6,
-          "detail": "正在分析第 2/6 批 · 1 个文件"
+          "total": 1,
+          "detail": "分批分析完成"
         },
         "请求状态": {
-          "success": 1,
-          "sent": 1
+          "success": 7,
+          "failed": 1
         },
-        "已知total_tokens": 13953,
-        "未知用量请求": 1,
-        "原快照字节未变": null
+        "已知total_tokens": 185152,
+        "未知用量请求": 0,
+        "原快照字节未变": true
       },
       "源码复核": {
         "状态": "三项函数抽样符合源码，完整范围对照未完成",
@@ -573,8 +564,8 @@
     }
   },
   "账本汇总": {
-    "去重请求数": 309,
-    "已知total_tokens": 8516287,
+    "去重请求数": 350,
+    "已知total_tokens": 9565424,
     "缺少用量请求数": 12,
     "在途请求数": 4,
     "费用": null,
@@ -582,7 +573,7 @@
   },
   "外部阻塞": "账户只读核对已恢复可用，已开始新修订真实重测；历史HTTP402检查点保留，实际进度见各样本记录。",
   "验收结论": "真实评测与源码质量复核尚未完成；结构发布不代表质量通过，不能宣称全部P0完成。",
-  "汇总时间UTC": "2026-10-11T05:07:29.645369+00:00",
+  "汇总时间UTC": "2026-10-11T05:14:12.427314+00:00",
   "本轮本地修订说明": {
     "新流水线": "cpp-config/8",
     "新模型请求": 0,

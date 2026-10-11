@@ -42,11 +42,11 @@
   "执行目标代码": false,
   "进度": {
     "phase": "batching",
-    "completed": 4,
+    "completed": 12,
     "total": 33,
-    "detail": "正在分析第 5/33 批 · 1 个文件"
+    "detail": "正在分析第 13/33 批 · 2 个文件"
   },
-  "耗时秒": 186.38,
+  "耗时秒": 630.31,
   "project_id": "4a9bcb54-8709-4877-92ae-03175eb459d3",
   "version_id": "648e7271-227f-4afd-abb5-eeb9e5165cc2",
   "实际快照hash": "05de006763cb3d83f9ef72708e199156697402cb13031070f51225a50852b8c7",

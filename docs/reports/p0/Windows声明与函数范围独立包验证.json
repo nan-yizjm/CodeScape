@@ -3,8 +3,8 @@
   "platform": "Windows-11-10.0.26200-SP0",
   "architecture": "AMD64",
   "executable": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\.runtime\\packaging\\dist\\CodeScape\\CodeScape.exe",
-  "executable_sha256": "69d46004c5f6e852726132a6c4410f7636f1275c7c03fbc46f33885151ade100",
-  "data_root": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\output\\windows-bundle-validation\\89ff3cd4-d3ba-46e3-9f6a-23e902ae13da",
+  "executable_sha256": "b2961f9e83bed52e62a81c49fed20813a6efedf95df4d917cfe0ba690a199e9e",
+  "data_root": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\output\\windows-bundle-validation\\4219a902-8a79-4531-bcee-bb71aa27e274",
   "developer_path_removed": true,
   "duplicate_launch_reused": true,
   "static_sample_functions": 8,
@@ -37,25 +37,7 @@
       "cpp": "tree-sitter/0.25.2 + libclang/18.1.1 + snapshot-config/8"
     }
   },
-  "public_git_import": {
-    "repository": "https://github.com/redis/hiredis.git",
-    "origin": {
-      "kind": "git",
-      "url": "https://github.com/redis/hiredis.git",
-      "default_branch": "master",
-      "commit": "058ebcdf36c5b05b759c613564fb958ec363c90f",
-      "excluded": [
-        {
-          "path": ".claude/skills/backport-pr",
-          "reason": "未读取符号链接或 Git 子模块"
-        }
-      ]
-    },
-    "file_count": 38,
-    "function_count": 573,
-    "diagnostic_count": 2446,
-    "ai_analysis": false
-  },
+  "public_git_import": "本次未验证",
   "update_saves_and_exits_normally": true,
   "boundary": "开发机 Windows 独立运行验证；不代替干净 Windows 10/11 虚拟机验收；不代表真实 AI 分析质量。"
 }
