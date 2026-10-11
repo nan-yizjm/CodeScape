@@ -18,6 +18,20 @@ from .runtime import executable, resource_root
 REPOSITORY = resource_root()
 
 
+def native_diagnostic_reference(root: Path, files: dict[str, str], location):
+    """诊断只定位到快照中实际出错的文件，不把包含文件的行号挂到入口文件。"""
+    if location.file is None:
+        return None, None
+    try:
+        path = Path(location.file.name).resolve().relative_to(root.resolve()).as_posix()
+    except (OSError, ValueError):
+        return None, None
+    if path not in files:
+        return None, None
+    line = location.line
+    return path, line if 0 < line <= len(files[path].splitlines()) else None
+
+
 def stable_id(*parts: object) -> str:
     return str(uuid.uuid5(uuid.NAMESPACE_URL, "codescape:" + ":".join(map(str, parts))))
 
@@ -350,7 +364,7 @@ def _cpp_analysis(root, files, version, source_root, header_directories, header_
     from clang import cindex
     from tree_sitter import Language, Parser
 
-    result = Analysis(tools={"cpp": "tree-sitter/0.25.2 + libclang/18.1.1 + snapshot-config/8"})
+    result = Analysis(tools={"cpp": "tree-sitter/0.25.2 + libclang/18.1.1 + snapshot-config/8 + native-diagnostics/1"})
     if syntax_only:
         result.tools['cpp'] += ' + syntax-fallback/1'
     if not any(Path(path).suffix in {".c", ".h", ".cc", ".cpp", ".cxx", ".hpp", ".hh"} for path in files):
@@ -640,11 +654,12 @@ def _cpp_analysis(root, files, version, source_root, header_directories, header_
         for diagnostic in unit.diagnostics:
             if diagnostic.severity >= cindex.Diagnostic.Error:
                 native_errors = True
+                diagnostic_path, diagnostic_line = native_diagnostic_reference(root, files, diagnostic.location)
                 result.diagnostics.append(
                     Diagnostic(
                         category="missing_dependency",
-                        path=path,
-                        line=diagnostic.location.line or None,
+                        path=diagnostic_path,
+                        line=diagnostic_line,
                         message=diagnostic.spelling,
                     )
                 )

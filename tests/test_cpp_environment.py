@@ -1,5 +1,6 @@
 import json
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 from clang import cindex
@@ -20,6 +21,29 @@ def write(root, files):
         target = root / path
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(text, encoding="utf-8", newline="")
+
+
+def test_native_error_in_included_header_keeps_actual_file_and_line(tmp_path):
+    files = {'bad.hpp': 'inline int broken(){return missing_name;}\n',
+             'caller.cpp': '#include "bad.hpp"\nint caller(){return broken();}\n'}
+    write(tmp_path, files)
+    result = cpp_analysis(tmp_path, files, 'v')
+    errors = [item for item in result.diagnostics if 'missing_name' in item.message]
+    assert errors and all(item.path == 'bad.hpp' and item.line == 1 for item in errors)
+    assert not any(call.resolution == 'confirmed' for call in result.calls)
+
+
+@pytest.mark.parametrize('filename,line,expected', [
+    ('owned.hpp', 1, ('owned.hpp', 1)),
+    ('owned.hpp', 999, ('owned.hpp', None)),
+    ('owned.hpp', 0, ('owned.hpp', None)),
+    ('not_selected.hpp', 1, (None, None)),
+    ('../outside.hpp', 1, (None, None)),
+    (None, 1, (None, None)),
+])
+def test_native_diagnostic_never_invents_snapshot_source_anchor(tmp_path, filename, line, expected):
+    location = SimpleNamespace(file=SimpleNamespace(name=str(tmp_path / filename)) if filename else None, line=line)
+    assert analyzers.native_diagnostic_reference(tmp_path, {'owned.hpp': 'int owned();\n'}, location) == expected
 
 
 def test_default_snapshot_include_root_and_explicit_config_stay_distinct(tmp_path):
