@@ -1,0 +1,23 @@
+{
+  "date": "2026-10-11",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "build_id": "20261011T043906Z",
+  "setup_sha256": "066e0afe3fe695c99464a652600dd4c7f3ed04fdc65e8ae4b5cf7cde8e0d010a",
+  "validation_root": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\output\\windows-installer-validation\\695499ec-ecee-4f45-a1dc-7b4f6e7726e6",
+  "first_install": "通过",
+  "installed_files_match_manifest": true,
+  "previous_build_id": "20261011T032337Z",
+  "upgraded_build_id": "20261011T043906Z",
+  "different_program_bytes": true,
+  "upgraded_program_started_and_learning_read": true,
+  "upgraded_files_match_current_manifest": true,
+  "upgrade_while_running": "通过；应用先正常退出，返回码 0",
+  "learning_retained": true,
+  "new_installer_data_preflight": "通过；字段损坏时安装返回失败，原程序与数据库哈希保持一致",
+  "uninstall": "通过；程序和本次安装记录移除",
+  "data_and_snapshot_retained": true,
+  "developer_path_removed": true,
+  "model_requests": 0,
+  "signed": false,
+  "boundary": "开发机Windows11两个实际预发布构建升级；版本号均为0.1.0，不代替干净Windows10/11或跨正式版本验收。"
+}

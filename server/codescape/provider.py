@@ -28,7 +28,7 @@ from .validation import SourceContractError
 MAX_CONTEXT_CHARS = 180_000
 BATCH_TARGET_CHARS = 150_000
 BATCH_MAX_ENTITIES = 12
-PIPELINE_VERSION = "architecture/2-explanations/1-reads/1-judgments/1-dependencies/1-cpp-config/8-interfaces/1-facts/1-index/2-ts-bindings/2-python-declarations/1"
+PIPELINE_VERSION = "architecture/2-explanations/2-reads/1-judgments/1-dependencies/1-cpp-config/8-interfaces/1-facts/1-index/2-ts-bindings/2-python-declarations/1"
 ProgressCallback = Callable[[int, int, str], Awaitable[None]]
 BatchCallback = Callable[[int, int, Architecture], Awaitable[None]]
 
@@ -701,6 +701,9 @@ class Provider:
             "受非空检查保护的解引用或写入不能描述成无条件操作。篇幅不足时概述该分支，不省掉关键保护条件。"
             "配置名称含 SKIP/DISABLE 等否定词时，核对函数实际返回分支及调用方用途；"
             "不能把返回 True 一律说成跳过/禁用，也不能只凭配置变量名判断开关方向。"
+            "异常捕获或包装宏不等于吞掉所有异常。描述异常是否继续传播、循环是否继续或尾部是否执行前，"
+            "核对 catch 的类型、重新抛出、处理器调用与条件编译分支；宏定义不在当前片段时先补读已授权快照中的定义，"
+            "找不到定义就保留异常行为未知。不能把部分异常的处理概括成任何异常都不中断，也不能把配置相关行为说成无条件保证。"
             "同一模块中的相似包装函数也要逐个核对参数和分支：显式覆盖参数与原样透传、正向与反向、"
             "同步与异步、抛异常与返回失败值不可混为一谈；某一个变体设置的常量不能外推到所有变体。"
             "模块 summary 先概括共同职责，再用简短语句说明会改变行为的差异；证据不足时保留差异未知。"

@@ -9,7 +9,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from codescape.models import Analysis
-from codescape.provider import Provider, PIPELINE_VERSION, MAX_CONTEXT_CHARS
+from codescape.provider import MAX_CONTEXT_CHARS, PIPELINE_VERSION, Provider
 
 repository = Path(__file__).resolve().parents[1]
 reports = repository / 'docs/reports/p0'
@@ -63,6 +63,7 @@ def main():
                          project['status'] if project else None, document['状态'])
             item = {
                 'Commit': document['Commit'], '实际文件': document['实际文件'],
+                '模型流水线': document.get('流水线'),
                 '状态': state, '错误': project['error'] if project else document.get('错误'),
                 '进度': progress or document.get('进度'),
                 '请求状态': dict(Counter(row['status'] for row in rows)),
@@ -94,6 +95,7 @@ def main():
                         '批次数': len(batches), '最大上下文字符': max(sizes, default=0),
                         '超过180000字符': sum(size > MAX_CONTEXT_CHARS for size in sizes),
                         '仅静态规划': True, '规划流水线': PIPELINE_VERSION,
+                        '索引所属模型流水线': document.get('流水线'),
                         '索引sha256': artifact['sha256'],
                     }
                 summary['完整范围'][sample] = item
@@ -111,11 +113,16 @@ def main():
         '说明': '包含历史失败、截断、修复及重新评测，按请求ID去重；在途属于尚未返回用量，未知不记零，缺少价格不估算费用。',
     }
     balances = [value['错误'] == '服务余额不足。' for value in summary['完整范围'].values()]
-    summary['外部阻塞'] = ('四个完整范围均因官方HTTP402余额不足暂停；检查点和历史报告保留，当前不继续重试收费任务。'
+    balance_path = reports / '真实模型账户可用状态核对.json'
+    available = (json.loads(balance_path.read_text(encoding='utf-8')).get('账户可供API调用')
+                 if balance_path.exists() else None)
+    summary['外部阻塞'] = ('账户只读核对已恢复可用，已开始新修订真实重测；历史HTTP402检查点保留，实际进度见各样本记录。'
+                         if available is True else
+                         '四个完整范围均因官方HTTP402余额不足暂停；检查点和历史报告保留，当前不继续重试收费任务。'
                          if all(balances) else '具体错误及在途状态见各样本实际记录；此前HTTP402记录完整保留。')
     summary['验收结论'] = ('修订后的四个完整范围均因HTTP402暂停，完整质量、范围对照与用户验收未完成；'
                        '缩小范围源码复核及历史缺陷见各样本记录，结构发布不代表质量通过。'
-                       if all(balances) else '真实评测与源码质量复核尚未完成；结构发布不代表质量通过，不能宣称全部P0完成。')
+                       if all(balances) and available is not True else '真实评测与源码质量复核尚未完成；结构发布不代表质量通过，不能宣称全部P0完成。')
     temporary = destination.with_suffix('.tmp')
     temporary.write_text(json.dumps(summary, ensure_ascii=False, indent=2), encoding='utf-8')
     temporary.replace(destination)

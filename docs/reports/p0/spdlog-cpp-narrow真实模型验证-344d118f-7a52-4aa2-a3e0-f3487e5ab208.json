@@ -1,0 +1,1647 @@
+{
+  "日期": "2026-10-11",
+  "样本": "spdlog-cpp",
+  "Commit": "d6c93f38a08b4ea0f8ffcfd7f7857307d5d5c3fa",
+  "范围": "缩小范围",
+  "授权": "用户允许四个固定公开样本真实评测",
+  "接收端": "https://api.deepseek.com",
+  "模型": "deepseek-flash",
+  "流水线": "architecture/2-explanations/1-reads/1-judgments/1-dependencies/1-cpp-config/8-interfaces/1-facts/1-index/2-ts-bindings/2-python-declarations/1",
+  "数据目录": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\.runtime\\public-model-validation\\2dd81171-9cd5-4687-a058-5f50336c1b10",
+  "原始快照hash": "d4586f715383197a4fccb3ccc33326112d0d5f8441eb5d02fbb79ab7ea70245d",
+  "实际文件": [
+    "include/spdlog/common.h",
+    "include/spdlog/logger-inl.h",
+    "include/spdlog/logger.h",
+    "include/spdlog/namespace.h"
+  ],
+  "状态": "结构检查通过，待源码质量复核",
+  "执行目标代码": false,
+  "进度": {
+    "phase": "completed",
+    "completed": 1,
+    "total": 1,
+    "detail": "分批分析完成"
+  },
+  "耗时秒": 319.42,
+  "project_id": "52b5c5e8-43ea-4464-b548-56df887cb302",
+  "version_id": "16d07546-e3ff-42f5-b2a5-8f9c46ebba32",
+  "实际快照hash": "b9819dac7628d7dc61c66503f9562275c0007159d96c0f59e51efd6f5414310c",
+  "scope_hash": "64d8fef1eca2d21c0868fb5cb2988d0e4d169bafe184ba5bc3727938f0682e93",
+  "错误": null,
+  "architecture": {
+    "modules": [
+      {
+        "id": "m1",
+        "parent_id": null,
+        "name": "spdlog 公共基础层（build 头片段）",
+        "summary": "include/spdlog/common.h 的头文件级职责：用编译期宏选择导出方式、格式化后端与平台类型别名，声明日志级别、异常与值类型，并在 details 中提供少量编译期兼容工具。",
+        "entity_ids": [],
+        "code_paths": [
+          "include/spdlog/common.h"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "m2",
+        "parent_id": "m1",
+        "name": "C++14 之前的 make_unique 回退",
+        "summary": "仅在 C++14 以下编译的参数转发工厂：把实参转发给 T 的构造函数并以 unique_ptr<T> 托管，同时用 static_assert 在编译期拒绝数组类型；C++14 及以上由 std::make_unique 别名取代。",
+        "entity_ids": [
+          "b1361e1d-24fb-5fff-ab9f-faff275a2f1e"
+        ],
+        "code_paths": [
+          "include/spdlog/common.h"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "m3",
+        "parent_id": "m1",
+        "name": "类型条件静态转换工具",
+        "summary": "一对同名 constexpr 转换函数，用互斥的 enable_if 条件按 T 与 U 是否相同分派：类型不同时 static_cast，类型相同时原样返回，避免 json 类场景中的无用转换。",
+        "entity_ids": [
+          "3f4dede6-97f5-5fbb-91de-34109858f315",
+          "01f60871-23b1-55e8-9496-c6f9b86aa7b2"
+        ],
+        "code_paths": [
+          "include/spdlog/common.h"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "m4",
+        "parent_id": "m1",
+        "name": "公共类型与平台适配声明",
+        "summary": "头文件顶层的宏与声明：编译库/头文件模式和 fmt 或 std::format 后端选择、文件名与缓冲区等类型别名、日志级别枚举与名称宏、spdlog_ex 异常类型、throw_spdlog_ex 声明，以及 source_loc 和 file_event_handlers 两个值类型（含行内构造函数）的头文件定义。",
+        "entity_ids": [],
+        "code_paths": [
+          "include/spdlog/common.h"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "m5",
+        "parent_id": null,
+        "name": "日志级别与刷新级别配置",
+        "summary": "统一管理日志器生效级别与自动刷新级别：set_level/level 读写 level_，flush_on/flush_level 读写 flush_level_，均为原子成员包装。",
+        "entity_ids": [
+          "64e61cc9-8b33-5f33-a275-6370197bcea9",
+          "92ce70c1-837c-5449-8262-929ddc67c410",
+          "8632d5a8-39fa-5978-a43f-87dac89a6aac",
+          "8feb72be-cb00-56b3-8502-363221e39170"
+        ],
+        "code_paths": [
+          "include/spdlog/logger-inl.h"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "m6",
+        "parent_id": null,
+        "name": "格式化器配置",
+        "summary": "管理 sink 格式化：set_formatter 把格式化器分发到各 sink（最后一个移动、其余克隆），set_pattern 构造 pattern_formatter 后复用同一分发路径。",
+        "entity_ids": [
+          "41051211-fc6e-5a57-ba8a-cd1e9e7290b2",
+          "81109d3a-8a6a-5f6d-a4b7-6ad50e1b0bcd"
+        ],
+        "code_paths": [
+          "include/spdlog/logger-inl.h"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "m7",
+        "parent_id": null,
+        "name": "回溯跟踪控制",
+        "summary": "通过 tracer_ 控制回溯缓存的启用、关闭与输出，三个接口分别委托 enable/disable/私有 dump 实现。",
+        "entity_ids": [
+          "7826ebe8-c13d-565c-ab84-6dbdbe900bcf",
+          "e4314565-3d90-58f0-9d38-e3a674df458e",
+          "7f52b672-ec8d-5994-8c05-d9bb48257681"
+        ],
+        "code_paths": [
+          "include/spdlog/logger-inl.h"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "m8",
+        "parent_id": null,
+        "name": "刷新与接收器访问",
+        "summary": "对外提供刷新入口和只读 sink 列表：flush 委托私有 flush_，sinks 返回内部 sink_ptr 容器的常量引用。",
+        "entity_ids": [
+          "242cc3cb-896a-5355-a0cb-0d6837fdbf8d",
+          "c21f9f83-d2c5-5fae-8396-c78344f1dcb3"
+        ],
+        "code_paths": [
+          "include/spdlog/logger-inl.h"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "m9",
+        "parent_id": null,
+        "name": "logger 自由交换函数",
+        "summary": "提供 noexcept 的 logger 互换自由函数，实现委托给成员 swap，用于整体状态交换。",
+        "entity_ids": [
+          "6baab740-9bdc-56a8-bfd4-3a33a88beb52"
+        ],
+        "code_paths": [
+          "include/spdlog/logger-inl.h"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "m10",
+        "parent_id": null,
+        "name": "构造、赋值与名称访问等顶层实现",
+        "summary": "片段中的非实体顶层逻辑：logger 拷贝/移动构造、按值参数赋值并调用成员 swap、成员 swap 逐个交换成员、name() 返回名称常量引用。",
+        "entity_ids": [],
+        "code_paths": [
+          "include/spdlog/logger-inl.h"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "m11",
+        "parent_id": null,
+        "name": "日志分派与 sink 输出",
+        "summary": "logger 内部把日志消息按级别分派给各 sink、执行刷新；log_it_ 由两个布尔开关分别控制是否落盘与是否存入回溯，sink_it_ 逐 sink 过滤并在异常后继续，flush_ 只负责刷新且使用默认 source_loc。",
+        "entity_ids": [
+          "cbd74082-16e0-53cc-8873-5b975820b635",
+          "4cc485d1-3964-5766-a2b1-15676cbcbe96",
+          "68662f0e-5b9b-54f1-928b-61066d88dc4c"
+        ],
+        "code_paths": [
+          "include/spdlog/logger-inl.h"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "m12",
+        "parent_id": null,
+        "name": "回溯转储与刷新判定",
+        "summary": "dump_backtrace_ 在 tracer_ 启用且非空时输出起止标记并逐条重放缓存消息；should_flush_ 用级别与 flush_level 的比较结果决定是否触发刷新。",
+        "entity_ids": [
+          "671c505d-cc87-52f2-956a-2453609369d8",
+          "b4ebb57b-3396-5098-960b-59cdfe4e636b"
+        ],
+        "code_paths": [
+          "include/spdlog/logger-inl.h"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "m13",
+        "parent_id": null,
+        "name": "sink 列表、错误回调与克隆配置",
+        "summary": "提供内部 sink 列表引用、错误处理回调设置和同配置克隆：sinks 返回可修改的成员引用，set_error_handler 移动赋值回调，clone 拷贝构造副本后替换名称。",
+        "entity_ids": [
+          "49279bd1-6da8-5d7a-8ba2-b25bf736b48e",
+          "ee8bbd32-3fa6-5f16-b326-2f2c98708076",
+          "5bf2293f-ac50-5858-a041-eda325faaf45"
+        ],
+        "code_paths": [
+          "include/spdlog/logger-inl.h"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "m14",
+        "parent_id": null,
+        "name": "错误报告",
+        "summary": "err_handler_ 优先调用自定义错误回调，否则在静态互斥量保护下做每秒一次的输出限流，并按宏分支选择 R 环境或标准错误输出。",
+        "entity_ids": [
+          "6475e802-7e4f-5d9b-a7d1-759952837212"
+        ],
+        "code_paths": [
+          "include/spdlog/logger-inl.h"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "m15",
+        "parent_id": null,
+        "name": "logger 公开日志接口层",
+        "summary": "spdlog logger 在头文件中声明的日志入口：级别快捷方法、格式化模板重载、string_view 与通用对象消息路径，统一收敛到带 source_loc 的 log 与 log_。",
+        "entity_ids": [],
+        "code_paths": [
+          "include/spdlog/logger.h"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "m16",
+        "parent_id": "m15",
+        "name": "格式化模板日志入口",
+        "summary": "以 format_string_t + 参数包为入口的模板 log 重载，仅做参数归一化与转发，不在此层过滤级别。",
+        "entity_ids": [
+          "dc90922b-bfb9-5609-b703-7b82744a884c",
+          "d3354b7a-c8dd-5a88-b1c8-b40ed5209bad"
+        ],
+        "code_paths": [
+          "include/spdlog/logger.h"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "m17",
+        "parent_id": "m15",
+        "name": "通用对象消息重载",
+        "summary": "针对非格式化字符串类型的消息重载：一个透传到带位置的 log，另一个用 \"{}\" 占位把消息当格式化参数处理。",
+        "entity_ids": [
+          "276d9109-a6c1-58e4-aac1-ba4839cc6886",
+          "10dcd3ce-d606-54f8-af28-b56f25037d1b"
+        ],
+        "code_paths": [
+          "include/spdlog/logger.h"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "m18",
+        "parent_id": "m15",
+        "name": "string_view 与显式时间戳直写路径",
+        "summary": "接收 string_view 消息的非模板路径，负责级别/回溯开关判断并构造 details::log_msg，其中一版可由调用方指定日志时间。",
+        "entity_ids": [
+          "331ebc57-79f5-5bfc-bbc4-71cc0a82bc27",
+          "4227da66-513e-5212-8b54-83f701a7cfd1",
+          "aac0f554-2fce-5e03-b5e7-3159cfb60f91"
+        ],
+        "code_paths": [
+          "include/spdlog/logger.h"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "m19",
+        "parent_id": "m15",
+        "name": "级别快捷方法",
+        "summary": "trace/debug/info/warn/error 五个模板包装，各自以固定 level 枚举调用 log 并完美转发参数，行为差异仅在级别常量。",
+        "entity_ids": [
+          "0c7dfeb9-121f-5300-8953-148320e446c6",
+          "acfd265c-0e90-56f9-a74d-66c7d9bf0410",
+          "a18f6667-1da7-5ad2-9bc9-abd2e857ec1a",
+          "916ec422-00e1-5901-beae-4d70615bb95f",
+          "8b3f98b2-d70e-58f5-b990-97f2ade7400a"
+        ],
+        "code_paths": [
+          "include/spdlog/logger.h"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "m20",
+        "parent_id": null,
+        "name": "logger 宽字符日志写入前端",
+        "summary": "聚合本批 logger 的宽字符日志入口，按职责分为格式化入口、宽字符串消息入口与窄字符入口三类；真正写出依赖外部 log_、log_it_ 等实现。",
+        "entity_ids": [],
+        "code_paths": [
+          "include/spdlog/logger.h"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "m21",
+        "parent_id": "m20",
+        "name": "宽字符格式化日志入口",
+        "summary": "共同职责：把带级别的宽字符格式化调用转发到统一 log 重载。差异：log(source_loc,...) 按编译条件选择传 fmt 还是 fmt.get()；log(level,...) 补 source_loc{}；级别便捷函数各自固定 level 常量。",
+        "entity_ids": [
+          "1f5d33ef-201c-5971-ac2f-d11d6b3257fb",
+          "c5d3765e-d75c-5324-ad33-d36f2de26dab",
+          "0326af54-9e19-5eac-a9ff-62619eacd3c7",
+          "6e2490b7-f1d3-5f39-9175-e562ae63e6ae",
+          "908b5340-d359-5c9d-bd79-3f0bcfb72d91",
+          "894c1f97-5c84-508f-aec1-e6dbd7f25eab",
+          "52a3c7ce-f0b2-5307-835c-3fe4d6a7e41b",
+          "8efd15d1-a624-5087-8a41-6482a059ba2c"
+        ],
+        "code_paths": [
+          "include/spdlog/logger.h"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "m22",
+        "parent_id": "m20",
+        "name": "宽字符串消息日志入口",
+        "summary": "共同职责：处理已格式化的宽字符串消息。差异：b51060cd 额外接收时间戳，bea932ff 只带位置，49b6ea47 补默认位置后委托；前两者在级别与回溯开关皆假时提前返回，并做 UTF-8 转换。",
+        "entity_ids": [
+          "b51060cd-035f-5119-8605-0c22fb9243ee",
+          "bea932ff-0636-5849-9964-63d5494b9942",
+          "49b6ea47-bdf3-5e3d-8683-61a4992f295d"
+        ],
+        "code_paths": [
+          "include/spdlog/logger.h"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "m23",
+        "parent_id": "m20",
+        "name": "窄字符 critical 便捷入口",
+        "summary": "窄字符 critical 包装：固定 critical 级别并以 format_string_t 转发到窄字符 log 重载，本身不做级别检查或宽字符转换。",
+        "entity_ids": [
+          "bb20ab35-5423-52b4-ade0-60b2504d1eca"
+        ],
+        "code_paths": [
+          "include/spdlog/logger.h"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "m24",
+        "parent_id": null,
+        "name": "日志级别便捷接口",
+        "summary": "六个模板便捷函数分别以 trace、debug、info、warn、error、critical 级别把用户消息转发给统一 log 入口；共同职责是固定级别常量，唯一差异是传入的 level 枚举值。",
+        "entity_ids": [
+          "7d20d681-5591-52dc-8317-a62d37e28f96",
+          "81092013-ae0e-55c2-9d86-f163c8951423",
+          "2e2213be-6d72-5b56-86e9-8526d42c83c9",
+          "1462b6e9-c5b5-53aa-91fa-d18ad2960072",
+          "770a6126-c969-53f7-b1d4-b32d5ffa7d37",
+          "80b8c9d8-02ad-5346-8529-9d42dd169437"
+        ],
+        "code_paths": [
+          "include/spdlog/logger.h"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "m25",
+        "parent_id": null,
+        "name": "日志开关与回溯查询",
+        "summary": "提供两个只读查询：should_log 比较传入级别与当前阈值，should_backtrace 委托 tracer_ 查询回溯是否启用；二者均不修改 logger 状态。",
+        "entity_ids": [
+          "9858bd35-56ae-50a0-90a0-b9c041ccdb33",
+          "0ed45436-06b7-5390-9507-be69eaf965c9"
+        ],
+        "code_paths": [
+          "include/spdlog/logger.h"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "m26",
+        "parent_id": null,
+        "name": "格式化日志核心",
+        "summary": "窄字符与宽字符两个 log_ 重载：先检查级别与回溯开关，任一启用时格式化参数、构造 details::log_msg 并调用 log_it_；宽字符路径额外做 UTF-8 转换，且仅在 SPDLOG_WCHAR_TO_UTF8_SUPPORT 下编译。",
+        "entity_ids": [
+          "db87be4f-56e8-5090-9976-748543c39ff9",
+          "2252e139-e767-5547-b18e-a191d2b0b7c3"
+        ],
+        "code_paths": [
+          "include/spdlog/logger.h"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "m27",
+        "parent_id": null,
+        "name": "命名空间宏配置",
+        "summary": "通过可覆盖宏定义 spdlog 外层命名空间 token 及 SPDLOG_NAMESPACE_BEGIN/END 起止标记，支持重命名外层命名空间或包裹内联子命名空间；本批次不含可见函数实体。",
+        "entity_ids": [],
+        "code_paths": [
+          "include/spdlog/namespace.h"
+        ],
+        "incomplete": false
+      }
+    ],
+    "overview": {
+      "introduction": "这是 C++ 日志库 spdlog 的日志器核心层，为需要在应用中按级别记录、格式化和输出日志的 C++ 开发者提供统一接口，集中管理日志级别、刷新策略、回溯缓存、输出目标与错误处理。",
+      "capabilities": [
+        "按多个日志级别记录窄字符消息，宽字符入口仅在支持启用时存在。",
+        "配置日志生效级别与自动刷新级别，并按级别阈值决定是否刷新。",
+        "启用、关闭或转储回溯缓存，用于延迟输出近期日志。",
+        "为输出目标设置统一格式化模式，并管理输出目标列表、克隆与自定义错误回调。",
+        "查询某级别是否记录、回溯是否启用，并主动刷新日志。"
+      ],
+      "principle": "日志调用先按级别与回溯开关判断：需要记录或回溯时，格式化参数、构造日志消息并分派给各输出目标；输出目标逐个过滤，发生异常后继续。刷新由级别阈值触发，回溯转储在启用且非空时重放缓存。宽字符路径在支持宏启用时额外转为 UTF-8。",
+      "limitations": [
+        "分析覆盖日志器公共接口、配置与公共基础层，不包含输出目标、回溯器和格式化器的具体实现，无法确认实际输出、线程安全与对象生命周期等运行期行为。",
+        "宽字符日志入口仅在编译时启用相关支持后存在；未提供真实构建配置，宏分支以保守默认估计，不代表实际构建结果。",
+        "已确认的异常处理仅限输出目标逐项处理时发生异常后继续，未穷尽全部接口的异常边界，不承诺任何接口在所有情况下不抛异常。",
+        "回溯转储依赖回溯器已启用且非空，刷新判定依赖级别比较；条件不满足时不会触发相应输出。",
+        "解析诊断记录和已确认协作关系有限，不代表完整运行时验证或跨模块调用绑定均已确认。"
+      ],
+      "synthesized": true,
+      "analysis_notes": [
+        "本批只对 details 中三个函数给出实现级讲解，头文件其余声明未逐一定位",
+        "make_unique 仅在 C++14 以下编译，更高标准下被 std::make_unique 别名取代",
+        "未提供真实编译配置，宏分支按保守默认视图，不代表实际构建结果",
+        "std::unique_ptr、std::forward 和 static_cast 等目标未解析，不能据此确认绑定",
+        "片段仅含 logger-inl.h 第 1–108 行，其后的私有实现未在本批展示",
+        "宏命名空间与 SPDLOG_INLINE/异常包装未由原生定义确认",
+        "本批调用均为未解析，未静态确认 sink、tracer、formatter 的具体目标",
+        "未覆盖线程安全、异常与对象生命周期等运行期行为",
+        "仅本批可见的 logger 内联片段，未覆盖构造函数与公开日志宏入口",
+        "SPDLOG_INLINE、SPDLOG_TRY/SPDLOG_LOGGER_CATCH 等宏边界由内存语法视图恢复，不据此证明调用绑定",
+        "编译配置使用保守默认，USING_R 与 R_R_H 分支是否启用未确认",
+        "本批未提供 sink 接口的 should_log/log/flush 实现，相关调用仍为未解析",
+        "本批仅覆盖 logger.h 的 1-156 行，log_、should_log、log_it_ 的实现不在范围内",
+        "该范围内没有已确认调用关系，转发目标绑定未经源码证实",
+        "宏命名空间名称与编译配置未确定，std::format 分支取向为保守默认",
+        "宽字符重载仅在定义了 SPDLOG_WCHAR_TO_UTF8_SUPPORT 时存在",
+        "多数函数只是内联转发，真正写出依赖 log_/log_it_ 等本批范围外的实现",
+        "静态解析未确认转发调用目标，重载绑定需按实参类型推断",
+        "未提供编译配置，SPDLOG_USE_STD_FORMAT 相关分支按保守默认估计",
+        "本批已提供调用均为未解析状态，无法确认具体绑定目标",
+        "宽字符重载仅在 SPDLOG_WCHAR_TO_UTF8_SUPPORT 定义时存在",
+        "宏命名空间名称待原生定义确认，命名空间宏不参与运行时",
+        "未覆盖完整运行时行为与构建配置",
+        "源码范围由 6 批受控上下文完成归纳，跨批次模块边界可能需要人工复核。"
+      ]
+    },
+    "explanations": [
+      {
+        "entity_id": "b1361e1d-24fb-5fff-ab9f-faff275a2f1e",
+        "summary": "在 C++14 之前转发参数构造 T 的 unique_ptr，并用 static_assert 拒绝数组类型。",
+        "details": "模板参数 T 为被构造类型、Args... 为构造实参包。函数体先用 static_assert(!std::is_array<T>::value, \"arrays not supported\") 在编译期拒绝数组实参化；随后执行 new T(std::forward<Args>(args)...)，把可变参数按原值类别转发给 T 的构造函数，并把裸指针交给 std::unique_ptr<T> 托管后返回。参数包为空时等价于调用 T 的默认构造。整段位于 #if __cplusplus >= 201402L 的 #else 分支，因此只在 C++14 以下编译；没有运行时错误处理，构造失败按 new 语义抛出异常。",
+        "evidence": [
+          {
+            "path": "include/spdlog/common.h",
+            "start_line": 353,
+            "end_line": 357
+          }
+        ]
+      },
+      {
+        "entity_id": "3f4dede6-97f5-5fbb-91de-34109858f315",
+        "summary": "T 与 U 类型不同时启用，返回 static_cast<T>(value) 的 constexpr 转换。",
+        "details": "该重载的第三个模板参数是 enable_if_t<!std::is_same<T, U>::value, int> 且默认实参为 0，只在 T 与 U 不同时参与重载解析（SFINAE）。参数 U value 按值传入，函数体直接把 value 通过 static_cast<T> 转成返回类型 T。constexpr 说明它可用于常量表达式求值；与另一个 enable_if_t<std::is_same<T, U>::value, int> 的重载条件互斥，同一调用点只实例化其中之一。函数体内无分支、无异常处理，转换合法性由编译期决定。",
+        "evidence": [
+          {
+            "path": "include/spdlog/common.h",
+            "start_line": 361,
+            "end_line": 364
+          }
+        ]
+      },
+      {
+        "entity_id": "01f60871-23b1-55e8-9496-c6f9b86aa7b2",
+        "summary": "T 与 U 类型相同时启用，直接原样返回 value，避免无意义的 static_cast。",
+        "details": "启用条件是 enable_if_t<std::is_same<T, U>::value, int>，与另一重载的类型不同条件互补，因此两个同名同形参函数不会同时被选中。参数 U value 按值传入，函数体只有 return value，不执行任何转换；由于 T 与 U 相同，返回类型 T 与参数类型一致。函数标记 constexpr，可用于常量表达式；没有空值检查、异常分支或额外副作用。",
+        "evidence": [
+          {
+            "path": "include/spdlog/common.h",
+            "start_line": 366,
+            "end_line": 369
+          }
+        ]
+      },
+      {
+        "entity_id": "6baab740-9bdc-56a8-bfd4-3a33a88beb52",
+        "summary": "交换两个 logger 对象的自由函数，委托成员 swap 完成状态互换。",
+        "details": "接收两个 logger 引用 a、b，函数体仅调用 a.swap(b)，由成员 swap 负责互换成名接收器、原子级别、刷新级别、错误处理器与 tracer；标记 noexcept，自身不返回结果，也不直接访问成员。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger-inl.h",
+            "start_line": 60,
+            "end_line": 60
+          }
+        ]
+      },
+      {
+        "entity_id": "64e61cc9-8b33-5f33-a275-6370197bcea9",
+        "summary": "写入日志器的生效级别到原子成员。",
+        "details": "输入 level::level_enum log_level，直接调用 level_.store(log_level) 写入原子成员；无分支、无返回值，也不校验枚举取值范围。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger-inl.h",
+            "start_line": 62,
+            "end_line": 62
+          }
+        ]
+      },
+      {
+        "entity_id": "92ce70c1-837c-5449-8262-929ddc67c410",
+        "summary": "读取日志器当前生效级别并转换为枚举返回。",
+        "details": "无参数；返回 static_cast<level::level_enum>(level_.load(std::memory_order_relaxed))，即读取原子级别再转回枚举类型；使用宽松内存序，不提供额外同步。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger-inl.h",
+            "start_line": 64,
+            "end_line": 66
+          }
+        ]
+      },
+      {
+        "entity_id": "41051211-fc6e-5a57-ba8a-cd1e9e7290b2",
+        "summary": "把格式化器分发到各 sink，末个移动、其余克隆。",
+        "details": "输入独占指针 f；遍历 sinks_，对最后一个 sink 调用 set_formatter(std::move(f)) 并 break，其余 sink 调用 set_formatter(f->clone()) 以各自获得独立实例；当 sinks_ 为空时循环不执行，f 未被使用，函数无返回值。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger-inl.h",
+            "start_line": 72,
+            "end_line": 82
+          }
+        ]
+      },
+      {
+        "entity_id": "81109d3a-8a6a-5f6d-a4b7-6ad50e1b0bcd",
+        "summary": "按模式串构造 pattern_formatter 并应用到所有 sink。",
+        "details": "输入 pattern 字符串与 pattern_time_type；先用 details::make_unique<pattern_formatter>(std::move(pattern), time_type) 构造新格式化器，再调用 set_formatter(std::move(new_formatter)) 进入分发路径；无返回值，构造与分发失败边界由被调方决定。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger-inl.h",
+            "start_line": 84,
+            "end_line": 87
+          }
+        ]
+      },
+      {
+        "entity_id": "7826ebe8-c13d-565c-ab84-6dbdbe900bcf",
+        "summary": "按指定条数启用日志器回溯缓存。",
+        "details": "输入消息条数 n_messages，调用 tracer_.enable(n_messages) 启用回溯暂存；无返回值，是否真正记录及容量行为取决于 tracer_ 实现。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger-inl.h",
+            "start_line": 90,
+            "end_line": 90
+          }
+        ]
+      },
+      {
+        "entity_id": "e4314565-3d90-58f0-9d38-e3a674df458e",
+        "summary": "关闭日志器回溯缓存记录。",
+        "details": "无参数，调用 tracer_.disable() 关闭回溯记录；无返回值，清理/恢复行为由 tracer_ 实现决定。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger-inl.h",
+            "start_line": 93,
+            "end_line": 93
+          }
+        ]
+      },
+      {
+        "entity_id": "7f52b672-ec8d-5994-8c05-d9bb48257681",
+        "summary": "触发输出当前回溯缓存内容。",
+        "details": "无参数，转调私有实现 dump_backtrace_()；无返回值，实际输出行为在该私有函数中，本片段未展示其实现。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger-inl.h",
+            "start_line": 95,
+            "end_line": 95
+          }
+        ]
+      },
+      {
+        "entity_id": "242cc3cb-896a-5355-a0cb-0d6837fdbf8d",
+        "summary": "刷新日志器的所有 sink。",
+        "details": "无参数，转调私有实现 flush_()；无返回值，实际刷新逻辑在该私有函数中，本片段未展示其实现。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger-inl.h",
+            "start_line": 98,
+            "end_line": 98
+          }
+        ]
+      },
+      {
+        "entity_id": "8632d5a8-39fa-5978-a43f-87dac89a6aac",
+        "summary": "设置触发自动刷新的日志级别。",
+        "details": "输入 level::level_enum log_level，调用 flush_level_.store(log_level) 记录刷新级别到原子成员；无分支、无返回值，是否在运行时触发刷新由其他日志路径判断。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger-inl.h",
+            "start_line": 100,
+            "end_line": 100
+          }
+        ]
+      },
+      {
+        "entity_id": "8feb72be-cb00-56b3-8502-363221e39170",
+        "summary": "读取自动刷新级别并转换为枚举返回。",
+        "details": "无参数，返回 static_cast<level::level_enum>(flush_level_.load(std::memory_order_relaxed))；以宽松内存序读取原子刷新级别，不提供额外同步。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger-inl.h",
+            "start_line": 102,
+            "end_line": 104
+          }
+        ]
+      },
+      {
+        "entity_id": "c21f9f83-d2c5-5fae-8396-c78344f1dcb3",
+        "summary": "返回内部接收器容器的常量引用。",
+        "details": "无参数，返回 const std::vector<sink_ptr>&，直接暴露 sinks_ 的引用；不做拷贝、不加锁或校验，调用方可读取但不可通过该接口修改容器。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger-inl.h",
+            "start_line": 107,
+            "end_line": 107
+          }
+        ]
+      },
+      {
+        "entity_id": "49279bd1-6da8-5d7a-8ba2-b25bf736b48e",
+        "summary": "返回内部 sink 列表的引用，供读取或修改。",
+        "details": "无参数、无分支，直接 return sinks_；返回类型为 std::vector<sink_ptr>&（非 const），调用方可借此增删 sink。实现仅一行，不做范围或生命周期检查。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger-inl.h",
+            "start_line": 109,
+            "end_line": 109
+          }
+        ]
+      },
+      {
+        "entity_id": "ee8bbd32-3fa6-5f16-b326-2f2c98708076",
+        "summary": "设置自定义错误处理回调。",
+        "details": "接收 err_handler handler，通过 std::move 移动赋值给成员 custom_err_handler_，无返回值、无分支。若传入空函数对象，后续 err_handler_ 会走默认报告分支。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger-inl.h",
+            "start_line": 112,
+            "end_line": 114
+          }
+        ]
+      },
+      {
+        "entity_id": "5bf2293f-ac50-5858-a041-eda325faaf45",
+        "summary": "按当前配置拷贝构造新 logger 并替换其名称。",
+        "details": "以 *this 拷贝构造 std::make_shared<logger>，再把 cloned->name_ 设为 std::move(logger_name)，返回 shared_ptr<logger>。无分支，sinks 等配置随拷贝构造继承，参数 logger_name 被移出。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger-inl.h",
+            "start_line": 117,
+            "end_line": 121
+          }
+        ]
+      },
+      {
+        "entity_id": "cbd74082-16e0-53cc-8873-5b975820b635",
+        "summary": "按两个开关分别落盘日志或写入回溯缓冲。",
+        "details": "log_enabled 为真时调用 sink_it_(log_msg)；traceback_enabled 为真时把 log_msg 推入 tracer_。两个条件独立判断，可同时执行；无返回值，也不在此处做级别过滤（由 sink_it_ 内部完成）。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger-inl.h",
+            "start_line": 124,
+            "end_line": 133
+          }
+        ]
+      },
+      {
+        "entity_id": "4cc485d1-3964-5766-a2b1-15676cbcbe96",
+        "summary": "遍历 sink 过滤并输出日志，必要时刷新。",
+        "details": "对 sinks_ 中每个 sink，仅当 sink->should_log(msg.level) 为真时在 SPDLOG_TRY 中调用 sink->log(msg)，异常交由 SPDLOG_LOGGER_CATCH(msg.source) 处理；循环结束后若 should_flush_(msg) 为真则调用 flush_()。单个 sink 异常不会中断对其余 sink 的处理。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger-inl.h",
+            "start_line": 135,
+            "end_line": 146
+          }
+        ]
+      },
+      {
+        "entity_id": "68662f0e-5b9b-54f1-928b-61066d88dc4c",
+        "summary": "遍历所有 sink 并逐个刷新。",
+        "details": "对 sinks_ 中每个 sink 在 SPDLOG_TRY 中调用 sink->flush()，异常由 SPDLOG_LOGGER_CATCH(source_loc()) 处理，此处使用默认构造的 source_loc 而非日志消息位置。无返回值，也不检查 sink 状态。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger-inl.h",
+            "start_line": 148,
+            "end_line": 153
+          }
+        ]
+      },
+      {
+        "entity_id": "671c505d-cc87-52f2-956a-2453609369d8",
+        "summary": "在回溯启用且非空时输出边界并逐条重放缓存消息。",
+        "details": "若 tracer_.enabled() 且 !tracer_.empty() 同时成立，先用 sink_it_ 输出 info 级 Backtrace Start，再通过 tracer_.foreach_pop 传入 lambda 对每条消息调用 this->sink_it_，最后输出 Backtrace End；条件不满足则不输出任何内容，缓存条目在弹出过程中消耗。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger-inl.h",
+            "start_line": 155,
+            "end_line": 164
+          }
+        ]
+      },
+      {
+        "entity_id": "b4ebb57b-3396-5098-960b-59cdfe4e636b",
+        "summary": "判断当前日志级别是否达到刷新阈值且不是 off。",
+        "details": "无副作用，返回 (msg.level >= flush_level()) && (msg.level != level::off)。由于短路求值，即使级别比较成立，level::off 消息仍返回 false 而不触发刷新；函数为 const 成员。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger-inl.h",
+            "start_line": 166,
+            "end_line": 168
+          }
+        ]
+      },
+      {
+        "entity_id": "6475e802-7e4f-5d9b-a7d1-759952837212",
+        "summary": "优先调用自定义错误回调，否则限流输出错误报告。",
+        "details": "若 custom_err_handler_ 非空则直接调用它并结束；否则在静态互斥量保护下递增静态 err_counter，若距 last_report_time 不足 std::chrono::seconds(1) 就提前 return 不再输出，否则更新报告时间、格式化本地时间，并按 USING_R/R_R_H 宏选择 REprintf 或 fprintf(stderr) 输出名称与消息。静态计数与时间跨调用共享。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger-inl.h",
+            "start_line": 170,
+            "end_line": 196
+          }
+        ]
+      },
+      {
+        "entity_id": "dc90922b-bfb9-5609-b703-7b82744a884c",
+        "summary": "格式化模板 log（带 source_loc）按编译配置把格式串交给 log_，并完美转发参数。",
+        "details": "入参为 source_loc、级别、format_string_t 与参数包。函数体依据 SPDLOG_USE_STD_FORMAT 与 __cpp_lib_format 版本分支：旧库条件下取 fmt.get()，否则直接传 fmt，两种路径都把参数经 std::forward 转发给 log_。无返回值、无级别判断，提前返回或异常处理均不在此函数内。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger.h",
+            "start_line": 78,
+            "end_line": 85
+          }
+        ]
+      },
+      {
+        "entity_id": "d3354b7a-c8dd-5a88-b1c8-b40ed5209bad",
+        "summary": "格式化模板 log（无 source_loc）以默认位置转发到四参 log 重载。",
+        "details": "入参为级别、format_string_t 与参数包；以默认构造的 source_loc{} 调用 log(loc, lvl, fmt, ...) 并完美转发参数。函数自身不取 format 底层串、不判断级别、不返回任何值，全部行为由被调用的重载决定。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger.h",
+            "start_line": 87,
+            "end_line": 90
+          }
+        ]
+      },
+      {
+        "entity_id": "276d9109-a6c1-58e4-aac1-ba4839cc6886",
+        "summary": "通用类型消息 log 重载，以默认位置转发到带位置的 log。",
+        "details": "模板参数 T 表示消息类型，函数以 source_loc{} 调用 log(loc, lvl, msg)。函数体本身不区分该调用最终落到格式化分支还是 string_view 分支，也不做格式串替换，属纯转发；无返回值。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger.h",
+            "start_line": 92,
+            "end_line": 95
+          }
+        ]
+      },
+      {
+        "entity_id": "10dcd3ce-d606-54f8-af28-b56f25037d1b",
+        "summary": "排除可转换格式串的类型后，用 \"{}\" 占位把消息作为参数格式化。",
+        "details": "通过 std::enable_if 与 is_convertible_to_any_format_string 约束，仅对不能静态转换为任一格式串（含 string_view/wstring_view）的 T 生效。函数调用 log(loc, lvl, \"{}\", msg)，即字面量 \"{}\" 才是格式串、msg 被当作格式化参数；无返回值。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger.h",
+            "start_line": 98,
+            "end_line": 103
+          }
+        ]
+      },
+      {
+        "entity_id": "331ebc57-79f5-5bfc-bbc4-71cc0a82bc27",
+        "summary": "带显式日志时间的 string_view 直写路径，先算开关再做回溯与落盘分发。",
+        "details": "入参为 log_clock::time_point、source_loc、级别与 string_view_t。先用 should_log(lvl) 得到 log_enabled、用 tracer_.enabled() 得到 traceback_enabled；两者皆为假时提前 return，否则以给定 log_time 构造 details::log_msg 并调用 log_it_(log_msg, log_enabled, traceback_enabled)。无返回值。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger.h",
+            "start_line": 105,
+            "end_line": 117
+          }
+        ]
+      },
+      {
+        "entity_id": "4227da66-513e-5212-8b54-83f701a7cfd1",
+        "summary": "string_view 直写路径，以当前时间构造 log_msg 并交由 log_it_ 处理。",
+        "details": "入参为 source_loc、级别与 string_view_t。与带时间戳版本相同的开关逻辑：should_log 与 tracer_.enabled() 均假则 return；否则构造 details::log_msg(loc, name_, lvl, msg)（时间由该构造自行决定）并调用 log_it_(log_msg, log_enabled, traceback_enabled)。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger.h",
+            "start_line": 119,
+            "end_line": 128
+          }
+        ]
+      },
+      {
+        "entity_id": "aac0f554-2fce-5e03-b5e7-3159cfb60f91",
+        "summary": "单行转发：以默认 source_loc 调用 string_view 版 log。",
+        "details": "入参为级别与 string_view_t，函数体仅调用 log(source_loc{}, lvl, msg)，不重复开关判断、不构造 log_msg，也无返回值。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger.h",
+            "start_line": 130,
+            "end_line": 130
+          }
+        ]
+      },
+      {
+        "entity_id": "0c7dfeb9-121f-5300-8953-148320e446c6",
+        "summary": "trace 快捷方法，以 level::trace 调用 log 并转发参数。",
+        "details": "入参为 format_string_t 与参数包，函数体只有一次 log(level::trace, fmt, std::forward<Args>(args)...) 调用；自身不做级别过滤或格式化取值，无返回值。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger.h",
+            "start_line": 132,
+            "end_line": 135
+          }
+        ]
+      },
+      {
+        "entity_id": "acfd265c-0e90-56f9-a74d-66c7d9bf0410",
+        "summary": "debug 快捷方法，以 level::debug 调用 log 并转发参数。",
+        "details": "入参为 format_string_t 与参数包，函数体调用 log(level::debug, fmt, std::forward<Args>(args)...)。除级别常量外与其它快捷方法一致，无返回值。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger.h",
+            "start_line": 137,
+            "end_line": 140
+          }
+        ]
+      },
+      {
+        "entity_id": "a18f6667-1da7-5ad2-9bc9-abd2e857ec1a",
+        "summary": "info 快捷方法，以 level::info 调用 log 并转发参数。",
+        "details": "入参为 format_string_t 与参数包，函数体调用 log(level::info, fmt, std::forward<Args>(args)...)；不做级别判断、无返回值。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger.h",
+            "start_line": 142,
+            "end_line": 145
+          }
+        ]
+      },
+      {
+        "entity_id": "916ec422-00e1-5901-beae-4d70615bb95f",
+        "summary": "warn 快捷方法，以 level::warn 调用 log 并转发参数。",
+        "details": "入参为 format_string_t 与参数包，函数体调用 log(level::warn, fmt, std::forward<Args>(args)...)；行为与其它快捷方法相同，仅级别枚举值不同，无返回值。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger.h",
+            "start_line": 147,
+            "end_line": 150
+          }
+        ]
+      },
+      {
+        "entity_id": "8b3f98b2-d70e-58f5-b990-97f2ade7400a",
+        "summary": "error 快捷方法，以 level::err 调用 log 并转发参数。",
+        "details": "入参为 format_string_t 与参数包，函数体调用 log(level::err, fmt, std::forward<Args>(args)...)；注意这里使用的是 level::err 而非 level::error，函数自身不判断级别、无返回值。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger.h",
+            "start_line": 152,
+            "end_line": 155
+          }
+        ]
+      },
+      {
+        "entity_id": "bb20ab35-5423-52b4-ade0-60b2504d1eca",
+        "summary": "窄字符 critical 便捷入口，把调用转发到窄字符 log 重载。",
+        "details": "模板参数包形式接收 format_string_t 与转发引用参数；函数体只有一条语句，调用 log(level::critical, fmt, std::forward<Args>(args)...)，固定 critical 级别并把格式化串与参数原样透传。此处不做级别检查、不做字符串转换，也无返回值与显式异常处理，实际写出由被调用的窄字符 log 重载完成。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger.h",
+            "start_line": 158,
+            "end_line": 159
+          }
+        ]
+      },
+      {
+        "entity_id": "1f5d33ef-201c-5971-ac2f-d11d6b3257fb",
+        "summary": "带 source_loc 的宽字符格式化日志重载，按编译配置选择格式串形态后转发。",
+        "details": "参数为 source_loc、level::level_enum、wformat_string_t 与参数包。在 SPDLOG_USE_STD_FORMAT 已定义且 __cpp_lib_format < 202207L 时，把 fmt 直接传给 log_；否则传 fmt.get()，两种分支都以 std::forward 转发参数。函数无返回值，也不在此处做级别判断，是否记录取决于被调用的 log_ 实现。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger.h",
+            "start_line": 164,
+            "end_line": 164
+          },
+          {
+            "path": "include/spdlog/logger.h",
+            "start_line": 165,
+            "end_line": 168
+          }
+        ]
+      },
+      {
+        "entity_id": "c5d3765e-d75c-5324-ad33-d36f2de26dab",
+        "summary": "缺省位置参数的宽字符格式化日志重载，补齐 source_loc 后转发。",
+        "details": "参数为 level::level_enum、wformat_string_t 与参数包；函数体以 source_loc{} 作为默认位置，调用 log(source_loc{}, lvl, fmt, std::forward<Args>(args)...)，级别与格式串原样透传。不做级别检查、不做格式化或字符串转换，也无返回值与异常处理。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger.h",
+            "start_line": 173,
+            "end_line": 174
+          }
+        ]
+      },
+      {
+        "entity_id": "b51060cd-035f-5119-8605-0c22fb9243ee",
+        "summary": "带时间戳的宽字符串消息日志，转 UTF-8 后交给 log_it_ 写出。",
+        "details": "输入为 log_clock::time_point、source_loc、级别与 wstring_view_t 消息。先求 should_log(lvl) 与 tracer_.enabled()，两者同为假时提前 return；否则构造 memory_buf_t，用 wstring_view_t(msg.data(), msg.size()) 调 details::os::wstr_to_utf8buf 得到 UTF-8 缓冲，再以 log_time、loc、name_、lvl 和缓冲视图构造 details::log_msg，最后调用 log_it_ 并传入两个布尔开关。无返回值。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger.h",
+            "start_line": 181,
+            "end_line": 183
+          },
+          {
+            "path": "include/spdlog/logger.h",
+            "start_line": 187,
+            "end_line": 190
+          }
+        ]
+      },
+      {
+        "entity_id": "bea932ff-0636-5849-9964-63d5494b9942",
+        "summary": "带位置信息的宽字符串消息日志，转 UTF-8 后交给 log_it_ 写出。",
+        "details": "输入为 source_loc、级别与 wstring_view_t 消息，不接收显式时间戳。同样先取 should_log(lvl) 与 tracer_.enabled()，二者皆假时提前返回；否则把 msg 以 data/size 组成 wstring_view_t 交给 wstr_to_utf8buf 写入 memory_buf_t，再用 loc、name_、lvl 与 UTF-8 视图构造 details::log_msg，并调用 log_it_ 传两个开关。无返回值。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger.h",
+            "start_line": 194,
+            "end_line": 196
+          },
+          {
+            "path": "include/spdlog/logger.h",
+            "start_line": 200,
+            "end_line": 203
+          }
+        ]
+      },
+      {
+        "entity_id": "49b6ea47-bdf3-5e3d-8683-61a4992f295d",
+        "summary": "最简宽字符串消息日志重载，补默认 source_loc 后委托。",
+        "details": "参数为 level::level_enum 与 wstring_view_t；函数体是单表达式调用 log(source_loc{}, lvl, msg)，把位置默认构造后原样透传级别与消息。此处不做 should_log 判断、不做 UTF-8 转换，完整处理逻辑在被调用的重载中。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger.h",
+            "start_line": 206,
+            "end_line": 206
+          }
+        ]
+      },
+      {
+        "entity_id": "0326af54-9e19-5eac-a9ff-62619eacd3c7",
+        "summary": "宽字符 trace 便捷入口，固定 trace 级别转发格式化参数。",
+        "details": "模板参数包接收 wformat_string_t 与转发引用；函数体调用 log(level::trace, fmt, std::forward<Args>(args)...)，级别硬编码为 trace，格式串与参数原样透传。无返回值、无级别检查。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger.h",
+            "start_line": 209,
+            "end_line": 210
+          }
+        ]
+      },
+      {
+        "entity_id": "6e2490b7-f1d3-5f39-9175-e562ae63e6ae",
+        "summary": "宽字符 debug 便捷入口，固定 debug 级别转发格式化参数。",
+        "details": "模板参数包接收 wformat_string_t 与转发引用；函数体调用 log(level::debug, fmt, std::forward<Args>(args)...)，级别硬编码为 debug，其余参数原样透传；不做检查或转换，无返回值。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger.h",
+            "start_line": 214,
+            "end_line": 215
+          }
+        ]
+      },
+      {
+        "entity_id": "908b5340-d359-5c9d-bd79-3f0bcfb72d91",
+        "summary": "宽字符 info 便捷入口，固定 info 级别转发格式化参数。",
+        "details": "模板参数包接收 wformat_string_t 与转发引用；函数体调用 log(level::info, fmt, std::forward<Args>(args)...)，级别硬编码为 info，格式串与参数原样透传；无检查、无返回值。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger.h",
+            "start_line": 219,
+            "end_line": 220
+          }
+        ]
+      },
+      {
+        "entity_id": "894c1f97-5c84-508f-aec1-e6dbd7f25eab",
+        "summary": "宽字符 warn 便捷入口，固定 warn 级别转发格式化参数。",
+        "details": "模板参数包接收 wformat_string_t 与转发引用；函数体调用 log(level::warn, fmt, std::forward<Args>(args)...)，级别硬编码为 warn，其余参数原样透传；不做级别检查或字符串处理，无返回值。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger.h",
+            "start_line": 224,
+            "end_line": 225
+          }
+        ]
+      },
+      {
+        "entity_id": "52a3c7ce-f0b2-5307-835c-3fe4d6a7e41b",
+        "summary": "宽字符 error 便捷入口，固定 err 级别转发格式化参数。",
+        "details": "模板参数包接收 wformat_string_t 与转发引用；函数体调用 log(level::err, fmt, std::forward<Args>(args)...)，级别硬编码为 level::err，格式串与参数原样透传；无返回值和异常处理。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger.h",
+            "start_line": 229,
+            "end_line": 230
+          }
+        ]
+      },
+      {
+        "entity_id": "8efd15d1-a624-5087-8a41-6482a059ba2c",
+        "summary": "宽字符 critical 便捷入口，固定 critical 级别转发格式化参数。",
+        "details": "模板参数包接收 wformat_string_t 与转发引用；函数体调用 log(level::critical, fmt, std::forward<Args>(args)...)，级别硬编码为 critical，其余参数原样透传；不做判断或转换，无返回值。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger.h",
+            "start_line": 234,
+            "end_line": 235
+          }
+        ]
+      },
+      {
+        "entity_id": "7d20d681-5591-52dc-8317-a62d37e28f96",
+        "summary": "模板便捷函数，以 trace 级别转发给定消息。",
+        "details": "接受任意类型 const T& 消息，调用 log 并固定传入 level::trace，返回 void；该调用在本批语义解析中未确认目标重载，函数体内无分支或异常处理代码。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger.h",
+            "start_line": 239,
+            "end_line": 242
+          }
+        ]
+      },
+      {
+        "entity_id": "81092013-ae0e-55c2-9d86-f163c8951423",
+        "summary": "模板便捷函数，以 debug 级别转发给定消息。",
+        "details": "接受任意类型 const T& 消息，调用 log 并固定传入 level::debug，返回 void；调用目标未解析确认，函数体内无分支或异常处理代码。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger.h",
+            "start_line": 244,
+            "end_line": 247
+          }
+        ]
+      },
+      {
+        "entity_id": "2e2213be-6d72-5b56-86e9-8526d42c83c9",
+        "summary": "模板便捷函数，以 info 级别转发给定消息。",
+        "details": "接受任意类型 const T& 消息，调用 log 并固定传入 level::info，返回 void；调用目标未解析确认，函数体内无分支或异常处理代码。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger.h",
+            "start_line": 249,
+            "end_line": 252
+          }
+        ]
+      },
+      {
+        "entity_id": "1462b6e9-c5b5-53aa-91fa-d18ad2960072",
+        "summary": "模板便捷函数，以 warn 级别转发给定消息。",
+        "details": "接受任意类型 const T& 消息，调用 log 并固定传入 level::warn，返回 void；调用目标未解析确认，函数体内无分支或异常处理代码。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger.h",
+            "start_line": 254,
+            "end_line": 257
+          }
+        ]
+      },
+      {
+        "entity_id": "770a6126-c969-53f7-b1d4-b32d5ffa7d37",
+        "summary": "模板便捷函数，以 error 级别转发给定消息。",
+        "details": "接受任意类型 const T& 消息，调用 log 并固定传入 level::err，返回 void；调用目标未解析确认，函数体内无分支或异常处理代码。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger.h",
+            "start_line": 259,
+            "end_line": 262
+          }
+        ]
+      },
+      {
+        "entity_id": "80b8c9d8-02ad-5346-8529-9d42dd169437",
+        "summary": "模板便捷函数，以 critical 级别转发给定消息。",
+        "details": "接受任意类型 const T& 消息，调用 log 并固定传入 level::critical，返回 void；调用目标未解析确认，函数体内无分支或异常处理代码。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger.h",
+            "start_line": 264,
+            "end_line": 267
+          }
+        ]
+      },
+      {
+        "entity_id": "9858bd35-56ae-50a0-90a0-b9c041ccdb33",
+        "summary": "查询指定级别是否达到当前日志记录阈值。",
+        "details": "比较传入 msg_level 与成员 level_ 的原子加载值，加载使用 std::memory_order_relaxed；当 msg_level 大于等于当前阈值时返回 true，否则返回 false。该函数为 const 成员函数，不修改 logger 状态。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger.h",
+            "start_line": 270,
+            "end_line": 272
+          }
+        ]
+      },
+      {
+        "entity_id": "0ed45436-06b7-5390-9507-be69eaf965c9",
+        "summary": "查询回溯日志功能是否启用。",
+        "details": "无参 const 成员函数，直接返回 tracer_ 的 enabled() 结果；不修改状态，结果反映当前 tracer 配置。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger.h",
+            "start_line": 275,
+            "end_line": 275
+          }
+        ]
+      },
+      {
+        "entity_id": "db87be4f-56e8-5090-9976-748543c39ff9",
+        "summary": "窄字符格式化核心，按级别与回溯开关决定是否构造并记录日志。",
+        "details": "接收 source_loc、level_enum、string_view_t 格式串与可变参数。先取 should_log(lvl) 和 tracer_.enabled()；仅当级别启用或回溯启用时才继续，二者皆禁用则直接返回。随后在 SPDLOG_TRY 内构造 memory_buf_t，按 SPDLOG_USE_STD_FORMAT 选择 std 版或 fmt 版 vformat_to 格式化参数，构造 details::log_msg，调用 log_it_ 并传入两个启用标志；SPDLOG_LOGGER_CATCH 处理异常。返回 void，调用目标在本批语义解析中未确认。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger.h",
+            "start_line": 324,
+            "end_line": 343
+          }
+        ]
+      },
+      {
+        "entity_id": "2252e139-e767-5547-b18e-a191d2b0b7c3",
+        "summary": "宽字符格式化核心，在宽字符支持开启时格式化并转 UTF-8 后记录。",
+        "details": "该重载仅在 SPDLOG_WCHAR_TO_UTF8_SUPPORT 定义时编译。接收 source_loc、level_enum、wstring_view_t 格式串与可变参数；先取 should_log(lvl) 和 tracer_.enabled()，二者皆禁用则返回。否则在 SPDLOG_TRY 内构造 wmemory_buf_t，使用宽格式上下文参数格式化到宽缓冲，再通过 details::os::wstr_to_utf8buf 转成 memory_buf_t，构造 details::log_msg 并调用 log_it_；SPDLOG_LOGGER_CATCH 处理异常。返回 void，调用目标在本批语义解析中未确认。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger.h",
+            "start_line": 346,
+            "end_line": 365
+          }
+        ]
+      }
+    ],
+    "call_judgments": [
+      {
+        "call_id": "08d1cda4-f189-5c35-b2b4-48506a9a46c0",
+        "target_id": "4cc485d1-3964-5766-a2b1-15676cbcbe96",
+        "reason": "log_it_ 在 log_enabled 分支内以无限定名直接调用 sink_it_(log_msg)，该名字对应 logger 的成员函数 sink_it_，参数为 const details::log_msg& 与实现签名一致，无函数指针、模板或宏改写迹象。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger-inl.h",
+            "start_line": 127,
+            "end_line": 128
+          },
+          {
+            "path": "include/spdlog/logger-inl.h",
+            "start_line": 135,
+            "end_line": 146
+          }
+        ]
+      },
+      {
+        "call_id": "47cd7f10-93d8-5a4d-bfea-711af3170847",
+        "target_id": "b4ebb57b-3396-5098-960b-59cdfe4e636b",
+        "reason": "sink_it_ 在遍历 sinks_ 之后直接调用 should_flush_(msg)，传入的 const details::log_msg& 与该 const 成员函数的声明一致，属同类成员直接调用。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger-inl.h",
+            "start_line": 143,
+            "end_line": 143
+          },
+          {
+            "path": "include/spdlog/logger-inl.h",
+            "start_line": 166,
+            "end_line": 168
+          }
+        ]
+      },
+      {
+        "call_id": "cd6e8537-5042-5cb3-9ce2-9357b47f3889",
+        "target_id": "68662f0e-5b9b-54f1-928b-61066d88dc4c",
+        "reason": "sink_it_ 在 should_flush_(msg) 为真的分支内直接调用无参成员函数 flush_()，与 flush_ 的实现签名匹配，无间接分派。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger-inl.h",
+            "start_line": 143,
+            "end_line": 144
+          },
+          {
+            "path": "include/spdlog/logger-inl.h",
+            "start_line": 148,
+            "end_line": 153
+          }
+        ]
+      },
+      {
+        "call_id": "a96e4139-cbc5-5885-8afe-218aaf790d6c",
+        "target_id": "4cc485d1-3964-5766-a2b1-15676cbcbe96",
+        "reason": "dump_backtrace_ 在 tracer_.enabled() 且非空的条件下直接调用 sink_it_(log_msg{...}) 输出回溯起始行，传入临时构造的 log_msg，仍解析为 logger 的成员函数 sink_it_。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger-inl.h",
+            "start_line": 157,
+            "end_line": 159
+          },
+          {
+            "path": "include/spdlog/logger-inl.h",
+            "start_line": 135,
+            "end_line": 146
+          }
+        ]
+      },
+      {
+        "call_id": "24689b97-a454-5297-b76c-d788b46d2bd5",
+        "target_id": "c5d3765e-d75c-5324-ad33-d36f2de26dab",
+        "reason": "trace 的形参 fmt 类型为 wformat_string_t，只有 log(level::level_enum, wformat_string_t<Args...>, Args&&...) 这一重载能接受宽字符格式化串，因此第 210 行的 log 调用绑定到第 172-175 行的实现，该实现再补 source_loc{} 继续转发。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger.h",
+            "start_line": 210,
+            "end_line": 210
+          },
+          {
+            "path": "include/spdlog/logger.h",
+            "start_line": 209,
+            "end_line": 209
+          },
+          {
+            "path": "include/spdlog/logger.h",
+            "start_line": 172,
+            "end_line": 175
+          }
+        ]
+      },
+      {
+        "call_id": "e555c1f5-6785-5884-ba60-84d0ddd7391d",
+        "target_id": "c5d3765e-d75c-5324-ad33-d36f2de26dab",
+        "reason": "info 的 fmt 参数为 wformat_string_t，实参与 log(level::level_enum, wformat_string_t<Args...>, Args&&...) 的第 173 行形参列表匹配，而窄字符 format_string_t 重载不能接受宽格式化串，故第 220 行绑定到 172-175 的实现。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger.h",
+            "start_line": 220,
+            "end_line": 220
+          },
+          {
+            "path": "include/spdlog/logger.h",
+            "start_line": 219,
+            "end_line": 219
+          },
+          {
+            "path": "include/spdlog/logger.h",
+            "start_line": 172,
+            "end_line": 175
+          }
+        ]
+      },
+      {
+        "call_id": "4b36b25f-062b-51e7-bd02-05759400f558",
+        "target_id": "1f5d33ef-201c-5971-ac2f-d11d6b3257fb",
+        "reason": "该调用首实参为 source_loc{}、第二实参为 lvl、第三实参为宽字符 fmt，与 log(source_loc, level::level_enum, wformat_string_t<Args...>, Args&&...) 的 163-170 实现形参一一对应，其余 log 重载缺少或错配 source_loc/宽格式化串参数，因此绑定到该实现。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger.h",
+            "start_line": 174,
+            "end_line": 174
+          },
+          {
+            "path": "include/spdlog/logger.h",
+            "start_line": 173,
+            "end_line": 173
+          },
+          {
+            "path": "include/spdlog/logger.h",
+            "start_line": 163,
+            "end_line": 170
+          }
+        ]
+      },
+      {
+        "call_id": "736caa7b-4f79-57f5-8495-eae173a01703",
+        "target_id": "bea932ff-0636-5849-9964-63d5494b9942",
+        "reason": "调用实参为 source_loc{}、level::level_enum 与 wstring_view_t，与 log(source_loc, level::level_enum, wstring_view_t) 的 193-204 实现完全对应；带时间戳的 log(log_clock::time_point,...) 需要额外时间点实参，不匹配。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger.h",
+            "start_line": 206,
+            "end_line": 206
+          },
+          {
+            "path": "include/spdlog/logger.h",
+            "start_line": 193,
+            "end_line": 204
+          }
+        ]
+      }
+    ],
+    "primary_dependencies": []
+  },
+  "原快照字节未变": true,
+  "请求账本": [
+    {
+      "id": "c4cff0a3-19d6-47eb-826b-3ba644b42611",
+      "project_id": "52b5c5e8-43ea-4464-b548-56df887cb302",
+      "version_id": "16d07546-e3ff-42f5-b2a5-8f9c46ebba32",
+      "job_id": "0294bc9c-2ad8-4adb-b73a-c82bf444e6a3",
+      "unit_id": "b4c8d606-6ac8-4732-8844-602eaec10c1a",
+      "attempt": 1,
+      "phase": "architecture",
+      "recipient": "https://api.deepseek.com",
+      "model": "deepseek-flash",
+      "status": "success",
+      "created_at": "2026-10-11T05:00:55.230521+00:00",
+      "sent_at": "2026-10-11T05:00:55.265577+00:00",
+      "finished_at": "2026-10-11T05:01:20.139960+00:00",
+      "payload_hash": "52234740ee9f5a5d1750663129baa8e3501bdc984cce6fe85327a36de7e77d36",
+      "source_chars": 11681,
+      "usage": {
+        "prompt_tokens": 9641,
+        "completion_tokens": 5407,
+        "total_tokens": 15048,
+        "prompt_cache_hit_tokens": 2432,
+        "prompt_cache_miss_tokens": 7209
+      },
+      "cost": null,
+      "currency": null,
+      "price_snapshot": null,
+      "http_status": 200,
+      "error_code": null
+    },
+    {
+      "id": "8c9dac00-1185-4dbc-ad2b-035d243f0c88",
+      "project_id": "52b5c5e8-43ea-4464-b548-56df887cb302",
+      "version_id": "16d07546-e3ff-42f5-b2a5-8f9c46ebba32",
+      "job_id": "0294bc9c-2ad8-4adb-b73a-c82bf444e6a3",
+      "unit_id": "8bf4c8d6-961c-4883-a2bf-8841a449a9fa",
+      "attempt": 1,
+      "phase": "architecture",
+      "recipient": "https://api.deepseek.com",
+      "model": "deepseek-flash",
+      "status": "failed",
+      "created_at": "2026-10-11T05:01:20.158698+00:00",
+      "sent_at": "2026-10-11T05:01:20.177213+00:00",
+      "finished_at": "2026-10-11T05:01:49.052619+00:00",
+      "payload_hash": "524b4a89e8d9a10a53ba657a6a058ba8cd267b6668c91a3420c75614155048d0",
+      "source_chars": 3664,
+      "usage": {
+        "prompt_tokens": 17095,
+        "completion_tokens": 7225,
+        "total_tokens": 24320,
+        "prompt_cache_hit_tokens": 2432,
+        "prompt_cache_miss_tokens": 14663
+      },
+      "cost": null,
+      "currency": null,
+      "price_snapshot": null,
+      "http_status": 200,
+      "error_code": "SCHEMA_INVALID"
+    },
+    {
+      "id": "50d2d3b3-515c-4df3-bd22-fcae3fea9e59",
+      "project_id": "52b5c5e8-43ea-4464-b548-56df887cb302",
+      "version_id": "16d07546-e3ff-42f5-b2a5-8f9c46ebba32",
+      "job_id": "0294bc9c-2ad8-4adb-b73a-c82bf444e6a3",
+      "unit_id": "8bf4c8d6-961c-4883-a2bf-8841a449a9fa",
+      "attempt": 2,
+      "phase": "repair",
+      "recipient": "https://api.deepseek.com",
+      "model": "deepseek-flash",
+      "status": "success",
+      "created_at": "2026-10-11T05:01:49.059154+00:00",
+      "sent_at": "2026-10-11T05:01:49.072842+00:00",
+      "finished_at": "2026-10-11T05:02:14.255401+00:00",
+      "payload_hash": "1afd9ef08965ab426ae0d296173878f837d9799bfa76402efa575dc648d37e20",
+      "source_chars": 3664,
+      "usage": {
+        "prompt_tokens": 17441,
+        "completion_tokens": 5774,
+        "total_tokens": 23215,
+        "prompt_cache_hit_tokens": 2432,
+        "prompt_cache_miss_tokens": 15009
+      },
+      "cost": null,
+      "currency": null,
+      "price_snapshot": null,
+      "http_status": 200,
+      "error_code": null
+    },
+    {
+      "id": "5e6eac9e-42bc-43b6-b12a-2194a05f4b5e",
+      "project_id": "52b5c5e8-43ea-4464-b548-56df887cb302",
+      "version_id": "16d07546-e3ff-42f5-b2a5-8f9c46ebba32",
+      "job_id": "0294bc9c-2ad8-4adb-b73a-c82bf444e6a3",
+      "unit_id": "8169a11b-f56f-47c0-aaef-ce7a346e98f1",
+      "attempt": 1,
+      "phase": "architecture",
+      "recipient": "https://api.deepseek.com",
+      "model": "deepseek-flash",
+      "status": "failed",
+      "created_at": "2026-10-11T05:02:14.271912+00:00",
+      "sent_at": "2026-10-11T05:02:14.286959+00:00",
+      "finished_at": "2026-10-11T05:02:55.209775+00:00",
+      "payload_hash": "5b061846d03899d64c193cd3b10cc8fb1560008067bc7920f0f255c51c7e741a",
+      "source_chars": 2997,
+      "usage": {
+        "prompt_tokens": 14489,
+        "completion_tokens": 10197,
+        "total_tokens": 24686,
+        "prompt_cache_hit_tokens": 2432,
+        "prompt_cache_miss_tokens": 12057
+      },
+      "cost": null,
+      "currency": null,
+      "price_snapshot": null,
+      "http_status": 200,
+      "error_code": "SCHEMA_INVALID"
+    },
+    {
+      "id": "5f2bce13-71ae-45f3-a96b-dd6c8fa826ed",
+      "project_id": "52b5c5e8-43ea-4464-b548-56df887cb302",
+      "version_id": "16d07546-e3ff-42f5-b2a5-8f9c46ebba32",
+      "job_id": "0294bc9c-2ad8-4adb-b73a-c82bf444e6a3",
+      "unit_id": "8169a11b-f56f-47c0-aaef-ce7a346e98f1",
+      "attempt": 2,
+      "phase": "repair",
+      "recipient": "https://api.deepseek.com",
+      "model": "deepseek-flash",
+      "status": "success",
+      "created_at": "2026-10-11T05:02:55.216247+00:00",
+      "sent_at": "2026-10-11T05:02:55.234621+00:00",
+      "finished_at": "2026-10-11T05:03:31.282992+00:00",
+      "payload_hash": "0f17a6ce330097be2805ac4228ec242f7e9595b962ad66d8f99b4c42e8e5ea29",
+      "source_chars": 2997,
+      "usage": {
+        "prompt_tokens": 14751,
+        "completion_tokens": 9120,
+        "total_tokens": 23871,
+        "prompt_cache_hit_tokens": 2432,
+        "prompt_cache_miss_tokens": 12319
+      },
+      "cost": null,
+      "currency": null,
+      "price_snapshot": null,
+      "http_status": 200,
+      "error_code": null
+    },
+    {
+      "id": "5fc07426-ebb7-4569-99ce-0f896be0bbf3",
+      "project_id": "52b5c5e8-43ea-4464-b548-56df887cb302",
+      "version_id": "16d07546-e3ff-42f5-b2a5-8f9c46ebba32",
+      "job_id": "0294bc9c-2ad8-4adb-b73a-c82bf444e6a3",
+      "unit_id": "6136bb7a-c9fe-46e9-b525-2198b3d82451",
+      "attempt": 1,
+      "phase": "architecture",
+      "recipient": "https://api.deepseek.com",
+      "model": "deepseek-flash",
+      "status": "success",
+      "created_at": "2026-10-11T05:03:31.311236+00:00",
+      "sent_at": "2026-10-11T05:03:31.338623+00:00",
+      "finished_at": "2026-10-11T05:03:53.926366+00:00",
+      "payload_hash": "8757a06d1ae61732ab8509e548efacd9d1c827f2a055c439553c04145d6cf443",
+      "source_chars": 5719,
+      "usage": {
+        "prompt_tokens": 17640,
+        "completion_tokens": 5590,
+        "total_tokens": 23230,
+        "prompt_cache_hit_tokens": 2432,
+        "prompt_cache_miss_tokens": 15208
+      },
+      "cost": null,
+      "currency": null,
+      "price_snapshot": null,
+      "http_status": 200,
+      "error_code": null
+    },
+    {
+      "id": "de7f4501-4ea2-4315-931d-0498a5d1b8d5",
+      "project_id": "52b5c5e8-43ea-4464-b548-56df887cb302",
+      "version_id": "16d07546-e3ff-42f5-b2a5-8f9c46ebba32",
+      "job_id": "0294bc9c-2ad8-4adb-b73a-c82bf444e6a3",
+      "unit_id": "0942d32c-f4c0-4f6d-a6fa-87ca6a673cb3",
+      "attempt": 1,
+      "phase": "architecture",
+      "recipient": "https://api.deepseek.com",
+      "model": "deepseek-flash",
+      "status": "success",
+      "created_at": "2026-10-11T05:03:53.949070+00:00",
+      "sent_at": "2026-10-11T05:03:53.967445+00:00",
+      "finished_at": "2026-10-11T05:04:46.741491+00:00",
+      "payload_hash": "a0b21732f87b9205d2e5f2dc6ebad3907b5fdce371bb7055786d185b84acc34b",
+      "source_chars": 2927,
+      "usage": {
+        "prompt_tokens": 18390,
+        "completion_tokens": 13666,
+        "total_tokens": 32056,
+        "prompt_cache_hit_tokens": 2432,
+        "prompt_cache_miss_tokens": 15958
+      },
+      "cost": null,
+      "currency": null,
+      "price_snapshot": null,
+      "http_status": 200,
+      "error_code": null
+    },
+    {
+      "id": "6f27cedf-a533-4d72-a2a8-d5c3901f607c",
+      "project_id": "52b5c5e8-43ea-4464-b548-56df887cb302",
+      "version_id": "16d07546-e3ff-42f5-b2a5-8f9c46ebba32",
+      "job_id": "0294bc9c-2ad8-4adb-b73a-c82bf444e6a3",
+      "unit_id": "a4ecd507-d306-4f57-927b-120450214b2f",
+      "attempt": 1,
+      "phase": "architecture",
+      "recipient": "https://api.deepseek.com",
+      "model": "deepseek-flash",
+      "status": "failed",
+      "created_at": "2026-10-11T05:04:46.769373+00:00",
+      "sent_at": "2026-10-11T05:04:46.790414+00:00",
+      "finished_at": "2026-10-11T05:05:27.533991+00:00",
+      "payload_hash": "379475031b6b4b598c679e356357de70efd4aab4d179b851a05c6c1c9578eada",
+      "source_chars": 6123,
+      "usage": {
+        "prompt_tokens": 16573,
+        "completion_tokens": 9658,
+        "total_tokens": 26231,
+        "prompt_cache_hit_tokens": 2432,
+        "prompt_cache_miss_tokens": 14141
+      },
+      "cost": null,
+      "currency": null,
+      "price_snapshot": null,
+      "http_status": 200,
+      "error_code": "SCHEMA_INVALID"
+    },
+    {
+      "id": "e7bc2e86-4e07-4d4a-ad33-7c74e4a7fde7",
+      "project_id": "52b5c5e8-43ea-4464-b548-56df887cb302",
+      "version_id": "16d07546-e3ff-42f5-b2a5-8f9c46ebba32",
+      "job_id": "0294bc9c-2ad8-4adb-b73a-c82bf444e6a3",
+      "unit_id": "a4ecd507-d306-4f57-927b-120450214b2f",
+      "attempt": 2,
+      "phase": "repair",
+      "recipient": "https://api.deepseek.com",
+      "model": "deepseek-flash",
+      "status": "success",
+      "created_at": "2026-10-11T05:05:27.540269+00:00",
+      "sent_at": "2026-10-11T05:05:27.554377+00:00",
+      "finished_at": "2026-10-11T05:05:49.150447+00:00",
+      "payload_hash": "90c3dc8eebebc653ac228a9fcdc7a2d2acd19336625fe36dfe41e57b28ead82a",
+      "source_chars": 6123,
+      "usage": {
+        "prompt_tokens": 16861,
+        "completion_tokens": 4975,
+        "total_tokens": 21836,
+        "prompt_cache_hit_tokens": 2432,
+        "prompt_cache_miss_tokens": 14429
+      },
+      "cost": null,
+      "currency": null,
+      "price_snapshot": null,
+      "http_status": 200,
+      "error_code": null
+    },
+    {
+      "id": "17fa04d8-d0c6-4290-a0b3-73d53badf4d7",
+      "project_id": "52b5c5e8-43ea-4464-b548-56df887cb302",
+      "version_id": "16d07546-e3ff-42f5-b2a5-8f9c46ebba32",
+      "job_id": "0294bc9c-2ad8-4adb-b73a-c82bf444e6a3",
+      "unit_id": "83de97c2-7948-4c7a-8ca3-debbbf1ffa18",
+      "attempt": 1,
+      "phase": "overview",
+      "recipient": "https://api.deepseek.com",
+      "model": "deepseek-flash",
+      "status": "success",
+      "created_at": "2026-10-11T05:05:49.193850+00:00",
+      "sent_at": "2026-10-11T05:05:49.208591+00:00",
+      "finished_at": "2026-10-11T05:06:08.431357+00:00",
+      "payload_hash": "98f6b0e9220160012acdc21741a0447d012f552baa249ab8a0df8601fd39d7d7",
+      "source_chars": 0,
+      "usage": {
+        "prompt_tokens": 3432,
+        "completion_tokens": 4108,
+        "total_tokens": 7540,
+        "prompt_cache_hit_tokens": 512,
+        "prompt_cache_miss_tokens": 2920
+      },
+      "cost": null,
+      "currency": null,
+      "price_snapshot": null,
+      "http_status": 200,
+      "error_code": null
+    }
+  ],
+  "请求状态": {
+    "success": 7,
+    "failed": 3
+  },
+  "已知total_tokens": 222033,
+  "未知用量请求": 0,
+  "费用": null,
+  "脱敏校验记录": [
+    {
+      "time": "2026-10-11T05:01:49.052096+00:00",
+      "request_id": "8c9dac00-1185-4dbc-ad2b-035d243f0c88",
+      "feedback": "讲解实体不唯一或不属于当前范围。。已知索引依据：{\"supplied_lines\": [], \"allowed_entity_ids\": [\"242cc3cb-896a-5355-a0cb-0d6837fdbf8d\", \"41051211-fc6e-5a57-ba8a-cd1e9e7290b2\", \"64e61cc9-8b33-5f33-a275-6370197bcea9\", \"6baab740-9bdc-56a8-bfd4-3a33a88beb52\", \"7826ebe8-c13d-565c-ab84-6dbdbe900bcf\", \"7f52b672-ec8d-5994-8c05-d9bb48257681\", \"81109d3a-8a6a-5f6d-a4b7-6ad50e1b0bcd\", \"8632d5a8-39fa-5978-a43f-87dac89a6aac\", \"8feb72be-cb00-56b3-8502-363221e39170\", \"92ce70c1-837c-5449-8262-929ddc67c410\", \"c21f9f83-d2c5-5fae-8396-c78344f1dcb3\", \"e4314565-3d90-58f0-9d38-e3a674df458e\"]}"
+    },
+    {
+      "time": "2026-10-11T05:02:55.208694+00:00",
+      "request_id": "5e6eac9e-42bc-43b6-b12a-2194a05f4b5e",
+      "feedback": "讲解实体不唯一或不属于当前范围。。已知索引依据：{\"supplied_lines\": [], \"allowed_entity_ids\": [\"49279bd1-6da8-5d7a-8ba2-b25bf736b48e\", \"4cc485d1-3964-5766-a2b1-15676cbcbe96\", \"5bf2293f-ac50-5858-a041-eda325faaf45\", \"6475e802-7e4f-5d9b-a7d1-759952837212\", \"671c505d-cc87-52f2-956a-2453609369d8\", \"68662f0e-5b9b-54f1-928b-61066d88dc4c\", \"b4ebb57b-3396-5098-960b-59cdfe4e636b\", \"cbd74082-16e0-53cc-8873-5b975820b635\", \"ee8bbd32-3fa6-5f16-b326-2f2c98708076\"]}"
+    },
+    {
+      "time": "2026-10-11T05:05:27.533478+00:00",
+      "request_id": "6f27cedf-a533-4d72-a2a8-d5c3901f607c",
+      "feedback": "讲解实体不唯一或不属于当前范围。。已知索引依据：{\"supplied_lines\": [], \"allowed_entity_ids\": [\"0ed45436-06b7-5390-9507-be69eaf965c9\", \"1462b6e9-c5b5-53aa-91fa-d18ad2960072\", \"2252e139-e767-5547-b18e-a191d2b0b7c3\", \"2e2213be-6d72-5b56-86e9-8526d42c83c9\", \"770a6126-c969-53f7-b1d4-b32d5ffa7d37\", \"7d20d681-5591-52dc-8317-a62d37e28f96\", \"80b8c9d8-02ad-5346-8529-9d42dd169437\", \"81092013-ae0e-55c2-9d86-f163c8951423\", \"9858bd35-56ae-50a0-90a0-b9c041ccdb33\", \"db87be4f-56e8-5090-9976-748543c39ff9\"]}"
+    }
+  ],
+  "边界": "真实官方模型，固定响应与质量复核分开；尚未代表用户验收；价格未知不记零费用。",
+  "静态索引制品": {
+    "path": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\.runtime\\public-model-validation\\2dd81171-9cd5-4687-a058-5f50336c1b10\\validation-artifacts\\bae4567cd331631e27e94508050020384157643bb57e62e89748d7e1a0eaa28e.json",
+    "sha256": "bae4567cd331631e27e94508050020384157643bb57e62e89748d7e1a0eaa28e",
+    "bytes": 350607
+  }
+}

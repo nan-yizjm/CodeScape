@@ -42,29 +42,23 @@
         "adapters/qt.h",
         "adapters/redismoduleapi.h"
       ],
-      "状态": "分析暂停",
-      "错误": "服务余额不足。",
+      "模型流水线": "architecture/2-explanations/1-reads/1-judgments/1-dependencies/1-cpp-config/8-interfaces/1-facts/1-index/2-ts-bindings/2-python-declarations/1",
+      "状态": "进行中",
+      "错误": null,
       "进度": {
-        "phase": "paused",
-        "completed": 41,
+        "phase": "batching",
+        "completed": 4,
         "total": 49,
-        "detail": "服务余额不足。"
+        "detail": "正在分析第 5/49 批 · 3 个文件"
       },
       "请求状态": {
-        "success": 43,
-        "failed": 23
+        "success": 4,
+        "failed": 1,
+        "sent": 1
       },
-      "已知total_tokens": 2173144,
-      "未知用量请求": 2,
-      "原快照字节未变": true,
-      "修订后本地批次检查": {
-        "批次数": 49,
-        "最大上下文字符": 79449,
-        "超过180000字符": 0,
-        "仅静态规划": true,
-        "规划流水线": "architecture/2-explanations/1-reads/1-judgments/1-dependencies/1-cpp-config/7-interfaces/1-facts/1-index/2-ts-bindings/2-python-declarations/1",
-        "索引sha256": "4064cb10771fd04c8d08fc6f3e28f3dbdf59fefa22b4dc379a355b597ccd8766"
-      }
+      "已知total_tokens": 140484,
+      "未知用量请求": 1,
+      "原快照字节未变": null
     },
     "spdlog-cpp": {
       "Commit": "d6c93f38a08b4ea0f8ffcfd7f7857307d5d5c3fa",
@@ -172,6 +166,7 @@
         "src/spdlog.cpp",
         "src/stdout_sinks.cpp"
       ],
+      "模型流水线": "architecture/2-explanations/1-reads/1-judgments/1-dependencies/1-cpp-config/7-interfaces/1-facts/1-index/2-ts-bindings/2",
       "状态": "分析暂停",
       "错误": "服务余额不足。",
       "进度": {
@@ -192,7 +187,8 @@
         "最大上下文字符": 145933,
         "超过180000字符": 0,
         "仅静态规划": true,
-        "规划流水线": "architecture/2-explanations/1-reads/1-judgments/1-dependencies/1-cpp-config/7-interfaces/1-facts/1-index/2-ts-bindings/2-python-declarations/1",
+        "规划流水线": "architecture/2-explanations/2-reads/1-judgments/1-dependencies/1-cpp-config/8-interfaces/1-facts/1-index/2-ts-bindings/2-python-declarations/1",
+        "索引所属模型流水线": "architecture/2-explanations/1-reads/1-judgments/1-dependencies/1-cpp-config/7-interfaces/1-facts/1-index/2-ts-bindings/2",
         "索引sha256": "666b65a3fbfbc88a546dc2cf8775bae4f4c31c1c01683019ab9b7c3a7d379046"
       }
     },
@@ -227,29 +223,22 @@
         "src/flask/sansio/blueprints.py",
         "src/flask/sansio/scaffold.py"
       ],
-      "状态": "分析暂停",
-      "错误": "服务余额不足。",
+      "模型流水线": "architecture/2-explanations/1-reads/1-judgments/1-dependencies/1-cpp-config/8-interfaces/1-facts/1-index/2-ts-bindings/2-python-declarations/1",
+      "状态": "进行中",
+      "错误": null,
       "进度": {
-        "phase": "paused",
-        "completed": 5,
+        "phase": "batching",
+        "completed": 4,
         "total": 33,
-        "detail": "服务余额不足。"
+        "detail": "正在分析第 5/33 批 · 1 个文件"
       },
       "请求状态": {
-        "failed": 3,
-        "success": 5
+        "success": 4,
+        "sent": 1
       },
-      "已知total_tokens": 201594,
+      "已知total_tokens": 103612,
       "未知用量请求": 1,
-      "原快照字节未变": true,
-      "修订后本地批次检查": {
-        "批次数": 33,
-        "最大上下文字符": 51704,
-        "超过180000字符": 0,
-        "仅静态规划": true,
-        "规划流水线": "architecture/2-explanations/1-reads/1-judgments/1-dependencies/1-cpp-config/7-interfaces/1-facts/1-index/2-ts-bindings/2-python-declarations/1",
-        "索引sha256": "0125456bb5bc525c31ee87e3c0ec8ce125b87ad05696c2c33714f3a1fd2ef94d"
-      }
+      "原快照字节未变": null
     },
     "zod-typescript": {
       "Commit": "0b216ef674e297ebe41d8bf902262e56f8755822",
@@ -366,29 +355,23 @@
         "packages/zod/src/v4/mini/parse.ts",
         "packages/zod/src/v4/mini/schemas.ts"
       ],
-      "状态": "分析暂停",
-      "错误": "服务余额不足。",
+      "模型流水线": "architecture/2-explanations/1-reads/1-judgments/1-dependencies/1-cpp-config/8-interfaces/1-facts/1-index/2-ts-bindings/2-python-declarations/1",
+      "状态": "进行中",
+      "错误": null,
       "进度": {
-        "phase": "paused",
-        "completed": 37,
+        "phase": "batching",
+        "completed": 10,
         "total": 76,
-        "detail": "服务余额不足。"
+        "detail": "正在分析第 11/76 批 · 1 个文件"
       },
       "请求状态": {
-        "failed": 14,
-        "success": 39
+        "success": 10,
+        "failed": 1,
+        "sent": 1
       },
-      "已知total_tokens": 1539798,
-      "未知用量请求": 2,
-      "原快照字节未变": true,
-      "修订后本地批次检查": {
-        "批次数": 76,
-        "最大上下文字符": 159051,
-        "超过180000字符": 0,
-        "仅静态规划": true,
-        "规划流水线": "architecture/2-explanations/1-reads/1-judgments/1-dependencies/1-cpp-config/7-interfaces/1-facts/1-index/2-ts-bindings/2-python-declarations/1",
-        "索引sha256": "ff3e19c1313d48354298194b1835ee1987ed669c598c357b4590c25121a16220"
-      }
+      "已知total_tokens": 271940,
+      "未知用量请求": 1,
+      "原快照字节未变": null
     }
   },
   "缩小范围": {
@@ -415,6 +398,7 @@
         "实际文件": [
           "packages/zod/src/v4/core/parse.ts"
         ],
+        "模型流水线": "architecture/2-explanations/1-reads/1-judgments/1-dependencies/1-cpp-config/7-interfaces/1-facts/1-index/2-ts-bindings/2",
         "状态": "结构检查通过，待源码质量复核",
         "错误": null,
         "进度": {
@@ -468,19 +452,20 @@
           "read.c",
           "read.h"
         ],
-        "状态": "分析暂停",
-        "错误": "服务余额不足。",
+        "模型流水线": "architecture/2-explanations/1-reads/1-judgments/1-dependencies/1-cpp-config/8-interfaces/1-facts/1-index/2-ts-bindings/2-python-declarations/1",
+        "状态": "结构检查通过，待源码质量复核",
+        "错误": null,
         "进度": {
-          "phase": "paused",
-          "completed": 0,
-          "total": 2,
-          "detail": "服务余额不足。"
+          "phase": "completed",
+          "completed": 1,
+          "total": 1,
+          "detail": "分批分析完成"
         },
         "请求状态": {
-          "failed": 2
+          "success": 3
         },
-        "已知total_tokens": 41088,
-        "未知用量请求": 1,
+        "已知total_tokens": 73429,
+        "未知用量请求": 0,
         "原快照字节未变": true
       },
       "源码复核": {
@@ -506,6 +491,7 @@
         "实际文件": [
           "src/flask/helpers.py"
         ],
+        "模型流水线": "architecture/2-explanations/1-reads/1-judgments/1-dependencies/1-cpp-config/8-interfaces/1-facts/1-index/2-ts-bindings/2-python-declarations/1",
         "状态": "结构检查通过，待源码质量复核",
         "错误": null,
         "进度": {
@@ -515,9 +501,10 @@
           "detail": "分批分析完成"
         },
         "请求状态": {
-          "success": 3
+          "success": 3,
+          "failed": 1
         },
-        "已知total_tokens": 48164,
+        "已知total_tokens": 71779,
         "未知用量请求": 0,
         "原快照字节未变": true
       },
@@ -546,21 +533,22 @@
           "include/spdlog/logger.h",
           "include/spdlog/namespace.h"
         ],
-        "状态": "结构检查通过，待源码质量复核",
+        "模型流水线": "architecture/2-explanations/2-reads/1-judgments/1-dependencies/1-cpp-config/8-interfaces/1-facts/1-index/2-ts-bindings/2-python-declarations/1",
+        "状态": "进行中",
         "错误": null,
         "进度": {
-          "phase": "completed",
+          "phase": "batching",
           "completed": 1,
-          "total": 1,
-          "detail": "分批分析完成"
+          "total": 6,
+          "detail": "正在分析第 2/6 批 · 1 个文件"
         },
         "请求状态": {
-          "success": 8,
-          "failed": 2
+          "success": 1,
+          "sent": 1
         },
-        "已知total_tokens": 224671,
-        "未知用量请求": 0,
-        "原快照字节未变": true
+        "已知total_tokens": 13953,
+        "未知用量请求": 1,
+        "原快照字节未变": null
       },
       "源码复核": {
         "状态": "三项函数抽样符合源码，完整范围对照未完成",
@@ -585,14 +573,26 @@
     }
   },
   "账本汇总": {
-    "去重请求数": 267,
-    "已知total_tokens": 7619057,
-    "缺少用量请求数": 8,
-    "在途请求数": 0,
+    "去重请求数": 309,
+    "已知total_tokens": 8516287,
+    "缺少用量请求数": 12,
+    "在途请求数": 4,
     "费用": null,
     "说明": "包含历史失败、截断、修复及重新评测，按请求ID去重；在途属于尚未返回用量，未知不记零，缺少价格不估算费用。"
   },
-  "外部阻塞": "四个完整范围均因官方HTTP402余额不足暂停；检查点和历史报告保留，当前不继续重试收费任务。",
-  "验收结论": "完整评测仍因HTTP402暂停；进一步复核发现spdlog范围缺陷及Flask开关方向误述，已记录并修订相应通用实现/提示。完整质量与范围对照及用户验收未完成。",
-  "汇总时间UTC": "2026-10-11T03:28:14.906296+00:00"
+  "外部阻塞": "账户只读核对已恢复可用，已开始新修订真实重测；历史HTTP402检查点保留，实际进度见各样本记录。",
+  "验收结论": "真实评测与源码质量复核尚未完成；结构发布不代表质量通过，不能宣称全部P0完成。",
+  "汇总时间UTC": "2026-10-11T05:07:29.645369+00:00",
+  "本轮本地修订说明": {
+    "新流水线": "cpp-config/8",
+    "新模型请求": 0,
+    "spdlog语法规划": {
+      "文件数": 102,
+      "可见函数": 534,
+      "批次": 53,
+      "最大字符": 145797
+    },
+    "边界": "当前完整进度19/51与缩小范围58讲解为原实际模型/旧索引状态，未修改其检查点或原AI文字；新语法规划非实际原生重索引/全局架构发布，后续须重建索引并核对检查点可复用性。",
+    "修订后实际产品索引": "spdlog修订后产品静态索引验证.json：102文件、534可见函数、完整尾部作用域通过；完整静态工作进程未完成后采用明确标识的语法回退，确认调用0，没有上传或AI架构；仍不能当作模型质量通过。"
+  }
 }

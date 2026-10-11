@@ -125,3 +125,19 @@ def test_exception_recovery_preserves_literal_directive_and_argument_bytes():
         pending.extend(node.named_children)
     assert b'WRAP_CATCH(source_loc())' in calls and b'source_loc()' in calls
     assert literals == [b'R"tag(WRAP_TRY {\n WRAP_CATCH(test())\n )tag"']
+
+
+def test_destructor_wrapper_does_not_swallow_following_methods_or_their_calls(tmp_path):
+    files = exception_fixture()
+    files['owned.cpp'] = 'class Worker {\npublic:\n ~Worker() {\n'
+    files['owned.cpp'] += '  WRAP_TRY { stop(); }\n  WRAP_CATCH(location())\n }\n'
+    files['owned.cpp'] += ' void post() { send(); }\n int count() const { return 1; }\n};\n'
+    indexed = cpp_analysis(tmp_path,files,'v',syntax_only=True)
+    assert sorted(e.name for e in indexed.entities if e.visible)==['count','post']
+    destructor = next(e for e in indexed.entities if e.name=='~Worker')
+    assert not destructor.visible and destructor.location.end_line==6
+    post = next(e for e in indexed.entities if e.name=='post')
+    calls = {c.expression:c for c in indexed.calls}
+    assert calls['stop'].caller_scope_id==destructor.scope_id
+    assert calls['location'].caller_scope_id==destructor.scope_id
+    assert calls['send'].caller_scope_id==post.scope_id

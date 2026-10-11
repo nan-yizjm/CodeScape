@@ -6,100 +6,757 @@
   "授权": "用户允许四个固定公开样本真实评测",
   "接收端": "https://api.deepseek.com",
   "模型": "deepseek-flash",
-  "流水线": "architecture/2-explanations/1-reads/1-judgments/1-dependencies/1-cpp-config/7-interfaces/1-facts/1-index/2-ts-bindings/2-python-declarations/1",
-  "数据目录": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\.runtime\\public-model-validation\\975d5a93-6cb9-4732-bf33-534195d9a0ee",
+  "流水线": "architecture/2-explanations/1-reads/1-judgments/1-dependencies/1-cpp-config/8-interfaces/1-facts/1-index/2-ts-bindings/2-python-declarations/1",
+  "数据目录": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\.runtime\\public-model-validation\\d01b01b4-abd2-4340-96ca-2e8df2613adf",
   "原始快照hash": "7240fe218f0552729c0343bf54f244013ed1ba2dd982d34f49e4bb421cbb39a2",
   "实际文件": [
     "read.c",
     "read.h"
   ],
-  "状态": "分析暂停",
+  "状态": "结构检查通过，待源码质量复核",
   "执行目标代码": false,
   "进度": {
-    "phase": "paused",
-    "completed": 0,
-    "total": 2,
-    "detail": "服务余额不足。"
+    "phase": "completed",
+    "completed": 1,
+    "total": 1,
+    "detail": "分批分析完成"
   },
-  "耗时秒": 68.5,
-  "project_id": "97a26e8b-36d7-4f77-a05c-5dafdcb542cb",
-  "version_id": "8e5c4505-42f1-483a-8d57-bcf0d98fc81f",
+  "耗时秒": 118.97,
+  "project_id": "570e7019-89b2-44eb-ae05-67275c7902c8",
+  "version_id": "463f6663-63b3-4299-abda-30fe5ecc8902",
   "实际快照hash": "8fd5570b3b8949d0839981e7e5e07a8e4563809c4c6d5820abe4aa081a70a78c",
   "scope_hash": "64d8fef1eca2d21c0868fb5cb2988d0e4d169bafe184ba5bc3727938f0682e93",
-  "错误": "服务余额不足。",
-  "architecture": null,
+  "错误": null,
+  "architecture": {
+    "modules": [
+      {
+        "id": "m1",
+        "parent_id": null,
+        "name": "read.c 协议解析模块",
+        "summary": "组织本批 read.c 中的错误诊断、缓冲区行扫描、整数解析、任务栈管理与回复项解析能力。",
+        "entity_ids": [],
+        "code_paths": [
+          "read.c"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "m2",
+        "parent_id": "m1",
+        "name": "错误与诊断信息",
+        "summary": "集中管理 redisReader 错误状态，并生成可读的协议错误与内存不足消息。",
+        "entity_ids": [
+          "68c4bd20-ad87-5222-a1c6-3040bba1c3c9",
+          "c612b3cb-399f-5c06-8f0f-ebca3bc1394e",
+          "e2d6c2f6-57b8-5ef3-936b-68c0c809f58b",
+          "c87de379-8cf4-5389-80fb-65ed836fd60b"
+        ],
+        "code_paths": [
+          "read.c"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "m3",
+        "parent_id": "m1",
+        "name": "缓冲区与行扫描",
+        "summary": "从 reader 输入缓冲区取字节，定位以 \\r\\n 结尾的行并返回行起始指针。",
+        "entity_ids": [
+          "490197ea-45c2-5f82-9eb5-f2c0de883866",
+          "ce2c171e-78b2-55d0-bfc2-f2f7e4776999",
+          "2f552a56-c987-5150-842b-cfc48208998e"
+        ],
+        "code_paths": [
+          "read.c"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "m4",
+        "parent_id": "m1",
+        "name": "严格整数解析",
+        "summary": "把 RESP 长度或整数字符串严格转换为 long long，并检测格式与溢出错误。",
+        "entity_ids": [
+          "1bab31d5-56cb-52a4-ad40-5cdc89334c69"
+        ],
+        "code_paths": [
+          "read.c"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "m5",
+        "parent_id": "m1",
+        "name": "任务栈管理",
+        "summary": "推进解析任务栈游标，并在栈容量不足时扩容任务数组。",
+        "entity_ids": [
+          "651d4062-936b-59d9-b2f1-3e2d3d9e7cf8",
+          "fe74fa5d-de6a-5d48-b864-0e976766b31b"
+        ],
+        "code_paths": [
+          "read.c"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "m6",
+        "parent_id": "m1",
+        "name": "回复项解析",
+        "summary": "按当前任务类型解析行型与批量型 RESP 回复，并通过回调创建对象。",
+        "entity_ids": [
+          "812136fd-2565-5f7c-8281-cc0a2d92c50c",
+          "ae14a637-6c17-540f-ad00-56155d09ac08"
+        ],
+        "code_paths": [
+          "read.c"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "m7",
+        "parent_id": null,
+        "name": "RESP 协议解析与回复组装",
+        "summary": "把缓冲区字节流解析成 Redis 回复：processItem 识别类型并分派，processAggregateItem 处理聚合类型，redisReaderGetReply 驱动解析循环并输出回复。",
+        "entity_ids": [
+          "372b438f-9336-57c9-8457-82da7392ff4b",
+          "af24cd4d-37cc-59c8-8752-904d636a897c",
+          "8e13e0ca-e853-5492-aa04-3177a35f5490"
+        ],
+        "code_paths": [
+          "read.c",
+          "read.h"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "m8",
+        "parent_id": null,
+        "name": "读取器生命周期与输入缓冲管理",
+        "summary": "创建/销毁 redisReader 及其任务栈与缓冲，并把外部字节追加进 sds 输入缓冲；分配失败或追加失败时设置 OOM 错误。",
+        "entity_ids": [
+          "32388b49-117c-52ab-8d39-78a65e20bdc9",
+          "e9778292-1b99-5463-98ce-3a15a2661c99",
+          "d2a3a5bb-527c-5a9f-b87f-3bb92a90aeb2"
+        ],
+        "code_paths": [
+          "read.c",
+          "read.h"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "m9",
+        "parent_id": null,
+        "name": "协议常量与公共接口声明",
+        "summary": "定义 hiredis 读取器相关的错误码、回复类型、默认上限、任务/对象工厂/读取器结构体，以及对外 API 原型。",
+        "entity_ids": [],
+        "code_paths": [
+          "read.h"
+        ],
+        "incomplete": false
+      }
+    ],
+    "overview": {
+      "introduction": "这是 hiredis 中负责读取与解析 Redis 回复的模块：把调用方喂入的字节流按 RESP 协议解析成回复对象，供 Redis 客户端程序使用。",
+      "capabilities": [
+        "把喂入的字节流解析成 Redis 回复",
+        "处理行型、批量型和聚合型回复",
+        "严格解析整数长度，检测格式与溢出错误",
+        "创建、销毁读取器并管理输入缓冲追加",
+        "用错误码和文本报告解析失败或内存不足"
+      ],
+      "principle": "调用方创建读取器并把外部字节追加到输入缓冲；解析时逐项识别回复类型，严格解析长度或整数，遇到聚合回复继续按类型处理，并通过调用方提供的构造方式生成结果。成功时输出解析出的回复对象；失败或内存不足时设置错误码和可读错误信息，由调用方检查。",
+      "limitations": [
+        "材料未覆盖套接字读写，读取器只处理已喂入输入缓冲的数据。",
+        "聚合类型的具体种类和完整解析细节未在材料中列出，范围有限。",
+        "对象工厂由调用方提供；缺省时可能只产生类型占位值，而非完整对象。",
+        "错误字符串使用固定长度缓冲，过长的错误消息可能被截断。",
+        "错误需调用方检查错误状态；材料未穷尽所有异常边界，诊断不等于完整运行时验证。"
+      ],
+      "synthesized": true,
+      "analysis_notes": [
+        "本批仅覆盖 read.c 前 552 行，数组、映射、集合等后续解析函数未展示",
+        "双精度解析依赖 ffc 或 strtod 的编译分支，本片段未包含第三方头实现",
+        "错误字符串长度和格式化缓冲大小固定，过长的错误消息会被截断",
+        "不负责套接字读写，只处理已喂入缓冲的数据",
+        "对象工厂由调用方提供，缺省时可能只产生类型占位值",
+        "错误需调用方读取 r->err/errstr，函数本身不抛异常",
+        "本批只分析 read.c 后半段与 read.h，部分辅助函数未覆盖",
+        "源码范围由 2 批受控上下文完成归纳，跨批次模块边界可能需要人工复核。"
+      ]
+    },
+    "explanations": [
+      {
+        "entity_id": "68c4bd20-ad87-5222-a1c6-3040bba1c3c9",
+        "summary": "重置 redisReader 错误状态并保存错误类型与消息。",
+        "details": "输入为 reader、错误类型 type 和消息 str。若 r->reply 非空且 r->fn 存在且 r->fn->freeObject 非空，则释放当前回复对象并置 NULL；随后调用 sdsfree 清空输入缓冲，将 buf 置 NULL、pos 与 len 归零；把任务栈索引 r->ridx 置 -1；设置 r->err=type，将 str 按 strlen 截断到 errstr 容量减一后 memcpy 并补 '\\0'。函数无返回值，释放与清理均受非空条件保护。",
+        "evidence": [
+          {
+            "path": "read.c",
+            "start_line": 74,
+            "end_line": 96
+          }
+        ]
+      },
+      {
+        "entity_id": "c612b3cb-399f-5c06-8f0f-ebca3bc1394e",
+        "summary": "把单个字节格式化为带引号的可读转义文本。",
+        "details": "输入输出缓冲 buf、大小 size 和字节 byte。按 byte 分支：反斜杠和双引号用带反斜杠转义的引号包裹格式；\\n、\\r、\\t、\\a、\\b 输出对应转义；默认分支下 isprint 为真时输出可打印字符，否则输出 \\xHH 十六进制形式。返回 snprintf 写入长度；若 size 不足，实际截断行为由 snprintf 决定。",
+        "evidence": [
+          {
+            "path": "read.c",
+            "start_line": 98,
+            "end_line": 120
+          }
+        ]
+      },
+      {
+        "entity_id": "e2d6c2f6-57b8-5ef3-936b-68c0c809f58b",
+        "summary": "将非法协议类型字节格式化为协议错误并写入 reader。",
+        "details": "输入 reader 和 byte。局部 cbuf[8]、sbuf[128]；先用 chrtos 把 byte 转成可读文本，再用 snprintf 组装 \"Protocol error, got %s as reply type byte\"，最后调用 __redisReaderSetError 设置 REDIS_ERR_PROTOCOL。函数无返回值，消息长度受 sbuf 容量限制。",
+        "evidence": [
+          {
+            "path": "read.c",
+            "start_line": 122,
+            "end_line": 129
+          }
+        ]
+      },
+      {
+        "entity_id": "c87de379-8cf4-5389-80fb-65ed836fd60b",
+        "summary": "将 reader 标记为内存不足错误。",
+        "details": "仅接收 reader，直接调用 __redisReaderSetError(r,REDIS_ERR_OOM,\"Out of memory\")。函数无返回值，不解析输入，也不做额外条件判断。",
+        "evidence": [
+          {
+            "path": "read.c",
+            "start_line": 131,
+            "end_line": 133
+          }
+        ]
+      },
+      {
+        "entity_id": "490197ea-45c2-5f82-9eb5-f2c0de883866",
+        "summary": "从 reader 缓冲区尝试取走指定字节数。",
+        "details": "输入 reader 和 bytes。若 r->len-r->pos >= bytes，返回 r->buf+r->pos 并将 r->pos 增加 bytes；否则返回 NULL。函数不复制数据，只移动读位置，因此返回指针指向缓冲区内部。",
+        "evidence": [
+          {
+            "path": "read.c",
+            "start_line": 135,
+            "end_line": 143
+          }
+        ]
+      },
+      {
+        "entity_id": "ce2c171e-78b2-55d0-bfc2-f2f7e4776999",
+        "summary": "在给定内存区间内查找 \\r\\n 分隔符。",
+        "details": "输入指针 s 和长度 len。len<2 时直接返回 NULL；否则 len-- 后循环用 memchr 查找 '\\r'，检查 ret[1] 是否为 '\\n'，是则返回该指针；否则调整 ret、len 和 s 继续搜索。返回指向 '\\r' 的指针或 NULL；不修改输入内容。",
+        "evidence": [
+          {
+            "path": "read.c",
+            "start_line": 146,
+            "end_line": 169
+          }
+        ]
+      },
+      {
+        "entity_id": "1bab31d5-56cb-52a4-ad40-5cdc89334c69",
+        "summary": "严格把字符串解析为 long long，并返回成功或失败。",
+        "details": "输入字符串 s、长度 slen、可选输出 value。空长度返回 REDIS_ERR；slen 为 1 且字符为 '0' 时写 0 并返回 REDIS_OK；处理可选负号，负号后无字符返回 REDIS_ERR；首数字必须为 1-9，否则返回 REDIS_ERR；循环累积数字时检查 ULLONG_MAX/10 与 ULLONG_MAX-(digit) 溢出，若未消耗完所有字节返回 REDIS_ERR；负数检查边界后写 -v，正数检查 LLONG_MAX 后写 v。返回 REDIS_OK 或 REDIS_ERR；value 为 NULL 时不写入。",
+        "evidence": [
+          {
+            "path": "read.c",
+            "start_line": 183,
+            "end_line": 244
+          }
+        ]
+      },
+      {
+        "entity_id": "2f552a56-c987-5150-842b-cfc48208998e",
+        "summary": "从 reader 缓冲区读取一行并以长度输出。",
+        "details": "输入 reader 和可选 _len 指针。p 指向 r->buf+r->pos，seekNewline 在剩余长度中查找 \\r\\n；找到时 len=s-(r->buf+r->pos)，r->pos 前进 len+2 以跳过 \\r\\n，若 _len 非空则写入 len，返回行起始 p；未找到返回 NULL。函数不复制数据，返回指针指向缓冲区内部。",
+        "evidence": [
+          {
+            "path": "read.c",
+            "start_line": 246,
+            "end_line": 259
+          }
+        ]
+      },
+      {
+        "entity_id": "651d4062-936b-59d9-b2f1-3e2d3d9e7cf8",
+        "summary": "沿 reader 任务栈推进到下一个待解析位置。",
+        "details": "输入 reader。当 r->ridx >= 0 时循环：若 ridx==0 则递减并返回；否则 cur=task[ridx]、prv=task[ridx-1]，assert 检查 prv 类型为数组、映射、属性、集合或推送；若 cur->idx == prv->elements-1 则递减栈索引；否则 assert cur->idx < prv->elements，重置 cur->type 为 -1、elements 为 -1、idx 自增并返回。函数无返回值，依赖调用方保证任务栈结构有效。",
+        "evidence": [
+          {
+            "path": "read.c",
+            "start_line": 261,
+            "end_line": 288
+          }
+        ]
+      },
+      {
+        "entity_id": "812136fd-2565-5f7c-8281-cc0a2d92c50c",
+        "summary": "解析行型 RESP 回复并按类型创建对象。",
+        "details": "输入 reader。先 readLine 取行，未取到返回 REDIS_ERR 表示数据不足。按 cur->type 分派：整数用 string2ll，失败报协议错误；双精度检查长度并复制终止，按编译配置走 ffc 或 strtod，处理 inf/-inf/nan/-nan，失败或非有限报错；nil 要求 len==0；bool 要求 len==1 且字符在 tTfF；bignum 逐字符校验数字且首位可负号；其他类型校验不含 \\r 或 \\n。创建对象时优先调用 r->fn 的 create* 回调，否则退化为类型占位值。若对象为 NULL 设 OOM；根对象时写 r->reply；最后 moveToNextTask 并返回 REDIS_OK。",
+        "evidence": [
+          {
+            "path": "read.c",
+            "start_line": 290,
+            "end_line": 453
+          }
+        ]
+      },
+      {
+        "entity_id": "ae14a637-6c17-540f-ad00-56155d09ac08",
+        "summary": "解析批量字符串、verbatim 或 nil 回复并创建对象。",
+        "details": "输入 reader。p 指向缓冲区当前位置，seekNewline 查找长度行；找到后计算含 \\r\\n 的 bytelen，用 string2ll 解析长度，失败报协议错误。检查 len 小于 -1 或超出 SIZE_MAX 时报错。len==-1 时创建 nil 占位并标记 success；否则累加 bytelen 并检查缓冲区是否包含完整数据，不足则返回 REDIS_ERR 等待更多数据。verbatim 类型还校验长度至少 4 且 s[5]==':'，否则报协议错误。调用 createString 或类型占位值；成功后若对象为 NULL 设 OOM，推进 r->pos，根对象写 r->reply，moveToNextTask 并返回 REDIS_OK；未成功返回 REDIS_ERR。",
+        "evidence": [
+          {
+            "path": "read.c",
+            "start_line": 455,
+            "end_line": 525
+          }
+        ]
+      },
+      {
+        "entity_id": "fe74fa5d-de6a-5d48-b864-0e976766b31b",
+        "summary": "扩容 reader 的任务栈并初始化新增任务。",
+        "details": "输入 reader。newlen=r->tasks+REDIS_READER_STACK_SIZE；用 hi_realloc 扩展 r->task 数组，失败跳 oom；更新 r->task 后循环从旧 tasks 到 newlen，为每个新槽位 hi_calloc 一个任务结构，失败跳 oom。全部成功返回 REDIS_OK；oom 调用 __redisReaderSetErrorOOM 并返回 REDIS_ERR。新增槽位由 calloc 清零。",
+        "evidence": [
+          {
+            "path": "read.c",
+            "start_line": 527,
+            "end_line": 550
+          }
+        ]
+      },
+      {
+        "entity_id": "372b438f-9336-57c9-8457-82da7392ff4b",
+        "summary": "解析 RESP 聚合类型（数组/映射/集合等）的长度头，创建容器对象并推进任务栈。",
+        "details": "输入 redisReader *r。先取当前任务 cur=r->task[r->ridx]；若 r->maxdepth>0 且 r->ridx>=r->maxdepth，设置协议错误“Max nesting depth exceeded”并返回 REDIS_ERR。若 r->ridx==r->tasks-1，调用 redisReaderGrow，失败则返回 REDIS_ERR。用 readLine 读取长度行；若返回 NULL，最终直接返回 REDIS_ERR（未在此处显式设错误）。用 string2ll 把行转成 elements，失败设“Bad multi-bulk length”并返回 REDIS_ERR。root=(r->ridx==0)。校验：elements<-1、或（LLONG_MAX>SIZE_MAX 且 elements>SIZE_MAX）、或 r->maxelements>0 且 elements>r->maxelements 时设“Multi-bulk length out of range”并返回 REDIS_ERR。elements==-1 走 nil 分支：若 r->fn 和 r->fn->createNil 存在则调用 createNil，否则用 (void*)REDIS_REPLY_NIL；obj==NULL 时设 OOM 错误并返回错误；成功则 moveToNextTask。否则处理容器：若 cur->type 是 MAP 或 ATTR，先按 LLONG_MAX/2 与 SIZE_MAX/2 取上限，elements 超出则设“Multi-bulk length out of range”返回错误，然后 elements*=2；再用 createArray 或类型占位创建 obj；obj==NULL 设 OOM 错误并返回错误；若 elements>0，把 elements、obj 写入当前任务，ridx++ 并初始化子任务字段；否则 moveToNextTask。最后若 root 为真，令 r->reply=obj；返回 REDIS_OK。",
+        "evidence": [
+          {
+            "path": "read.c",
+            "start_line": 553,
+            "end_line": 649
+          },
+          {
+            "path": "read.c",
+            "start_line": 560,
+            "end_line": 564
+          },
+          {
+            "path": "read.c",
+            "start_line": 566,
+            "end_line": 569
+          },
+          {
+            "path": "read.c",
+            "start_line": 571,
+            "end_line": 586
+          },
+          {
+            "path": "read.c",
+            "start_line": 588,
+            "end_line": 599
+          },
+          {
+            "path": "read.c",
+            "start_line": 601,
+            "end_line": 645
+          }
+        ]
+      },
+      {
+        "entity_id": "af24cd4d-37cc-59c8-8752-904d636a897c",
+        "summary": "根据首字节识别 RESP 类型，并把具体解析分派给行、二进制或聚合处理函数。",
+        "details": "输入 redisReader *r，取 cur=r->task[r->ridx]。若 cur->type<0，则用 readBytes(r,1) 读 1 字节；返回 NULL 时直接返回 REDIS_ERR。按 p[0] 的 switch 设置类型：'-' ERROR、'+' STATUS、':' INTEGER、',' DOUBLE、'_' NIL、'$' STRING、'*' ARRAY、'%' MAP、'|' ATTR、'~' SET、'#' BOOL、'=' VERB、'>' PUSH、'(' BIGNUM；default 调用 __redisReaderSetErrorProtocolByte 并返回 REDIS_ERR。类型确定后按 cur->type 分派：ERROR/STATUS/INTEGER/DOUBLE/NIL/BOOL/BIGNUM 调 processLineItem；STRING/VERB 调 processBulkItem；ARRAY/MAP/ATTR/SET/PUSH 调 processAggregateItem；default 调 assert(NULL) 后返回 REDIS_ERR 以避免编译告警。返回值为被调处理函数的结果。",
+        "evidence": [
+          {
+            "path": "read.c",
+            "start_line": 651,
+            "end_line": 657
+          },
+          {
+            "path": "read.c",
+            "start_line": 658,
+            "end_line": 704
+          },
+          {
+            "path": "read.c",
+            "start_line": 705,
+            "end_line": 708
+          },
+          {
+            "path": "read.c",
+            "start_line": 712,
+            "end_line": 733
+          }
+        ]
+      },
+      {
+        "entity_id": "8e13e0ca-e853-5492-aa04-3177a35f5490",
+        "summary": "驱动解析循环，从缓冲解析出完整回复并可选返回给调用方。",
+        "details": "输入 redisReader *r、void **reply。若 reply!=NULL，先令 *reply=NULL。若 r->err 已置位，返回 REDIS_ERR；若 r->len==0，返回 REDIS_OK。若 r->ridx==-1，初始化 task[0] 的 type/elements/idx/obj/parent/privdata 并令 r->ridx=0。随后 while(r->ridx>=0) 反复调用 processItem(r)，遇到非 REDIS_OK 就 break。若 r->err 已置位，返回 REDIS_ERR。若 r->pos>=1024，调用 sdsrange(r->buf,r->pos,-1) 丢弃已消费前缀，返回负数则返回 REDIS_ERR；成功后 r->pos=0、r->len=sdslen(r->buf)。最后若 r->ridx==-1，reply 非空时把 r->reply 赋给 *reply；否则在 r->reply 非空且 r->fn/freeObject 存在时释放该回复；然后 r->reply=NULL。函数返回 REDIS_OK。",
+        "evidence": [
+          {
+            "path": "read.c",
+            "start_line": 820,
+            "end_line": 831
+          },
+          {
+            "path": "read.c",
+            "start_line": 834,
+            "end_line": 841
+          },
+          {
+            "path": "read.c",
+            "start_line": 845,
+            "end_line": 851
+          },
+          {
+            "path": "read.c",
+            "start_line": 855,
+            "end_line": 859
+          },
+          {
+            "path": "read.c",
+            "start_line": 862,
+            "end_line": 870
+          }
+        ]
+      },
+      {
+        "entity_id": "32388b49-117c-52ab-8d39-78a65e20bdc9",
+        "summary": "分配并初始化 redisReader，包括 sds 缓冲、固定大小任务栈及默认上限参数。",
+        "details": "输入 redisReplyObjectFunctions *fn。用 hi_calloc(1,sizeof(redisReader)) 分配零初始化 reader，失败返回 NULL；再用 sdsempty 初始化 r->buf，失败 goto oom。hi_calloc 分配 r->task 指针数组（REDIS_READER_STACK_SIZE 项），失败 goto oom；for 循环为 r->tasks < REDIS_READER_STACK_SIZE 的每个槽位 hi_calloc 一个 redisReadTask，任一失败 goto oom。成功后设置 r->fn=fn、r->maxbuf=REDIS_READER_MAX_BUF、r->maxelements=REDIS_READER_MAX_ARRAY_ELEMENTS、r->maxdepth=REDIS_READER_MAX_REPLY_DEPTH、r->ridx=-1，返回 r。oom 标签调用 redisReaderFree(r) 清理已分配部分后返回 NULL。",
+        "evidence": [
+          {
+            "path": "read.c",
+            "start_line": 736,
+            "end_line": 741
+          },
+          {
+            "path": "read.c",
+            "start_line": 743,
+            "end_line": 745
+          },
+          {
+            "path": "read.c",
+            "start_line": 747,
+            "end_line": 755
+          },
+          {
+            "path": "read.c",
+            "start_line": 757,
+            "end_line": 763
+          },
+          {
+            "path": "read.c",
+            "start_line": 764,
+            "end_line": 766
+          }
+        ]
+      },
+      {
+        "entity_id": "e9778292-1b99-5463-98ce-3a15a2661c99",
+        "summary": "释放 reader 持有的回复对象、任务栈、输入缓冲及 reader 自身。",
+        "details": "输入 redisReader *r。若 r==NULL 立即返回。若 r->reply!=NULL 且 r->fn 与 r->fn->freeObject 均非空，调用 freeObject 释放回复对象。若 r->task 非空，则按 i<r->tasks 循环 hi_free(r->task[i]) 释放每个任务，再 hi_free(r->task)。随后 sdsfree(r->buf) 释放输入缓冲，最后 hi_free(r) 释放 reader 本体。没有返回值，也不把指针置空。",
+        "evidence": [
+          {
+            "path": "read.c",
+            "start_line": 769,
+            "end_line": 771
+          },
+          {
+            "path": "read.c",
+            "start_line": 773,
+            "end_line": 774
+          },
+          {
+            "path": "read.c",
+            "start_line": 776,
+            "end_line": 783
+          },
+          {
+            "path": "read.c",
+            "start_line": 785,
+            "end_line": 786
+          }
+        ]
+      },
+      {
+        "entity_id": "d2a3a5bb-527c-5a9f-b87f-3bb92a90aeb2",
+        "summary": "把外部字节追加到 reader 的 sds 缓冲；reader 已出错时提前返回失败。",
+        "details": "输入 redisReader *r、const char *buf、size_t len。若 r->err 已置位，直接返回 REDIS_ERR。仅当 buf!=NULL 且 len>=1 时处理：若 r->len==0 且 r->maxbuf!=0 且 sdsavail(r->buf)>r->maxbuf，先 sdsfree 旧缓冲、重新 sdsempty，新缓冲为 0 则 goto oom，并把 r->pos 重置为 0；然后 sdscatlen 追加数据，失败 goto oom；成功更新 r->buf 并令 r->len=sdslen(r->buf)。若不满足追加条件，直接返回 REDIS_OK。oom 标签调用 __redisReaderSetErrorOOM(r) 并返回 REDIS_ERR。",
+        "evidence": [
+          {
+            "path": "read.c",
+            "start_line": 789,
+            "end_line": 794
+          },
+          {
+            "path": "read.c",
+            "start_line": 797,
+            "end_line": 805
+          },
+          {
+            "path": "read.c",
+            "start_line": 807,
+            "end_line": 811
+          },
+          {
+            "path": "read.c",
+            "start_line": 814,
+            "end_line": 817
+          }
+        ]
+      }
+    ],
+    "call_judgments": [
+      {
+        "call_id": "8c023d48-082a-553a-8ece-966acc5f97af",
+        "target_id": "68c4bd20-ad87-5222-a1c6-3040bba1c3c9",
+        "reason": "在 __redisReaderSetErrorOOM 第 132 行直接调用 __redisReaderSetError，传入 REDIS_ERR_OOM 和常量消息，作用域与名称唯一对应目标实体。",
+        "evidence": [
+          {
+            "path": "read.c",
+            "start_line": 131,
+            "end_line": 133
+          },
+          {
+            "path": "read.c",
+            "start_line": 132,
+            "end_line": 132
+          },
+          {
+            "path": "read.c",
+            "start_line": 74,
+            "end_line": 96
+          }
+        ]
+      },
+      {
+        "call_id": "b63e429a-4a2c-592c-8b09-e4efbfb45ce0",
+        "target_id": "c612b3cb-399f-5c06-8f0f-ebca3bc1394e",
+        "reason": "在 __redisReaderSetErrorProtocolByte 第 125 行直接调用 chrtos，用于把协议类型字节转成可读文本，调用位置和目标实现均完整可见。",
+        "evidence": [
+          {
+            "path": "read.c",
+            "start_line": 122,
+            "end_line": 129
+          },
+          {
+            "path": "read.c",
+            "start_line": 125,
+            "end_line": 125
+          },
+          {
+            "path": "read.c",
+            "start_line": 98,
+            "end_line": 120
+          }
+        ]
+      },
+      {
+        "call_id": "8fdab7b0-1124-5630-88e5-03f74abd998c",
+        "target_id": "ce2c171e-78b2-55d0-bfc2-f2f7e4776999",
+        "reason": "在 readLine 第 251 行直接调用 seekNewline，用于在 reader 剩余缓冲区中定位 \\r\\n，调用行与目标实现完整可见。",
+        "evidence": [
+          {
+            "path": "read.c",
+            "start_line": 246,
+            "end_line": 259
+          },
+          {
+            "path": "read.c",
+            "start_line": 251,
+            "end_line": 251
+          },
+          {
+            "path": "read.c",
+            "start_line": 146,
+            "end_line": 169
+          }
+        ]
+      },
+      {
+        "call_id": "e3f04644-3bc2-5c93-b082-31689b161d27",
+        "target_id": "651d4062-936b-59d9-b2f1-3e2d3d9e7cf8",
+        "reason": "在 processLineItem 第 448 行直接调用 moveToNextTask，用于成功创建行型回复对象后推进任务栈，调用行与目标实现完整可见。",
+        "evidence": [
+          {
+            "path": "read.c",
+            "start_line": 290,
+            "end_line": 453
+          },
+          {
+            "path": "read.c",
+            "start_line": 448,
+            "end_line": 448
+          },
+          {
+            "path": "read.c",
+            "start_line": 261,
+            "end_line": 288
+          }
+        ]
+      },
+      {
+        "call_id": "da68dd4f-b15c-5e4e-8aed-3a387a345f47",
+        "target_id": "372b438f-9336-57c9-8457-82da7392ff4b",
+        "reason": "processItem 在 cur->type 为数组/映射/属性/集合/推送时直接调用 processAggregateItem；调用行与目标定义同文件，参数均为 redisReader*，目标实现完整可见。",
+        "evidence": [
+          {
+            "path": "read.c",
+            "start_line": 729,
+            "end_line": 729
+          },
+          {
+            "path": "read.c",
+            "start_line": 553,
+            "end_line": 649
+          }
+        ]
+      },
+      {
+        "call_id": "91003cf5-31b4-52cb-88dc-fa5d10abb723",
+        "target_id": "af24cd4d-37cc-59c8-8752-904d636a897c",
+        "reason": "redisReaderGetReply 的解析循环内直接调用 processItem(r)；同文件静态函数，调用表达式与目标函数名一致，目标实现完整可见。",
+        "evidence": [
+          {
+            "path": "read.c",
+            "start_line": 846,
+            "end_line": 846
+          },
+          {
+            "path": "read.c",
+            "start_line": 651,
+            "end_line": 734
+          }
+        ]
+      },
+      {
+        "call_id": "84b912ae-ee47-5934-a5a2-6bcafd1ce528",
+        "target_id": "e9778292-1b99-5463-98ce-3a15a2661c99",
+        "reason": "redisReaderCreateWithFunctions 在 oom 标签处直接调用 redisReaderFree(r) 做失败清理；同文件、参数类型匹配，目标实现完整可见。",
+        "evidence": [
+          {
+            "path": "read.c",
+            "start_line": 765,
+            "end_line": 765
+          },
+          {
+            "path": "read.c",
+            "start_line": 769,
+            "end_line": 787
+          }
+        ]
+      }
+    ],
+    "primary_dependencies": []
+  },
   "原快照字节未变": true,
   "请求账本": [
     {
-      "id": "13dbc7cd-a80c-4cf7-8970-fcf3900d86f1",
-      "project_id": "97a26e8b-36d7-4f77-a05c-5dafdcb542cb",
-      "version_id": "8e5c4505-42f1-483a-8d57-bcf0d98fc81f",
-      "job_id": "0f03aa18-174c-4cfd-809a-fd4adaf734b9",
-      "unit_id": "19a796c5-6ef3-4a4c-9483-6e308633fbc7",
+      "id": "58dc2244-ba8b-42b1-8afd-c27f541ad818",
+      "project_id": "570e7019-89b2-44eb-ae05-67275c7902c8",
+      "version_id": "463f6663-63b3-4299-abda-30fe5ecc8902",
+      "job_id": "f449110b-07f1-421d-aeb9-1b954442bbb1",
+      "unit_id": "cbb10a6b-68ff-4cb9-80de-5daf0117d300",
       "attempt": 1,
       "phase": "architecture",
       "recipient": "https://api.deepseek.com",
       "model": "deepseek-flash",
-      "status": "failed",
-      "created_at": "2026-10-11T03:22:28.152346+00:00",
-      "sent_at": "2026-10-11T03:22:28.190645+00:00",
-      "finished_at": "2026-10-11T03:23:32.072742+00:00",
-      "payload_hash": "5710c3774b15115e90b17e73846b0bd2871020e9db7fe6468227f81f69ca346f",
+      "status": "success",
+      "created_at": "2026-10-11T05:01:37.951235+00:00",
+      "sent_at": "2026-10-11T05:01:37.991990+00:00",
+      "finished_at": "2026-10-11T05:02:25.381554+00:00",
+      "payload_hash": "17f8c4c28b4f2b236ac3f4ba6cc3e79d838217162e8959e68578c862748c0746",
       "source_chars": 18221,
       "usage": {
-        "prompt_tokens": 24155,
-        "completion_tokens": 16933,
-        "total_tokens": 41088,
-        "prompt_cache_hit_tokens": 512,
-        "prompt_cache_miss_tokens": 23643
+        "prompt_tokens": 24134,
+        "completion_tokens": 12403,
+        "total_tokens": 36537,
+        "prompt_cache_hit_tokens": 2432,
+        "prompt_cache_miss_tokens": 21702
       },
       "cost": null,
       "currency": null,
       "price_snapshot": null,
       "http_status": 200,
-      "error_code": "SCHEMA_INVALID"
+      "error_code": null
     },
     {
-      "id": "54fc4340-4e41-4ab3-a4b5-9dbe968a4b92",
-      "project_id": "97a26e8b-36d7-4f77-a05c-5dafdcb542cb",
-      "version_id": "8e5c4505-42f1-483a-8d57-bcf0d98fc81f",
-      "job_id": "0f03aa18-174c-4cfd-809a-fd4adaf734b9",
-      "unit_id": "19a796c5-6ef3-4a4c-9483-6e308633fbc7",
-      "attempt": 2,
-      "phase": "repair",
+      "id": "660a9c4d-f109-4fa6-b55f-c99462a528c6",
+      "project_id": "570e7019-89b2-44eb-ae05-67275c7902c8",
+      "version_id": "463f6663-63b3-4299-abda-30fe5ecc8902",
+      "job_id": "f449110b-07f1-421d-aeb9-1b954442bbb1",
+      "unit_id": "d2247b08-9009-4b94-baa5-803dbe0f1d16",
+      "attempt": 1,
+      "phase": "architecture",
       "recipient": "https://api.deepseek.com",
       "model": "deepseek-flash",
-      "status": "failed",
-      "created_at": "2026-10-11T03:23:32.078028+00:00",
-      "sent_at": "2026-10-11T03:23:32.089502+00:00",
-      "finished_at": "2026-10-11T03:23:32.553934+00:00",
-      "payload_hash": "40150fa7865f69db5fd4fe73a6d91688b38cc29347f5fa778b9f34ca39db904c",
-      "source_chars": 18221,
-      "usage": null,
+      "status": "success",
+      "created_at": "2026-10-11T05:02:25.400346+00:00",
+      "sent_at": "2026-10-11T05:02:25.413391+00:00",
+      "finished_at": "2026-10-11T05:03:18.156495+00:00",
+      "payload_hash": "fa5213a94492b393af504cc3d414641cbbd61a84f60e8e2699cbf3a790c7bcda",
+      "source_chars": 13949,
+      "usage": {
+        "prompt_tokens": 16897,
+        "completion_tokens": 15246,
+        "total_tokens": 32143,
+        "prompt_cache_hit_tokens": 2432,
+        "prompt_cache_miss_tokens": 14465
+      },
       "cost": null,
       "currency": null,
       "price_snapshot": null,
-      "http_status": 402,
-      "error_code": "HTTP_402"
+      "http_status": 200,
+      "error_code": null
+    },
+    {
+      "id": "cd2e4fe3-6388-4b12-a1a8-9e47721b64c8",
+      "project_id": "570e7019-89b2-44eb-ae05-67275c7902c8",
+      "version_id": "463f6663-63b3-4299-abda-30fe5ecc8902",
+      "job_id": "f449110b-07f1-421d-aeb9-1b954442bbb1",
+      "unit_id": "152aa76d-5c0b-4c25-b271-71994acc6aae",
+      "attempt": 1,
+      "phase": "overview",
+      "recipient": "https://api.deepseek.com",
+      "model": "deepseek-flash",
+      "status": "success",
+      "created_at": "2026-10-11T05:03:18.176849+00:00",
+      "sent_at": "2026-10-11T05:03:18.190171+00:00",
+      "finished_at": "2026-10-11T05:03:33.571843+00:00",
+      "payload_hash": "dd93cc32adfa09d7edca48de3cdef8ea7035a45719ab33c09976933fca4dbadc",
+      "source_chars": 0,
+      "usage": {
+        "prompt_tokens": 1469,
+        "completion_tokens": 3280,
+        "total_tokens": 4749,
+        "prompt_cache_hit_tokens": 512,
+        "prompt_cache_miss_tokens": 957
+      },
+      "cost": null,
+      "currency": null,
+      "price_snapshot": null,
+      "http_status": 200,
+      "error_code": null
     }
   ],
   "请求状态": {
-    "failed": 2
+    "success": 3
   },
-  "已知total_tokens": 41088,
-  "未知用量请求": 1,
+  "已知total_tokens": 73429,
+  "未知用量请求": 0,
   "费用": null,
-  "脱敏校验记录": [
-    {
-      "time": "2026-10-11T03:23:32.072742+00:00",
-      "request_id": "13dbc7cd-a80c-4cf7-8970-fcf3900d86f1",
-      "feedback": "调用判断引用错误或重复"
-    }
-  ],
+  "脱敏校验记录": [],
   "边界": "真实官方模型，固定响应与质量复核分开；尚未代表用户验收；价格未知不记零费用。",
   "静态索引制品": {
-    "path": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\.runtime\\public-model-validation\\975d5a93-6cb9-4732-bf33-534195d9a0ee\\validation-artifacts\\459a77274594cfe5064d68028da510ccb5ab6945c7c0b499d2b7c45e906de1c6.json",
-    "sha256": "459a77274594cfe5064d68028da510ccb5ab6945c7c0b499d2b7c45e906de1c6",
-    "bytes": 128457
+    "path": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\.runtime\\public-model-validation\\d01b01b4-abd2-4340-96ca-2e8df2613adf\\validation-artifacts\\b868d64716371b09bf8722f1136615d13d766d36c65b7b0940ba456717994457.json",
+    "sha256": "b868d64716371b09bf8722f1136615d13d766d36c65b7b0940ba456717994457",
+    "bytes": 148433
   }
 }

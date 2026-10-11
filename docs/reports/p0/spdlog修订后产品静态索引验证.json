@@ -1,0 +1,44 @@
+{
+  "日期": "2026-10-11",
+  "性质": "修订后实际产品导入与静态工作进程，未调用模型、不执行目标代码",
+  "Commit": "d6c93f38a08b4ea0f8ffcfd7f7857307d5d5c3fa",
+  "数据目录": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\.runtime\\cpp8-product-validation\\ceedb0d7-da9d-408f-aa5f-73832678e806",
+  "project_id": "d13badb2-a9a0-44bb-a68d-521ced335cf9",
+  "version_id": "b3ab7532-6777-41fb-b634-35f228abb272",
+  "实际文件数": 102,
+  "可见函数数": 534,
+  "确认调用数": 0,
+  "工具": {
+    "python": "ast/3.12; conservative-bindings/1; type-declarations/1",
+    "cpp": "tree-sitter/0.25.2 + libclang/18.1.1 + snapshot-config/8 + syntax-fallback/1"
+  },
+  "原字节未变": true,
+  "完整尾部作用域": true,
+  "模型请求": 0,
+  "已上传": false,
+  "已有AI架构": false,
+  "静态索引制品": {
+    "path": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\.runtime\\cpp8-product-validation\\ceedb0d7-da9d-408f-aa5f-73832678e806\\static-analysis.json",
+    "sha256": "d608a8bfabbbf2808f6336b9da40946640d477268c49f10b5a6d2ff615dd220a",
+    "bytes": 3662402
+  },
+  "边界": "当前新静态索引不替代旧模型结果；原完整19/51检查点及报告均保留，真实模型质量与新索引范围对照仍未完成。",
+  "诊断分类": {
+    "syntax_recovery": 84,
+    "parse_failed": 146,
+    "condition_unknown": 236,
+    "symbol_name_unresolved": 58,
+    "configuration": 1,
+    "unresolved_call": 2280,
+    "native_index_incomplete": 1
+  },
+  "原生回退说明": [
+    {
+      "category": "native_index_incomplete",
+      "message": "完整静态工作进程未完成，已保留完整 C/C++ 语法索引及可验证的其他语言结果；本轮 C/C++ 调用未做原生语义确认。可缩小范围或补充配置后新建快照重试。",
+      "path": null,
+      "line": null
+    }
+  ],
+  "原因边界": "诊断只证明完整工作进程未完成，未提供足够证据区分超时与异常；不猜测具体原因。"
+}
