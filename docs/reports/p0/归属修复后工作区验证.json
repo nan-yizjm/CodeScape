@@ -1,0 +1,16 @@
+{
+  "日期": "2026-10-11",
+  "代码提交": "28fda58",
+  "运行流水线": "architecture/3-explanations/3-reads/1-judgments/2-dependencies/1-cpp-config/8-interfaces/1-facts/2-index/2-ts-bindings/2-python-declarations/1",
+  "重启方式": "正常保存退出后独立启动",
+  "项目数": 4,
+  "学习记录": 2,
+  "项目状态版本架构与快照哈希逐项不变": true,
+  "学习状态与revision逐项不变": true,
+  "主工作区模型账本数": 7,
+  "新增模型请求": 0,
+  "新上传AIHOT": false,
+  "旧结果": "保持各自原始版本，未改写为新流水线",
+  "浏览器复核": "现有侧边AIHOT恢复5个顶层节点与2条主要协作线，标题和已保存项目恢复；未点击AI分析或学习状态修改。",
+  "截图": "output/playwright/P0归属修复后工作区.png"
+}
