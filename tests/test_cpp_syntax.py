@@ -2,7 +2,7 @@ import hashlib
 
 import tree_sitter_cpp
 from codescape.analyzers import cpp_analysis
-from codescape.cpp_syntax import recover_parse, recovery_macros
+from codescape.cpp_syntax import exception_wrappers, recover_parse, recovery_macros
 from tree_sitter import Language, Parser
 
 
@@ -63,3 +63,65 @@ def test_behavior_macros_are_not_export_annotations():
     annotations, namespaces = recovery_macros({'x.hpp':
         '#define API int changed;\n#define BEGIN namespace n { work();\n#define END }; run();\n'})
     assert not annotations and not namespaces
+
+
+def exception_fixture():
+    return {'macros.hpp': '#if DISABLED\n#define WRAP_TRY\n#define WRAP_CATCH(location)\n'
+            '#else\n#define WRAP_TRY try\n#define WRAP_CATCH(location) catch (...) { report(location); }\n#endif\n',
+            'owned.cpp': 'void source_loc() {}\nvoid flush() {}\n'
+                         'void sink() {\n for (;;) {\n  if (enabled()) {\n'
+                         '   WRAP_TRY { output(); }\n'
+                         '   WRAP_CATCH(source_loc())\n  }\n }\n'
+                         ' if (should_flush()) { flush(); }\n}\n'
+                         'void after() { flush(); }\n'}
+
+
+def test_exception_wrappers_keep_whole_body_and_tail_call_scope(tmp_path):
+    files = exception_fixture()
+    for name, source in files.items():
+        (tmp_path/name).write_text(source, encoding='utf-8', newline='')
+    indexed = cpp_analysis(tmp_path, files, 'v', syntax_only=True)
+    sink = next(entity for entity in indexed.entities if entity.name == 'sink')
+    assert (sink.location.start_line, sink.location.end_line) == (3, 11)
+    calls = [call for call in indexed.calls if call.caller_scope_id == sink.scope_id]
+    assert {call.expression for call in calls} >= {'output', 'source_loc', 'should_flush', 'flush'}
+    tail = next(call for call in calls if call.expression == 'flush')
+    assert tail.location.start_line == 10 and tail.resolution != 'confirmed'
+    assert not any(call.expression == 'report' for call in calls)
+    after = next(entity for entity in indexed.entities if entity.name == 'after')
+    assert all(call.caller_scope_id == after.scope_id for call in indexed.calls if call.location.start_line == 12)
+    assert files == {name:(tmp_path/name).read_text(encoding='utf-8') for name in files}
+    scope = next(scope for scope in indexed.scopes if scope.id == sink.scope_id)
+    assert scope.location == sink.location
+
+
+def test_unsupported_or_undefined_exception_macro_is_not_recovered():
+    for source in [
+        '#define WRAP_TRY do\n#define WRAP_CATCH(x) catch (...) { report(x); } trailing()\n',
+        '#define WRAP_TRY try\n#undef WRAP_TRY\n#define WRAP_CATCH(x) catch (...) {}\n#undef WRAP_CATCH\n',
+        '#define WRAP_TRY try\n#define WRAP_TRY(x) catch (...) {}\n',
+    ]:
+        assert exception_wrappers({'owned.hpp':source}) == (set(),set())
+
+
+def test_exception_recovery_preserves_literal_directive_and_argument_bytes():
+    files = exception_fixture()
+    source = files['owned.cpp'] + 'const char *s = R"tag(WRAP_TRY {\n WRAP_CATCH(test())\n )tag";\n'
+    raw = source.encode()
+    parser = Parser(Language(tree_sitter_cpp.language()))
+    recovered, changed, _ = recover_parse(parser, parser.parse(raw), raw,
+        recovery_macros(files), exception_wrappers(files))
+    assert changed
+    assert not recovered.root_node.has_error
+    # 调用标识与实参不被掩掉；因此内层调用仍具有自己的源码位置。
+    pending = [recovered.root_node]
+    calls, literals = [], []
+    while pending:
+        node = pending.pop()
+        if node.type == 'call_expression':
+            calls.append(raw[node.start_byte:node.end_byte])
+        if node.type == 'raw_string_literal':
+            literals.append(raw[node.start_byte:node.end_byte])
+        pending.extend(node.named_children)
+    assert b'WRAP_CATCH(source_loc())' in calls and b'source_loc()' in calls
+    assert literals == [b'R"tag(WRAP_TRY {\n WRAP_CATCH(test())\n )tag"']

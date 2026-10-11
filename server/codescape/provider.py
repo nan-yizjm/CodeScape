@@ -28,7 +28,7 @@ from .validation import SourceContractError
 MAX_CONTEXT_CHARS = 180_000
 BATCH_TARGET_CHARS = 150_000
 BATCH_MAX_ENTITIES = 12
-PIPELINE_VERSION = "architecture/2-explanations/1-reads/1-judgments/1-dependencies/1-cpp-config/7-interfaces/1-facts/1-index/2-ts-bindings/2-python-declarations/1"
+PIPELINE_VERSION = "architecture/2-explanations/1-reads/1-judgments/1-dependencies/1-cpp-config/8-interfaces/1-facts/1-index/2-ts-bindings/2-python-declarations/1"
 ProgressCallback = Callable[[int, int, str], Awaitable[None]]
 BatchCallback = Callable[[int, int, Architecture], Awaitable[None]]
 
@@ -699,6 +699,8 @@ class Provider:
             "区分从输入读取的值和硬编码常量，不能将固定深度说成从输入读取；区分返回配置字典和返回校验布尔值。"
             "描述条件分支时保留影响行为的联合前提，包括可空参数检查、零值关闭配置与短路求值；"
             "受非空检查保护的解引用或写入不能描述成无条件操作。篇幅不足时概述该分支，不省掉关键保护条件。"
+            "配置名称含 SKIP/DISABLE 等否定词时，核对函数实际返回分支及调用方用途；"
+            "不能把返回 True 一律说成跳过/禁用，也不能只凭配置变量名判断开关方向。"
             "同一模块中的相似包装函数也要逐个核对参数和分支：显式覆盖参数与原样透传、正向与反向、"
             "同步与异步、抛异常与返回失败值不可混为一谈；某一个变体设置的常量不能外推到所有变体。"
             "模块 summary 先概括共同职责，再用简短语句说明会改变行为的差异；证据不足时保留差异未知。"

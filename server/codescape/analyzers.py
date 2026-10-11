@@ -11,7 +11,7 @@ from functools import lru_cache
 from pathlib import Path
 
 from .cpp_environment import compiler_configurations, snapshot_overlay, trusted_headers, verify_includes
-from .cpp_syntax import recover_parse, recovery_macros
+from .cpp_syntax import exception_wrappers, recover_parse, recovery_macros
 from .models import Analysis, Call, Diagnostic, Entity, Location, Scope
 from .runtime import executable, resource_root
 
@@ -350,7 +350,7 @@ def _cpp_analysis(root, files, version, source_root, header_directories, header_
     from clang import cindex
     from tree_sitter import Language, Parser
 
-    result = Analysis(tools={"cpp": "tree-sitter/0.25.2 + libclang/18.1.1 + snapshot-config/7"})
+    result = Analysis(tools={"cpp": "tree-sitter/0.25.2 + libclang/18.1.1 + snapshot-config/8"})
     if syntax_only:
         result.tools['cpp'] += ' + syntax-fallback/1'
     if not any(Path(path).suffix in {".c", ".h", ".cc", ".cpp", ".cxx", ".hpp", ".hh"} for path in files):
@@ -377,6 +377,7 @@ def _cpp_analysis(root, files, version, source_root, header_directories, header_
         cindex.CursorKind.FUNCTION_TEMPLATE,
     }
     syntax_macros = recovery_macros(files)
+    syntax_exceptions = exception_wrappers(files)
     for path, text in files.items():
         if Path(path).suffix not in {".c", ".h", ".cc", ".cpp", ".cxx", ".hpp", ".hh"}:
             continue
@@ -387,10 +388,10 @@ def _cpp_analysis(root, files, version, source_root, header_directories, header_
         original_parsed = parsed
         recovered = namespace_recovered = False
         if language == 'cpp':
-            parsed, recovered, namespace_recovered = recover_parse(parser, parsed, source_bytes, syntax_macros)
+            parsed, recovered, namespace_recovered = recover_parse(parser, parsed, source_bytes, syntax_macros, syntax_exceptions)
         if recovered:
             result.diagnostics.append(Diagnostic(category='syntax_recovery', path=path,
-                message='仅在内存语法视图忽略已知导出注解和命名空间包装宏以恢复声明；'
+                message='仅在内存语法视图恢复已提供的导出注解、命名空间和异常包装宏的声明/块边界；'
                         '源码位置与原字节不变，宏命名空间名称待原生定义确认，不以此证明调用绑定。'))
         module_scope = stable_id(version, path, "module")
         result.scopes.append(Scope(id=module_scope, kind="module", name=path,
