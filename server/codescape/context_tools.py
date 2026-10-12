@@ -104,7 +104,10 @@ def validate_explanations(architecture, analysis, expected, files, ranges):
         own_evidence = False
         for ref in note.evidence:
             lines = files.get(ref.path, "").splitlines()
-            if (ref.end_line > len(lines) or ref.end_line - ref.start_line >= 200
+            if ref.end_line - ref.start_line >= 200:
+                raise SourceContractError("单条讲解源码引用最多200行，请拆为多个已提供范围内的引用", entity.id,
+                    (entity.location.start_line, entity.location.end_line), ranges.get(entity.location.path, []))
+            if (ref.end_line > len(lines)
                     or not any(start <= ref.start_line <= ref.end_line <= end for start, end in ranges.get(ref.path, []))):
                 raise SourceContractError("讲解引用未提供的源码位置", entity.id,
                     (entity.location.start_line, entity.location.end_line), ranges.get(entity.location.path, []))

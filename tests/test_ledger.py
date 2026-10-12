@@ -246,6 +246,37 @@ def test_repair_feedback_identifies_contract_fields_without_echoing_inputs(tmp_p
     database.engine.dispose()
 
 
+def test_length_repair_reports_contract_limit_without_returning_input(tmp_path, monkeypatch):
+    from codescape.models import FunctionExplanation
+    calls = []
+    marker = 'private-long-explanation'
+    def handler(request):
+        payload = json.loads(request.content)
+        calls.append(payload)
+        value = {'entity_id': 'owned', 'summary': '说明主要职责。',
+                 'details': marker + 'x' * (1201 - len(marker)) if len(calls) == 1 else '保留主要流程与关键条件。',
+                 'evidence': [{'path': 'owned.py', 'start_line': 1, 'end_line': 2}]}
+        return httpx.Response(200, json=document(json.dumps(value), {'total_tokens': 5}))
+    database, provider, _ = configured(tmp_path, monkeypatch, handler)
+    result, usage = asyncio.run(provider.structured('schema', 'context', FunctionExplanation.model_validate))
+    assert result.details == '保留主要流程与关键条件。' and usage['total_tokens'] == 10 and len(calls) == 2
+    feedback = calls[1]['messages'][0]['content']
+    assert '最多1200个字符' in feedback and '保留关键条件' in feedback
+    assert marker not in feedback and marker not in (tmp_path / 'validation-errors.jsonl').read_text(encoding='utf-8')
+    database.engine.dispose()
+
+
+def test_length_feedback_ignores_arbitrary_error_context():
+    from codescape.provider import validation_feedback
+    from pydantic import ValidationError
+    error = ValidationError.from_exception_data('固定契约', [{'type': 'string_too_long',
+        'loc': ('explanations', 0, 'details'), 'input': 'private-input',
+        'ctx': {'max_length': 1200, 'private-context': 'private-context-value'}}])
+    feedback = validation_feedback(error)
+    assert '最多1200个字符' in feedback
+    assert 'private' not in feedback
+
+
 def test_source_feedback_contains_only_trusted_ids_and_numeric_ranges():
     from codescape.provider import validation_feedback
     from codescape.validation import SourceContractError

@@ -5,7 +5,7 @@ import hashlib
 import json
 import sqlite3
 from collections import Counter
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 from codescape.models import Analysis
@@ -36,6 +36,7 @@ def read_database(document):
 def main():
     destination = reports / '公开工程真实评测进度.json'
     summary = json.loads(destination.read_text(encoding='utf-8'))
+    summary['日期'] = (datetime.now(UTC) + timedelta(hours=8)).date().isoformat()
     summary['汇总时间UTC'] = datetime.now(UTC).isoformat()
     receipts = {}
     documents = {}

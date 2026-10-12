@@ -28,7 +28,7 @@ from .validation import SourceContractError
 MAX_CONTEXT_CHARS = 180_000
 BATCH_TARGET_CHARS = 150_000
 BATCH_MAX_ENTITIES = 12
-PIPELINE_VERSION = "architecture/3-explanations/3-reads/1-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/2-index/3-ts-bindings/2-python-declarations/1"
+PIPELINE_VERSION = "architecture/3-repairs/1-explanations/3-reads/1-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/2-index/3-ts-bindings/2-python-declarations/1"
 ProgressCallback = Callable[[int, int, str], Awaitable[None]]
 BatchCallback = Callable[[int, int, Architecture], Awaitable[None]]
 
@@ -36,6 +36,7 @@ SAFE_VALIDATION_MESSAGES = {
     "缺少项目概览", "补读参数错误", "补读超出当前授权快照", "补读范围超过保护上限", "补读片段超过保护上限",
     "实体不属于当前快照", "调用不属于当前确认集", "诊断补读不接受外部标识", "补读总量超过保护上限",
     "函数讲解引用错误", "讲解引用未提供的源码位置", "函数讲解缺少实现自身的依据", "重复补读没有新增依据",
+    "单条讲解源码引用最多200行，请拆为多个已提供范围内的引用",
     "架构至少需要一个真实模块。", "模块 ID 重复。", "讲解实体不唯一或不属于当前范围。",
     "讲解源码依据超出当前范围。", "模块缺少名称或职责。", "模块缺少有效源码依据。", "父模块不能直接拥有函数。",
     "模块源码依据没有覆盖所归属的函数。", "模块层级包含环或无效父节点。", "函数归属不唯一或与真实实体不一致。",
@@ -58,13 +59,19 @@ SAFE_VALIDATION_FIELDS = {
 
 
 def validation_feedback(error: ValueError) -> str:
-    """Return trusted contract diagnostics only, excluding inputs, arbitrary keys and error context."""
+    """仅返回契约位置、错误类型和可信数值上限，不回显输入或任意上下文。"""
     if isinstance(error, ValidationError):
         problems = []
-        for item in error.errors(include_input=False, include_url=False, include_context=False)[:8]:
+        for item in error.errors(include_input=False, include_url=False)[:8]:
             location = '.'.join(str(part) if isinstance(part, int) or part in SAFE_VALIDATION_FIELDS
                                 else '未知字段' for part in item['loc'])
-            problems.append(f"{location}: {item['type']}")
+            problem = f"{location}: {item['type']}"
+            if item['type'] in {'string_too_long', 'too_long'}:
+                maximum = item.get('ctx', {}).get('max_length')
+                if type(maximum) is int and 0 < maximum <= 1_000_000:
+                    unit = '个字符（英文代码与标点也计入）' if item['type'] == 'string_too_long' else '项'
+                    problem += f'，最多{maximum}{unit}，请压缩到上限以内并保留关键条件'
+            problems.append(problem)
         return "字段校验失败：" + '；'.join(problems)
     message = str(error)
     if message not in SAFE_VALIDATION_MESSAGES:

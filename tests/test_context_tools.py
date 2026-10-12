@@ -58,6 +58,26 @@ def test_explanation_own_implementation_and_supplied_ranges_are_required():
         validate_explanations(result, analysis, {entity.id}, files, {"b.py": [(1, 2)]})
 
 
+def test_long_function_evidence_reports_span_limit_and_accepts_split_references():
+    from codescape.provider import validation_feedback
+    files = {'owned.py': 'def large():\n' + '    value = 1\n' * 410 + '    return value\n'}
+    analysis = python_analysis(files, 'v')
+    entity = next(item for item in analysis.entities if item.visible)
+    result = architecture(analysis)
+    note = FunctionExplanation(entity_id=entity.id, summary='返回赋值结果。', details='重复赋值后返回结果。',
+        evidence=[{'path': 'owned.py', 'start_line': 1, 'end_line': 412}])
+    result.explanations = [note]
+    with pytest.raises(ValueError, match='最多200行') as error:
+        validate_explanations(result, analysis, {entity.id}, files, {'owned.py': [(1, 412)]})
+    assert '请拆为多个' in validation_feedback(error.value)
+    note.evidence = [type(note.evidence[0])(path='owned.py', start_line=start, end_line=end)
+                     for start, end in [(1, 200), (201, 400), (401, 412)]]
+    validate_explanations(result, analysis, {entity.id}, files, {'owned.py': [(1, 412)]})
+    note.evidence[0].end_line = 201
+    with pytest.raises(ValueError, match='最多200行'):
+        validate_explanations(result, analysis, {entity.id}, files, {'owned.py': [(1, 412)]})
+
+
 def test_supplemental_read_and_final_explanation_share_ledger_budget(tmp_path, monkeypatch):
     files, analysis = fixture()
     result = architecture(analysis)
