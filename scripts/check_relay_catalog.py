@@ -1,4 +1,5 @@
 """只读核对既定中转站模型目录；不发起生成、不发送源码、不输出响应正文。"""
+import argparse
 import asyncio
 import json
 import os
@@ -10,11 +11,11 @@ from codescape.provider import Provider
 from codescape.streaming import StreamContractError, read_json_response
 
 
-async def main():
+async def main(expected_model):
     repository = Path(__file__).resolve().parents[1]
     provider = Provider(Path(os.environ['LOCALAPPDATA']) / 'CodeScape')
     settings = provider.settings()
-    assert settings['base_url'] == 'https://www.cctq.ai/v1' and settings['model'] == 'gpt-6-luna'
+    assert settings['base_url'] == 'https://www.cctq.ai/v1' and settings['model'] == expected_model
     record = {'日期': datetime.now().date().isoformat(), '核对时间UTC': datetime.now(UTC).isoformat(),
         '接收端': settings['base_url'], '模型': settings['model'], '接口': '/models', '方法': 'GET',
         '源码发送': False, '模型生成请求数': 0, 'HTTP状态': None, '目录包含指定模型': None,
@@ -47,4 +48,6 @@ async def main():
 
 
 if __name__ == '__main__':
-    asyncio.run(main())
+    parser = argparse.ArgumentParser(description='只读核对明确指定的模型是否出现在目录中')
+    parser.add_argument('--model', required=True, help='已授权接收端的准确模型ID')
+    asyncio.run(main(parser.parse_args().model))

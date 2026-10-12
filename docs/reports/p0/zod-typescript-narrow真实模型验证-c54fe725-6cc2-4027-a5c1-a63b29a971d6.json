@@ -1,0 +1,75 @@
+{
+  "日期": "2026-10-12",
+  "检查开始时间UTC": "2026-10-12T09:26:25.621929+00:00",
+  "样本": "zod-typescript",
+  "Commit": "0b216ef674e297ebe41d8bf902262e56f8755822",
+  "范围": "缩小范围",
+  "授权": "用户允许四个固定公开样本向当前配置接收端上传并评测",
+  "接收端": "https://www.cctq.ai/v1",
+  "模型": "gpt-6-luna",
+  "流式接收": true,
+  "流水线": "architecture/5-repairs/4-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
+  "数据目录": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\.runtime\\public-model-validation\\14a46030-6f86-40cb-a18a-d23d82c1bc56",
+  "原始快照hash": "c179e795ed4cac054e4cc4ff09bfd53aeca57c44706f8eba1969db3400a39955",
+  "实际文件": [
+    "packages/zod/src/v4/core/parse.ts"
+  ],
+  "状态": "分析暂停",
+  "执行目标代码": false,
+  "实施代码起始sha256": "196e6e500ce8bcb879fb1dffab61055d29f229143aaf229439a8643992f049f8",
+  "开发评测截止秒数": 180,
+  "进度": {
+    "phase": "paused",
+    "completed": 0,
+    "total": 1,
+    "detail": "AI 服务在流式响应中返回错误，未发布部分结果；检查点已保留，请检查服务后主动恢复。"
+  },
+  "耗时秒": 10.31,
+  "project_id": "8cda4956-9fca-4286-8d0a-28fdbfd2e8e0",
+  "version_id": "2239bb3f-81ce-47c1-bb3b-7e2bfb2a6a20",
+  "实际快照hash": "eeeb84dfaee5bbbfc76dc5b618580c16108bc4804202bed4aedd1f8b6bc242c3",
+  "scope_hash": "64d8fef1eca2d21c0868fb5cb2988d0e4d169bafe184ba5bc3727938f0682e93",
+  "错误": "AI 服务在流式响应中返回错误，未发布部分结果；检查点已保留，请检查服务后主动恢复。",
+  "architecture": null,
+  "原快照字节未变": true,
+  "请求账本": [
+    {
+      "id": "d318357d-67e6-4356-853b-ffa81e11f6e4",
+      "project_id": "8cda4956-9fca-4286-8d0a-28fdbfd2e8e0",
+      "version_id": "2239bb3f-81ce-47c1-bb3b-7e2bfb2a6a20",
+      "job_id": "36938854-8982-4496-a203-cb1daedf4dbb",
+      "unit_id": "d07391be-56f8-474f-86cc-c296edc238d1",
+      "attempt": 1,
+      "phase": "architecture",
+      "recipient": "https://www.cctq.ai/v1",
+      "model": "gpt-6-luna",
+      "status": "failed",
+      "created_at": "2026-10-12T09:26:28.483470+00:00",
+      "sent_at": "2026-10-12T09:26:28.525019+00:00",
+      "finished_at": "2026-10-12T09:26:35.461243+00:00",
+      "payload_hash": "f7803a81d998a55920284675dce2049f98fc6bfa75af5970556ff40a4c7d2716",
+      "source_chars": 12572,
+      "usage": null,
+      "cost": null,
+      "currency": null,
+      "price_snapshot": null,
+      "http_status": 200,
+      "error_code": "INVALID_STREAM_ERROR_EVENT"
+    }
+  ],
+  "请求状态": {
+    "failed": 1
+  },
+  "已知total_tokens": 0,
+  "未知用量请求": 1,
+  "费用": null,
+  "脱敏校验记录": [],
+  "边界": "真实配置接口，固定响应与质量复核分开；尚未代表用户验收；价格未知不记零费用。",
+  "实施代码结束sha256": "196e6e500ce8bcb879fb1dffab61055d29f229143aaf229439a8643992f049f8",
+  "评测期间实施代码一致": true,
+  "静态索引制品": {
+    "path": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\.runtime\\public-model-validation\\14a46030-6f86-40cb-a18a-d23d82c1bc56\\validation-artifacts\\e093bf101e2bb2c517f99ee2dcf14d4601969bfd5416601a6cd73afba3b56587.json",
+    "sha256": "e093bf101e2bb2c517f99ee2dcf14d4601969bfd5416601a6cd73afba3b56587",
+    "bytes": 82626
+  }
+}

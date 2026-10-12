@@ -1,163 +1,46 @@
 {
-  "核对时间UTC": "2026-10-12T09:28:52.504291+00:00",
+  "核对时间UTC": "2026-10-12T15:06:07.705531+00:00",
   "执行目标代码": false,
   "模型请求": 0,
   "样本": {
     "hiredis-c": {
       "完整状态": "分析暂停",
-      "缩小范围状态": "结构检查通过，待源码质量复核",
+      "缩小范围状态": "分析暂停",
       "报告": {
-        "hiredis-c-full真实模型验证.json": "83afaa8b725c5483dfb31e0a7af001681abbbbd163fc73e480a301b4eb6100ce",
-        "hiredis-c-narrow真实模型验证.json": "9786f62381821d1593750bc40fb5efa2c4018b6e8f5b60efe672d2cfeccf0298"
+        "hiredis-c-full真实模型验证.json": "d81fdc883502799dea70ff2ebac95c6e8d1f31338741f50bdf2ca2dff3a1252f",
+        "hiredis-c-narrow真实模型验证.json": "9dae25b783c6d18f09a67caf8be84fe5953f42d84efc9193a50adb376affd9fb"
       },
-      "完整流水线": "architecture/4-repairs/3-explanations/3-reads/2-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
-      "缩小范围流水线": "architecture/3-repairs/2-explanations/3-reads/2-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/2-index/3-ts-bindings/2-python-declarations/1",
+      "完整流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
+      "缩小范围流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
       "完整接收端与模型": {
         "base_url": "https://www.cctq.ai/v1",
-        "model": "gpt-6-luna"
+        "model": "gpt-6.1-sol"
       },
       "缩小范围接收端与模型": {
         "base_url": "https://www.cctq.ai/v1",
-        "model": "gpt-6-luna"
+        "model": "gpt-6.1-sol"
       },
       "同一接收端与模型": true,
-      "同一模型流水线": false,
+      "同一模型流水线": true,
       "语义质量结论": "待源码逐项复核，不能由本脚本自动判定。",
-      "缩小范围讲解覆盖": {
-        "可见函数": 18,
-        "有讲解": 18,
-        "缺失函数": []
-      },
-      "缩小范围抽查材料": [
-        {
-          "函数": "redisReaderFeed",
-          "位置": {
-            "path": "read.c",
-            "start_line": 789,
-            "end_line": 818,
-            "start_byte": 24832,
-            "end_byte": 25615
-          },
-          "源码": "int redisReaderFeed(redisReader *r, const char *buf, size_t len) {\n    sds newbuf;\n\n    /* Return early when this reader is in an erroneous state. */\n    if (r->err)\n        return REDIS_ERR;\n\n    /* Copy the provided buffer. */\n    if (buf != NULL && len >= 1) {\n        /* Destroy internal buffer when it is empty and is quite large. */\n        if (r->len == 0 && r->maxbuf != 0 && sdsavail(r->buf) > r->maxbuf) {\n            sdsfree(r->buf);\n            r->buf = sdsempty();\n            if (r->buf == 0) goto oom;\n\n            r->pos = 0;\n        }\n\n        newbuf = sdscatlen(r->buf,buf,len);\n        if (newbuf == NULL) goto oom;\n\n        r->buf = newbuf;\n        r->len = sdslen(r->buf);\n    }\n\n    return REDIS_OK;\noom:\n    __redisReaderSetErrorOOM(r);\n    return REDIS_ERR;\n}",
-          "实际讲解": {
-            "entity_id": "7728ee2d-e431-5b6b-b076-8a2ce11cc706",
-            "summary": "将输入字节追加到读取器缓冲区",
-            "details": "读取器已处于错误状态时直接返回 REDIS_ERR。仅在 buf 非空且 len 至少为 1 时追加输入；空闲缓冲超过 maxbuf 且 maxbuf 非零时先重建缓冲。追加或重建失败设置 OOM 错误并返回 REDIS_ERR。",
-            "evidence": [
-              {
-                "path": "read.c",
-                "start_line": 789,
-                "end_line": 806
-              },
-              {
-                "path": "read.c",
-                "start_line": 807,
-                "end_line": 818
-              }
-            ]
-          },
-          "讲解状态": "有实际讲解，待源码复核",
-          "实际模块": [
-            {
-              "name": "读取器生命周期与流式接口",
-              "summary": "管理读取器分配、释放、输入缓冲和增量取回复流程；错误状态会阻止后续处理。",
-              "incomplete": false
-            }
-          ]
-        },
-        {
-          "函数": "redisReaderGetReply",
-          "位置": {
-            "path": "read.c",
-            "start_line": 820,
-            "end_line": 871,
-            "start_byte": 25617,
-            "end_byte": 27093
-          },
-          "源码": "int redisReaderGetReply(redisReader *r, void **reply) {\n    /* Default target pointer to NULL. */\n    if (reply != NULL)\n        *reply = NULL;\n\n    /* Return early when this reader is in an erroneous state. */\n    if (r->err)\n        return REDIS_ERR;\n\n    /* When the buffer is empty, there will never be a reply. */\n    if (r->len == 0)\n        return REDIS_OK;\n\n    /* Set first item to process when the stack is empty. */\n    if (r->ridx == -1) {\n        r->task[0]->type = -1;\n        r->task[0]->elements = -1;\n        r->task[0]->idx = -1;\n        r->task[0]->obj = NULL;\n        r->task[0]->parent = NULL;\n        r->task[0]->privdata = r->privdata;\n        r->ridx = 0;\n    }\n\n    /* Process items in reply. */\n    while (r->ridx >= 0)\n        if (processItem(r) != REDIS_OK)\n            break;\n\n    /* Return ASAP when an error occurred. */\n    if (r->err)\n        return REDIS_ERR;\n\n    /* Discard part of the buffer when we've consumed at least 1k, to avoid\n     * doing unnecessary calls to memmove() in sds.c. */\n    if (r->pos >= 1024) {\n        if (sdsrange(r->buf,r->pos,-1) < 0) return REDIS_ERR;\n        r->pos = 0;\n        r->len = sdslen(r->buf);\n    }\n\n    /* Emit a reply when there is one. */\n    if (r->ridx == -1) {\n        if (reply != NULL) {\n            *reply = r->reply;\n        } else if (r->reply != NULL && r->fn && r->fn->freeObject) {\n            r->fn->freeObject(r->reply);\n        }\n        r->reply = NULL;\n    }\n    return REDIS_OK;\n}",
-          "实际讲解": {
-            "entity_id": "d6cc140e-86f6-5eed-b8df-202a896b9cde",
-            "summary": "驱动增量解析并交付完整回复",
-            "details": "先将非空输出指针置 NULL；错误状态直接失败，空缓冲返回成功但无回复。初始化根任务后循环处理，错误时返回 REDIS_ERR；消费位置至少 1024 时压缩缓冲。任务栈完成后交付 reply，若输出指针为空则通过 freeObject 释放。",
-            "evidence": [
-              {
-                "path": "read.c",
-                "start_line": 820,
-                "end_line": 846
-              },
-              {
-                "path": "read.c",
-                "start_line": 847,
-                "end_line": 866
-              },
-              {
-                "path": "read.c",
-                "start_line": 867,
-                "end_line": 871
-              }
-            ]
-          },
-          "讲解状态": "有实际讲解，待源码复核",
-          "实际模块": [
-            {
-              "name": "读取器生命周期与流式接口",
-              "summary": "管理读取器分配、释放、输入缓冲和增量取回复流程；错误状态会阻止后续处理。",
-              "incomplete": false
-            }
-          ]
-        }
-      ],
-      "缩小范围模块摘要": [
-        {
-          "name": "读取错误与协议诊断",
-          "summary": "统一清理读取状态并格式化协议错误；不同入口分别处理通用、字节和内存错误。",
-          "incomplete": false
-        },
-        {
-          "name": "输入缓冲与基础解析",
-          "summary": "从输入缓冲读取字节和行，定位换行并严格转换有界整数。",
-          "incomplete": false
-        },
-        {
-          "name": "RESP项目处理与任务栈",
-          "summary": "按任务类型解析行式和批量项目，创建回复对象并推进嵌套任务；栈不足时扩容。",
-          "incomplete": false
-        },
-        {
-          "name": "协议项解析与嵌套任务调度",
-          "summary": "解析协议类型并构造普通、批量及嵌套聚合回复，执行深度、元素数和内存失败保护。",
-          "incomplete": false
-        },
-        {
-          "name": "读取器生命周期与流式接口",
-          "summary": "管理读取器分配、释放、输入缓冲和增量取回复流程；错误状态会阻止后续处理。",
-          "incomplete": false
-        },
-        {
-          "name": "读取器公共契约与限制配置",
-          "summary": "声明读取器、任务和回复对象回调接口，并定义默认缓冲、元素数与嵌套深度限制。",
-          "incomplete": false
-        }
-      ],
-      "缩小范围未完成模块": 0,
       "范围对照限制": "需两份均已发布且使用同一接收端、模型及流水线，才能生成本轮范围对照；局部材料单独保留。"
     },
     "flask-python": {
       "完整状态": "分析暂停",
       "缩小范围状态": "结构检查通过，待源码质量复核",
       "报告": {
-        "flask-python-full真实模型验证.json": "6d9be10adb4fd0371d6f3494eeedbefdfc4dbcd5e5a3a1194da60610ae17304b",
-        "flask-python-narrow真实模型验证.json": "5827f515cd932769a5a70a733b318ee0a6b8f1fdba4698d9da7747493a74da9c"
+        "flask-python-full真实模型验证.json": "511a0d321a83346bb08d662b7791dcf487234a7109a6e030f8e864f33010ce9f",
+        "flask-python-narrow真实模型验证.json": "0987f3fa797d61ce226cf3915d31b9bb829b0a8aeaf073449a5cfb55034db844"
       },
-      "完整流水线": "architecture/4-repairs/2-explanations/3-reads/2-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
-      "缩小范围流水线": "architecture/4-repairs/2-explanations/3-reads/2-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
+      "完整流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
+      "缩小范围流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
       "完整接收端与模型": {
         "base_url": "https://www.cctq.ai/v1",
-        "model": "gpt-6-luna"
+        "model": "gpt-6.1-sol"
       },
       "缩小范围接收端与模型": {
         "base_url": "https://www.cctq.ai/v1",
-        "model": "gpt-6-luna"
+        "model": "gpt-6.1-sol"
       },
       "同一接收端与模型": true,
       "同一模型流水线": true,
@@ -179,9 +62,9 @@
           },
           "源码": "def get_load_dotenv(default: bool = True) -> bool:\n    \"\"\"Get whether the user has disabled loading default dotenv files by\n    setting :envvar:`FLASK_SKIP_DOTENV`. The default is ``True``, load\n    the files.\n\n    :param default: What to return if the env var isn't set.\n    \"\"\"\n    val = os.environ.get(\"FLASK_SKIP_DOTENV\")\n\n    if not val:\n        return default\n\n    return val.lower() in (\"0\", \"false\", \"no\")",
           "实际讲解": {
-            "entity_id": "c20bc33a-81d6-5611-bfed-c32f788531c2",
-            "summary": "解析 FLASK_SKIP_DOTENV 并决定是否加载 dotenv。",
-            "details": "函数读取 FLASK_SKIP_DOTENV。读取结果为假值时直接返回 default，省略参数时 default 为 True；非假值时返回 val.lower() 是否属于“0”“false”“no”。也就是说这些值表示不跳过加载，其他非空值表示跳过。函数只处理显式分支，不包装环境读取或字符串操作异常。",
+            "entity_id": "ab06c135-cc70-5f6a-b7d7-85f95acc249f",
+            "summary": "决定是否加载默认 dotenv 文件。",
+            "details": "读取 FLASK_SKIP_DOTENV。若读取结果是假值，直接返回 default；default 默认是 True。若为非假值，则仅当其忽略大小写后为“0”“false”“no”时返回 True，否则返回 False。因此变量名称表示跳过开关，但返回值实际表示是否加载 dotenv，且读取异常不会被本函数捕获。",
             "evidence": [
               {
                 "path": "src/flask/helpers.py",
@@ -193,7 +76,7 @@
           "讲解状态": "有实际讲解，待源码复核",
           "实际模块": [
             {
-              "name": "运行配置读取",
+              "name": "配置标志读取",
               "summary": "读取环境变量并解析调试与 dotenv 开关。",
               "incomplete": false
             }
@@ -210,9 +93,9 @@
           },
           "源码": "def _prepare_send_file_kwargs(**kwargs: t.Any) -> dict[str, t.Any]:\n    ctx = app_ctx._get_current_object()\n\n    if kwargs.get(\"max_age\") is None:\n        kwargs[\"max_age\"] = ctx.app.get_send_file_max_age\n\n    kwargs.update(\n        environ=ctx.request.environ,\n        use_x_sendfile=ctx.app.config[\"USE_X_SENDFILE\"],\n        response_class=ctx.app.response_class,\n        _root_path=ctx.app.root_path,\n    )\n    return kwargs",
           "实际讲解": {
-            "entity_id": "f0a9ffbd-0eb8-5792-9b99-768557d850c0",
-            "summary": "补齐发送文件所需的 Flask 请求和应用参数。",
-            "details": "函数取得当前应用上下文对象；当 kwargs.get(\"max_age\") 严格为 None 时，使用 ctx.app.get_send_file_max_age 作为默认策略。随后统一写入当前请求 environ、USE_X_SENDFILE 配置、应用响应类和 root_path，并返回更新后的字典。已提供的 max_age 即使为 0 也不会被默认值覆盖；上下文缺失、配置缺失或默认策略调用异常均直接传播。",
+            "entity_id": "57adf214-f1a0-572a-b760-fba22bae7ab8",
+            "summary": "补齐文件发送所需的 Flask 参数。",
+            "details": "取得当前应用上下文对象；当 kwargs 中 max_age 严格为 None 时，用 ctx.app.get_send_file_max_age 替换。随后无条件注入当前请求 environ、USE_X_SENDFILE 配置、应用 response_class 和 root_path，最后返回更新后的字典。空字符串、零值或其他非 None 的 max_age 不会触发默认策略。",
             "evidence": [
               {
                 "path": "src/flask/helpers.py",
@@ -224,8 +107,8 @@
           "讲解状态": "有实际讲解，待源码复核",
           "实际模块": [
             {
-              "name": "文件传输辅助",
-              "summary": "补充 Flask 请求配置并委托 Werkzeug 发送文件。",
+              "name": "文件响应服务",
+              "summary": "注入 Flask 请求配置并委托 Werkzeug 发送文件。",
               "incomplete": false
             }
           ]
@@ -241,22 +124,27 @@
           },
           "源码": "def send_file(\n    path_or_file: os.PathLike[t.AnyStr] | str | t.IO[bytes],\n    mimetype: str | None = None,\n    as_attachment: bool = False,\n    download_name: str | None = None,\n    conditional: bool = True,\n    etag: bool | str = True,\n    last_modified: datetime | int | float | None = None,\n    max_age: None | (int | t.Callable[[str | None], int | None]) = None,\n) -> Response:\n    \"\"\"Send the contents of a file to the client.\n\n    The first argument can be a file path or a file-like object. Paths\n    are preferred in most cases because Werkzeug can manage the file and\n    get extra information from the path. Passing a file-like object\n    requires that the file is opened in binary mode, and is mostly\n    useful when building a file in memory with :class:`io.BytesIO`.\n\n    Never pass file paths provided by a user. The path is assumed to be\n    trusted, so a user could craft a path to access a file you didn't\n    intend. Use :func:`send_from_directory` to safely serve\n    user-requested paths from within a directory.\n\n    If the WSGI server sets a ``file_wrapper`` in ``environ``, it is\n    used, otherwise Werkzeug's built-in wrapper is used. Alternatively,\n    if the HTTP server supports ``X-Sendfile``, configuring Flask with\n    ``USE_X_SENDFILE = True`` will tell the server to send the given\n    path, which is much more efficient than reading it in Python.\n\n    :param path_or_file: The path to the file to send, relative to the\n        current working directory if a relative path is given.\n        Alternatively, a file-like object opened in binary mode; make\n        sure to call ``seek(0)`` if it was already read.\n    :param mimetype: The MIME type to send for the file. If not\n        provided, it will try to detect it from the file name.\n    :param as_attachment: Indicate to a browser that it should offer to\n        save the file instead of displaying it.\n    :param download_name: The default name browsers will use when saving\n        the file. Defaults to the passed file name.\n    :param conditional: Enable conditional and range responses based on\n        request headers. Requires passing a file path and ``environ``.\n    :param etag: Calculate an ETag for the file, which requires passing\n        a file path. Can also be a string to use instead.\n    :param last_modified: The last modified time to send for the file,\n        in seconds. If not provided, it will try to detect it from the\n        file path.\n    :param max_age: How long the client should cache the file, in\n        seconds. If set, ``Cache-Control`` will be ``public``, otherwise\n        it will be ``no-cache`` to prefer conditional caching.\n\n    .. versionchanged:: 2.0\n        ``download_name`` replaces the ``attachment_filename``\n        parameter. If ``as_attachment=False``, it is passed with\n        ``Content-Disposition: inline`` instead.\n\n    .. versionchanged:: 2.0\n        ``max_age`` replaces the ``cache_timeout`` parameter.\n        ``conditional`` is enabled and ``max_age`` is not set by\n        default.\n\n    .. versionchanged:: 2.0\n        ``etag`` replaces the ``add_etags`` parameter. It can be a\n        string to use instead of generating one.\n\n    .. versionchanged:: 2.0\n        Passing a file-like object that inherits from\n        :class:`~io.TextIOBase` will raise a :exc:`ValueError` rather\n        than sending an empty file.\n\n    .. versionadded:: 2.0\n        Moved the implementation to Werkzeug. This is now a wrapper to\n        pass some Flask-specific arguments.\n\n    .. versionchanged:: 1.1\n        ``filename`` may be a :class:`~os.PathLike` object.\n\n    .. versionchanged:: 1.1\n        Passing a :class:`~io.BytesIO` object supports range requests.\n\n    .. versionchanged:: 1.0.3\n        Filenames are encoded with ASCII instead of Latin-1 for broader\n        compatibility with WSGI servers.\n\n    .. versionchanged:: 1.0\n        UTF-8 filenames as specified in :rfc:`2231` are supported.\n\n    .. versionchanged:: 0.12\n        The filename is no longer automatically inferred from file\n        objects. If you want to use automatic MIME and etag support,\n        pass a filename via ``filename_or_fp`` or\n        ``attachment_filename``.\n\n    .. versionchanged:: 0.12\n        ``attachment_filename`` is preferred over ``filename`` for MIME\n        detection.\n\n    .. versionchanged:: 0.9\n        ``cache_timeout`` defaults to\n        :meth:`Flask.get_send_file_max_age`.\n\n    .. versionchanged:: 0.7\n        MIME guessing and etag support for file-like objects was\n        removed because it was unreliable. Pass a filename if you are\n        able to, otherwise attach an etag yourself.\n\n    .. versionchanged:: 0.5\n        The ``add_etags``, ``cache_timeout`` and ``conditional``\n        parameters were added. The default behavior is to add etags.\n\n    .. versionadded:: 0.2\n    \"\"\"\n    return werkzeug.utils.send_file(  # type: ignore[return-value]\n        **_prepare_send_file_kwargs(\n            path_or_file=path_or_file,\n            environ=request.environ,\n            mimetype=mimetype,\n            as_attachment=as_attachment,\n            download_name=download_name,\n            conditional=conditional,\n            etag=etag,\n            last_modified=last_modified,\n            max_age=max_age,\n        )\n    )",
           "实际讲解": {
-            "entity_id": "0f0621c5-6939-5756-a76b-5a633c25e739",
-            "summary": "准备 Flask 参数后委托 Werkzeug 发送文件。",
-            "details": "函数接受路径或二进制文件对象，以及 MIME、附件下载名、条件请求、ETag、修改时间和缓存期限等选项。它构造参数并调用 _prepare_send_file_kwargs，再将结果展开传给 werkzeug.utils.send_file；其中 request.environ 显式提供请求环境，而准备函数还会补充响应类、根路径、X-Sendfile 配置及 max_age 默认策略。文件类型、路径安全、范围请求和实际响应生成由 Werkzeug 处理；上下文缺失或下游异常直接传播。",
+            "entity_id": "f1927f2b-3bc6-52fd-b56f-1dfe24e543ae",
+            "summary": "将文件发送请求委托给 Werkzeug。",
+            "details": "接收路径或二进制文件对象以及 MIME、附件下载、名称、条件请求、ETag、修改时间和缓存参数。调用前通过 _prepare_send_file_kwargs 注入请求环境及 Flask 专属配置，并额外传入 request.environ；随后把完整参数交给 werkzeug.utils.send_file，返回其响应。文件对象模式、路径存在性、范围请求和文本流校验由 Werkzeug 处理，本函数不捕获异常。",
             "evidence": [
               {
                 "path": "src/flask/helpers.py",
                 "start_line": 417,
-                "end_line": 540
+                "end_line": 456
+              },
+              {
+                "path": "src/flask/helpers.py",
+                "start_line": 529,
+                "end_line": 539
               }
             ]
           },
           "讲解状态": "有实际讲解，待源码复核",
           "实际模块": [
             {
-              "name": "文件传输辅助",
-              "summary": "补充 Flask 请求配置并委托 Werkzeug 发送文件。",
+              "name": "文件响应服务",
+              "summary": "注入 Flask 请求配置并委托 Werkzeug 发送文件。",
               "incomplete": false
             }
           ]
@@ -272,18 +160,13 @@
           },
           "源码": "def get_root_path(import_name: str) -> str:\n    \"\"\"Find the root path of a package, or the path that contains a\n    module. If it cannot be found, returns the current working\n    directory.\n\n    Not to be confused with the value returned by :func:`find_package`.\n\n    :meta private:\n    \"\"\"\n    # Module already imported and has a file attribute. Use that first.\n    mod = sys.modules.get(import_name)\n\n    if mod is not None and hasattr(mod, \"__file__\") and mod.__file__ is not None:\n        return os.path.dirname(os.path.abspath(mod.__file__))\n\n    # Next attempt: check the loader.\n    try:\n        spec = importlib.util.find_spec(import_name)\n\n        if spec is None:\n            raise ValueError\n    except (ImportError, ValueError):\n        loader = None\n    else:\n        loader = spec.loader\n\n    # Loader does not exist or we're referring to an unloaded main\n    # module or a main module without path (interactive sessions), go\n    # with the current working directory.\n    if loader is None:\n        return os.getcwd()\n\n    if hasattr(loader, \"get_filename\"):\n        filepath = loader.get_filename(import_name)  # pyright: ignore\n    else:\n        # Fall back to imports.\n        __import__(import_name)\n        mod = sys.modules[import_name]\n        filepath = getattr(mod, \"__file__\", None)\n\n        # If we don't have a file path it might be because it is a\n        # namespace package. In this case pick the root path from the\n        # first module that is contained in the package.\n        if filepath is None:\n            raise RuntimeError(\n                \"No root path can be found for the provided module\"\n                f\" {import_name!r}. This can happen because the module\"\n                \" came from an import hook that does not provide file\"\n                \" name information or because it's a namespace package.\"\n                \" In this case the root path needs to be explicitly\"\n                \" provided.\"\n            )\n\n    # filepath is import_name.py for a module, or __init__.py for a package.\n    return os.path.dirname(os.path.abspath(filepath))  # type: ignore[no-any-return]",
           "实际讲解": {
-            "entity_id": "0c19fd45-58e0-5491-ba4c-0d2ed8bca840",
-            "summary": "按模块导入信息解析根目录，必要时回退或报错。",
-            "details": "输入为模块导入名，输出为其文件所在目录。先检查 sys.modules 中的模块：只有模块及其 __file__ 均非 None 才直接取绝对路径目录。否则查询导入规格；找不到规格会转成 ValueError 路径并按 ImportError、ValueError 捕获，令 loader 为空。loader 为空时返回当前工作目录；否则优先用 get_filename，没有该方法则导入模块并读取 __file__。后备导入分支在文件路径为 None 时抛出 RuntimeError。最终对文件路径取绝对路径目录；其他未捕获的导入或 loader 异常不会被统一吞掉。各处 is not None 只判断对象身份，不代表字符串非空或真值。",
+            "entity_id": "34986324-b32a-5019-b312-95583aa58a22",
+            "summary": "解析模块或包的根目录路径。",
+            "details": "函数先查 sys.modules：模块存在、具有 __file__ 且该属性不是 None 时，直接返回其文件绝对路径所在目录。否则通过 find_spec 查找加载规范；找不到规范，或查找抛出 ImportError/ValueError 时，将 loader 置为空并回退当前工作目录。存在 loader 时优先使用 get_filename；没有该方法则导入模块并读取 __file__。若导入后文件路径仍为 None，则明确抛出 RuntimeError，提示导入钩子或命名空间包无法推导根路径。最终对文件路径取绝对路径目录。",
             "evidence": [
               {
                 "path": "src/flask/helpers.py",
-                "start_line": 597,
-                "end_line": 608
-              },
-              {
-                "path": "src/flask/helpers.py",
-                "start_line": 616,
+                "start_line": 587,
                 "end_line": 641
               }
             ]
@@ -291,8 +174,8 @@
           "讲解状态": "有实际讲解，待源码复核",
           "实际模块": [
             {
-              "name": "文件与路径辅助",
-              "summary": "封装目录内文件发送、模块根路径定位及蓝图名称路径拆分。",
+              "name": "模块根路径解析",
+              "summary": "根据模块加载信息确定应用根目录。",
               "incomplete": false
             }
           ]
@@ -300,33 +183,48 @@
       ],
       "缩小范围模块摘要": [
         {
-          "name": "运行配置读取",
+          "name": "配置标志读取",
           "summary": "读取环境变量并解析调试与 dotenv 开关。",
           "incomplete": false
         },
         {
-          "name": "上下文与响应辅助",
-          "summary": "维持请求上下文并创建、构造和中止响应。",
+          "name": "请求上下文与响应辅助",
+          "summary": "维护流式请求上下文并构造标准响应。",
+          "incomplete": false
+        },
+        {
+          "name": "路由与 HTTP 控制",
+          "summary": "生成 URL、重定向和抛出 HTTP 异常。",
           "incomplete": false
         },
         {
           "name": "模板与消息闪现",
-          "summary": "访问模板导出对象并管理会话中的闪现消息。",
+          "summary": "访问模板导出值并管理会话闪现消息。",
           "incomplete": false
         },
         {
-          "name": "文件传输辅助",
-          "summary": "补充 Flask 请求配置并委托 Werkzeug 发送文件。",
+          "name": "文件响应服务",
+          "summary": "注入 Flask 请求配置并委托 Werkzeug 发送文件。",
           "incomplete": false
         },
         {
-          "name": "文件与路径辅助",
-          "summary": "封装目录内文件发送、模块根路径定位及蓝图名称路径拆分。",
+          "name": "安全文件发送",
+          "summary": "在目录边界内定位并发送文件。",
           "incomplete": false
         },
         {
-          "name": "错误收集上下文管理",
-          "summary": "在上下文退出时记录异常，供后续集中重新抛出。",
+          "name": "模块根路径解析",
+          "summary": "根据模块加载信息确定应用根目录。",
+          "incomplete": false
+        },
+        {
+          "name": "蓝图路径拆分",
+          "summary": "递归拆分蓝图名称及其父级名称。",
+          "incomplete": false
+        },
+        {
+          "name": "错误收集上下文",
+          "summary": "收集清理阶段异常并统一重新抛出。",
           "incomplete": false
         }
       ],
@@ -335,296 +233,174 @@
     },
     "spdlog-cpp": {
       "完整状态": "分析暂停",
-      "缩小范围状态": "结构检查通过，待源码质量复核",
+      "缩小范围状态": "分析暂停",
       "报告": {
-        "spdlog-cpp-full真实模型验证.json": "ffd6169428465d7da9e8c2a59fa657226434593fdde38fe460d251a788f9ec5b",
-        "spdlog-cpp-narrow真实模型验证.json": "268df8985417c9749f3f902a0035ce5c8fc813743c4964a68458b2fba43bd972"
+        "spdlog-cpp-full真实模型验证.json": "a3b01a7521c12a0c60ea2cfb7b41a49f1c75ac6d7e616873cca3ab16a0bdcfd9",
+        "spdlog-cpp-narrow真实模型验证.json": "bef6dd56cf2fd75c0382aa669f6d50d2f0958bfcef55beeae207a8d9072199b0"
       },
-      "完整流水线": "architecture/4-repairs/3-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
-      "缩小范围流水线": "architecture/3-repairs/2-explanations/3-reads/2-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/2-index/3-ts-bindings/2-python-declarations/1",
+      "完整流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
+      "缩小范围流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
       "完整接收端与模型": {
         "base_url": "https://www.cctq.ai/v1",
-        "model": "gpt-6-luna"
+        "model": "gpt-6.1-sol"
       },
       "缩小范围接收端与模型": {
         "base_url": "https://www.cctq.ai/v1",
-        "model": "gpt-6-luna"
+        "model": "gpt-6.1-sol"
       },
       "同一接收端与模型": true,
-      "同一模型流水线": false,
+      "同一模型流水线": true,
+      "语义质量结论": "待源码逐项复核，不能由本脚本自动判定。",
+      "范围对照限制": "需两份均已发布且使用同一接收端、模型及流水线，才能生成本轮范围对照；局部材料单独保留。"
+    },
+    "zod-typescript": {
+      "完整状态": "分析暂停",
+      "缩小范围状态": "结构检查通过，待源码质量复核",
+      "报告": {
+        "zod-typescript-full真实模型验证.json": "ba7c4411dbd8b19073ac58efa36830454e6aa6fb911bcda240debd1e8a32c2d4",
+        "zod-typescript-narrow真实模型验证.json": "1aa1f3f09f2667f1d72fc3d1cd27cf71a89a91fac4350f5c09fa4fd7f3a03719"
+      },
+      "完整流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
+      "缩小范围流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
+      "完整接收端与模型": {
+        "base_url": "https://www.cctq.ai/v1",
+        "model": "gpt-6.1-sol"
+      },
+      "缩小范围接收端与模型": {
+        "base_url": "https://www.cctq.ai/v1",
+        "model": "gpt-6.1-sol"
+      },
+      "同一接收端与模型": true,
+      "同一模型流水线": true,
       "语义质量结论": "待源码逐项复核，不能由本脚本自动判定。",
       "缩小范围讲解覆盖": {
-        "可见函数": 58,
-        "有讲解": 58,
+        "可见函数": 3,
+        "有讲解": 3,
         "缺失函数": []
       },
       "缩小范围抽查材料": [
         {
-          "函数": "logger::sink_it_",
+          "函数": "finalizeParams",
           "位置": {
-            "path": "include/spdlog/logger-inl.h",
-            "start_line": 135,
-            "end_line": 146,
-            "start_byte": 4456,
-            "end_byte": 4757
+            "path": "packages/zod/src/v4/core/parse.ts",
+            "start_line": 10,
+            "end_line": 12,
+            "start_byte": 422,
+            "end_byte": 584
           },
-          "源码": "SPDLOG_INLINE void logger::sink_it_(const details::log_msg &msg) {\n    for (auto &sink : sinks_) {\n        if (sink->should_log(msg.level)) {\n            SPDLOG_TRY { sink->log(msg); }\n            SPDLOG_LOGGER_CATCH(msg.source)\n        }\n    }\n\n    if (should_flush_(msg)) {\n        flush_();\n    }\n}",
+          "源码": "function finalizeParams(callee: util.AnyFunc, params: $ParseParams | undefined): $ParseParams {\n  return { callee: params?.callee ?? callee, Err: params?.Err };\n}",
           "实际讲解": {
-            "entity_id": "14e66a54-7019-515a-96fd-82d69946a2cc",
-            "summary": "将消息分发到符合级别的 sinks 并按需刷新。",
-            "details": "遍历 sinks_，仅对 should_log(msg.level) 为真者调用 log；异常由宏处理。遍历后若 should_flush_ 返回真则调用 flush_，未知异常是否继续取决于宏配置。",
+            "entity_id": "f5d11b8ee5d0b47d291b8520b27e7a19",
+            "summary": "统一编解码包装的调用者与错误类参数",
+            "details": "输入为当前包装函数 callee 和可选参数对象，返回一个始终同时具有 callee、Err 两个键的新对象，供编解码包装传入解析器。callee 使用空值合并：只有参数中的值为 null 或 undefined 时才回退到当前函数，并非一般真值判断；Err 原样读取，缺少参数时为 undefined，由解析入口选择默认错误类。函数不修改原参数，不进行错误类校验，也不捕获属性读取等操作可能产生的异常。",
             "evidence": [
               {
-                "path": "include/spdlog/logger-inl.h",
-                "start_line": 135,
-                "end_line": 146
+                "path": "packages/zod/src/v4/core/parse.ts",
+                "start_line": 10,
+                "end_line": 12
               }
             ]
           },
           "讲解状态": "有实际讲解，待源码复核",
           "实际模块": [
             {
-              "name": "日志分发与刷新",
-              "summary": "按开关记录日志、分发到符合级别的 sinks，并按刷新级别触发刷新。",
+              "name": "编解码适配与错误参数归一",
+              "summary": "“Codec functions”下的 _encode、_decode、异步变体及四个安全变体复用解析能力。编码覆盖 direction 为 backward，解码原样传递上下文；抛错型包装通过 finalizeParams 保留错误类覆盖和调用栈入口，安全型包装返回安全解析结果。各公开入口使用默认错误类。",
               "incomplete": false
             }
           ]
         },
         {
-          "函数": "logger::flush_",
+          "函数": "failure",
           "位置": {
-            "path": "include/spdlog/logger-inl.h",
-            "start_line": 148,
-            "end_line": 153,
-            "start_byte": 4759,
-            "end_byte": 4916
+            "path": "packages/zod/src/v4/core/parse.ts",
+            "start_line": 83,
+            "end_line": 103,
+            "start_byte": 3589,
+            "end_byte": 4395
           },
-          "源码": "SPDLOG_INLINE void logger::flush_() {\n    for (auto &sink : sinks_) {\n        SPDLOG_TRY { sink->flush(); }\n        SPDLOG_LOGGER_CATCH(source_loc())\n    }\n}",
+          "源码": "function failure(Err: $ZodErrorClass, issues: errors.$ZodRawIssue[], ctx: schemas.ParseContextInternal): any {\n  let error: errors.$ZodError | undefined;\n  return {\n    success: false,\n    get error() {\n      if (!error) {\n        error = new Err(issues.map((iss) => util.finalizeIssue(iss, ctx, core.config())));\n        // finalizeIssue drops `input`, so the built error holds nothing; keeping the raw issues past this point pins the parsed value for the life of the result\n        issues = undefined as any;\n        ctx = undefined as any;\n      }\n      return error;\n    },\n    set error(e: errors.$ZodError) {\n      error = e;\n      // a replacement makes the getter's branch unreachable, so the captures have to go here too\n      issues = undefined as any;\n      ctx = undefined as any;\n    },\n  };\n}",
           "实际讲解": {
-            "entity_id": "015fd430-f636-5548-87e1-f1880e61cc48",
-            "summary": "刷新全部 sinks。",
-            "details": "遍历 sinks_ 并调用每个 sink 的 flush；每次调用使用异常包装宏，标准异常进入错误处理路径，未知异常的传播取决于宏定义。",
+            "entity_id": "bf5b9bc8fb91a38e274d3fca28428211",
+            "summary": "生成延迟构造且可替换错误的失败结果",
+            "details": "接收错误类、原始问题数组和内部上下文，立即返回 success:false 的对象，不立即创建错误。首次读取 error 时，若缓存为假值，则使用上下文与全局配置整理各问题，再构造 Err 实例；成功构造后缓存实例，并清除闭包中的 issues、ctx 引用，避免继续持有原始输入。后续读取返回缓存。写入 error 会替换缓存并立即清除这些引用。没有异常捕获，问题整理或构造错误失败会传播；类型契约要求写入有效错误实例，若运行时写入假值，仍会触发 getter 分支，但原始引用已清除。",
             "evidence": [
               {
-                "path": "include/spdlog/logger-inl.h",
-                "start_line": 148,
-                "end_line": 153
+                "path": "packages/zod/src/v4/core/parse.ts",
+                "start_line": 83,
+                "end_line": 103
               }
             ]
           },
           "讲解状态": "有实际讲解，待源码复核",
           "实际模块": [
             {
-              "name": "日志分发与刷新",
-              "summary": "按开关记录日志、分发到符合级别的 sinks，并按刷新级别触发刷新。",
+              "name": "安全解析与延迟错误结果",
+              "summary": "未单独成节点的 _safeParse、_safeParseAsync 及其默认入口返回 success/data 或延迟 error 结果；failure 管理错误缓存和原始引用释放。安全解析不捕获任意运行时异常，同步入口仍拒绝 Promise。",
               "incomplete": false
             }
           ]
         },
         {
-          "函数": "logger::should_flush_",
+          "函数": "validateFallback",
           "位置": {
-            "path": "include/spdlog/logger-inl.h",
-            "start_line": 166,
-            "end_line": 168,
-            "start_byte": 5369,
-            "end_byte": 5518
+            "path": "packages/zod/src/v4/core/parse.ts",
+            "start_line": 151,
+            "end_line": 172,
+            "start_byte": 6545,
+            "end_byte": 7356
           },
-          "源码": "SPDLOG_INLINE bool logger::should_flush_(const details::log_msg &msg) const {\n    return (msg.level >= flush_level()) && (msg.level != level::off);\n}",
+          "源码": "function validateFallback(\n  schema: schemas.$ZodType,\n  value: unknown,\n  _ctx?: schemas.ParseContext<errors.$ZodIssue>\n): boolean {\n  const ctx: schemas.ParseContextInternal = _ctx\n    ? { ..._ctx, async: false, abortEarly: true }\n    : { async: false, abortEarly: true };\n  const fallbackRun = (schema._zod.bag as CompiledBag).fallbackRun;\n  let result: unknown;\n  if (fallbackRun) {\n    // skip nested fast paths on the fallback, so user callbacks keep the at-most-twice bound\n    (ctx as Record<symbol, unknown>)[COMPILE_FALLBACK] = true;\n    result = fallbackRun({ value, issues: [] }, ctx);\n  } else {\n    result = schema._zod.run({ value, issues: [] }, ctx);\n  }\n  if (result instanceof Promise) {\n    throw new core.$ZodAsyncError();\n  }\n  return (result as schemas.ParsePayload).issues.length === 0;\n}",
           "实际讲解": {
-            "entity_id": "937052bb-8de8-5897-8b99-5f72ac3eb53a",
-            "summary": "判断消息是否达到刷新级别。",
-            "details": "返回 msg.level >= flush_level() 且 msg.level != level::off 的联合结果；不执行刷新，仅返回布尔判定。",
+            "entity_id": "ae90fc72e239f6a862e08b94e70ad69c",
+            "summary": "以同步提前终止模式执行布尔校验回退",
+            "details": "接收模式、待校验值和可选上下文，浅拷贝已提供的真值上下文，并强制设置 async:false、abortEarly:true；未提供时仅建立这两个默认字段。读取 bag.fallbackRun，若其为真值则在新上下文上设置 COMPILE_FALLBACK 符号标记，再执行回退运行器，以跳过嵌套快路径；否则执行 schema._zod.run。两条路径都传入当前值与空问题数组。结果若为 Promise 则抛出 $ZodAsyncError，否则仅以 issues.length 是否为零返回布尔值，不返回转换后的值、不构造校验错误，也不捕获运行器异常。",
             "evidence": [
               {
-                "path": "include/spdlog/logger-inl.h",
-                "start_line": 166,
-                "end_line": 168
+                "path": "packages/zod/src/v4/core/parse.ts",
+                "start_line": 151,
+                "end_line": 172
               }
             ]
           },
           "讲解状态": "有实际讲解，待源码复核",
           "实际模块": [
             {
-              "name": "日志分发与刷新",
-              "summary": "按开关记录日志、分发到符合级别的 sinks，并按刷新级别触发刷新。",
+              "name": "布尔校验与编译回退",
+              "summary": "validate 使用 bag.validator 快速判定：返回值不等于 COMPILE_INVALID 即通过；仅在 definite 严格为 true 且上下文未提供时直接判失败，其余进入 validateFallback。validateAsync 不走编译快路径，以 async 与 abortEarly 运行模式。顶层注册表符号和 CompiledBag 描述编译结果及回退入口。",
               "incomplete": false
-            }
-          ]
-        },
-        {
-          "函数": "log_",
-          "位置": {
-            "path": "include/spdlog/logger.h",
-            "start_line": 324,
-            "end_line": 343,
-            "start_byte": 11134,
-            "end_byte": 11911
-          },
-          "源码": "    template <typename... Args>\n    void log_(source_loc loc, level::level_enum lvl, string_view_t fmt, Args &&...args) {\n        bool log_enabled = should_log(lvl);\n        bool traceback_enabled = tracer_.enabled();\n        if (!log_enabled && !traceback_enabled) {\n            return;\n        }\n        SPDLOG_TRY {\n            memory_buf_t buf;\n#ifdef SPDLOG_USE_STD_FORMAT\n            fmt_lib::vformat_to(std::back_inserter(buf), fmt, fmt_lib::make_format_args(args...));\n#else\n            fmt::vformat_to(fmt::appender(buf), fmt, fmt::make_format_args(args...));\n#endif\n\n            details::log_msg log_msg(loc, name_, lvl, string_view_t(buf.data(), buf.size()));\n            log_it_(log_msg, log_enabled, traceback_enabled);\n        }\n        SPDLOG_LOGGER_CATCH(loc)\n    }",
-          "实际讲解": {
-            "entity_id": "339a1f14-3be7-5dc2-934a-286c08bb6e19",
-            "summary": "格式化窄字符日志并提交。",
-            "details": "先计算普通日志和回溯是否启用；两者均为假时直接返回。否则在异常保护块中格式化参数，构造 log_msg 后调用 log_it_。标准格式库分支不同；std::exception 由错误处理器处理，未知异常重新抛出；无异常配置下的宏行为依赖编译设置。",
-            "evidence": [
-              {
-                "path": "include/spdlog/logger.h",
-                "start_line": 324,
-                "end_line": 343
-              },
-              {
-                "path": "include/spdlog/logger.h",
-                "start_line": 326,
-                "end_line": 330
-              },
-              {
-                "path": "include/spdlog/logger.h",
-                "start_line": 334,
-                "end_line": 342
-              }
-            ]
-          },
-          "讲解状态": "有实际讲解，待源码复核",
-          "实际模块": [
-            {
-              "name": "日志格式化与提交",
-              "summary": "格式化窄字符或宽字符消息，并在启用日志或回溯时提交。",
-              "incomplete": true
-            }
-          ]
-        },
-        {
-          "函数": "log_",
-          "位置": {
-            "path": "include/spdlog/logger.h",
-            "start_line": 346,
-            "end_line": 365,
-            "start_byte": 11953,
-            "end_byte": 12843
-          },
-          "源码": "    template <typename... Args>\n    void log_(source_loc loc, level::level_enum lvl, wstring_view_t fmt, Args &&...args) {\n        bool log_enabled = should_log(lvl);\n        bool traceback_enabled = tracer_.enabled();\n        if (!log_enabled && !traceback_enabled) {\n            return;\n        }\n        SPDLOG_TRY {\n            // format to wmemory_buffer and convert to utf8\n            wmemory_buf_t wbuf;\n            fmt_lib::vformat_to(std::back_inserter(wbuf), fmt,\n                                fmt_lib::make_format_args<fmt_lib::wformat_context>(args...));\n\n            memory_buf_t buf;\n            details::os::wstr_to_utf8buf(wstring_view_t(wbuf.data(), wbuf.size()), buf);\n            details::log_msg log_msg(loc, name_, lvl, string_view_t(buf.data(), buf.size()));\n            log_it_(log_msg, log_enabled, traceback_enabled);\n        }\n        SPDLOG_LOGGER_CATCH(loc)\n    }",
-          "实际讲解": {
-            "entity_id": "580bdc09-23f4-54d6-964c-8fa27207d6d3",
-            "summary": "格式化宽字符并转换为 UTF-8 后提交。",
-            "details": "仅在 SPDLOG_WCHAR_TO_UTF8_SUPPORT 下提供。普通日志和回溯均未启用时返回；否则先格式化宽缓冲区，再转为 UTF-8，构造 log_msg 并调用 log_it_。异常处理由 SPDLOG_LOGGER_CATCH 控制，具体宏行为受编译配置影响。",
-            "evidence": [
-              {
-                "path": "include/spdlog/logger.h",
-                "start_line": 346,
-                "end_line": 365
-              },
-              {
-                "path": "include/spdlog/logger.h",
-                "start_line": 348,
-                "end_line": 352
-              },
-              {
-                "path": "include/spdlog/logger.h",
-                "start_line": 356,
-                "end_line": 364
-              }
-            ]
-          },
-          "讲解状态": "有实际讲解，待源码复核",
-          "实际模块": [
-            {
-              "name": "日志格式化与提交",
-              "summary": "格式化窄字符或宽字符消息，并在启用日志或回溯时提交。",
-              "incomplete": true
             }
           ]
         }
       ],
       "缩小范围模块摘要": [
         {
-          "name": "类型适配与兼容工具",
-          "summary": "提供模板类型转换与对象创建辅助：旧标准分支实现非数组对象的转发构造；两种转换重载按类型是否相同分别转换或原样返回。",
+          "name": "解析与校验入口",
+          "summary": "组织基于模式的解析、安全结果、布尔校验和编解码入口；顶层类型声明约束输入输出，公开入口默认使用 $ZodRealError。",
           "incomplete": false
         },
         {
-          "name": "日志级别与状态访问",
-          "summary": "提供日志级别、刷新阈值和 sink 列表的设置、读取接口；swap 另负责交换 logger 状态。",
+          "name": "同步与异步运行时解析",
+          "summary": "未单独成节点的 _parse、_parseAsync 工厂生成解析函数，强制设置 async，运行模式并返回转换后的值；有问题时整理问题、构造错误并捕获调用栈。同步入口遇到 Promise 抛出异步错误，异步入口等待结果。parse 与 parseAsync 是默认错误类的实例化入口。",
           "incomplete": false
         },
         {
-          "name": "格式化器与回溯控制",
-          "summary": "设置各 sink 的格式化器或模式，并启停、输出日志回溯；格式化器在多个 sink 间克隆，最后一个 sink 接收移动对象。",
+          "name": "安全解析与延迟错误结果",
+          "summary": "未单独成节点的 _safeParse、_safeParseAsync 及其默认入口返回 success/data 或延迟 error 结果；failure 管理错误缓存和原始引用释放。安全解析不捕获任意运行时异常，同步入口仍拒绝 Promise。",
           "incomplete": false
         },
         {
-          "name": "日志器状态与配置管理",
-          "summary": "提供输出端集合访问、错误处理器设置及克隆能力；克隆保留原配置并覆盖名称。",
+          "name": "布尔校验与编译回退",
+          "summary": "validate 使用 bag.validator 快速判定：返回值不等于 COMPILE_INVALID 即通过；仅在 definite 严格为 true 且上下文未提供时直接判失败，其余进入 validateFallback。validateAsync 不走编译快路径，以 async 与 abortEarly 运行模式。顶层注册表符号和 CompiledBag 描述编译结果及回退入口。",
           "incomplete": false
         },
         {
-          "name": "日志分发与刷新",
-          "summary": "按开关记录日志、分发到符合级别的 sinks，并按刷新级别触发刷新。",
+          "name": "编解码适配与错误参数归一",
+          "summary": "“Codec functions”下的 _encode、_decode、异步变体及四个安全变体复用解析能力。编码覆盖 direction 为 backward，解码原样传递上下文；抛错型包装通过 finalizeParams 保留错误类覆盖和调用栈入口，安全型包装返回安全解析结果。各公开入口使用默认错误类。",
           "incomplete": false
-        },
-        {
-          "name": "回溯输出与错误报告",
-          "summary": "输出启用且非空的回溯，并提供刷新判定和限频的默认错误报告路径。",
-          "incomplete": false
-        },
-        {
-          "name": "日志写入与级别快捷接口",
-          "summary": "统一承载日志写入及级别快捷封装；带 source_loc 与不带位置参数的重载分别转发或构造消息。",
-          "incomplete": false
-        },
-        {
-          "name": "窄字符格式化入口",
-          "summary": "转发窄字符格式化参数到对应日志级别处理。",
-          "incomplete": false
-        },
-        {
-          "name": "宽字符格式化日志入口",
-          "summary": "提供宽字符格式化日志及按级别分发入口。",
-          "incomplete": false
-        },
-        {
-          "name": "宽字符消息转换与提交",
-          "summary": "过滤宽字符日志、转换为UTF-8并提交日志消息。",
-          "incomplete": false
-        },
-        {
-          "name": "日志级别便捷接口",
-          "summary": "将消息按固定日志级别转发到统一日志入口。",
-          "incomplete": false
-        },
-        {
-          "name": "日志状态判定",
-          "summary": "依据当前级别和回溯器状态判断是否需要处理日志。",
-          "incomplete": false
-        },
-        {
-          "name": "日志格式化与提交",
-          "summary": "格式化窄字符或宽字符消息，并在启用日志或回溯时提交。",
-          "incomplete": true
         }
       ],
-      "缩小范围未完成模块": 1,
-      "范围对照限制": "需两份均已发布且使用同一接收端、模型及流水线，才能生成本轮范围对照；局部材料单独保留。"
-    },
-    "zod-typescript": {
-      "完整状态": "分析暂停",
-      "缩小范围状态": "分析暂停",
-      "报告": {
-        "zod-typescript-full真实模型验证.json": "d92c836c148530463d30a1573801513a0bedc903a0ec7b695e34cdd9c5edf8c0",
-        "zod-typescript-narrow真实模型验证.json": "d52b6336b2a244cfa44cba1ab69bf46f64c1e4e38b53de32d66251d0ec757b3d"
-      },
-      "完整流水线": "architecture/4-repairs/3-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
-      "缩小范围流水线": "architecture/5-repairs/4-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
-      "完整接收端与模型": {
-        "base_url": "https://www.cctq.ai/v1",
-        "model": "gpt-6-luna"
-      },
-      "缩小范围接收端与模型": {
-        "base_url": "https://www.cctq.ai/v1",
-        "model": "gpt-6-luna"
-      },
-      "同一接收端与模型": true,
-      "同一模型流水线": false,
-      "语义质量结论": "待源码逐项复核，不能由本脚本自动判定。",
+      "缩小范围未完成模块": 0,
       "范围对照限制": "需两份均已发布且使用同一接收端、模型及流水线，才能生成本轮范围对照；局部材料单独保留。"
     }
   },

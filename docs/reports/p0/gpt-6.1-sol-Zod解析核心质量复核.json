@@ -1,0 +1,86 @@
+{
+  "核对时间UTC": "2026-10-12T09:59:08.636569+00:00",
+  "性质": "真实gpt-6.1-sol生成结果的开发代理源码复核，非固定响应、非用户验收",
+  "报告": "zod-typescript-narrow真实模型验证.json",
+  "报告sha256": "1aa1f3f09f2667f1d72fc3d1cd27cf71a89a91fac4350f5c09fa4fd7f3a03719",
+  "模型": "gpt-6.1-sol",
+  "接收端": "https://www.cctq.ai/v1",
+  "Commit": "0b216ef674e297ebe41d8bf902262e56f8755822",
+  "流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
+  "评测期间实施代码一致": true,
+  "源码sha256": "855bda0c95d79be1562fb1f48db4eefb7697276675b7debeb389aaba1b61e9e6",
+  "实际文件": [
+    "packages/zod/src/v4/core/parse.ts"
+  ],
+  "可见函数": 3,
+  "有讲解": 3,
+  "缺失讲解": [],
+  "复核": [
+    {
+      "位置": [
+        10,
+        12
+      ],
+      "项目": "finalizeParams参数默认与透传",
+      "结果": "通过",
+      "依据": "callee仅null/undefined回退，Err原样读取，返回同时含两键的新对象；实际讲解没有将空值合并混同一般真值判断。"
+    },
+    {
+      "位置": [
+        83,
+        103
+      ],
+      "项目": "failure延迟错误与引用释放",
+      "结果": "通过",
+      "依据": "getter按!error条件首次构造并清除issues/ctx，setter替换缓存并清引用；未捕获整理与构造异常。讲解还明确非法假值写入的运行时边界。"
+    },
+    {
+      "位置": [
+        151,
+        172
+      ],
+      "项目": "validateFallback同步回退",
+      "结果": "通过",
+      "依据": "新上下文强制async:false与abortEarly:true；fallbackRun真值时加COMPILE_FALLBACK并调用，否则_zod.run；Promise抛错，按issues长度返回布尔值。"
+    },
+    {
+      "位置": [
+        142,
+        149
+      ],
+      "项目": "编译快路径联合保护",
+      "结果": "通过",
+      "依据": "boolean_validation摘要准确保留validator返回不是COMPILE_INVALID即可通过，以及definite===true且_ctx===undefined才直接失败；未泛化为非空上下文。"
+    },
+    {
+      "位置": [
+        198,
+        309
+      ],
+      "项目": "匿名工厂职责与编解码差异",
+      "结果": "通过",
+      "依据": "codec_adapters准确区分编码覆盖backward与解码透传；同步/异步、安全/抛错包装有分工；隐藏实现未创建普通可见函数，既有三函数集合不变。"
+    },
+    {
+      "位置": [
+        71,
+        119
+      ],
+      "项目": "安全入口异常边界及核心协作",
+      "结果": "通过",
+      "依据": "摘要和概览指出safe入口只包装校验问题且不吞任意运行器异常，同步仍拒绝Promise；primary_dependencies采用原call_ids和匿名caller_scope_id，未把内部调用归给failure等外层。"
+    },
+    {
+      "位置": [
+        1,
+        309
+      ],
+      "项目": "缩小范围概览",
+      "结果": "通过",
+      "依据": "四部分齐全，说明仅解析入口的范围，介绍检查和转换输入的用途，未声称覆盖全部模式/编译器内部或运行行为。"
+    }
+  ],
+  "结论": "本次Zod解析核心小范围复核通过；此前缺失的validateFallback讲解和匿名工厂分工已在真实新模型结果中改善。",
+  "边界": "仅parse.ts，不代表完整Zod质量或AC-31范围对照通过；没有执行被分析代码或修改原快照，评测使用既定授权。",
+  "复核新增模型请求": 0
+}

@@ -1,4 +1,5 @@
 """隔离数据中的一次无源码连接检查，最多等待60秒，不改主工作区。"""
+import argparse
 import asyncio
 import json
 import os
@@ -29,11 +30,11 @@ def safe_remote_error(error):
     return result
 
 
-async def main():
+async def main(expected_model):
     repository = Path(__file__).resolve().parents[1]
     actual = Path(os.environ['LOCALAPPDATA']) / 'CodeScape'
     settings = Provider(actual).settings()
-    assert settings['base_url'] == 'https://www.cctq.ai/v1' and settings['model'] == 'gpt-6-luna'
+    assert settings['base_url'] == 'https://www.cctq.ai/v1' and settings['model'] == expected_model
     root = repository / '.runtime/public-model-validation' / str(uuid.uuid4())
     (root / 'credentials').mkdir(parents=True)
     shutil.copyfile(actual / 'credentials/provider.dpapi', root / 'credentials/provider.dpapi')
@@ -75,4 +76,6 @@ async def main():
 
 
 if __name__ == '__main__':
-    asyncio.run(main())
+    parser = argparse.ArgumentParser(description='按明确的模型身份进行一次无源码连接检查')
+    parser.add_argument('--model', required=True, help='已授权接收端的准确模型ID')
+    asyncio.run(main(parser.parse_args().model))

@@ -1,0 +1,111 @@
+{
+  "日期": "2026-10-12",
+  "检查开始时间UTC": "2026-10-12T09:55:29.749321+00:00",
+  "样本": "spdlog-cpp",
+  "Commit": "d6c93f38a08b4ea0f8ffcfd7f7857307d5d5c3fa",
+  "范围": "缩小范围",
+  "授权": "用户允许四个固定公开样本向当前配置接收端上传并评测",
+  "接收端": "https://www.cctq.ai/v1",
+  "模型": "gpt-6.1-sol",
+  "流式接收": true,
+  "流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
+  "数据目录": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\.runtime\\public-model-validation\\b3df4bb8-351f-41e3-a012-1a2a6f4a933a",
+  "原始快照hash": "d4586f715383197a4fccb3ccc33326112d0d5f8441eb5d02fbb79ab7ea70245d",
+  "实际文件": [
+    "include/spdlog/common.h",
+    "include/spdlog/logger-inl.h",
+    "include/spdlog/logger.h",
+    "include/spdlog/namespace.h"
+  ],
+  "状态": "分析暂停",
+  "执行目标代码": false,
+  "实施代码起始sha256": "0ad350061a0c795ba17b0d2c707ae3d0c1232c12803e86966f91ac8f24c8990c",
+  "开发评测截止秒数": 600,
+  "进度": {
+    "phase": "paused",
+    "completed": 0,
+    "total": 6,
+    "detail": "AI 服务在流式响应中返回错误，未发布部分结果；检查点已保留，请检查服务后主动恢复。"
+  },
+  "耗时秒": 87.03,
+  "project_id": "86263274-8555-4cd5-845e-3d1354cbcbbc",
+  "version_id": "e1d8fd20-3cdf-48cc-9478-9e935c46b040",
+  "实际快照hash": "b9819dac7628d7dc61c66503f9562275c0007159d96c0f59e51efd6f5414310c",
+  "scope_hash": "64d8fef1eca2d21c0868fb5cb2988d0e4d169bafe184ba5bc3727938f0682e93",
+  "错误": "AI 服务在流式响应中返回错误，未发布部分结果；检查点已保留，请检查服务后主动恢复。",
+  "architecture": null,
+  "原快照字节未变": true,
+  "请求账本": [
+    {
+      "id": "443bbf34-6b79-48f8-93e8-8b8732adb541",
+      "project_id": "86263274-8555-4cd5-845e-3d1354cbcbbc",
+      "version_id": "e1d8fd20-3cdf-48cc-9478-9e935c46b040",
+      "job_id": "dc9b535f-f327-4afd-bb38-4e93dda87d73",
+      "unit_id": "d16ea190-c833-4f80-ac30-37c529b94c06",
+      "attempt": 1,
+      "phase": "architecture",
+      "recipient": "https://www.cctq.ai/v1",
+      "model": "gpt-6.1-sol",
+      "status": "failed",
+      "created_at": "2026-10-12T09:55:34.682524+00:00",
+      "sent_at": "2026-10-12T09:55:34.722951+00:00",
+      "finished_at": "2026-10-12T09:56:53.810483+00:00",
+      "payload_hash": "efffb0df9cf64d3d158b3b2a5944aec73e0d457c36d890ae3d1eebee68bdfac3",
+      "source_chars": 11681,
+      "usage": {
+        "prompt_tokens": 11022,
+        "completion_tokens": 1885,
+        "total_tokens": 12907
+      },
+      "cost": null,
+      "currency": null,
+      "price_snapshot": null,
+      "http_status": 200,
+      "error_code": "SCHEMA_INVALID"
+    },
+    {
+      "id": "43b88ecd-6247-4ba6-9541-d893865496ad",
+      "project_id": "86263274-8555-4cd5-845e-3d1354cbcbbc",
+      "version_id": "e1d8fd20-3cdf-48cc-9478-9e935c46b040",
+      "job_id": "dc9b535f-f327-4afd-bb38-4e93dda87d73",
+      "unit_id": "d16ea190-c833-4f80-ac30-37c529b94c06",
+      "attempt": 2,
+      "phase": "repair",
+      "recipient": "https://www.cctq.ai/v1",
+      "model": "gpt-6.1-sol",
+      "status": "failed",
+      "created_at": "2026-10-12T09:56:53.820794+00:00",
+      "sent_at": "2026-10-12T09:56:53.834429+00:00",
+      "finished_at": "2026-10-12T09:56:56.127123+00:00",
+      "payload_hash": "c6963c563831066d34e7f069d3a375f2dddfd830cdce362c8f7bd9c4b9eed4a6",
+      "source_chars": 11681,
+      "usage": null,
+      "cost": null,
+      "currency": null,
+      "price_snapshot": null,
+      "http_status": 200,
+      "error_code": "INVALID_STREAM_ERROR_EVENT"
+    }
+  ],
+  "请求状态": {
+    "failed": 2
+  },
+  "已知total_tokens": 12907,
+  "未知用量请求": 1,
+  "费用": null,
+  "脱敏校验记录": [
+    {
+      "time": "2026-10-12T09:56:53.808887+00:00",
+      "request_id": "443bbf34-6b79-48f8-93e8-8b8732adb541",
+      "feedback": "函数讲解缺少实现自身的依据。已知索引依据：{\"entity_or_call_id\": \"09d10f20-931c-5ab6-becc-93df0ff42ab1\", \"implementation_lines\": [353, 357], \"supplied_lines\": [[1, 376]], \"repair_action\": \"为该 entity_or_call_id 提供至少一条 evidence，start_line 和 end_line 必须都落在 implementation_lines 内，且不超过已提供的 supplied_lines；不能用包围函数的整文件引用替代。其他函数或宏定义的补充引用不能替代这条自身依据。若自身范围超过200行，选择其中实际支持讲解的短片段；没有依据时省略该讲解，明确保留未完成，不伪造引用。\"}"
+    }
+  ],
+  "边界": "真实配置接口，固定响应与质量复核分开；尚未代表用户验收；价格未知不记零费用。",
+  "实施代码结束sha256": "0ad350061a0c795ba17b0d2c707ae3d0c1232c12803e86966f91ac8f24c8990c",
+  "评测期间实施代码一致": true,
+  "静态索引制品": {
+    "path": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\.runtime\\public-model-validation\\b3df4bb8-351f-41e3-a012-1a2a6f4a933a\\validation-artifacts\\f0f3cca0c0972f76e548204fd0b78b8692d81b99f1ced5ff787f0c9b889351b1.json",
+    "sha256": "f0f3cca0c0972f76e548204fd0b78b8692d81b99f1ced5ff787f0c9b889351b1",
+    "bytes": 316777
+  }
+}
