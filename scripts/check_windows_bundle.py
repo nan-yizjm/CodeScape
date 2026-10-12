@@ -9,6 +9,7 @@ import platform
 import subprocess
 import time
 import uuid
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import httpx
@@ -189,7 +190,7 @@ def main():
         assert stopped.returncode == 0
         process.wait(timeout=5)
         assert process.returncode == 0
-        result = {"date": "2026-10-11", "platform": platform.platform(), "architecture": platform.machine(),
+        result = {"date": (datetime.now(UTC) + timedelta(hours=8)).date().isoformat(), "platform": platform.platform(), "architecture": platform.machine(),
             "executable": str(executable), "executable_sha256": hashlib.sha256(executable.read_bytes()).hexdigest(),
             "data_root": str(root), "developer_path_removed": True, "duplicate_launch_reused": True,
             "static_sample_functions": 8, "confirmed_call_languages": sorted(confirmed_languages),

@@ -1,10 +1,10 @@
 {
-  "date": "2026-10-11",
+  "date": "2026-10-12",
   "platform": "Windows-11-10.0.26200-SP0",
   "architecture": "AMD64",
   "executable": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\.runtime\\packaging\\dist\\CodeScape\\CodeScape.exe",
-  "executable_sha256": "386cbfd57210ba6f59c12621a3ec1b7da58097b0bdf814c63989f8ea1cb1705c",
-  "data_root": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\output\\windows-bundle-validation\\18b3c126-1171-41ed-a7d6-9b8f1f459794",
+  "executable_sha256": "147abe292656fc32ec0af473d170fffb69ae8c2a029abd8c84f4bef844c13a3e",
+  "data_root": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\output\\windows-bundle-validation\\2d30c55a-d035-4920-bed6-602ae9850d0c",
   "developer_path_removed": true,
   "duplicate_launch_reused": true,
   "static_sample_functions": 8,

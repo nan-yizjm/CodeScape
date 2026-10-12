@@ -12,6 +12,7 @@ import sys
 import time
 import uuid
 import winreg
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import httpx
@@ -167,7 +168,7 @@ def main():
         snapshot_after = {str(path.relative_to(data)): hashlib.sha256(path.read_bytes()).hexdigest()
             for path in (data / "projects").rglob("*") if path.is_file()}
         assert snapshot_before == snapshot_after
-        report = {"date": "2026-10-11", "platform": platform.platform(), "build_id": build["build_id"],
+        report = {"date": (datetime.now(UTC) + timedelta(hours=8)).date().isoformat(), "platform": platform.platform(), "build_id": build["build_id"],
             "setup_sha256": build["artifacts"][setup.name]["sha256"], "validation_root": str(root),
             "first_install": "通过", "installed_files_match_manifest": True,
             'previous_build_id':initial_build_id,'upgraded_build_id':upgraded_build_id,

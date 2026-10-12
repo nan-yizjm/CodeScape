@@ -1,0 +1,99 @@
+{
+  "日期": "2026-10-11",
+  "样本": "flask-python",
+  "Commit": "d086db856be187255b8ec61ef409357393020f32",
+  "范围": "缩小范围",
+  "授权": "用户允许四个固定公开样本真实评测",
+  "接收端": "https://api.deepseek.com",
+  "模型": "deepseek-flash",
+  "流水线": "architecture/2-explanations/3-reads/1-judgments/1-dependencies/1-cpp-config/8-interfaces/1-facts/2-index/2-ts-bindings/2-python-declarations/1",
+  "数据目录": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\.runtime\\public-model-validation\\1c0d1fa5-b487-4665-8703-bedd09e60127",
+  "原始快照hash": "05de006763cb3d83f9ef72708e199156697402cb13031070f51225a50852b8c7",
+  "实际文件": [
+    "src/flask/helpers.py"
+  ],
+  "状态": "分析暂停",
+  "执行目标代码": false,
+  "进度": {
+    "phase": "paused",
+    "completed": 1,
+    "total": 2,
+    "detail": "服务余额不足。"
+  },
+  "耗时秒": 82.52,
+  "project_id": "01248522-802e-4297-809b-27bdd601ae01",
+  "version_id": "8b366831-d923-4a2a-a094-19ce9087f6ef",
+  "实际快照hash": "ad5bdcc28670e5b0b4123226504abb578cf8deb4fcb4c1ff163b063f1748827a",
+  "scope_hash": "64d8fef1eca2d21c0868fb5cb2988d0e4d169bafe184ba5bc3727938f0682e93",
+  "错误": "服务余额不足。",
+  "architecture": null,
+  "原快照字节未变": true,
+  "请求账本": [
+    {
+      "id": "c5a3f035-1244-445d-b735-22d47094eafe",
+      "project_id": "01248522-802e-4297-809b-27bdd601ae01",
+      "version_id": "8b366831-d923-4a2a-a094-19ce9087f6ef",
+      "job_id": "e73e3e90-5e34-4d25-9749-04c93fab2a1f",
+      "unit_id": "b4b319dc-2ced-429c-947a-ecf31de84d3c",
+      "attempt": 1,
+      "phase": "architecture",
+      "recipient": "https://api.deepseek.com",
+      "model": "deepseek-flash",
+      "status": "success",
+      "created_at": "2026-10-11T05:31:14.235517+00:00",
+      "sent_at": "2026-10-11T05:31:14.273032+00:00",
+      "finished_at": "2026-10-11T05:32:31.496331+00:00",
+      "payload_hash": "30e1a088fc229eb1b0da3cc8440cc570034c39b89aafe605f9d96947fee27582",
+      "source_chars": 19860,
+      "usage": {
+        "prompt_tokens": 14347,
+        "completion_tokens": 19686,
+        "total_tokens": 34033,
+        "prompt_cache_hit_tokens": 512,
+        "prompt_cache_miss_tokens": 13835
+      },
+      "cost": null,
+      "currency": null,
+      "price_snapshot": null,
+      "http_status": 200,
+      "error_code": null
+    },
+    {
+      "id": "ea492cfa-5442-4f11-b721-64cb82dacf19",
+      "project_id": "01248522-802e-4297-809b-27bdd601ae01",
+      "version_id": "8b366831-d923-4a2a-a094-19ce9087f6ef",
+      "job_id": "e73e3e90-5e34-4d25-9749-04c93fab2a1f",
+      "unit_id": "ce85a6cd-52d1-4eb7-8e14-6807f0b9d4be",
+      "attempt": 1,
+      "phase": "architecture",
+      "recipient": "https://api.deepseek.com",
+      "model": "deepseek-flash",
+      "status": "failed",
+      "created_at": "2026-10-11T05:32:31.510056+00:00",
+      "sent_at": "2026-10-11T05:32:31.524044+00:00",
+      "finished_at": "2026-10-11T05:32:31.988366+00:00",
+      "payload_hash": "c1f0489187430e49d5098b5003756674e20578c4999f2be68e336a6fbcb3f62f",
+      "source_chars": 4651,
+      "usage": null,
+      "cost": null,
+      "currency": null,
+      "price_snapshot": null,
+      "http_status": 402,
+      "error_code": "HTTP_402"
+    }
+  ],
+  "请求状态": {
+    "success": 1,
+    "failed": 1
+  },
+  "已知total_tokens": 34033,
+  "未知用量请求": 1,
+  "费用": null,
+  "脱敏校验记录": [],
+  "边界": "真实官方模型，固定响应与质量复核分开；尚未代表用户验收；价格未知不记零费用。",
+  "静态索引制品": {
+    "path": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\.runtime\\public-model-validation\\1c0d1fa5-b487-4665-8703-bedd09e60127\\validation-artifacts\\ae84db09d1c48b94d85fd010566531414a2ab4e1d62b1c36b76a728548d2abfc.json",
+    "sha256": "ae84db09d1c48b94d85fd010566531414a2ab4e1d62b1c36b76a728548d2abfc",
+    "bytes": 71904
+  }
+}
