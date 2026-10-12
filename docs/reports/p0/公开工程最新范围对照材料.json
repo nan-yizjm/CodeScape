@@ -1,5 +1,5 @@
 {
-  "核对时间UTC": "2026-10-12T08:44:11.176884+00:00",
+  "核对时间UTC": "2026-10-12T09:28:52.504291+00:00",
   "执行目标代码": false,
   "模型请求": 0,
   "样本": {
@@ -610,10 +610,10 @@
       "缩小范围状态": "分析暂停",
       "报告": {
         "zod-typescript-full真实模型验证.json": "d92c836c148530463d30a1573801513a0bedc903a0ec7b695e34cdd9c5edf8c0",
-        "zod-typescript-narrow真实模型验证.json": "e557f26100eccbf67d1f67117a922ae1e7bb9517c2f55e1a2c3dc80cdac6c721"
+        "zod-typescript-narrow真实模型验证.json": "d52b6336b2a244cfa44cba1ab69bf46f64c1e4e38b53de32d66251d0ec757b3d"
       },
       "完整流水线": "architecture/4-repairs/3-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
-      "缩小范围流水线": "architecture/4-repairs/3-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
+      "缩小范围流水线": "architecture/5-repairs/4-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
       "完整接收端与模型": {
         "base_url": "https://www.cctq.ai/v1",
         "model": "gpt-6-luna"
@@ -623,7 +623,7 @@
         "model": "gpt-6-luna"
       },
       "同一接收端与模型": true,
-      "同一模型流水线": true,
+      "同一模型流水线": false,
       "语义质量结论": "待源码逐项复核，不能由本脚本自动判定。",
       "范围对照限制": "需两份均已发布且使用同一接收端、模型及流水线，才能生成本轮范围对照；局部材料单独保留。"
     }

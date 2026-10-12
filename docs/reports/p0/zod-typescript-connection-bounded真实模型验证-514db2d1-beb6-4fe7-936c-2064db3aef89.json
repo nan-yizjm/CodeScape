@@ -1,0 +1,48 @@
+{
+  "日期": "2026-10-12",
+  "核对时间UTC": "2026-10-12T09:23:10.923955+00:00",
+  "性质": "真实模型无源码连接检查，不替代架构与质量验收",
+  "数据目录": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\.runtime\\public-model-validation\\c7888c28-d883-46b3-b676-ead96adc9007",
+  "接收端": "https://www.cctq.ai/v1",
+  "模型": "gpt-6-luna",
+  "流水线": "architecture/5-repairs/4-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
+  "流式接收": true,
+  "实际文件": [],
+  "源码发送": false,
+  "最多请求": 1,
+  "等待上限秒": 60,
+  "执行目标代码": false,
+  "服务错误事件白名单": [],
+  "状态": "连接通过",
+  "请求账本": [
+    {
+      "id": "dbd65057-5a93-438a-a3ba-59882ee9a408",
+      "project_id": null,
+      "version_id": null,
+      "job_id": null,
+      "unit_id": "b8b3b346-1f04-4539-a6cc-1b4b300b79f8",
+      "attempt": 1,
+      "phase": "connection",
+      "recipient": "https://www.cctq.ai/v1",
+      "model": "gpt-6-luna",
+      "status": "success",
+      "created_at": "2026-10-12T09:23:10.930952+00:00",
+      "sent_at": "2026-10-12T09:23:10.980828+00:00",
+      "finished_at": "2026-10-12T09:23:24.812910+00:00",
+      "payload_hash": "980e06aa0d68a0bd0d9c6d0bf9d4462f98712fbb9ea2244a434a0c613ef6dfa5",
+      "source_chars": 0,
+      "usage": {
+        "prompt_tokens": 60,
+        "completion_tokens": 12,
+        "total_tokens": 72
+      },
+      "cost": null,
+      "currency": null,
+      "price_snapshot": null,
+      "http_status": 200,
+      "error_code": null
+    }
+  ],
+  "已知total_tokens": 72,
+  "未知用量请求": 0
+}

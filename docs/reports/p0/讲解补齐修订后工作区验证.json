@@ -1,0 +1,21 @@
+{
+  "日期": "2026-10-12",
+  "产品提交": "1a0c328",
+  "正常保存退出后重开": true,
+  "工作区数据与学习记录全部列hash一致": true,
+  "记录": {
+    "prototype_projects": {
+      "count": 4,
+      "sha256": "347a3aa00aae891300acc2dd6b26f248be91200ef3d850451dd8eba4d1d336fe"
+    },
+    "prototype_learning": {
+      "count": 2,
+      "sha256": "adb7ae26041f6e71ddbfe74c9098123726704bcfb32ec02f4b1128b6985bb29e"
+    },
+    "requests": 13
+  },
+  "模型请求新增": 0,
+  "端口": 8125,
+  "浏览器原项目与层级恢复": "learning_project (2) / 配置读取与校验，6节点2协作线",
+  "截图": "output/playwright/P0讲解补齐修订后工作区.png"
+}

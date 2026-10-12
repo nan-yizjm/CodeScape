@@ -54,10 +54,13 @@ def main():
     parser.add_argument('--base-url', default='https://api.deepseek.com', help='核对已授权接收端，不接受密钥参数')
     parser.add_argument('--model', default='deepseek-flash', help='核对实际模型ID')
     parser.add_argument('--json-response', action='store_true', help='仅隔离评测使用非流式JSON，主工作区设置不变')
+    parser.add_argument('--max-seconds', type=int, default=0, help='开发评测截止秒数；到时通过任务接口主动暂停，0使用产品原有限预算')
     mode = parser.add_mutually_exclusive_group()
     mode.add_argument('--resume',action='store_true',help='从该样本已有暂停记录和检查点主动恢复，不创建新的快照')
     mode.add_argument('--refresh-overview',action='store_true',help='仅重测已发布结果的概览，架构及源码保持不变')
     arguments = parser.parse_args()
+    if not 0 <= arguments.max_seconds <= 86400:
+        parser.error('评测截止时间需在0至86400秒之间。')
     sources = json.loads((repository/'docs/benchmark_sources.json').read_text(encoding='utf-8'))
     selected = next(item for item in sources['repositories'] if item['id']==arguments.id)
     snapshot,old_manifest = saved_snapshot(selected)
@@ -120,6 +123,7 @@ def main():
         '流水线':PIPELINE_VERSION,'数据目录':str(root),
         '原始快照hash':old_manifest['hash'],'实际文件':list(files),'状态':'进行中','执行目标代码':False}
     record['实施代码起始sha256'] = implementation_hash()
+    record['开发评测截止秒数'] = arguments.max_seconds or None
     destination = reports/f"{arguments.id}-{'narrow' if arguments.narrow else 'full'}真实模型验证.json"
     if previous:
         record['恢复前已知total_tokens'] = previous.get('已知total_tokens')
@@ -154,6 +158,17 @@ def main():
                 save()
             if value['status'] in terminal:
                 return value
+            if (arguments.max_seconds and time.monotonic() - started >= arguments.max_seconds
+                    and value['status'] in {'indexing', 'analyzing'}):
+                jobs = [job for job in database.list_jobs()
+                        if job['project_id'] == value['id'] and job['status'] == 'running']
+                if jobs:
+                    stopped = client.post(f"/api/v1/tasks/{jobs[0]['id']}/pause")
+                    if stopped.status_code == 200:
+                        record['开发评测主动暂停'] = '达到评测截止时间，已调用产品暂停接口；在途远端用量可能未知。'
+                        save()
+                        continue
+                    assert stopped.status_code == 409, stopped.status_code
             time.sleep(2)
     save()
     database = Database(root)
