@@ -1,24 +1,25 @@
 {
   "日期": "2026-10-12",
-  "代码提交": "cc1233f",
-  "构建号": "20261012T060630Z",
+  "代码提交": "4bec17e",
+  "构建号": "20261012T072053Z",
   "版本": "0.1.0",
   "状态": "P0验收中，非全部通过",
   "制品": {
     "CodeScape-0.1.0-Windows-x64-Portable.zip": {
-      "sha256": "7a4de7d58565a4c1ba6f3325d6559edeab3fb1717364d5b5194d7001a45b114d",
-      "bytes": 158217510
+      "sha256": "ffc14231213f91f0d676bc9f615f37a642b69dd9c93532389fe7d45663a11b0d",
+      "bytes": 158218528
     },
     "CodeScape-0.1.0-Windows-x64-Setup.exe": {
-      "sha256": "b0b27b11d797941d6a857ed643bb67dc43f456ab614af8b346d3c2b597587b52",
-      "bytes": 115256558
+      "sha256": "f2b15d8c117c6da7198b649dfe41d47d4f196aeedef682b355b265b778a2cbbb",
+      "bytes": 115254357
     }
   },
   "自动检查": {
-    "后端": 364,
+    "后端": 365,
     "前端": 35,
-    "前端说明": "本轮重新执行35项、TypeScript与生产构建通过；生产构建保留SourceReader大块提示。",
-    "Ruff": "通过"
+    "Ruff": "通过",
+    "TypeScript": "通过",
+    "生产构建": "通过；SourceReader大块提示保留"
   },
   "AC状态": {
     "已验证": 30,
@@ -27,8 +28,8 @@
   },
   "本轮安装模型请求": 0,
   "当前工作区": "http://127.0.0.1:8125/",
-  "剩余": "四个完整工程的真实语义质量与同模型流水线范围对照、真实系统断网/休眠及用户验收未完成。最新小范围Zod只有2/3讲解，spdlog1未完成归属；Hiredis联合保护和spdlog宏异常边界仍有风险。",
-  "主工作区重启": "正常保存退出后8125重开，4项目与2学习记录全部列哈希一致，AIHOT5顶层节点2主要协作线保留；主工作区账本13条。本轮未在主工作区发起新源码分析。",
+  "剩余": "完整工程真实AI语义质量、同模型流水线范围对照与用户验收尚未通过；系统断网及休眠保留未实测的方法边界。干净Windows矩阵已由用户免除本轮门槛。",
+  "主工作区重启": "最终代码正常保存退出后8125重开，4项目和2学习记录全部列哈希一致，13条主工作区账本不增。AIHOT原有结果保留；隔离评测非流式选项不修改主设置。",
   "请求口径": "真实模型账本为历史累计去重，包含前轮失败/修复及重新评测；本轮静态、独立包及升级验证不发模型请求。",
   "本轮增补验证": [
     "Windows声明与函数范围独立包验证.json",
@@ -58,21 +59,26 @@
     "补读证据修复后工作区验证.json",
     "Windows原生PowerShell验收脚本验证.json",
     "spdlog跨文件补读真实修复验证.json",
-    "spdlog完整检查点异常边界局部复核.json"
+    "spdlog完整检查点异常边界局部复核.json",
+    "服务错误提示修订后工作区验证.json",
+    "zod-typescript-stream-error-diagnostic真实模型验证.json",
+    "zod-typescript-json-transport-diagnostic真实模型验证.json",
+    "zod-typescript-exact-json-diagnostic真实模型验证.json",
+    "P0两层导航与同级恢复实测.json"
   ],
-  "跨构建升级边界": "实际20261012T052745Z→20261012T060630Z，版本均0.1.0；不替代跨正式版本或干净系统验证。",
+  "跨构建升级边界": "实际20261012T060630Z→20261012T072053Z，版本均0.1.0；作为本轮升级功能验收，不声称跨正式版本或未测环境通过。",
   "真实模型累计账本": {
-    "去重请求数": 677,
-    "已知total_tokens": 17430017,
-    "缺少用量请求数": 43,
+    "去重请求数": 714,
+    "已知total_tokens": 18296586,
+    "缺少用量请求数": 50,
     "在途请求数": 0,
     "费用": null,
     "说明": "包含历史失败、截断、修复及重新评测，按请求ID去重；在途属于尚未返回用量，未知不记零，缺少价格不估算费用。"
   },
   "模型账本口径": "公开工程历史去重，包括旧DeepSeek、新中转站、失败/修复/重测；核对时间快照。在途和缺少用量保留，未知不记零。主工作区13条连接等请求另计。",
-  "本轮制品说明": "包括受控流式接收、精简提示、Python None事实、宏补读、跨文件补读证据修复与明确自身引用修复反馈。364项后端、35项前端、Ruff/TypeScript/生产构建通过。独立包、原生PowerShell5.1与实际升级验证均无模型请求。",
-  "当前阻塞": "完整模型评测仍出现服务错误事件、传输或结构失败；按有限预算暂停并保留检查点。最新在途及终态见各样本和汇总记录，不能由连接成功推导复杂请求可靠。干净Windows环境已由用户免除本轮门槛。",
-  "核对时间UTC": "2026-10-12T06:21:12.474977+00:00",
+  "本轮制品说明": "受控流式与宏补读、精简提示、None比较事实、跨文件实际证据校验、明确自身引用修复、流式服务错误中文提示和错误事件已知用量保留。365项后端、35项前端、Ruff/TypeScript/生产构建通过。最终072053Z独立包与060630Z→072053Z实际升级验证通过，模型请求0。",
+  "当前阻塞": "四个完整工程仍有流式服务错误或传输失败。Zod经单次传输对照和限次主动恢复完成5/76，随后三次TRANSPORT_UNKNOWN暂停；在途0，没有继续无限恢复。干净环境门槛已按用户CHG-13免除。",
+  "核对时间UTC": "2026-10-12T07:57:48.209742+00:00",
   "当前模型": {
     "接收端": "https://www.cctq.ai/v1",
     "模型": "gpt-6-luna",
@@ -102,17 +108,18 @@
     "spdlog-cpp": {
       "接收端": "https://www.cctq.ai/v1",
       "模型": "gpt-6-luna",
-      "流水线": "architecture/4-repairs/2-explanations/3-reads/2-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
+      "流水线": "architecture/4-repairs/3-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
       "状态": "分析暂停",
-      "错误": "模型输出未通过结构校验，已用完有限修复次数；已有结果和检查点保留。",
+      "错误": "流式响应不符合接收契约，未发布部分结果。",
       "进度": {
         "phase": "paused",
-        "completed": 0,
+        "completed": 14,
         "total": 53,
-        "detail": "模型输出未通过结构校验，已用完有限修复次数；已有结果和检查点保留。"
+        "detail": "流式响应不符合接收契约，未发布部分结果。"
       },
       "请求状态": {
-        "failed": 3
+        "success": 14,
+        "failed": 6
       }
     },
     "flask-python": {
@@ -135,19 +142,19 @@
     "zod-typescript": {
       "接收端": "https://www.cctq.ai/v1",
       "模型": "gpt-6-luna",
-      "流水线": "architecture/3-repairs/2-explanations/3-reads/1-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/2-index/3-ts-bindings/2-python-declarations/1",
+      "流水线": "architecture/4-repairs/3-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
       "状态": "分析暂停",
       "错误": "网络请求超时或失败；远端用量可能不确定。",
       "进度": {
         "phase": "paused",
-        "completed": 12,
+        "completed": 5,
         "total": 76,
         "detail": "网络请求超时或失败；远端用量可能不确定。"
       },
       "请求状态": {
-        "success": 12,
-        "outcome_unknown": 4,
-        "failed": 1
+        "success": 5,
+        "failed": 5,
+        "outcome_unknown": 4
       }
     }
   },
@@ -164,9 +171,9 @@
   "人工验收说明": "docs/P0_独立环境验收.md",
   "最新实现流水线": "architecture/4-repairs/3-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
   "本轮制品校验": {
-    "Windows声明与函数范围独立包验证.json": "661d2fe6f87b07523ad7ac3cb8298c08d63e17ed7d3feab8633ae07c28b60dca",
-    "Windows跨构建升级验证.json": "d4db51d89354b3f356241e3ab9e4efdd7a778eab318ea44dab49611d3aaa6f1a",
-    "Windows原生PowerShell验收脚本验证.json": "864a3013777ce0ee199299882678dc6398c75c16617f05dddb4dd94b65d0f79b"
+    "Windows声明与函数范围独立包验证.json": "47bc04232521054df51391f8410ad39d4e29c594411ef40385fee4d6fde28513",
+    "Windows跨构建升级验证.json": "2f45751626cd787cc2f789def62fcc53357e5e6eef0f9d4160fb2545762b97ef",
+    "Windows原生PowerShell验收脚本验证.json": "1cd9e349b2f989c2eb09513ec4996dce07c841fda8e1daab3385f39eb6ab2fde"
   },
   "核对注意": "该账本/评测字段为汇总时间快照。后续进行中的评测只见各样本及公开工程真实评测进度.json，不以旧快照的在途0推导当前无任务。",
   "验收范围调整": {
@@ -174,5 +181,13 @@
     "用户决定": "没有，不需要干净Windows10/11测试环境",
     "当前环境门槛": "目标开发机已实测独立运行、安装升级卸载及原生PowerShell检查",
     "未测环境不冒称通过": true
+  },
+  "评测选项提交": "6c667fd",
+  "当前工作区截图": "output/playwright/P0最终构建工作区配置.png",
+  "本轮公开真实账本增量": {
+    "请求数": 89,
+    "已知total_tokens": 1729306,
+    "缺少用量请求": 14,
+    "说明": "以625/16567280/36前轮已核对累计为基准，主工作区连接测试另计。"
   }
 }

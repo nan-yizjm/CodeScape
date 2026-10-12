@@ -1,5 +1,5 @@
 {
-  "核对时间UTC": "2026-10-12T06:25:10.578831+00:00",
+  "核对时间UTC": "2026-10-12T07:55:57.450487+00:00",
   "执行目标代码": false,
   "模型请求": 0,
   "样本": {
@@ -334,10 +334,10 @@
       "范围对照限制": "需两份均已发布且使用同一接收端、模型及流水线，才能生成本轮范围对照；局部材料单独保留。"
     },
     "spdlog-cpp": {
-      "完整状态": "进行中",
+      "完整状态": "分析暂停",
       "缩小范围状态": "结构检查通过，待源码质量复核",
       "报告": {
-        "spdlog-cpp-full真实模型验证.json": "d021968bd88d17c209fe725b5de5f4484ce78e029c72722be3ec158c12b357c6",
+        "spdlog-cpp-full真实模型验证.json": "ffd6169428465d7da9e8c2a59fa657226434593fdde38fe460d251a788f9ec5b",
         "spdlog-cpp-narrow真实模型验证.json": "268df8985417c9749f3f902a0035ce5c8fc813743c4964a68458b2fba43bd972"
       },
       "完整流水线": "architecture/4-repairs/3-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
@@ -609,10 +609,10 @@
       "完整状态": "分析暂停",
       "缩小范围状态": "结构检查通过，待源码质量复核",
       "报告": {
-        "zod-typescript-full真实模型验证.json": "d223fae492f341da14b4fdca929cfb2f01faa70a42eeba3c5e758d702138d930",
+        "zod-typescript-full真实模型验证.json": "d92c836c148530463d30a1573801513a0bedc903a0ec7b695e34cdd9c5edf8c0",
         "zod-typescript-narrow真实模型验证.json": "818381aa29647885949eb4d16606faa2e3d06362aafef37242a625133df5347f"
       },
-      "完整流水线": "architecture/3-repairs/2-explanations/3-reads/1-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/2-index/3-ts-bindings/2-python-declarations/1",
+      "完整流水线": "architecture/4-repairs/3-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
       "缩小范围流水线": "architecture/4-repairs/2-explanations/3-reads/2-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/2-index/3-ts-bindings/2-python-declarations/1",
       "完整接收端与模型": {
         "base_url": "https://www.cctq.ai/v1",
