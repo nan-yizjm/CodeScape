@@ -23,6 +23,7 @@ from .macro_context import macro_reads
 from .models import Analysis, Architecture, Module, Overview
 from .overview import ConciseOverview, overview_context
 from .prompts import architecture_prompt
+from .responsibility_context import non_node_implementations
 from .security import CredentialStore
 from .semantic_facts import (
     defaulted_flag_facts,
@@ -37,11 +38,12 @@ from .validation import SourceContractError
 MAX_CONTEXT_CHARS = 180_000
 BATCH_TARGET_CHARS = 150_000
 BATCH_MAX_ENTITIES = 12
-PIPELINE_VERSION = "architecture/4-repairs/3-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1"
+PIPELINE_VERSION = "architecture/5-repairs/4-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1"
 ProgressCallback = Callable[[int, int, str], Awaitable[None]]
 BatchCallback = Callable[[int, int, Architecture], Awaitable[None]]
 
 SAFE_VALIDATION_MESSAGES = {
+    '本批已提供完整实现的可见函数缺少讲解。',
     'None身份比较需要明确说明None，不能笼统概括成空值或非空。',
     "缺少项目概览", "补读参数错误", "补读超出当前授权快照", "补读范围超过保护上限", "补读片段超过保护上限",
     "实体不属于当前快照", "调用不属于当前确认集", "诊断补读不接受外部标识", "补读总量超过保护上限",
@@ -116,6 +118,11 @@ def validation_feedback(error: ValueError) -> str:
                                         '其他函数或宏定义的补充引用不能替代这条自身依据。'
                                         '若自身范围超过200行，选择其中实际支持讲解的短片段；'
                                         '没有依据时省略该讲解，明确保留未完成，不伪造引用。')
+        if message == '本批已提供完整实现的可见函数缺少讲解。':
+            details['repair_action'] = ('补齐 allowed_entity_ids 中缺失的 explanations，保留已有有效讲解；'
+                                        '按本批已提供实现解释用途、关键条件和结果，并提供实现内的真实 evidence。'
+                                        '这些ID不是新的模块归属集合，不要重复添加函数、改换模块或虚构调用。'
+                                        '无法可靠解释时仍可省略，保持未完成；此补齐机会只提供一次。')
         return message + '。已知索引依据：' + json.dumps(details, ensure_ascii=False)
     return message
 
@@ -529,6 +536,9 @@ class Provider:
                              for fact in extractor(analysis, {path:text for path,text in files.items() if ranges[path][0] == 1}).values()
                              if fact['entity_id'] in local_ids],
         }
+        hints = non_node_implementations(analysis, files, ranges)
+        if hints['total_count']:
+            payload['non_node_implementations'] = hints
         return json.dumps(payload, ensure_ascii=False, separators=(',', ':')), local_ids
 
     def _plan_batches(self, analysis: Analysis, files: dict[str, str]) -> list[tuple[dict[str, str], dict[str, tuple[int, int]]]]:
@@ -670,9 +680,12 @@ class Provider:
             supplements = tools.read(automatic)
             seen.add(json.dumps([item.model_dump() for item in automatic], sort_keys=True))
         supplied = {path: [bounds] for path, bounds in ranges.items()}
+        explanation_repair_requested = False
+        completion_notes = {}
         with model_unit():
             for round_index in range(4):
                 def checked(document):
+                    nonlocal explanation_repair_requested
                     if isinstance(document, dict) and document.get("type") == "json_object":
                         document = {key: value for key, value in document.items() if key != "type"}
                     reply = ArchitectureReply.model_validate(document)
@@ -686,6 +699,9 @@ class Provider:
                     for path, bounds in tools.read_ranges.items():
                         evidence_ranges.setdefault(path, bounds)
                     expected = {identifier for module in architecture.modules for identifier in module.entity_ids}
+                    current_notes = {note.entity_id for note in architecture.explanations}
+                    architecture.explanations.extend(note for identifier, note in completion_notes.items()
+                        if identifier in expected and identifier not in current_notes)
                     validate_explanations(architecture, analysis, expected, files, evidence_ranges)
                     validate_fold_wording(architecture, recursive_fold_facts(analysis, files))
                     validate_null_wording(architecture, null_facts)
@@ -693,6 +709,19 @@ class Provider:
                     validate_judgments(architecture, analysis, {call["id"] for call in payload["calls"] + payload["unresolved_calls"]},
                                        files, evidence_ranges)
                     validate_primary_dependencies(architecture, analysis, {call["id"] for call in payload["calls"] + payload["unresolved_calls"]})
+                    explained = {note.entity_id for note in architecture.explanations}
+                    missing = [entity for entity in analysis.entities if entity.id in expected - explained
+                        and any(start <= entity.location.start_line <= entity.location.end_line <= end
+                                for start, end in evidence_ranges.get(entity.location.path, []))]
+                    # 全部没有讲解可能是明确的部分结果；只对已有讲解中的遗漏给一次补齐机会。
+                    if explained and missing and not explanation_repair_requested:
+                        explanation_repair_requested = True
+                        completion_notes.update({note.entity_id: note for note in architecture.explanations})
+                        entity = missing[0]
+                        raise SourceContractError('本批已提供完整实现的可见函数缺少讲解。', entity.id,
+                            (entity.location.start_line, entity.location.end_line),
+                            evidence_ranges.get(entity.location.path, []),
+                            allowed_identifiers=[item.id for item in missing])
                     return architecture
 
                 payload = context if not supplements else json.dumps({**json.loads(context), "supplemental_reads": supplements}, ensure_ascii=False)
