@@ -1,0 +1,100 @@
+{
+  "日期": "2026-10-12",
+  "核对时间UTC": "2026-10-12T03:31:09.917807+00:00",
+  "接收端": "https://www.cctq.ai/v1",
+  "模型": "gpt-6-luna",
+  "执行目标代码": false,
+  "复核模型请求": 0,
+  "材料报告sha256": "15789d0796a7f12e5aebd9928dcb3e08e8acd888df448adbd1a45984e429761d",
+  "来源": {
+    "hiredis-c": {
+      "报告": "hiredis-c-narrow真实模型验证.json",
+      "sha256": "4bb461a6fabc0f9ab61c478ec866d8c4dc702b7a3a120958d66799b77226d19d",
+      "实际模型": "gpt-6-luna",
+      "数据目录": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\.runtime\\public-model-validation\\19cc8722-c921-494d-81cc-1761e5f7acc3",
+      "静态索引制品": {
+        "path": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\.runtime\\public-model-validation\\19cc8722-c921-494d-81cc-1761e5f7acc3\\validation-artifacts\\7c6d44d9183e8bc16570b8dea8dbe88312877010362bce3923187621a170490f.json",
+        "sha256": "7c6d44d9183e8bc16570b8dea8dbe88312877010362bce3923187621a170490f",
+        "bytes": 136912
+      },
+      "流水线": "architecture/3-repairs/2-explanations/3-reads/1-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/2-index/3-ts-bindings/2-python-declarations/1"
+    },
+    "flask-python": {
+      "报告": "flask-python-narrow真实模型验证.json",
+      "sha256": "a9e6f30bd04c7a1173ab2a240f0061faa4d136601954fe0d36164372df3c9442",
+      "实际模型": "gpt-6-luna",
+      "数据目录": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\.runtime\\public-model-validation\\e83fe5d3-7775-461b-992c-9fe2394d4cba",
+      "静态索引制品": {
+        "path": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\.runtime\\public-model-validation\\e83fe5d3-7775-461b-992c-9fe2394d4cba\\validation-artifacts\\1217b16b0cd46b6d49392b611649f6ea4d1dac68d70959f939b3fa8265b0df8d.json",
+        "sha256": "1217b16b0cd46b6d49392b611649f6ea4d1dac68d70959f939b3fa8265b0df8d",
+        "bytes": 79353
+      },
+      "流水线": "architecture/3-repairs/2-explanations/3-reads/1-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/2-index/3-ts-bindings/2-python-declarations/1"
+    },
+    "spdlog-cpp": {
+      "报告": "spdlog-cpp-narrow真实模型验证.json",
+      "sha256": "b23020d100529d6df2b7b56691cb278ce320084a2febe644b06f294eda8cd51b",
+      "实际模型": "gpt-6-luna",
+      "数据目录": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\.runtime\\public-model-validation\\b6c270ee-7028-43de-b489-c5e4b2513af8",
+      "静态索引制品": {
+        "path": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\.runtime\\public-model-validation\\b6c270ee-7028-43de-b489-c5e4b2513af8\\validation-artifacts\\f8eeb9e17a6b4dd39501c4b0ee63f9fa6ea69a01b114a82b91db34416d92eaa6.json",
+        "sha256": "f8eeb9e17a6b4dd39501c4b0ee63f9fa6ea69a01b114a82b91db34416d92eaa6",
+        "bytes": 337086
+      },
+      "流水线": "architecture/3-repairs/2-explanations/3-reads/1-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/2-index/3-ts-bindings/2-python-declarations/1"
+    }
+  },
+  "局部复核": [
+    {
+      "样本": "hiredis-c",
+      "函数": "redisReaderFeed",
+      "结论": "关键边界符合源码",
+      "依据": "read.c:789-818。已有错误立即返回；输入指针与len联合条件保留，重建要求r->len==0、maxbuf!=0及sdsavail>maxbuf同时成立；OOM失败出口保留。"
+    },
+    {
+      "样本": "hiredis-c",
+      "函数": "redisReaderGetReply",
+      "结论": "关键边界符合源码",
+      "依据": "read.c:820-871。输出指针判空，已有错误与空缓冲分别返回，处理任务与1024压缩阈值保留；仅完成时交付，输出指针为空时按释放回调条件释放。"
+    },
+    {
+      "样本": "flask-python",
+      "函数": "get_load_dotenv",
+      "结论": "默认值及比较方向符合源码",
+      "依据": "helpers.py:36-48。假值读取结果返回调用方default，省略参数True；非假值时小写结果属于0/false/no才True。"
+    },
+    {
+      "样本": "flask-python",
+      "函数": "_prepare_send_file_kwargs、send_file",
+      "结论": "参数加工与下游委托符合源码",
+      "依据": "helpers.py:402-414、528-540。max_age为None时换成应用方法并补齐四项上下文参数；send_file展开加工结果委托Werkzeug，无不适当运行时保证。"
+    },
+    {
+      "样本": "flask-python",
+      "函数": "get_root_path",
+      "结论": "主要路径符合源码，但措辞需要精确化",
+      "依据": "helpers.py:597-641。已加载模块路径、find_spec捕获类型、无loader时cwd、导入后无文件路径RuntimeError等保留；实际条件为__file__ is not None，讲解概括成非空__file__，没有说明空字符串仍满足is not None，不能视为完整逐条件验收通过。"
+    },
+    {
+      "样本": "spdlog-cpp",
+      "函数": "logger::should_flush_、log_两个重载",
+      "结论": "关键过滤与开关方向符合源码",
+      "依据": "logger-inl.h:166-168保留msg.level>=flush_level且不等于off；logger.h:324-365保留日志和回溯同时关闭才早退、宽字符支持条件和UTF-8转换。"
+    },
+    {
+      "样本": "spdlog-cpp",
+      "函数": "logger::sink_it_、logger::flush_、log_",
+      "结论": "异常上下文质量缺口仍未解决",
+      "依据": "新实际讲解仍称宏具体异常行为不能从本段确定；本次已授权的四文件范围包含common.h:107-121和logger.h:30-46。启用异常的源码分支捕获std::exception并调用错误处理器，未知异常分支调用处理器后重新抛出；SPDLOG_NO_EXCEPTIONS时包装为空。当前讲解未补读并说明这些已提供条件边界，不能计为完整异常语义通过，也不能把结构incomplete=false当成无缺口。"
+    }
+  ],
+  "边界": "仅抽查上述实际文本与关键分支，不覆盖所有函数、模块边界或完整/缩小范围一致性；不以引用有效或结构发布替代语义质量通过。",
+  "固定对照材料": {
+    "path": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\output\\public-quality-artifacts\\15789d0796a7f12e5aebd9928dcb3e08e8acd888df448adbd1a45984e429761d.json",
+    "sha256": "15789d0796a7f12e5aebd9928dcb3e08e8acd888df448adbd1a45984e429761d"
+  },
+  "增补固定对照材料": {
+    "path": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\output\\public-quality-artifacts\\4ec574428fc509df9639383c9f0ef23cc280f71fb80c75893b292d81f2afc4c3.json",
+    "sha256": "4ec574428fc509df9639383c9f0ef23cc280f71fb80c75893b292d81f2afc4c3"
+  }
+}

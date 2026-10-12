@@ -1,0 +1,72 @@
+{
+  "日期": "2026-10-12",
+  "核对时间UTC": "2026-10-12T03:43:30.458644+00:00",
+  "接收端": "https://www.cctq.ai/v1",
+  "实际模型": "gpt-6-luna",
+  "用户授权范围": "仅Hiredis、spdlog、Flask、Zod四个固定Commit的筛选源码及静态索引",
+  "主工作区源码上传": false,
+  "密钥保存": "仅当前Windows用户DPAPI加密；未进入源码、命令参数、日志、截图或Git",
+  "连接测试": "gpt-6-luna返回connected=true，已知72 total_tokens，无源码",
+  "模型目录查询": "HTTP200且包含gpt-6-luna，不保存响应头或完整模型清单",
+  "主工作区连接账本": [
+    {
+      "model": "gpt5.6-luna",
+      "status": "failed",
+      "http_status": 503,
+      "error_code": "HTTP_503",
+      "usage": null
+    },
+    {
+      "model": "gpt5.6-luna",
+      "status": "failed",
+      "http_status": 503,
+      "error_code": "HTTP_503",
+      "usage": null
+    },
+    {
+      "model": "gpt5.6-luna",
+      "status": "failed",
+      "http_status": 503,
+      "error_code": "HTTP_503",
+      "usage": null
+    },
+    {
+      "model": "gpt-6-luna",
+      "status": "success",
+      "http_status": 200,
+      "error_code": null,
+      "usage": {
+        "prompt_tokens": 60,
+        "completion_tokens": 12,
+        "total_tokens": 72
+      }
+    }
+  ],
+  "缩小范围真实测试": "Flask19、Hiredis18、spdlog58个可见函数完成结构发布及全局概览，未完成归属均0；仅关键函数局部复核，Flaskis not None措辞及spdlog跨批异常宏上下文仍有缺口，不计全部语义通过。Zod与完整范围最新状态见公开工程真实评测进度.json。",
+  "评测范围与边界": "四个完整范围全部因传输结果未知暂停：Hiredis3/49、spdlog5/53、Flask3/33、Zod12/76；Hiredis18、spdlog58、Flask19可见函数的小范围结构发布，Zod小范围0/1暂停。原DeepSeek报告/检查点保留，未混入新模型。局部质量缺口未消除，P0不计全部通过。",
+  "缓存修订": "检查点与待发布制品绑定base_url和model；变更后不直接复用，产物摘要校验仍保留；只写两项公开身份，不写key或其他配置",
+  "自动检查": "338项后端和Ruff通过，前端未修改",
+  "产品提交": "5e29fe5",
+  "构建号": "20261012T030041Z",
+  "安装验证": "独立运行及022142Z→030041Z实际升级/学习保留/损坏数据拒绝/卸载保留通过，模型请求0",
+  "截图": "output/playwright/中转站模型连接验证.png",
+  "范围复核报告": "中转站范围局部复核.json",
+  "范围对照约束": "两份结果均已发布且接收端、模型、流水线一致后才生成同轮范围对照；历史DeepSeek结果不混入本轮。",
+  "本轮公开工程账本": {
+    "请求数": 65,
+    "已知total_tokens": 937797,
+    "用量未知请求数": 20,
+    "在途请求数": 0,
+    "费用": null,
+    "边界": "只计本轮中转站四样本真实评测，不含主工作区连接测试；未知用量不记零，缺价格不估算费用。"
+  },
+  "累计公开工程账本": {
+    "去重请求数": 625,
+    "已知total_tokens": 16567280,
+    "缺少用量请求数": 36,
+    "在途请求数": 0,
+    "费用": null,
+    "说明": "包含历史失败、截断、修复及重新评测，按请求ID去重；在途属于尚未返回用量，未知不记零，缺少价格不估算费用。"
+  },
+  "身份核对报告": "中转站评测身份核对.json"
+}

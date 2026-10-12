@@ -76,6 +76,10 @@ def main():
         item = {'完整状态': full['状态'], '缩小范围状态': narrow['状态'],
                 '报告': {path.name: hashlib.sha256(path.read_bytes()).hexdigest() for path in (full_path, narrow_path)},
                 '完整流水线': full['流水线'], '缩小范围流水线': narrow['流水线'],
+                '完整接收端与模型': {'base_url': full['接收端'], 'model': full['模型']},
+                '缩小范围接收端与模型': {'base_url': narrow['接收端'], 'model': narrow['模型']},
+                '同一接收端与模型': (full['接收端'], full['模型']) == (narrow['接收端'], narrow['模型']),
+                '同一模型流水线': full['流水线'] == narrow['流水线'],
                 '语义质量结论': '待源码逐项复核，不能由本脚本自动判定。'}
         assert full['Commit'] == narrow['Commit']
         if small:
@@ -83,7 +87,7 @@ def main():
             item['缩小范围模块摘要'] = [{key: module[key] for key in ('name', 'summary', 'incomplete')}
                                   for module in narrow['architecture']['modules']]
             item['缩小范围未完成模块'] = sum(module['incomplete'] for module in narrow['architecture']['modules'])
-        if large and small:
+        if large and small and item['同一接收端与模型'] and item['同一模型流水线']:
             assert all(files.get(name) == raw for name, raw in small_files.items())
             identities = {identity(entity) for entity in large.entities if entity.visible}
             assert all(identity(entity) in identities for entity in small.entities if entity.visible)
@@ -94,6 +98,8 @@ def main():
                         完整抽查材料=excerpts(full, large, files, names),
                         完整概览=full['architecture']['overview'],
                         缩小范围概览=narrow['architecture']['overview'])
+        else:
+            item['范围对照限制'] = '需两份均已发布且使用同一接收端、模型及流水线，才能生成本轮范围对照；局部材料单独保留。'
         result['样本'][sample] = item
     (reports / '公开工程最新范围对照材料.json').write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding='utf-8')
     print(json.dumps({name: {key: value[key] for key in ('完整状态', '缩小范围状态')}

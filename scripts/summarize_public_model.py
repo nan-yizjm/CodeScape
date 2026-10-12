@@ -38,6 +38,8 @@ def main():
     summary = json.loads(destination.read_text(encoding='utf-8'))
     summary['日期'] = (datetime.now(UTC) + timedelta(hours=8)).date().isoformat()
     summary['汇总时间UTC'] = datetime.now(UTC).isoformat()
+    summary['性质'] = '真实配置服务模型与本地源码复核，非固定响应，非用户验收'
+    summary['历史复核边界'] = '缩小范围原有源码复核字段属于当时报告；最新重测单独记录，不自动继承历史质量结论。'
     receipts = {}
     documents = {}
     for sample in samples:
@@ -64,6 +66,7 @@ def main():
                          project['status'] if project else None, document['状态'])
             item = {
                 'Commit': document['Commit'], '实际文件': document['实际文件'],
+                '接收端': document.get('接收端'), '模型': document.get('模型'),
                 '模型流水线': document.get('流水线'),
                 '状态': state, '错误': project['error'] if project else document.get('错误'),
                 '进度': progress or document.get('进度'),
@@ -114,16 +117,21 @@ def main():
         '说明': '包含历史失败、截断、修复及重新评测，按请求ID去重；在途属于尚未返回用量，未知不记零，缺少价格不估算费用。',
     }
     balances = [value['错误'] == '服务余额不足。' for value in summary['完整范围'].values()]
+    official_receivers = {'https://api.deepseek.com', 'https://api.deepseek.com/v1'}
+    official_evaluation = all(value.get('接收端') in official_receivers
+                              for value in summary['完整范围'].values())
     balance_path = reports / '真实模型账户可用状态核对.json'
     available = (json.loads(balance_path.read_text(encoding='utf-8')).get('账户可供API调用')
-                 if balance_path.exists() else None)
+                 if official_evaluation and balance_path.exists() else None)
     summary['外部阻塞'] = ('账户只读核对已恢复可用，已开始新修订真实重测；历史HTTP402检查点保留，实际进度见各样本记录。'
                          if available is True else
                          '官方账户只读查询确认暂不可调用，不重试收费任务；各样本的暂停原因和已发布状态见实际记录。'
                          if available is False else
                          '四个完整范围均因官方HTTP402余额不足暂停；检查点和历史报告保留，当前不继续重试收费任务。'
                          if all(balances) else '具体错误及在途状态见各样本实际记录；此前HTTP402记录完整保留。')
-    summary['验收结论'] = ('修订后的四个完整范围均因HTTP402暂停，完整质量、范围对照与用户验收未完成；'
+    if not official_evaluation:
+        summary['外部阻塞'] = '已按授权切换新接收端，实际终态和错误见各样本；历史DeepSeek官方余额查询不用于判定中转站可用性。'
+    summary['验收结论'] = ('当前四个完整范围均因服务余额不足暂停，完整质量、范围对照与用户验收未完成；'
                        '缩小范围源码复核及历史缺陷见各样本记录，结构发布不代表质量通过。'
                        if all(balances) and available is not True else '真实评测与源码质量复核尚未完成；结构发布不代表质量通过，不能宣称全部P0完成。')
     temporary = destination.with_suffix('.tmp')
