@@ -50,9 +50,9 @@ async def read_chat_stream(response, on_usage):
             value = json.loads(raw)
             if not isinstance(value, dict):
                 raise StreamContractError('流式事件不是对象。')
+            on_usage(value.get('usage'))
             if 'error' in value:
                 raise StreamContractError('流式服务返回错误事件。', code='ERROR_EVENT')
-            on_usage(value.get('usage'))
             choices = value.get('choices', [])
             if not isinstance(choices, list):
                 raise StreamContractError('流式选择项不是列表。', code='INVALID_CHOICES')

@@ -332,6 +332,8 @@ class Provider:
                 except StreamContractError as error:
                     ledger.finish(identifier, 'failed', usage=usage, http_status=response.status_code,
                                   error_code='INVALID_STREAM_'+error.code)
+                    if error.code == 'ERROR_EVENT':
+                        raise ProviderError('AI 服务在流式响应中返回错误，未发布部分结果；检查点已保留，请检查服务后主动恢复。') from None
                     raise ProviderError('流式响应不符合接收契约，未发布部分结果。') from None
                 except (httpx.HTTPError, TimeoutError):
                     ledger.finish(identifier, "outcome_unknown" if sent else "failed", usage=usage,

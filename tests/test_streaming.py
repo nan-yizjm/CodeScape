@@ -111,6 +111,20 @@ def test_multiline_events_missing_usage_and_content_limit(tmp_path, monkeypatch)
     db.engine.dispose()
 
 
+def test_remote_error_retains_reported_usage_without_exposing_its_message(tmp_path, monkeypatch):
+    raw = b'data: {"error":{"message":"private-service-message"},"usage":{"total_tokens":19,"unsafe":"private-usage"}}\n\n'
+    db, provider, ledger = setup(tmp_path, monkeypatch, lambda _:
+        httpx.Response(200, headers={'content-type': 'text/event-stream'}, stream=Bytes(raw)))
+    with pytest.raises(ProviderError, match='AI 服务.*检查点已保留') as error:
+        asyncio.run(provider.request('固定验证', '非源码'))
+    receipt = ledger.summary()['records'][0]
+    assert ledger.summary()['request_count'] == 1
+    assert receipt['status'] == 'failed' and receipt['error_code'] == 'INVALID_STREAM_ERROR_EVENT'
+    assert receipt['usage'] == {'total_tokens': 19}
+    assert 'private-' not in str(error.value) and 'private-' not in json.dumps(receipt)
+    db.engine.dispose()
+
+
 @pytest.mark.parametrize('status', [401, 503])
 def test_http_errors_keep_original_retry_policy_with_html_body(tmp_path, monkeypatch, status):
     db, provider, ledger = setup(tmp_path, monkeypatch, lambda _: httpx.Response(status, text='private-html'))

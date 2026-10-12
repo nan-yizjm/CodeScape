@@ -7,7 +7,7 @@ type Usage = {request_count: number; known_total_tokens: number; total_tokens: n
   unknown_usage_count: number; outcome_unknown_count: number; cost: string | null;
   records: Receipt[]; records_offset: number; next_offset: number | null};
 const states: Record<string,string> = {prepared:'待发送', sent:'已发送，等待结果', success:'成功', failed:'失败', outcome_unknown:'远端结果未知'};
-const phases: Record<string,string> = {connection:'无源码连接测试', architecture:'架构归纳', overview:'全局概览', explanation:'函数讲解', relation:'关系复核', repair:'结构修复'};
+const phases: Record<string,string> = {connection:'无源码连接测试', architecture:'架构归纳', source_read:'源码补读', overview:'全局概览', explanation:'函数讲解', relation:'关系复核', repair:'结构修复'};
 
 export function RequestUsage() {
   const [usage, setUsage] = useState<Usage | null>(null);
