@@ -38,7 +38,7 @@ from .validation import SourceContractError
 MAX_CONTEXT_CHARS = 180_000
 BATCH_TARGET_CHARS = 150_000
 BATCH_MAX_ENTITIES = 12
-PIPELINE_VERSION = "architecture/5-repairs/4-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1"
+PIPELINE_VERSION = "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1"
 ProgressCallback = Callable[[int, int, str], Awaitable[None]]
 BatchCallback = Callable[[int, int, Architecture], Awaitable[None]]
 
@@ -1013,9 +1013,14 @@ def repair_batch_architecture(
     missing = expected - seen_ids
     if missing:
         missing_paths = list(dict.fromkeys(entity_paths[entity_id] for entity_id in missing))
+        base_id = f"m-unassigned-{len(architecture.modules) + 1}"
+        fallback_id, suffix = base_id, 1
+        while fallback_id in used_module_ids:
+            fallback_id = f"{base_id}-repair-{suffix}"
+            suffix += 1
         architecture.modules.append(
             Module(
-                id=f"m-unassigned-{len(architecture.modules) + 1}",
+                id=fallback_id,
                 name="待复核模块",
                 summary="本批模型未明确归属的函数，已保留真实源码范围，等待后续人工复核。",
                 entity_ids=sorted(missing),

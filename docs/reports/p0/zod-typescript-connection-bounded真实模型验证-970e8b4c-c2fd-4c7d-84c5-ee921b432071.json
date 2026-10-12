@@ -1,0 +1,51 @@
+{
+  "日期": "2026-10-12",
+  "核对时间UTC": "2026-10-12T09:35:40.976192+00:00",
+  "性质": "真实模型无源码连接检查，不替代架构与质量验收",
+  "数据目录": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\.runtime\\public-model-validation\\593b6184-4233-4960-b421-615793140324",
+  "接收端": "https://www.cctq.ai/v1",
+  "模型": "gpt-6-luna",
+  "流水线": "architecture/5-repairs/4-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
+  "流式接收": true,
+  "实际文件": [],
+  "源码发送": false,
+  "最多请求": 1,
+  "等待上限秒": 60,
+  "执行目标代码": false,
+  "服务错误事件白名单": [
+    {
+      "code": "未提供或未识别",
+      "type": "upstream_error",
+      "status": "未提供或未识别"
+    }
+  ],
+  "状态": "连接失败",
+  "错误": "AI 服务在流式响应中返回错误，未发布部分结果；检查点已保留，请检查服务后主动恢复。",
+  "请求账本": [
+    {
+      "id": "07d1f973-0266-4e8b-90de-8a4f32357fd6",
+      "project_id": null,
+      "version_id": null,
+      "job_id": null,
+      "unit_id": "ec43eb59-f306-41ed-b805-af69d59a68c7",
+      "attempt": 1,
+      "phase": "connection",
+      "recipient": "https://www.cctq.ai/v1",
+      "model": "gpt-6-luna",
+      "status": "failed",
+      "created_at": "2026-10-12T09:35:40.979191+00:00",
+      "sent_at": "2026-10-12T09:35:41.027268+00:00",
+      "finished_at": "2026-10-12T09:35:43.908018+00:00",
+      "payload_hash": "980e06aa0d68a0bd0d9c6d0bf9d4462f98712fbb9ea2244a434a0c613ef6dfa5",
+      "source_chars": 0,
+      "usage": null,
+      "cost": null,
+      "currency": null,
+      "price_snapshot": null,
+      "http_status": 200,
+      "error_code": "INVALID_STREAM_ERROR_EVENT"
+    }
+  ],
+  "已知total_tokens": 0,
+  "未知用量请求": 1
+}

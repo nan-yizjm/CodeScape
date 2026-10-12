@@ -66,7 +66,7 @@
         "最大上下文字符": 79533,
         "超过180000字符": 0,
         "仅静态规划": true,
-        "规划流水线": "architecture/5-repairs/4-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
+        "规划流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
         "索引所属模型流水线": "architecture/4-repairs/3-explanations/3-reads/2-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
         "索引sha256": "3f4ec6781a6ce65830850a50f92701c48a92f4b0640baa7f31e78a08fcf457e6"
       }
@@ -200,7 +200,7 @@
         "最大上下文字符": 145998,
         "超过180000字符": 0,
         "仅静态规划": true,
-        "规划流水线": "architecture/5-repairs/4-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
+        "规划流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
         "索引所属模型流水线": "architecture/4-repairs/3-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
         "索引sha256": "d144421089d6503e3581e2610f68698c44ea5f6df78f556b2978f84e401a7b6b"
       }
@@ -259,7 +259,7 @@
         "最大上下文字符": 51704,
         "超过180000字符": 0,
         "仅静态规划": true,
-        "规划流水线": "architecture/5-repairs/4-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
+        "规划流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
         "索引所属模型流水线": "architecture/4-repairs/2-explanations/3-reads/2-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
         "索引sha256": "ef501b9afd73e5f1b8760e5dfceb0a8db4a46cecbb2162f46cf50c6e16509eab"
       }
@@ -403,7 +403,7 @@
         "最大上下文字符": 168299,
         "超过180000字符": 0,
         "仅静态规划": true,
-        "规划流水线": "architecture/5-repairs/4-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
+        "规划流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
         "索引所属模型流水线": "architecture/4-repairs/3-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
         "索引sha256": "29723470cb271fc827a09ad438a394b38712ffbf5bce4253fc12aec86a90f5d4"
       }
@@ -618,16 +618,16 @@
     }
   },
   "账本汇总": {
-    "去重请求数": 721,
+    "去重请求数": 722,
     "已知total_tokens": 18296658,
-    "缺少用量请求数": 56,
+    "缺少用量请求数": 57,
     "在途请求数": 0,
     "费用": null,
     "说明": "包含历史失败、截断、修复及重新评测，按请求ID去重；在途属于尚未返回用量，未知不记零，缺少价格不估算费用。"
   },
   "外部阻塞": "已按授权切换新接收端，实际终态和错误见各样本；历史DeepSeek官方余额查询不用于判定中转站可用性。",
   "验收结论": "真实评测与源码质量复核尚未完成；结构发布不代表质量通过，不能宣称全部P0完成。",
-  "汇总时间UTC": "2026-10-12T09:28:47.124734+00:00",
+  "汇总时间UTC": "2026-10-12T09:45:59.557803+00:00",
   "本轮本地修订说明": {
     "新流水线": "cpp-config/8",
     "新模型请求": 0,
