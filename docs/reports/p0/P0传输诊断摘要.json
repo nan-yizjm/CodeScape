@@ -1,0 +1,51 @@
+{
+  "日期": "2026-10-12",
+  "目的": "供本地开发复核和服务排查，未向第三方发送此报告",
+  "接收端": "https://www.cctq.ai/v1",
+  "接口": "/chat/completions",
+  "配置模型": "gpt-6-luna",
+  "诊断": {
+    "最多发送": 1,
+    "实际发送": 1,
+    "批次": 6,
+    "上下文字符": 24437,
+    "源码字符": 2005,
+    "流式接收": false,
+    "耗时秒": 351.454,
+    "失败阶段": "http11.receive_response_headers",
+    "失败类型": "RemoteProtocolError",
+    "HTTP状态": null,
+    "usage": null,
+    "与生产最近失败payload_hash一致": true,
+    "授权快照字节一致": true
+  },
+  "小范围正式重测": {
+    "状态": "分析暂停",
+    "进度": {
+      "phase": "paused",
+      "completed": 0,
+      "total": 1,
+      "detail": "网络请求超时或失败；远端用量可能不确定。"
+    },
+    "有限请求数": 3,
+    "状态统计": {
+      "outcome_unknown": 3
+    },
+    "缺少用量请求": 3,
+    "评测期间实施代码一致": true,
+    "旧结果归档": "zod-typescript-narrow真实模型验证-23d40f2f-a878-408d-b91d-f4fedf3e7767.json"
+  },
+  "证据": {
+    "zod-typescript-bounded-transport-5716b8f1-098e-490f-b538-4d474343c202真实模型验证.json": "526dd82e6f1c07d9bf023e5e730408a7e3ff268eba17546251de3ab6f339dda5",
+    "zod-typescript-narrow真实模型验证.json": "e557f26100eccbf67d1f67117a922ae1e7bb9517c2f55e1a2c3dc80cdac6c721"
+  },
+  "用量边界": "本次4请求未返回用量，不能推定没有远端生成或没有费用；不存服务正文、请求头或密钥。",
+  "原因边界": "诊断在JSON接收之前失败，不能归因于本地JSON契约校验；无法仅凭异常类型断定中转站内部原因，也未收到HTTP413或上下文超限证据。",
+  "查阅公开文档": [
+    "https://doc.cctq.ai/guide/api-key.html",
+    "https://doc.cctq.ai/guide/troubleshooting/request-error.html"
+  ],
+  "文档核对边界": "本次查阅页面没有提供此例可验证的修复参数，未自动切换接收端、模型或采用图片异步接口。",
+  "在途请求数": 0,
+  "后续仍缺": "完整真实语义质量及同模型流水线范围对照与用户验收；不以此诊断替代质量通过"
+}

@@ -435,20 +435,20 @@
         ],
         "接收端": "https://www.cctq.ai/v1",
         "模型": "gpt-6-luna",
-        "模型流水线": "architecture/4-repairs/2-explanations/3-reads/2-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/2-index/3-ts-bindings/2-python-declarations/1",
-        "状态": "结构检查通过，待源码质量复核",
-        "错误": null,
+        "模型流水线": "architecture/4-repairs/3-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
+        "状态": "分析暂停",
+        "错误": "网络请求超时或失败；远端用量可能不确定。",
         "进度": {
-          "phase": "completed",
-          "completed": 1,
+          "phase": "paused",
+          "completed": 0,
           "total": 1,
-          "detail": "分批分析完成"
+          "detail": "网络请求超时或失败；远端用量可能不确定。"
         },
         "请求状态": {
-          "success": 1
+          "outcome_unknown": 3
         },
-        "已知total_tokens": 16707,
-        "未知用量请求": 0,
+        "已知total_tokens": 0,
+        "未知用量请求": 3,
         "原快照字节未变": true
       },
       "重测源码复核": {
@@ -618,16 +618,16 @@
     }
   },
   "账本汇总": {
-    "去重请求数": 714,
+    "去重请求数": 718,
     "已知total_tokens": 18296586,
-    "缺少用量请求数": 50,
+    "缺少用量请求数": 54,
     "在途请求数": 0,
     "费用": null,
     "说明": "包含历史失败、截断、修复及重新评测，按请求ID去重；在途属于尚未返回用量，未知不记零，缺少价格不估算费用。"
   },
   "外部阻塞": "已按授权切换新接收端，实际终态和错误见各样本；历史DeepSeek官方余额查询不用于判定中转站可用性。",
   "验收结论": "真实评测与源码质量复核尚未完成；结构发布不代表质量通过，不能宣称全部P0完成。",
-  "汇总时间UTC": "2026-10-12T07:55:52.658740+00:00",
+  "汇总时间UTC": "2026-10-12T08:44:07.362971+00:00",
   "本轮本地修订说明": {
     "新流水线": "cpp-config/8",
     "新模型请求": 0,

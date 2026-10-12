@@ -1,5 +1,5 @@
 {
-  "核对时间UTC": "2026-10-12T07:55:57.450487+00:00",
+  "核对时间UTC": "2026-10-12T08:44:11.176884+00:00",
   "执行目标代码": false,
   "模型请求": 0,
   "样本": {
@@ -607,13 +607,13 @@
     },
     "zod-typescript": {
       "完整状态": "分析暂停",
-      "缩小范围状态": "结构检查通过，待源码质量复核",
+      "缩小范围状态": "分析暂停",
       "报告": {
         "zod-typescript-full真实模型验证.json": "d92c836c148530463d30a1573801513a0bedc903a0ec7b695e34cdd9c5edf8c0",
-        "zod-typescript-narrow真实模型验证.json": "818381aa29647885949eb4d16606faa2e3d06362aafef37242a625133df5347f"
+        "zod-typescript-narrow真实模型验证.json": "e557f26100eccbf67d1f67117a922ae1e7bb9517c2f55e1a2c3dc80cdac6c721"
       },
       "完整流水线": "architecture/4-repairs/3-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
-      "缩小范围流水线": "architecture/4-repairs/2-explanations/3-reads/2-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/2-index/3-ts-bindings/2-python-declarations/1",
+      "缩小范围流水线": "architecture/4-repairs/3-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
       "完整接收端与模型": {
         "base_url": "https://www.cctq.ai/v1",
         "model": "gpt-6-luna"
@@ -623,117 +623,8 @@
         "model": "gpt-6-luna"
       },
       "同一接收端与模型": true,
-      "同一模型流水线": false,
+      "同一模型流水线": true,
       "语义质量结论": "待源码逐项复核，不能由本脚本自动判定。",
-      "缩小范围讲解覆盖": {
-        "可见函数": 3,
-        "有讲解": 2,
-        "缺失函数": [
-          "validateFallback"
-        ]
-      },
-      "缩小范围抽查材料": [
-        {
-          "函数": "finalizeParams",
-          "位置": {
-            "path": "packages/zod/src/v4/core/parse.ts",
-            "start_line": 10,
-            "end_line": 12,
-            "start_byte": 422,
-            "end_byte": 584
-          },
-          "源码": "function finalizeParams(callee: util.AnyFunc, params: $ParseParams | undefined): $ParseParams {\n  return { callee: params?.callee ?? callee, Err: params?.Err };\n}",
-          "实际讲解": {
-            "entity_id": "a43613ace3f7d7d5686b6256677b8a87",
-            "summary": "归一化解析参数，始终返回包含调用者与错误类键的对象。",
-            "details": "输入是默认调用者 callee 和可选的 params。函数返回新对象：callee 取 params.callee（仅在其为 null 或 undefined 时回退到传入的 callee），Err 直接取 params?.Err；即使 params 缺省，返回对象也保留这两个键，供下游以一致对象形状读取。它不校验调用者或错误类，也不捕获异常。",
-            "evidence": [
-              {
-                "path": "packages/zod/src/v4/core/parse.ts",
-                "start_line": 10,
-                "end_line": 12
-              }
-            ]
-          },
-          "讲解状态": "有实际讲解，待源码复核",
-          "实际模块": [
-            {
-              "name": "解析参数归一化",
-              "summary": "统一解析器的错误类与调用者信息，供编解码调用链复用。",
-              "incomplete": false
-            }
-          ]
-        },
-        {
-          "函数": "failure",
-          "位置": {
-            "path": "packages/zod/src/v4/core/parse.ts",
-            "start_line": 83,
-            "end_line": 103,
-            "start_byte": 3589,
-            "end_byte": 4395
-          },
-          "源码": "function failure(Err: $ZodErrorClass, issues: errors.$ZodRawIssue[], ctx: schemas.ParseContextInternal): any {\n  let error: errors.$ZodError | undefined;\n  return {\n    success: false,\n    get error() {\n      if (!error) {\n        error = new Err(issues.map((iss) => util.finalizeIssue(iss, ctx, core.config())));\n        // finalizeIssue drops `input`, so the built error holds nothing; keeping the raw issues past this point pins the parsed value for the life of the result\n        issues = undefined as any;\n        ctx = undefined as any;\n      }\n      return error;\n    },\n    set error(e: errors.$ZodError) {\n      error = e;\n      // a replacement makes the getter's branch unreachable, so the captures have to go here too\n      issues = undefined as any;\n      ctx = undefined as any;\n    },\n  };\n}",
-          "实际讲解": {
-            "entity_id": "9785612fccf844dbf4fd8b055123d816",
-            "summary": "创建失败型安全解析结果，首次读取 error 时才构造并缓存错误。",
-            "details": "输入为错误类、原始问题数组和解析上下文；返回 success 为 false 且带 error 访问器的对象。首次读取 error 时，将每项 issue 经 finalizeIssue 处理后交给 Err 构造错误并缓存，同时清空 issues 与 ctx 引用，避免结果对象长期持有原始输入；后续读取复用缓存。设置 error 会覆盖缓存并同样释放捕获的引用。错误构造或问题处理若抛异常，本函数没有捕获。",
-            "evidence": [
-              {
-                "path": "packages/zod/src/v4/core/parse.ts",
-                "start_line": 83,
-                "end_line": 103
-              }
-            ]
-          },
-          "讲解状态": "有实际讲解，待源码复核",
-          "实际模块": [
-            {
-              "name": "安全解析失败结果",
-              "summary": "按需构造并缓存安全解析结果中的错误对象，同时释放原始问题引用。",
-              "incomplete": false
-            }
-          ]
-        },
-        {
-          "函数": "validateFallback",
-          "位置": {
-            "path": "packages/zod/src/v4/core/parse.ts",
-            "start_line": 151,
-            "end_line": 172,
-            "start_byte": 6545,
-            "end_byte": 7356
-          },
-          "源码": "function validateFallback(\n  schema: schemas.$ZodType,\n  value: unknown,\n  _ctx?: schemas.ParseContext<errors.$ZodIssue>\n): boolean {\n  const ctx: schemas.ParseContextInternal = _ctx\n    ? { ..._ctx, async: false, abortEarly: true }\n    : { async: false, abortEarly: true };\n  const fallbackRun = (schema._zod.bag as CompiledBag).fallbackRun;\n  let result: unknown;\n  if (fallbackRun) {\n    // skip nested fast paths on the fallback, so user callbacks keep the at-most-twice bound\n    (ctx as Record<symbol, unknown>)[COMPILE_FALLBACK] = true;\n    result = fallbackRun({ value, issues: [] }, ctx);\n  } else {\n    result = schema._zod.run({ value, issues: [] }, ctx);\n  }\n  if (result instanceof Promise) {\n    throw new core.$ZodAsyncError();\n  }\n  return (result as schemas.ParsePayload).issues.length === 0;\n}",
-          "实际讲解": null,
-          "讲解状态": "尚未生成讲解",
-          "实际模块": [
-            {
-              "name": "编译校验回退验证",
-              "summary": "在编译校验器不可用或不能确定结论时，通过运行时解析判断输入有效性。",
-              "incomplete": false
-            }
-          ]
-        }
-      ],
-      "缩小范围模块摘要": [
-        {
-          "name": "解析参数归一化",
-          "summary": "统一解析器的错误类与调用者信息，供编解码调用链复用。",
-          "incomplete": false
-        },
-        {
-          "name": "安全解析失败结果",
-          "summary": "按需构造并缓存安全解析结果中的错误对象，同时释放原始问题引用。",
-          "incomplete": false
-        },
-        {
-          "name": "编译校验回退验证",
-          "summary": "在编译校验器不可用或不能确定结论时，通过运行时解析判断输入有效性。",
-          "incomplete": false
-        }
-      ],
-      "缩小范围未完成模块": 0,
       "范围对照限制": "需两份均已发布且使用同一接收端、模型及流水线，才能生成本轮范围对照；局部材料单独保留。"
     }
   },

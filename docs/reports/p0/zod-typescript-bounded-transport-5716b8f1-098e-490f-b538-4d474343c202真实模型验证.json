@@ -1,0 +1,135 @@
+{
+  "样本": "zod-typescript",
+  "Commit": "0b216ef674e297ebe41d8bf902262e56f8755822",
+  "接收端": "https://www.cctq.ai/v1",
+  "模型": "gpt-6-luna",
+  "流水线": "architecture/4-repairs/3-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
+  "实际快照hash": "c179e795ed4cac054e4cc4ff09bfd53aeca57c44706f8eba1969db3400a39955",
+  "project_id": "191d3b35-d8f4-4bc2-a0a9-1b0c375ce990",
+  "version_id": "5466969a-0e2c-4440-8564-f87c77b3420c",
+  "日期": "2026-10-12",
+  "核对时间UTC": "2026-10-12T08:19:21.844067+00:00",
+  "数据目录": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\.runtime\\public-model-validation\\ed6d52ae-936e-40ff-8fd2-6ce8eb4a2c43",
+  "本次新建job_id": "dc42fcad-37c1-4247-95cc-33b5526f1e29",
+  "最多发送": 1,
+  "执行目标代码": false,
+  "状态": "传输诊断失败",
+  "传输阶段": [
+    {
+      "阶段": "connection.connect_tcp",
+      "结果": "started",
+      "耗时秒": 0.125
+    },
+    {
+      "阶段": "connection.connect_tcp",
+      "结果": "complete",
+      "耗时秒": 0.141
+    },
+    {
+      "阶段": "connection.start_tls",
+      "结果": "started",
+      "耗时秒": 0.141
+    },
+    {
+      "阶段": "connection.start_tls",
+      "结果": "complete",
+      "耗时秒": 1.047
+    },
+    {
+      "阶段": "http11.send_request_headers",
+      "结果": "started",
+      "耗时秒": 1.047
+    },
+    {
+      "阶段": "http11.send_request_headers",
+      "结果": "complete",
+      "耗时秒": 1.047
+    },
+    {
+      "阶段": "http11.send_request_body",
+      "结果": "started",
+      "耗时秒": 1.047
+    },
+    {
+      "阶段": "http11.send_request_body",
+      "结果": "complete",
+      "耗时秒": 1.047
+    },
+    {
+      "阶段": "http11.receive_response_headers",
+      "结果": "started",
+      "耗时秒": 1.047
+    },
+    {
+      "阶段": "http11.receive_response_headers",
+      "结果": "failed",
+      "耗时秒": 351.422,
+      "异常类型链": [
+        "RemoteProtocolError"
+      ]
+    },
+    {
+      "阶段": "http11.response_closed",
+      "结果": "started",
+      "耗时秒": 351.422
+    },
+    {
+      "阶段": "http11.response_closed",
+      "结果": "complete",
+      "耗时秒": 351.422
+    }
+  ],
+  "异常类型链": [
+    "RemoteProtocolError",
+    "RemoteProtocolError"
+  ],
+  "边界": "只诊断当前暂停批次的传输，不发布架构；不把JSON接收成功计为质量通过。异常正文、请求头和密钥不记录。",
+  "批次": 6,
+  "总批次": 76,
+  "实际文件": [
+    "packages/zod/src/v4/classic/schemas.ts"
+  ],
+  "上下文字符": 24437,
+  "源码字符": 2005,
+  "流式接收": false,
+  "错误": "网络请求超时或失败；远端用量可能不确定。",
+  "请求账本": [
+    {
+      "id": "0c71d4e9-836e-4753-b094-18d9cbf9ff96",
+      "project_id": "191d3b35-d8f4-4bc2-a0a9-1b0c375ce990",
+      "version_id": "5466969a-0e2c-4440-8564-f87c77b3420c",
+      "job_id": "dc42fcad-37c1-4247-95cc-33b5526f1e29",
+      "unit_id": "7383f84b-41f4-4098-ac14-3495a055c249",
+      "attempt": 1,
+      "phase": "architecture",
+      "recipient": "https://www.cctq.ai/v1",
+      "model": "gpt-6-luna",
+      "status": "outcome_unknown",
+      "created_at": "2026-10-12T08:19:23.232864+00:00",
+      "sent_at": "2026-10-12T08:19:23.297434+00:00",
+      "finished_at": "2026-10-12T08:25:14.618062+00:00",
+      "payload_hash": "bebf404e1e276cd309df07e4bd0e29102007dd193639426a8d3785217ea015af",
+      "source_chars": 2005,
+      "usage": null,
+      "cost": null,
+      "currency": null,
+      "price_snapshot": null,
+      "http_status": null,
+      "error_code": "TRANSPORT_UNKNOWN"
+    }
+  ],
+  "请求状态": {
+    "outcome_unknown": 1
+  },
+  "已知total_tokens": 0,
+  "未知用量请求": 1,
+  "原源码字节未变": true,
+  "耗时秒": 351.454,
+  "事后只读输入核对": {
+    "授权快照文件hash校验": "通过",
+    "诊断源副本与实际快照字节一致": true,
+    "与生产最近失败请求payload_hash一致": true,
+    "生产检查点未改变": true,
+    "额外模型请求": 0
+  }
+}
