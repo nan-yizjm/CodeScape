@@ -53,6 +53,7 @@ def main():
     parser.add_argument('--narrow',action='store_true')
     parser.add_argument('--base-url', default='https://api.deepseek.com', help='核对已授权接收端，不接受密钥参数')
     parser.add_argument('--model', default='deepseek-flash', help='核对实际模型ID')
+    parser.add_argument('--json-response', action='store_true', help='仅隔离评测使用非流式JSON，主工作区设置不变')
     mode = parser.add_mutually_exclusive_group()
     mode.add_argument('--resume',action='store_true',help='从该样本已有暂停记录和检查点主动恢复，不创建新的快照')
     mode.add_argument('--refresh-overview',action='store_true',help='仅重测已发布结果的概览，架构及源码保持不变')
@@ -103,6 +104,8 @@ def main():
     actual = Path(os.environ['LOCALAPPDATA'])/'CodeScape'
     config = Provider(actual).settings()
     assert config['base_url']==arguments.base_url and config['model']==arguments.model and config['has_key']
+    if arguments.json_response:
+        config['stream_response'] = False
     if previous and (previous['接收端'] != config['base_url'] or previous['模型'] != config['model']):
         raise RuntimeError('旧评测接收端或模型不同，不能直接恢复；请新建评测，历史结果已保留。')
     (root/'credentials').mkdir(exist_ok=True)
