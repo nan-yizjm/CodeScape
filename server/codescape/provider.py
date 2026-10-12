@@ -19,16 +19,18 @@ from .call_judgments import callable_name, reconcile_judgments, validate_judgmen
 from .context_tools import ArchitectureReply, SnapshotTools, validate_explanations
 from .dependencies import validate_primary_dependencies
 from .ledger import RequestLedger, ai_scope, known_usage, model_budget, model_unit, request_scope
+from .macro_context import macro_reads
 from .models import Analysis, Architecture, Module, Overview
 from .overview import ConciseOverview, overview_context
 from .security import CredentialStore
 from .semantic_facts import defaulted_flag_facts, recursive_fold_facts, validate_fold_wording
+from .streaming import StreamContractError, read_chat_stream, read_json_response
 from .validation import SourceContractError
 
 MAX_CONTEXT_CHARS = 180_000
 BATCH_TARGET_CHARS = 150_000
 BATCH_MAX_ENTITIES = 12
-PIPELINE_VERSION = "architecture/3-repairs/2-explanations/3-reads/1-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/2-index/3-ts-bindings/2-python-declarations/1"
+PIPELINE_VERSION = "architecture/3-repairs/2-explanations/3-reads/2-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/2-index/3-ts-bindings/2-python-declarations/1"
 ProgressCallback = Callable[[int, int, str], Awaitable[None]]
 BatchCallback = Callable[[int, int, Architecture], Awaitable[None]]
 
@@ -131,7 +133,7 @@ class Provider:
         self.config_path = root / "provider.json"
 
     def settings(self) -> dict:
-        config = {"base_url": "https://api.deepseek.com", "model": ""}
+        config = {"base_url": "https://api.deepseek.com", "model": "", "stream_response": False}
         if self.config_path.exists():
             config.update(json.loads(self.config_path.read_text(encoding="utf-8")))
         config["has_key"] = self.credentials.exists()
@@ -172,7 +174,7 @@ class Provider:
         if latest["base_url"] != config["base_url"] or latest["model"] != config["model"]:
             raise ProviderError("模型配置已改变，任务已停止，请主动重启分析。")
 
-    def configure(self, base_url: str, model: str, key: str | None) -> dict:
+    def configure(self, base_url: str, model: str, key: str | None, stream_response: bool | None = None) -> dict:
         parsed = urlparse(base_url)
         if (
             parsed.scheme != "https"
@@ -187,11 +189,14 @@ class Provider:
             raise ValueError("AI 接收端不能是本地地址。")
         if not model.strip():
             raise ValueError("请填写模型名称。")
+        if stream_response is not None and type(stream_response) is not bool:
+            raise ValueError('流式接收设置需为布尔值。')
+        stream_response = self.settings().get('stream_response', False) if stream_response is None else stream_response
         self.root.mkdir(parents=True, exist_ok=True)
         if key:
             self.credentials.save(key)
         self.config_path.write_text(
-            json.dumps({"base_url": base_url.rstrip("/"), "model": model.strip()}), encoding="utf-8"
+            json.dumps({"base_url": base_url.rstrip("/"), "model": model.strip(), 'stream_response': stream_response}), encoding="utf-8"
         )
         return self.settings()
 
@@ -208,6 +213,9 @@ class Provider:
             "max_tokens": max_tokens,
             "stream": False,
         }
+        if config.get('stream_response'):
+            payload['stream'] = True
+            payload['stream_options'] = {'include_usage': True}
         # Official Flash defaults to thinking: its total generation budget must
         # leave room for the final JSON, rather than spending the entire cap before it.
         if config['base_url'].rstrip('/') in {'https://api.deepseek.com','https://api.deepseek.com/v1'} and config['model']=='deepseek-flash':
@@ -230,6 +238,11 @@ class Provider:
                 if budget:
                     budget.last_request = identifier
                 usage = None
+                def update_usage(value):
+                    nonlocal usage
+                    normalized = known_usage(value)
+                    if normalized is not None:
+                        usage = normalized
                 sent = False
                 received = False
                 try:
@@ -239,12 +252,27 @@ class Provider:
                         ledger.sent(identifier)
                         sent = True
                         async with asyncio.timeout(600):
-                            response = await client.post(endpoint, json=payload,
-                                                         headers={"Authorization": f"Bearer {key}"})
+                            if payload['stream']:
+                                async with client.stream('POST', endpoint, json=payload,
+                                                         headers={"Authorization": f"Bearer {key}"}) as response:
+                                    if response.status_code == 200 and response.headers.get('content-type', '').split(';')[0].strip() == 'text/event-stream':
+                                        document = await read_chat_stream(response, update_usage)
+                                    else:
+                                        try:
+                                            document = await read_json_response(response)
+                                        except (json.JSONDecodeError, UnicodeError):
+                                            if response.status_code == 200:
+                                                raise StreamContractError('响应不符合JSON契约。') from None
+                                            document = None
+                                        update_usage(document.get('usage') if isinstance(document, dict) else None)
+                            else:
+                                response = await client.post(endpoint, json=payload,
+                                                             headers={"Authorization": f"Bearer {key}"})
                         received = True
                     try:
-                        document = response.json()
-                        usage = known_usage(document.get("usage")) if isinstance(document, dict) else None
+                        if not payload['stream']:
+                            document = response.json()
+                            update_usage(document.get('usage') if isinstance(document, dict) else None)
                     except ValueError:
                         document = None
                     status = response.status_code
@@ -284,6 +312,10 @@ class Provider:
                         ledger.finish(identifier, "outcome_unknown" if sent else "failed", usage=usage,
                                       error_code="CANCELLED_AFTER_SEND" if sent else "NOT_SENT")
                     raise
+                except StreamContractError:
+                    ledger.finish(identifier, 'failed', usage=usage, http_status=response.status_code,
+                                  error_code='INVALID_STREAM')
+                    raise ProviderError('流式响应不符合接收契约，未发布部分结果。') from None
                 except (httpx.HTTPError, TimeoutError):
                     ledger.finish(identifier, "outcome_unknown" if sent else "failed", usage=usage,
                                   error_code="TRANSPORT_UNKNOWN" if sent else "NOT_SENT")
@@ -591,6 +623,18 @@ class Provider:
     async def _read_batch(self, system, context, validator, analysis, files, ranges):
         tools = SnapshotTools(analysis, files)
         supplements, seen, usage_total = [], set(), {}
+        automatic = []
+        for request in macro_reads(analysis, files, ranges):
+            candidate = [*automatic, request]
+            try:
+                preview = SnapshotTools(analysis, files).read(candidate)
+            except ValueError:
+                continue
+            if len(json.dumps({**json.loads(context), 'supplemental_reads': preview}, ensure_ascii=False)) <= MAX_CONTEXT_CHARS:
+                automatic = candidate
+        if automatic:
+            supplements = tools.read(automatic)
+            seen.add(json.dumps([item.model_dump() for item in automatic], sort_keys=True))
         supplied = {path: [bounds] for path, bounds in ranges.items()}
         with model_unit():
             for round_index in range(4):
@@ -726,6 +770,7 @@ class Provider:
             "defaulted_flag_branch 区分假值读取结果返回参数默认值与非假值分支的比较表达式；不能把后者说成全部输入的唯一条件。"
             "区分从输入读取的值和硬编码常量，不能将固定深度说成从输入读取；区分返回配置字典和返回校验布尔值。"
             "描述条件分支时保留影响行为的联合前提，包括可空参数检查、零值关闭配置与短路求值；"
+            "is not None 或与空指针比较不等于非空字符串、非零或真值检查；条件的比较对象必须准确表达。"
             "受非空检查保护的解引用或写入不能描述成无条件操作。篇幅不足时概述该分支，不省掉关键保护条件。"
             "配置名称含 SKIP/DISABLE 等否定词时，核对函数实际返回分支及调用方用途；"
             "不能把返回 True 一律说成跳过/禁用，也不能只凭配置变量名判断开关方向。"

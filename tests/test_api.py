@@ -34,6 +34,15 @@ def test_missing_asset_does_not_return_successful_spa_html(client):
     assert response.headers['content-type'].startswith('application/json')
 
 
+def test_stream_setting_is_explicit_strict_and_preserved_for_legacy_clients(client):
+    base = {'base_url': 'https://example.invalid/v1', 'model': '固定设置验证', 'key': None}
+    assert client.get('/api/v1/settings/ai').json()['data']['stream_response'] is False
+    assert client.put('/api/v1/settings/ai', json={**base, 'stream_response': True}).json()['data']['stream_response'] is True
+    assert client.put('/api/v1/settings/ai', json=base).json()['data']['stream_response'] is True
+    assert client.put('/api/v1/settings/ai', json={**base, 'stream_response': 'false'}).status_code == 422
+    assert client.get('/api/v1/settings/ai').json()['data']['stream_response'] is True
+
+
 def test_auth_origin_csrf_and_nonce(tmp_path):
     with TestClient(create_app(tmp_path, "nonce")) as client:
         assert client.get("/api/v1/projects").status_code == 401

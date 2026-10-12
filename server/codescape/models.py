@@ -152,6 +152,7 @@ class AISettings(Contract):
     base_url: str = "https://api.deepseek.com"
     model: str = ""
     key: str | None = None
+    stream_response: bool | None = Field(default=None, strict=True)
 
 
 class LearningRequest(Contract):

@@ -644,3 +644,9 @@ button:active:not(:disabled) { transform: translateY(1px); }
 }
 @media(max-width:600px) {.graph-view-options {gap:5px; padding:8px;} .graph-view-options > span {display:none;}}
 @media(prefers-reduced-motion:reduce) {.map-node {transition:none;}}
+
+.stream-option { display:flex !important; align-items:flex-start; gap:12px; padding:14px; border:1px solid var(--line); border-radius:14px; }
+.stream-option input { width:16px !important; height:16px; margin:3px 0 0; accent-color:#202020; flex:none; }
+.modal label.stream-option > span { display:grid; gap:5px; float:none; color:var(--ink); }
+.stream-option strong { font-size:13px; font-weight:600; }
+.stream-option small { font-size:12px; font-weight:400; line-height:1.6; color:var(--muted); }

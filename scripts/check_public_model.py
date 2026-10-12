@@ -98,12 +98,14 @@ def main():
         raise RuntimeError('旧评测接收端或模型不同，不能直接恢复；请新建评测，历史结果已保留。')
     (root/'credentials').mkdir(exist_ok=True)
     shutil.copyfile(actual/'credentials/provider.dpapi',root/'credentials/provider.dpapi')
-    (root/'provider.json').write_text(json.dumps({'base_url':config['base_url'],'model':config['model']}),encoding='utf-8')
+    (root/'provider.json').write_text(json.dumps({'base_url':config['base_url'],'model':config['model'],
+                                               'stream_response':config.get('stream_response',False)}),encoding='utf-8')
     nonce = 'public-model-validation'
     record = {'日期':(datetime.now(UTC) + timedelta(hours=8)).date().isoformat(),
         '检查开始时间UTC':datetime.now(UTC).isoformat(),'样本':arguments.id,'Commit':selected['commit'],
         '范围':'缩小范围' if arguments.narrow else '约定完整范围','授权':'用户允许四个固定公开样本向当前配置接收端上传并评测',
-        '接收端':config['base_url'],'模型':config['model'],'流水线':PIPELINE_VERSION,'数据目录':str(root),
+        '接收端':config['base_url'],'模型':config['model'],'流式接收':config.get('stream_response',False),
+        '流水线':PIPELINE_VERSION,'数据目录':str(root),
         '原始快照hash':old_manifest['hash'],'实际文件':list(files),'状态':'进行中','执行目标代码':False}
     destination = reports/f"{arguments.id}-{'narrow' if arguments.narrow else 'full'}真实模型验证.json"
     if previous:
