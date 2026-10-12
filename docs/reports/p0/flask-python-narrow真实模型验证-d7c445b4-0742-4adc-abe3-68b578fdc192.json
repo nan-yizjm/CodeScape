@@ -1,0 +1,549 @@
+{
+  "日期": "2026-10-12",
+  "检查开始时间UTC": "2026-10-12T04:43:13.631028+00:00",
+  "样本": "flask-python",
+  "Commit": "d086db856be187255b8ec61ef409357393020f32",
+  "范围": "缩小范围",
+  "授权": "用户允许四个固定公开样本向当前配置接收端上传并评测",
+  "接收端": "https://www.cctq.ai/v1",
+  "模型": "gpt-6-luna",
+  "流式接收": true,
+  "流水线": "architecture/3-repairs/2-explanations/3-reads/2-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/2-index/3-ts-bindings/2-python-declarations/1",
+  "数据目录": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\.runtime\\public-model-validation\\41b60350-1d9c-4577-988b-770582e25fca",
+  "原始快照hash": "05de006763cb3d83f9ef72708e199156697402cb13031070f51225a50852b8c7",
+  "实际文件": [
+    "src/flask/helpers.py"
+  ],
+  "状态": "结构检查通过，待源码质量复核",
+  "执行目标代码": false,
+  "进度": {
+    "phase": "completed",
+    "completed": 1,
+    "total": 1,
+    "detail": "分批分析完成"
+  },
+  "耗时秒": 110.86,
+  "project_id": "f6d7279d-ca50-432c-93b5-879f6813b41d",
+  "version_id": "91473a5d-0d26-4a44-aa1c-d76dad9be3d2",
+  "实际快照hash": "ad5bdcc28670e5b0b4123226504abb578cf8deb4fcb4c1ff163b063f1748827a",
+  "scope_hash": "64d8fef1eca2d21c0868fb5cb2988d0e4d169bafe184ba5bc3727938f0682e93",
+  "错误": null,
+  "architecture": {
+    "modules": [
+      {
+        "id": "m1",
+        "parent_id": null,
+        "name": "运行配置读取",
+        "summary": "读取环境变量形成调试与 dotenv 加载配置；dotenv 标志在环境值为假值时采用参数默认值。",
+        "entity_ids": [
+          "f7ce7254-3434-546f-ba34-151cd89ab84c",
+          "36cd58ea-393e-54dd-ada5-75fc3f09ba60"
+        ],
+        "code_paths": [
+          "src/flask/helpers.py"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "m2",
+        "parent_id": null,
+        "name": "请求上下文与响应辅助",
+        "summary": "在请求上下文中保留流式生成器执行环境，并提供响应构造、URL 生成、重定向、中止和模板属性访问。",
+        "entity_ids": [
+          "276a8c83-758f-53cf-a4aa-587df774ff1f",
+          "6680f0a9-0cfc-5a5b-9f45-f98a9b3ba8c4",
+          "cc66bcc3-fdaa-5a16-bf15-aa336ec3367d",
+          "1c48e33c-9059-5bf3-b177-023b40ac4e85",
+          "b37dc327-cf16-5a12-8609-2ac36e7bd92a",
+          "b6520f76-e763-5df5-9819-d7fd39006b10"
+        ],
+        "code_paths": [
+          "src/flask/helpers.py"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "m3",
+        "parent_id": null,
+        "name": "闪现消息管理",
+        "summary": "将分类消息写入会话并发送信号；读取时在同一应用上下文缓存结果，可按类别筛选并选择返回消息或分类元组。",
+        "entity_ids": [
+          "e0e55610-bb29-589b-abbd-22d7210fb5f6",
+          "21ce632e-5c73-52e2-9b65-2ab37eb20d97"
+        ],
+        "code_paths": [
+          "src/flask/helpers.py"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "m4",
+        "parent_id": null,
+        "name": "文件响应发送",
+        "summary": "为文件发送补充当前请求和应用配置，再委托 Werkzeug 构造文件响应；max_age 未提供时使用应用的文件缓存策略。",
+        "entity_ids": [
+          "0eea647c-5c9a-51bd-851e-deb07e53e662",
+          "e6376c51-be9e-5f96-8462-8eec995ca431"
+        ],
+        "code_paths": [
+          "src/flask/helpers.py"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "m5",
+        "parent_id": null,
+        "name": "文件发送辅助",
+        "summary": "在目录约束下委托文件发送，并补充 Flask 所需参数。",
+        "entity_ids": [
+          "a39edd5d-3941-528e-8b9f-dab01878284d"
+        ],
+        "code_paths": [
+          "src/flask/helpers.py"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "m6",
+        "parent_id": null,
+        "name": "导入路径与蓝图路径处理",
+        "summary": "定位模块或包的根目录；按点分隔名称递归构造蓝图路径前缀列表。",
+        "entity_ids": [
+          "be80ce56-953d-591e-a15a-530ec8260433",
+          "0aca3820-2729-5433-8a3d-f805043e02fe"
+        ],
+        "code_paths": [
+          "src/flask/helpers.py"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "m7",
+        "parent_id": null,
+        "name": "清理阶段错误收集",
+        "summary": "上下文管理器收集退出时遇到的异常，并在显式调用时合并抛出。",
+        "entity_ids": [
+          "515d0f7f-c507-56a2-a92c-47212f49de15",
+          "0ee10b56-966e-5737-866c-71e7f808da94",
+          "f5f47998-bd94-52c7-a7de-287efc22a502",
+          "3e3eae90-b50d-52ef-a18a-7696e755a890"
+        ],
+        "code_paths": [
+          "src/flask/helpers.py"
+        ],
+        "incomplete": false
+      }
+    ],
+    "overview": {
+      "introduction": "这是一个为使用 Flask 构建网站的开发者提供的基础辅助组件，处理请求与响应、会话消息、文件发送和应用路径等常见事务，帮助应用以一致方式完成这些工作。",
+      "capabilities": [
+        "构造响应、生成网址，并支持重定向与中止请求",
+        "在会话中保存闪现消息，并按类别读取",
+        "依据应用配置发送文件，或在目录约束下发送文件",
+        "定位模块或包目录，并构造蓝图路径前缀",
+        "收集清理阶段的异常，并在显式调用时合并抛出"
+      ],
+      "principle": "组件读取运行配置，并借助请求或应用上下文提供响应、消息和文件处理所需的信息；文件发送进一步委托给底层工具构造响应。清理阶段遇到的异常会先被收集，只有显式调用时才合并抛出。",
+      "limitations": [
+        "部分操作依赖有效的应用或请求上下文；材料未证明所有环境下的完整行为。",
+        "文件发送的路径校验与响应构造由底层工具负责，本项目片段未显示完整校验行为。",
+        "路径定位在信息不足时可能回退到当前工作目录，某些命名空间包情形会抛出运行时错误。"
+      ],
+      "synthesized": true,
+      "analysis_notes": [
+        "片段不能证明这些辅助函数在所有运行环境下的完整行为；部分操作依赖有效的应用或请求上下文。",
+        "文件发送函数本身未显示对用户提供路径的安全校验。",
+        "dotenv 标志的非假值分支按特定字符串比较，其结果并非简单的统一开关。",
+        "路径定位在加载器或文件信息不足时可能回退到当前工作目录，部分命名空间包情形会抛出 RuntimeError。",
+        "蓝图路径函数带缓存装饰器，源码不足以确认装饰器对递归调用绑定的影响。",
+        "文件发送的实际路径校验与响应构造由 Werkzeug 实现。",
+        "源码范围由 2 批受控上下文完成归纳，跨批次模块边界可能需要人工复核。"
+      ]
+    },
+    "explanations": [
+      {
+        "entity_id": "f7ce7254-3434-546f-ba34-151cd89ab84c",
+        "summary": "依据 FLASK_DEBUG 环境变量计算调试标志。",
+        "details": "读取 FLASK_DEBUG；环境值不存在或为空时结果为 False。其他值转为小写后，只有不属于 0、false、no 时才返回 True。",
+        "evidence": [
+          {
+            "path": "src/flask/helpers.py",
+            "start_line": 28,
+            "end_line": 33
+          }
+        ]
+      },
+      {
+        "entity_id": "36cd58ea-393e-54dd-ada5-75fc3f09ba60",
+        "summary": "依据 FLASK_SKIP_DOTENV 环境值决定 dotenv 加载标志。",
+        "details": "读取环境值；值为假值时返回 default，省略参数时该值为 True。非假值时返回其小写形式是否属于 0、false、no 的比较结果。",
+        "evidence": [
+          {
+            "path": "src/flask/helpers.py",
+            "start_line": 36,
+            "end_line": 48
+          }
+        ]
+      },
+      {
+        "entity_id": "276a8c83-758f-53cf-a4aa-587df774ff1f",
+        "summary": "包装流式迭代器，使其迭代期间保留当前应用上下文。",
+        "details": "先尝试将输入转成迭代器；若抛出 TypeError，则按装饰器形式调用输入函数并递归包装其结果。迭代器路径创建生成器：没有当前上下文时抛出 RuntimeError；否则在上下文中产出哨兵值，再转发原迭代器内容，并在结束时对具有 close 属性的对象调用 close。返回前先推进包装生成器以捕获上下文。",
+        "evidence": [
+          {
+            "path": "src/flask/helpers.py",
+            "start_line": 106,
+            "end_line": 124
+          },
+          {
+            "path": "src/flask/helpers.py",
+            "start_line": 126,
+            "end_line": 148
+          }
+        ]
+      },
+      {
+        "entity_id": "6680f0a9-0cfc-5a5b-9f45-f98a9b3ba8c4",
+        "summary": "将视图返回值转换为响应对象。",
+        "details": "无参数时构造当前应用的响应类实例；一个参数时将参数解包后交给当前应用的 make_response；多个参数则以原元组形式传入。响应构造由当前应用处理。",
+        "evidence": [
+          {
+            "path": "src/flask/helpers.py",
+            "start_line": 189,
+            "end_line": 197
+          }
+        ]
+      },
+      {
+        "entity_id": "cc66bcc3-fdaa-5a16-bf15-aa336ec3367d",
+        "summary": "将 URL 生成参数转交当前应用。",
+        "details": "接收 endpoint、可选锚点、方法、scheme、外部 URL 标志及额外值，并将它们传给 current_app.url_for，返回该调用结果。此函数本身不提供独立的错误回退逻辑。",
+        "evidence": [
+          {
+            "path": "src/flask/helpers.py",
+            "start_line": 247,
+            "end_line": 251
+          }
+        ]
+      },
+      {
+        "entity_id": "1c48e33c-9059-5bf3-b177-023b40ac4e85",
+        "summary": "按当前上下文选择应用或 Werkzeug 重定向实现。",
+        "details": "默认状态码为 303。存在当前应用上下文时调用应用的 redirect，并传入 location 和 code；否则调用 Werkzeug 的 redirect，并额外传入 Response 参数。返回所选实现的响应。",
+        "evidence": [
+          {
+            "path": "src/flask/helpers.py",
+            "start_line": 254,
+            "end_line": 278
+          }
+        ]
+      },
+      {
+        "entity_id": "b37dc327-cf16-5a12-8609-2ac36e7bd92a",
+        "summary": "按上下文调用应用中止器并调用 Werkzeug 中止函数。",
+        "details": "存在当前应用上下文时先调用应用的 aborter；随后执行 Werkzeug 的 abort，并透传 code、位置参数和关键字参数。函数标注为不返回；应用分支调用后源码仍继续执行后续调用。",
+        "evidence": [
+          {
+            "path": "src/flask/helpers.py",
+            "start_line": 281,
+            "end_line": 301
+          }
+        ]
+      },
+      {
+        "entity_id": "b6520f76-e763-5df5-9819-d7fd39006b10",
+        "summary": "从已加载模板模块中取得指定属性。",
+        "details": "通过当前应用的 Jinja 环境加载 template_name 对应模板，访问其 module，再按 attribute 名称取值并返回。模板加载或属性访问的失败没有在此函数中捕获。",
+        "evidence": [
+          {
+            "path": "src/flask/helpers.py",
+            "start_line": 304,
+            "end_line": 323
+          }
+        ]
+      },
+      {
+        "entity_id": "e0e55610-bb29-589b-abbd-22d7210fb5f6",
+        "summary": "将分类消息存入会话并发送闪现信号。",
+        "details": "从 session 读取 _flashes，缺省为空列表；追加分类与消息后写回会话。随后取得当前应用对象并发送 message_flashed 信号，传入应用同步包装器、消息及分类。会话和信号操作的异常未在函数内处理。",
+        "evidence": [
+          {
+            "path": "src/flask/helpers.py",
+            "start_line": 326,
+            "end_line": 357
+          }
+        ]
+      },
+      {
+        "entity_id": "21ce632e-5c73-52e2-9b65-2ab37eb20d97",
+        "summary": "读取并缓存闪现消息，可筛选分类及控制返回形式。",
+        "details": "优先读取应用上下文缓存；缓存为 None 时从会话取出 _flashes（不存在则用空列表）并缓存。非空 category_filter 会筛选匹配项；默认返回消息文本列表，with_categories 为真时返回分类与消息组成的项。",
+        "evidence": [
+          {
+            "path": "src/flask/helpers.py",
+            "start_line": 360,
+            "end_line": 399
+          }
+        ]
+      },
+      {
+        "entity_id": "0eea647c-5c9a-51bd-851e-deb07e53e662",
+        "summary": "补齐文件响应所需的当前请求与应用参数。",
+        "details": "取得当前应用上下文；max_age 为 None 时以应用的 get_send_file_max_age 方法补入默认策略。随后用当前请求环境、X-Sendfile 配置、响应类和应用根路径更新参数字典并返回。",
+        "evidence": [
+          {
+            "path": "src/flask/helpers.py",
+            "start_line": 402,
+            "end_line": 414
+          }
+        ]
+      },
+      {
+        "entity_id": "e6376c51-be9e-5f96-8462-8eec995ca431",
+        "summary": "委托 Werkzeug 根据文件和请求选项生成文件响应。",
+        "details": "将文件路径或文件对象及 MIME、附件、下载名、条件请求、ETag、修改时间和缓存选项交给参数准备函数，再把所得参数展开传给 Werkzeug 的 send_file 并返回结果。函数本身未显示对路径进行安全校验。",
+        "evidence": [
+          {
+            "path": "src/flask/helpers.py",
+            "start_line": 529,
+            "end_line": 540
+          }
+        ]
+      },
+      {
+        "entity_id": "a39edd5d-3941-528e-8b9f-dab01878284d",
+        "summary": "将目录和相对路径交给 Werkzeug 发送文件，并传入 Flask 文件参数。",
+        "details": "接收目录、文件相对路径及额外关键字参数，将关键字参数交由 Flask 参数准备逻辑处理后，调用 Werkzeug 的同名发送函数并返回其结果。该函数本身不检查文件是否存在或执行路径校验；这些行为不在此处实现。",
+        "evidence": [
+          {
+            "path": "src/flask/helpers.py",
+            "start_line": 583,
+            "end_line": 584
+          }
+        ]
+      },
+      {
+        "entity_id": "be80ce56-953d-591e-a15a-530ec8260433",
+        "summary": "根据导入信息定位模块或包的根目录，必要时回退或报错。",
+        "details": "先使用已加载模块的非空文件属性；否则查询导入规格，查找规格时的 ImportError 或 ValueError 会使加载器视为缺失。加载器缺失时返回当前工作目录；有 get_filename 时用其取得文件位置，否则导入模块读取文件属性。回退导入路径仍为空时抛出 RuntimeError，最终将文件路径转为绝对路径并取其目录。",
+        "evidence": [
+          {
+            "path": "src/flask/helpers.py",
+            "start_line": 594,
+            "end_line": 600
+          },
+          {
+            "path": "src/flask/helpers.py",
+            "start_line": 606,
+            "end_line": 628
+          },
+          {
+            "path": "src/flask/helpers.py",
+            "start_line": 638,
+            "end_line": 641
+          }
+        ]
+      },
+      {
+        "entity_id": "0aca3820-2729-5433-8a3d-f805043e02fe",
+        "summary": "递归生成点分隔名称的层级路径列表。",
+        "details": "以完整名称初始化结果；名称含点时，取最后一个点之前的部分递归处理并将结果追加。无点名称直接返回单元素列表。函数带 cache 装饰器；递归调用名称的绑定是否受装饰器改写无法从当前实现确认。",
+        "evidence": [
+          {
+            "path": "src/flask/helpers.py",
+            "start_line": 645,
+            "end_line": 651
+          }
+        ]
+      },
+      {
+        "entity_id": "515d0f7f-c507-56a2-a92c-47212f49de15",
+        "summary": "初始化错误收集器的异常列表。",
+        "details": "构造时将实例的 errors 属性设为空的 BaseException 列表，供后续上下文退出逻辑记录异常。",
+        "evidence": [
+          {
+            "path": "src/flask/helpers.py",
+            "start_line": 659,
+            "end_line": 660
+          }
+        ]
+      },
+      {
+        "entity_id": "0ee10b56-966e-5737-866c-71e7f808da94",
+        "summary": "进入错误收集上下文时不执行额外操作。",
+        "details": "上下文进入方法执行 pass，不返回其他值，也不在该方法中收集或抛出异常。",
+        "evidence": [
+          {
+            "path": "src/flask/helpers.py",
+            "start_line": 662,
+            "end_line": 663
+          }
+        ]
+      },
+      {
+        "entity_id": "f5f47998-bd94-52c7-a7de-287efc22a502",
+        "summary": "记录退出时存在的异常，并抑制上下文内异常传播。",
+        "details": "仅在 exc_val 非空时将其追加至 errors；无异常值时不追加。随后无条件返回 True，按上下文管理器协议表示抑制当前异常。",
+        "evidence": [
+          {
+            "path": "src/flask/helpers.py",
+            "start_line": 665,
+            "end_line": 674
+          }
+        ]
+      },
+      {
+        "entity_id": "3e3eae90-b50d-52ef-a18a-7696e755a890",
+        "summary": "在已收集异常时抛出包含这些异常的异常组。",
+        "details": "检查 errors 是否非空；有内容时以传入 message 和已收集异常构造 BaseExceptionGroup 并抛出。列表为空时不抛出，也不返回其他值。",
+        "evidence": [
+          {
+            "path": "src/flask/helpers.py",
+            "start_line": 676,
+            "end_line": 679
+          }
+        ]
+      }
+    ],
+    "call_judgments": [],
+    "primary_dependencies": [
+      {
+        "call_ids": [
+          "f544fb10-e310-59cf-bb1e-031bd312fa04"
+        ],
+        "reason": "文件发送流程依赖 Flask 参数准备函数补入请求环境和应用配置，再将完整选项交给文件响应实现，是该辅助接口完成文件发送的关键协作。"
+      }
+    ]
+  },
+  "原快照字节未变": true,
+  "请求账本": [
+    {
+      "id": "6ad1b455-870f-4539-9da5-57449738ff17",
+      "project_id": "f6d7279d-ca50-432c-93b5-879f6813b41d",
+      "version_id": "91473a5d-0d26-4a44-aa1c-d76dad9be3d2",
+      "job_id": "a13cbaaa-2617-4029-84eb-328d45d932f1",
+      "unit_id": "900b5193-5451-445a-839e-ef4ac531d5c6",
+      "attempt": 1,
+      "phase": "architecture",
+      "recipient": "https://www.cctq.ai/v1",
+      "model": "gpt-6-luna",
+      "status": "success",
+      "created_at": "2026-10-12T04:43:16.508479+00:00",
+      "sent_at": "2026-10-12T04:43:16.546514+00:00",
+      "finished_at": "2026-10-12T04:43:40.793640+00:00",
+      "payload_hash": "0415b26913c3546702021d3488f0d6c799456065278281b57039d0433602acbb",
+      "source_chars": 19860,
+      "usage": {
+        "prompt_tokens": 17150,
+        "completion_tokens": 2963,
+        "total_tokens": 20113
+      },
+      "cost": null,
+      "currency": null,
+      "price_snapshot": null,
+      "http_status": 200,
+      "error_code": null
+    },
+    {
+      "id": "7e7215f1-e3ec-4940-8470-4bfbf0ba10d3",
+      "project_id": "f6d7279d-ca50-432c-93b5-879f6813b41d",
+      "version_id": "91473a5d-0d26-4a44-aa1c-d76dad9be3d2",
+      "job_id": "a13cbaaa-2617-4029-84eb-328d45d932f1",
+      "unit_id": "488735f7-5ee6-4af1-b01e-a92c81414193",
+      "attempt": 1,
+      "phase": "architecture",
+      "recipient": "https://www.cctq.ai/v1",
+      "model": "gpt-6-luna",
+      "status": "failed",
+      "created_at": "2026-10-12T04:43:40.815671+00:00",
+      "sent_at": "2026-10-12T04:43:40.833470+00:00",
+      "finished_at": "2026-10-12T04:44:42.754408+00:00",
+      "payload_hash": "c521b63e9733a756d646873e0ae840fd448e67beb4fb10590cd8711a0a027609",
+      "source_chars": 4651,
+      "usage": {
+        "prompt_tokens": 10324,
+        "completion_tokens": 1801,
+        "total_tokens": 12125
+      },
+      "cost": null,
+      "currency": null,
+      "price_snapshot": null,
+      "http_status": 200,
+      "error_code": "SCHEMA_INVALID"
+    },
+    {
+      "id": "03187393-7918-47c5-93d7-11c2a5dadd18",
+      "project_id": "f6d7279d-ca50-432c-93b5-879f6813b41d",
+      "version_id": "91473a5d-0d26-4a44-aa1c-d76dad9be3d2",
+      "job_id": "a13cbaaa-2617-4029-84eb-328d45d932f1",
+      "unit_id": "488735f7-5ee6-4af1-b01e-a92c81414193",
+      "attempt": 2,
+      "phase": "repair",
+      "recipient": "https://www.cctq.ai/v1",
+      "model": "gpt-6-luna",
+      "status": "success",
+      "created_at": "2026-10-12T04:44:42.759629+00:00",
+      "sent_at": "2026-10-12T04:44:42.772394+00:00",
+      "finished_at": "2026-10-12T04:44:56.942682+00:00",
+      "payload_hash": "a7c9a171be33a803a02cc529a577ae384458769a564cc0553dbeba7773d11c63",
+      "source_chars": 4651,
+      "usage": {
+        "prompt_tokens": 10748,
+        "completion_tokens": 1458,
+        "total_tokens": 12206
+      },
+      "cost": null,
+      "currency": null,
+      "price_snapshot": null,
+      "http_status": 200,
+      "error_code": null
+    },
+    {
+      "id": "d204f6a2-4084-4a8d-b421-02a084cfb158",
+      "project_id": "f6d7279d-ca50-432c-93b5-879f6813b41d",
+      "version_id": "91473a5d-0d26-4a44-aa1c-d76dad9be3d2",
+      "job_id": "a13cbaaa-2617-4029-84eb-328d45d932f1",
+      "unit_id": "959e16f8-b41b-4e7e-b8a6-54ecd98f1787",
+      "attempt": 1,
+      "phase": "overview",
+      "recipient": "https://www.cctq.ai/v1",
+      "model": "gpt-6-luna",
+      "status": "success",
+      "created_at": "2026-10-12T04:44:56.974460+00:00",
+      "sent_at": "2026-10-12T04:44:56.999732+00:00",
+      "finished_at": "2026-10-12T04:45:02.632894+00:00",
+      "payload_hash": "5d3d0c14c9437a9c3aa4e69322958ebefcd102caea0a2c03063b729ffd91d087",
+      "source_chars": 0,
+      "usage": {
+        "prompt_tokens": 2093,
+        "completion_tokens": 289,
+        "total_tokens": 2382
+      },
+      "cost": null,
+      "currency": null,
+      "price_snapshot": null,
+      "http_status": 200,
+      "error_code": null
+    }
+  ],
+  "请求状态": {
+    "success": 3,
+    "failed": 1
+  },
+  "已知total_tokens": 46826,
+  "未知用量请求": 0,
+  "费用": null,
+  "脱敏校验记录": [
+    {
+      "time": "2026-10-12T04:44:42.753367+00:00",
+      "request_id": "7e7215f1-e3ec-4940-8470-4bfbf0ba10d3",
+      "feedback": "讲解实体不唯一或不属于当前范围。。已知索引依据：{\"supplied_lines\": [], \"allowed_entity_ids\": [\"0aca3820-2729-5433-8a3d-f805043e02fe\", \"0ee10b56-966e-5737-866c-71e7f808da94\", \"3e3eae90-b50d-52ef-a18a-7696e755a890\", \"515d0f7f-c507-56a2-a92c-47212f49de15\", \"a39edd5d-3941-528e-8b9f-dab01878284d\", \"be80ce56-953d-591e-a15a-530ec8260433\", \"f5f47998-bd94-52c7-a7de-287efc22a502\"]}"
+    }
+  ],
+  "边界": "真实配置接口，固定响应与质量复核分开；尚未代表用户验收；价格未知不记零费用。",
+  "静态索引制品": {
+    "path": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\.runtime\\public-model-validation\\41b60350-1d9c-4577-988b-770582e25fca\\validation-artifacts\\0c60905d914125a2e9b66f4b25142b7be211eecb2c3743860d856fc2536660d4.json",
+    "sha256": "0c60905d914125a2e9b66f4b25142b7be211eecb2c3743860d856fc2536660d4",
+    "bytes": 79868
+  }
+}

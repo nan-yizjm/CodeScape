@@ -1,23 +1,23 @@
 {
   "日期": "2026-10-12",
-  "代码提交": "5e29fe5",
-  "构建号": "20261012T030041Z",
+  "代码提交": "cc1233f",
+  "构建号": "20261012T060630Z",
   "版本": "0.1.0",
-  "状态": "P0 验收中，非全部通过",
+  "状态": "P0验收中，非全部通过",
   "制品": {
     "CodeScape-0.1.0-Windows-x64-Portable.zip": {
-      "sha256": "e65b5f5e380c35e8e566f4bda90515a5db45b9a3df0c1187e66efacfda5663bb",
-      "bytes": 158208983
+      "sha256": "7a4de7d58565a4c1ba6f3325d6559edeab3fb1717364d5b5194d7001a45b114d",
+      "bytes": 158217510
     },
     "CodeScape-0.1.0-Windows-x64-Setup.exe": {
-      "sha256": "38bd36f3a4e3566f5adb654dd3eeac4b164aa0e283863d6f7aee12f0f331f49c",
-      "bytes": 115243656
+      "sha256": "b0b27b11d797941d6a857ed643bb67dc43f456ab614af8b346d3c2b597587b52",
+      "bytes": 115256558
     }
   },
   "自动检查": {
-    "后端": 338,
+    "后端": 364,
     "前端": 35,
-    "前端说明": "前端未修改，沿用此前35项、TypeScript与生产构建通过结果；本轮未重复执行。",
+    "前端说明": "本轮重新执行35项、TypeScript与生产构建通过；生产构建保留SourceReader大块提示。",
     "Ruff": "通过"
   },
   "AC状态": {
@@ -27,8 +27,8 @@
   },
   "本轮安装模型请求": 0,
   "当前工作区": "http://127.0.0.1:8125/",
-  "剩余": "中转站完整四工程均因传输失败暂停，最新Hiredis3/49、spdlog5/53、Flask3/33、Zod12/76；Zod小范围0/1暂停。其他三个小范围95个可见函数结构发布，局部质量缺口和同模型完整范围对照未消除。干净Windows10/11、跨正式版本升级、真实系统断网/休眠及用户验收待完成。",
-  "主工作区重启": "正常保存退出后8125重开；4项目与2学习记录保留，AIHOT5顶层节点、2主要协作线。主工作区账本11条，其中本轮增加3次错误模型HTTP503和1次正确模型连接成功；没有在主工作区发起新源码分析。",
+  "剩余": "四个完整工程的真实语义质量与同模型流水线范围对照、干净Windows10/11、跨正式版本升级、真实系统断网/休眠及用户验收未完成。最新小范围Zod只有2/3讲解，spdlog1未完成归属；Hiredis联合保护和spdlog宏异常边界仍有风险。",
+  "主工作区重启": "正常保存退出后8125重开，4项目与2学习记录全部列哈希一致，AIHOT5顶层节点2主要协作线保留；主工作区账本13条。本轮未在主工作区发起新源码分析。",
   "请求口径": "真实模型账本为历史累计去重，包含前轮失败/修复及重新评测；本轮静态、独立包及升级验证不发模型请求。",
   "本轮增补验证": [
     "Windows声明与函数范围独立包验证.json",
@@ -52,81 +52,89 @@
     "有限修复更新后工作区验证.json",
     "中转站配置与真实验证.json",
     "中转站范围局部复核.json",
-    "中转站评测身份核对.json"
+    "中转站评测身份核对.json",
+    "流式与精简提示真实模型局部复核.json",
+    "流式与精简提示更新后工作区验证.json",
+    "补读证据修复后工作区验证.json",
+    "Windows原生PowerShell验收脚本验证.json",
+    "spdlog跨文件补读真实修复验证.json"
   ],
-  "跨构建升级边界": "实际20261012T022142Z→20261012T030041Z，版本均0.1.0；不替代跨正式版本或干净系统验证。",
+  "跨构建升级边界": "实际20261012T052745Z→20261012T060630Z，版本均0.1.0；不替代跨正式版本或干净系统验证。",
   "真实模型累计账本": {
-    "去重请求数": 625,
-    "已知total_tokens": 16567280,
-    "缺少用量请求数": 36,
+    "去重请求数": 677,
+    "已知total_tokens": 17430017,
+    "缺少用量请求数": 43,
     "在途请求数": 0,
     "费用": null,
     "说明": "包含历史失败、截断、修复及重新评测，按请求ID去重；在途属于尚未返回用量，未知不记零，缺少价格不估算费用。"
   },
-  "模型账本口径": "公开工程历史累计去重，含旧DeepSeek和新中转站、失败/修复/重测；数值为核对时间快照，进行中时会变化。主工作区11条连接等账本另计；已知token不代表实际费用，未知用量不记零。",
-  "本轮制品说明": "包含检查点及待发布制品的接收端/模型绑定。39项针对性和338项全量后端与Ruff通过，原源码及证据契约保留。独立运行、四语言、声明/宏范围及实际跨构建升级/学习保留/损坏数据拒绝/卸载保留通过，安装验证模型请求0。",
-  "当前阻塞": "中转站可返回部分正常结果，但各暂停单元最后均连续三次传输失败、远端结果与用量未知。全部验证进程已结束，在途0，检查点保留，没有继续自动恢复。旧DeepSeek余额查询不用于该中转站。尚无干净Windows测试环境。",
-  "核对时间UTC": "2026-10-12T03:43:30.458644+00:00",
+  "模型账本口径": "公开工程历史去重，包括旧DeepSeek、新中转站、失败/修复/重测；核对时间快照。在途和缺少用量保留，未知不记零。主工作区13条连接等请求另计。",
+  "本轮制品说明": "包括受控流式接收、精简提示、Python None事实、宏补读、跨文件补读证据修复与明确自身引用修复反馈。364项后端、35项前端、Ruff/TypeScript/生产构建通过。独立包、原生PowerShell5.1与实际升级验证均无模型请求。",
+  "当前阻塞": "完整模型评测仍出现服务错误事件、传输或结构失败；按有限预算暂停并保留检查点。最新在途及终态见各样本和汇总记录，不能由连接成功推导复杂请求可靠。没有现成干净Windows环境。",
+  "核对时间UTC": "2026-10-12T06:21:12.474977+00:00",
   "当前模型": {
     "接收端": "https://www.cctq.ai/v1",
     "模型": "gpt-6-luna",
+    "流式接收": true,
     "首次上传授权": "仅四个固定公开样本，不含AIHOT",
-    "无源码连接测试": "成功，72已知total_tokens"
+    "无源码连接测试": "两次实际流式连接各72已知total_tokens，真实Content-Type为text/event-stream"
   },
   "最新完整评测": {
     "hiredis-c": {
       "接收端": "https://www.cctq.ai/v1",
       "模型": "gpt-6-luna",
+      "流水线": "architecture/4-repairs/3-explanations/3-reads/2-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
       "状态": "分析暂停",
-      "错误": "网络请求超时或失败；远端用量可能不确定。",
+      "错误": "流式响应不符合接收契约，未发布部分结果。",
       "进度": {
         "phase": "paused",
-        "completed": 3,
+        "completed": 10,
         "total": 49,
-        "detail": "网络请求超时或失败；远端用量可能不确定。"
+        "detail": "流式响应不符合接收契约，未发布部分结果。"
       },
       "请求状态": {
-        "outcome_unknown": 4,
-        "success": 3,
-        "failed": 2
+        "success": 10,
+        "outcome_unknown": 1,
+        "failed": 3
       }
     },
     "spdlog-cpp": {
       "接收端": "https://www.cctq.ai/v1",
       "模型": "gpt-6-luna",
+      "流水线": "architecture/4-repairs/2-explanations/3-reads/2-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
       "状态": "分析暂停",
-      "错误": "网络请求超时或失败；远端用量可能不确定。",
+      "错误": "模型输出未通过结构校验，已用完有限修复次数；已有结果和检查点保留。",
       "进度": {
         "phase": "paused",
-        "completed": 5,
+        "completed": 0,
         "total": 53,
-        "detail": "网络请求超时或失败；远端用量可能不确定。"
+        "detail": "模型输出未通过结构校验，已用完有限修复次数；已有结果和检查点保留。"
       },
       "请求状态": {
-        "success": 5,
-        "failed": 2,
-        "outcome_unknown": 4
+        "failed": 3
       }
     },
     "flask-python": {
       "接收端": "https://www.cctq.ai/v1",
       "模型": "gpt-6-luna",
+      "流水线": "architecture/4-repairs/2-explanations/3-reads/2-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
       "状态": "分析暂停",
-      "错误": "网络请求超时或失败；远端用量可能不确定。",
+      "错误": "流式响应不符合接收契约，未发布部分结果。",
       "进度": {
         "phase": "paused",
-        "completed": 3,
+        "completed": 4,
         "total": 33,
-        "detail": "网络请求超时或失败；远端用量可能不确定。"
+        "detail": "流式响应不符合接收契约，未发布部分结果。"
       },
       "请求状态": {
-        "success": 3,
-        "outcome_unknown": 3
+        "success": 4,
+        "failed": 1
       }
     },
     "zod-typescript": {
       "接收端": "https://www.cctq.ai/v1",
       "模型": "gpt-6-luna",
+      "流水线": "architecture/3-repairs/2-explanations/3-reads/1-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/2-index/3-ts-bindings/2-python-declarations/1",
       "状态": "分析暂停",
       "错误": "网络请求超时或失败；远端用量可能不确定。",
       "进度": {
@@ -149,5 +157,15 @@
     "在途请求数": 0,
     "费用": null,
     "边界": "只计本轮中转站四样本真实评测，不含主工作区连接测试；未知用量不记零，缺价格不估算费用。"
-  }
+  },
+  "验收脚本提交": "f10bfa4",
+  "Windows原生脚本": "packaging/Test-CleanWindows.ps1 已在系统PowerShell5.1实跑，模型请求0；环境声明为开发机，不能计干净系统通过。",
+  "人工验收说明": "docs/P0_独立环境验收.md",
+  "最新实现流水线": "architecture/4-repairs/3-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
+  "本轮制品校验": {
+    "Windows声明与函数范围独立包验证.json": "661d2fe6f87b07523ad7ac3cb8298c08d63e17ed7d3feab8633ae07c28b60dca",
+    "Windows跨构建升级验证.json": "d4db51d89354b3f356241e3ab9e4efdd7a778eab318ea44dab49611d3aaa6f1a",
+    "Windows原生PowerShell验收脚本验证.json": "864a3013777ce0ee199299882678dc6398c75c16617f05dddb4dd94b65d0f79b"
+  },
+  "核对注意": "该账本/评测字段为汇总时间快照。后续进行中的评测只见各样本及公开工程真实评测进度.json，不以旧快照的在途0推导当前无任务。"
 }

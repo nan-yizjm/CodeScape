@@ -44,31 +44,31 @@
       ],
       "接收端": "https://www.cctq.ai/v1",
       "模型": "gpt-6-luna",
-      "模型流水线": "architecture/3-repairs/2-explanations/3-reads/1-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/2-index/3-ts-bindings/2-python-declarations/1",
+      "模型流水线": "architecture/4-repairs/3-explanations/3-reads/2-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
       "状态": "分析暂停",
-      "错误": "网络请求超时或失败；远端用量可能不确定。",
+      "错误": "流式响应不符合接收契约，未发布部分结果。",
       "进度": {
         "phase": "paused",
-        "completed": 3,
+        "completed": 10,
         "total": 49,
-        "detail": "网络请求超时或失败；远端用量可能不确定。"
+        "detail": "流式响应不符合接收契约，未发布部分结果。"
       },
       "请求状态": {
-        "outcome_unknown": 4,
-        "success": 3,
-        "failed": 2
+        "success": 10,
+        "outcome_unknown": 1,
+        "failed": 3
       },
-      "已知total_tokens": 104310,
-      "未知用量请求": 4,
+      "已知total_tokens": 265047,
+      "未知用量请求": 2,
       "原快照字节未变": true,
       "修订后本地批次检查": {
         "批次数": 49,
         "最大上下文字符": 79533,
         "超过180000字符": 0,
         "仅静态规划": true,
-        "规划流水线": "architecture/3-repairs/2-explanations/3-reads/1-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/2-index/3-ts-bindings/2-python-declarations/1",
-        "索引所属模型流水线": "architecture/3-repairs/2-explanations/3-reads/1-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/2-index/3-ts-bindings/2-python-declarations/1",
-        "索引sha256": "75bb8458ec507f6a21346658851020830e30dc68f252e796f16b8a4bc35e6090"
+        "规划流水线": "architecture/4-repairs/3-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
+        "索引所属模型流水线": "architecture/4-repairs/3-explanations/3-reads/2-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
+        "索引sha256": "3f4ec6781a6ce65830850a50f92701c48a92f4b0640baa7f31e78a08fcf457e6"
       }
     },
     "spdlog-cpp": {
@@ -179,31 +179,29 @@
       ],
       "接收端": "https://www.cctq.ai/v1",
       "模型": "gpt-6-luna",
-      "模型流水线": "architecture/3-repairs/2-explanations/3-reads/1-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/2-index/3-ts-bindings/2-python-declarations/1",
+      "模型流水线": "architecture/4-repairs/2-explanations/3-reads/2-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
       "状态": "分析暂停",
-      "错误": "网络请求超时或失败；远端用量可能不确定。",
+      "错误": "模型输出未通过结构校验，已用完有限修复次数；已有结果和检查点保留。",
       "进度": {
         "phase": "paused",
-        "completed": 5,
+        "completed": 0,
         "total": 53,
-        "detail": "网络请求超时或失败；远端用量可能不确定。"
+        "detail": "模型输出未通过结构校验，已用完有限修复次数；已有结果和检查点保留。"
       },
       "请求状态": {
-        "success": 5,
-        "failed": 2,
-        "outcome_unknown": 4
+        "failed": 3
       },
-      "已知total_tokens": 196042,
-      "未知用量请求": 4,
+      "已知total_tokens": 120506,
+      "未知用量请求": 0,
       "原快照字节未变": true,
       "修订后本地批次检查": {
         "批次数": 53,
-        "最大上下文字符": 145802,
+        "最大上下文字符": 145998,
         "超过180000字符": 0,
         "仅静态规划": true,
-        "规划流水线": "architecture/3-repairs/2-explanations/3-reads/1-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/2-index/3-ts-bindings/2-python-declarations/1",
-        "索引所属模型流水线": "architecture/3-repairs/2-explanations/3-reads/1-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/2-index/3-ts-bindings/2-python-declarations/1",
-        "索引sha256": "0ecf93049297abe5097565cfa2ad528ec201421bce3bc9bf56866f4e12811e20"
+        "规划流水线": "architecture/4-repairs/3-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
+        "索引所属模型流水线": "architecture/4-repairs/2-explanations/3-reads/2-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
+        "索引sha256": "4d420d6eed0935688d381de2e9d264757b8ac69981f428154fb23849879f4bc2"
       }
     },
     "flask-python": {
@@ -239,30 +237,30 @@
       ],
       "接收端": "https://www.cctq.ai/v1",
       "模型": "gpt-6-luna",
-      "模型流水线": "architecture/3-repairs/2-explanations/3-reads/1-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/2-index/3-ts-bindings/2-python-declarations/1",
+      "模型流水线": "architecture/4-repairs/2-explanations/3-reads/2-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
       "状态": "分析暂停",
-      "错误": "网络请求超时或失败；远端用量可能不确定。",
+      "错误": "流式响应不符合接收契约，未发布部分结果。",
       "进度": {
         "phase": "paused",
-        "completed": 3,
+        "completed": 4,
         "total": 33,
-        "detail": "网络请求超时或失败；远端用量可能不确定。"
+        "detail": "流式响应不符合接收契约，未发布部分结果。"
       },
       "请求状态": {
-        "success": 3,
-        "outcome_unknown": 3
+        "success": 4,
+        "failed": 1
       },
-      "已知total_tokens": 60952,
-      "未知用量请求": 3,
+      "已知total_tokens": 69417,
+      "未知用量请求": 1,
       "原快照字节未变": true,
       "修订后本地批次检查": {
         "批次数": 33,
         "最大上下文字符": 51704,
         "超过180000字符": 0,
         "仅静态规划": true,
-        "规划流水线": "architecture/3-repairs/2-explanations/3-reads/1-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/2-index/3-ts-bindings/2-python-declarations/1",
-        "索引所属模型流水线": "architecture/3-repairs/2-explanations/3-reads/1-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/2-index/3-ts-bindings/2-python-declarations/1",
-        "索引sha256": "85fe5df2af5dfb6ce20bafb38b4de12c32660211a687f43b3acd052e53ebf80a"
+        "规划流水线": "architecture/4-repairs/3-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
+        "索引所属模型流水线": "architecture/4-repairs/2-explanations/3-reads/2-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
+        "索引sha256": "ef501b9afd73e5f1b8760e5dfceb0a8db4a46cecbb2162f46cf50c6e16509eab"
       }
     },
     "zod-typescript": {
@@ -404,7 +402,7 @@
         "最大上下文字符": 159051,
         "超过180000字符": 0,
         "仅静态规划": true,
-        "规划流水线": "architecture/3-repairs/2-explanations/3-reads/1-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/2-index/3-ts-bindings/2-python-declarations/1",
+        "规划流水线": "architecture/4-repairs/3-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
         "索引所属模型流水线": "architecture/3-repairs/2-explanations/3-reads/1-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/2-index/3-ts-bindings/2-python-declarations/1",
         "索引sha256": "17633f202ab7eda832f4e34c11dd4e28246a817857710342a4b547c0ac5112b2"
       }
@@ -436,20 +434,20 @@
         ],
         "接收端": "https://www.cctq.ai/v1",
         "模型": "gpt-6-luna",
-        "模型流水线": "architecture/3-repairs/2-explanations/3-reads/1-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/2-index/3-ts-bindings/2-python-declarations/1",
-        "状态": "分析暂停",
-        "错误": "网络请求超时或失败；远端用量可能不确定。",
+        "模型流水线": "architecture/4-repairs/2-explanations/3-reads/2-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/2-index/3-ts-bindings/2-python-declarations/1",
+        "状态": "结构检查通过，待源码质量复核",
+        "错误": null,
         "进度": {
-          "phase": "paused",
-          "completed": 0,
+          "phase": "completed",
+          "completed": 1,
           "total": 1,
-          "detail": "网络请求超时或失败；远端用量可能不确定。"
+          "detail": "分批分析完成"
         },
         "请求状态": {
-          "outcome_unknown": 3
+          "success": 1
         },
-        "已知total_tokens": 0,
-        "未知用量请求": 3,
+        "已知total_tokens": 16707,
+        "未知用量请求": 0,
         "原快照字节未变": true
       },
       "重测源码复核": {
@@ -492,7 +490,7 @@
         ],
         "接收端": "https://www.cctq.ai/v1",
         "模型": "gpt-6-luna",
-        "模型流水线": "architecture/3-repairs/2-explanations/3-reads/1-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/2-index/3-ts-bindings/2-python-declarations/1",
+        "模型流水线": "architecture/3-repairs/2-explanations/3-reads/2-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/2-index/3-ts-bindings/2-python-declarations/1",
         "状态": "结构检查通过，待源码质量复核",
         "错误": null,
         "进度": {
@@ -502,9 +500,10 @@
           "detail": "分批分析完成"
         },
         "请求状态": {
+          "failed": 1,
           "success": 3
         },
-        "已知total_tokens": 53768,
+        "已知total_tokens": 83638,
         "未知用量请求": 0,
         "原快照字节未变": true
       },
@@ -533,7 +532,7 @@
         ],
         "接收端": "https://www.cctq.ai/v1",
         "模型": "gpt-6-luna",
-        "模型流水线": "architecture/3-repairs/2-explanations/3-reads/1-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/2-index/3-ts-bindings/2-python-declarations/1",
+        "模型流水线": "architecture/4-repairs/2-explanations/3-reads/2-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
         "状态": "结构检查通过，待源码质量复核",
         "错误": null,
         "进度": {
@@ -543,12 +542,11 @@
           "detail": "分批分析完成"
         },
         "请求状态": {
-          "outcome_unknown": 1,
           "success": 3,
           "failed": 1
         },
-        "已知total_tokens": 46654,
-        "未知用量请求": 1,
+        "已知total_tokens": 42325,
+        "未知用量请求": 0,
         "原快照字节未变": true
       },
       "源码复核": {
@@ -578,7 +576,7 @@
         ],
         "接收端": "https://www.cctq.ai/v1",
         "模型": "gpt-6-luna",
-        "模型流水线": "architecture/3-repairs/2-explanations/3-reads/1-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/2-index/3-ts-bindings/2-python-declarations/1",
+        "模型流水线": "architecture/3-repairs/2-explanations/3-reads/2-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/2-index/3-ts-bindings/2-python-declarations/1",
         "状态": "结构检查通过，待源码质量复核",
         "错误": null,
         "进度": {
@@ -588,11 +586,11 @@
           "detail": "分批分析完成"
         },
         "请求状态": {
-          "outcome_unknown": 1,
-          "failed": 3,
-          "success": 7
+          "success": 7,
+          "failed": 1,
+          "outcome_unknown": 1
         },
-        "已知total_tokens": 190538,
+        "已知total_tokens": 155031,
         "未知用量请求": 1,
         "原快照字节未变": true
       },
@@ -619,16 +617,16 @@
     }
   },
   "账本汇总": {
-    "去重请求数": 625,
-    "已知total_tokens": 16567280,
-    "缺少用量请求数": 36,
+    "去重请求数": 677,
+    "已知total_tokens": 17430017,
+    "缺少用量请求数": 43,
     "在途请求数": 0,
     "费用": null,
     "说明": "包含历史失败、截断、修复及重新评测，按请求ID去重；在途属于尚未返回用量，未知不记零，缺少价格不估算费用。"
   },
   "外部阻塞": "已按授权切换新接收端，实际终态和错误见各样本；历史DeepSeek官方余额查询不用于判定中转站可用性。",
   "验收结论": "真实评测与源码质量复核尚未完成；结构发布不代表质量通过，不能宣称全部P0完成。",
-  "汇总时间UTC": "2026-10-12T03:44:05.538160+00:00",
+  "汇总时间UTC": "2026-10-12T06:19:02.102114+00:00",
   "本轮本地修订说明": {
     "新流水线": "cpp-config/8",
     "新模型请求": 0,

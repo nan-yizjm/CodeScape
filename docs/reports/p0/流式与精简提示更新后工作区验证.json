@@ -1,0 +1,20 @@
+{
+  "prototype_projects": {
+    "count": 4,
+    "sha256": "7cbc55aa6f174b940bf2afcd87ddffda3fddbd1928c942221ee70f8bb38b34a8"
+  },
+  "prototype_learning": {
+    "count": 2,
+    "sha256": "d19e06ce45389e94dce88d144cdeb663dfb066c913984f544607d93892b23e45"
+  },
+  "requests": 13,
+  "日期": "2026-10-12",
+  "产品提交": "d521612",
+  "正常保存退出": true,
+  "端口": 8125,
+  "浏览器恢复": "AIHOT 5节点2条主要协作线",
+  "设置": "中转站gpt-6-luna、流式接收启用、密码输入为空",
+  "新源码上传": 0,
+  "新模型请求": 0,
+  "截图": "output/playwright/P0最新构建流式设置.png"
+}

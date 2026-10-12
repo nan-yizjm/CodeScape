@@ -1,0 +1,258 @@
+{
+  "样本": "zod-typescript",
+  "Commit": "0b216ef674e297ebe41d8bf902262e56f8755822",
+  "接收端": "https://www.cctq.ai/v1",
+  "模型": "gpt-6-luna",
+  "数据目录": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\.runtime\\public-model-validation\\a740585d-7806-4f27-9768-dea59293e5de",
+  "原始快照hash": "c179e795ed4cac054e4cc4ff09bfd53aeca57c44706f8eba1969db3400a39955",
+  "实际文件": [
+    "packages/zod/src/v4/core/parse.ts"
+  ],
+  "project_id": "827eecf6-388c-4f2d-ba46-fbfd0f91a7b7",
+  "version_id": "372458ea-3da1-4925-b87a-94c38266f5cb",
+  "流式接收": true,
+  "流水线": "architecture/3-repairs/2-explanations/3-reads/2-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/2-index/3-ts-bindings/2-python-declarations/1",
+  "日期": "2026-10-12",
+  "状态": "架构与讲解结构诊断通过，待源码复核",
+  "范围": "紧凑完整schema诊断，非架构验收",
+  "执行目标代码": false,
+  "本次新建job_id": "d6c07973-c5fe-48ec-943f-8f636dc0fcb4",
+  "最多发送": 1,
+  "system字符": 4562,
+  "context字符": 34716,
+  "实际输出": {
+    "modules": [
+      {
+        "id": "module_parse_ts",
+        "parent_id": null,
+        "name": "解析与验证核心",
+        "summary": "提供同步、异步解析，安全解析，编解码及验证所依赖的核心辅助逻辑。",
+        "entity_ids": [
+          "8098fb830b1107547f3a686cfda6632d",
+          "b26d984890290a2dc2d369b80d8923ec",
+          "4f560833352d1b87fe2a7e755145e855"
+        ],
+        "code_paths": [
+          "packages/zod/src/v4/core/parse.ts"
+        ],
+        "incomplete": false
+      }
+    ],
+    "overview": {
+      "introduction": "该文件是 Zod v4 核心解析模块的一部分，围绕 schema 的运行结果提供参数整理、错误构造和验证回退能力。",
+      "capabilities": [
+        "统一补全解析参数并保持固定对象形状",
+        "在安全解析失败时延迟构造错误对象",
+        "对编译验证器和运行时回退路径进行协调",
+        "支持同步与异步解析、验证及编解码流程"
+      ],
+      "principle": "函数通过 schema._zod.run 执行校验，以 issues 是否为空判断成功；同步路径检测 Promise 并抛出异步错误，失败时使用错误类和上下文生成错误。编译验证路径不可用或结果不确定时，回退到短路运行逻辑。",
+      "limitations": [
+        "本次输入仅提供三个可见函数实体，未对其他导出函数建立实体说明。",
+        "schema._zod.run、util.finalizeIssue、编译验证器等具体实现不在当前代码范围内。",
+        "无法仅依据当前文件确认外部 schema、错误类和回调的全部运行时行为。"
+      ],
+      "synthesized": false,
+      "analysis_notes": []
+    },
+    "explanations": [
+      {
+        "entity_id": "8098fb830b1107547f3a686cfda6632d",
+        "summary": "补全解析参数并统一返回固定结构。",
+        "details": "输入为调用方函数 callee，以及可选的 $ParseParams。函数始终返回包含 callee 和 Err 两个键的对象：callee 优先取 params.callee，只有其为空值时才回退到传入的 callee；Err 直接保留 params.Err，因此未提供参数时 Err 为 undefined。该实现通过可选链和空值合并处理 params 缺失，并保持对象形状稳定，服务于编码、解码等包装函数向底层解析器传递调用来源和错误类。函数本身不执行解析，也不抛出显式异常。",
+        "evidence": [
+          {
+            "path": "packages/zod/src/v4/core/parse.ts",
+            "start_line": 10,
+            "end_line": 12
+          }
+        ]
+      },
+      {
+        "entity_id": "b26d984890290a2dc2d369b80d8923ec",
+        "summary": "惰性构造安全解析失败结果中的错误对象。",
+        "details": "输入包括错误构造类 Err、原始问题数组 issues 和内部解析上下文 ctx，输出是带 success:false、error getter/setter 的对象。首次读取 error 时，函数将每个 issue 通过 util.finalizeIssue 结合 ctx 和 core.config 处理，再实例化 Err；随后把 issues 与 ctx 置为 undefined，避免结果对象继续持有解析输入。若调用方通过 setter 替换错误，也会立即释放这两份捕获状态。getter 使用 !error 判断，因此错误对象若为真值则只构造一次；具体错误构造或 finalizeIssue 的异常由外部实现决定。",
+        "evidence": [
+          {
+            "path": "packages/zod/src/v4/core/parse.ts",
+            "start_line": 83,
+            "end_line": 103
+          }
+        ]
+      },
+      {
+        "entity_id": "4f560833352d1b87fe2a7e755145e855",
+        "summary": "执行编译验证失败后的运行时回退校验。",
+        "details": "输入为 schema、待验证 value 和可选上下文，输出 boolean。函数创建或复制内部上下文，并强制 async:false、abortEarly:true；若 schema 的 bag 中存在 fallbackRun，则设置 COMPILE_FALLBACK 标记后执行它，否则直接调用 schema._zod.run。结果若为 Promise，立即抛出 core.$ZodAsyncError，避免同步验证吞掉异步流程；否则检查 ParsePayload.issues 长度是否为零。该函数只返回成功与否，不构造错误对象，fallbackRun 或 schema 运行本身的异常继续向外传播。",
+        "evidence": [
+          {
+            "path": "packages/zod/src/v4/core/parse.ts",
+            "start_line": 151,
+            "end_line": 172
+          }
+        ]
+      }
+    ],
+    "call_judgments": [
+      {
+        "call_id": "39589a36311a38ebf9bfe48e29b37b46",
+        "target_id": "b26d984890290a2dc2d369b80d8923ec",
+        "reason": "源码静态关系已确认：安全解析闭包在失败分支直接调用 failure，目标唯一对应 failure 实现。",
+        "evidence": [
+          {
+            "path": "packages/zod/src/v4/core/parse.ts",
+            "start_line": 71,
+            "end_line": 79
+          },
+          {
+            "path": "packages/zod/src/v4/core/parse.ts",
+            "start_line": 83,
+            "end_line": 103
+          }
+        ]
+      },
+      {
+        "call_id": "bb809ca4fc131f383a8c20d81fd0b8d9",
+        "target_id": "b26d984890290a2dc2d369b80d8923ec",
+        "reason": "源码静态关系已确认：异步安全解析失败分支调用 failure，目标唯一对应 failure 实现。",
+        "evidence": [
+          {
+            "path": "packages/zod/src/v4/core/parse.ts",
+            "start_line": 111,
+            "end_line": 117
+          },
+          {
+            "path": "packages/zod/src/v4/core/parse.ts",
+            "start_line": 83,
+            "end_line": 103
+          }
+        ]
+      },
+      {
+        "call_id": "3641e47235ab0f51c0e6fe9ba7f26878",
+        "target_id": "4f560833352d1b87fe2a7e755145e855",
+        "reason": "源码静态关系已确认：验证导出函数在编译路径未返回时调用 validateFallback。",
+        "evidence": [
+          {
+            "path": "packages/zod/src/v4/core/parse.ts",
+            "start_line": 137,
+            "end_line": 149
+          },
+          {
+            "path": "packages/zod/src/v4/core/parse.ts",
+            "start_line": 151,
+            "end_line": 172
+          }
+        ]
+      },
+      {
+        "call_id": "c4791358aa6e13002a4365a51f32aeaa",
+        "target_id": "8098fb830b1107547f3a686cfda6632d",
+        "reason": "源码静态关系已确认：编码包装函数调用 finalizeParams 生成底层解析参数。",
+        "evidence": [
+          {
+            "path": "packages/zod/src/v4/core/parse.ts",
+            "start_line": 198,
+            "end_line": 203
+          },
+          {
+            "path": "packages/zod/src/v4/core/parse.ts",
+            "start_line": 10,
+            "end_line": 12
+          }
+        ]
+      },
+      {
+        "call_id": "1e488570e0d0d0b28d31e1c4e4456f19",
+        "target_id": "8098fb830b1107547f3a686cfda6632d",
+        "reason": "源码静态关系已确认：解码包装函数调用 finalizeParams 生成底层解析参数。",
+        "evidence": [
+          {
+            "path": "packages/zod/src/v4/core/parse.ts",
+            "start_line": 216,
+            "end_line": 220
+          },
+          {
+            "path": "packages/zod/src/v4/core/parse.ts",
+            "start_line": 10,
+            "end_line": 12
+          }
+        ]
+      },
+      {
+        "call_id": "b1eff5aad192e4cd1227c038038929b0",
+        "target_id": "8098fb830b1107547f3a686cfda6632d",
+        "reason": "源码静态关系已确认：异步编码包装函数调用 finalizeParams 传递调用函数和错误类。",
+        "evidence": [
+          {
+            "path": "packages/zod/src/v4/core/parse.ts",
+            "start_line": 233,
+            "end_line": 238
+          },
+          {
+            "path": "packages/zod/src/v4/core/parse.ts",
+            "start_line": 10,
+            "end_line": 12
+          }
+        ]
+      },
+      {
+        "call_id": "021a4679ff6ba3404327858c1ecda248",
+        "target_id": "8098fb830b1107547f3a686cfda6632d",
+        "reason": "源码静态关系已确认：异步解码包装函数调用 finalizeParams 传递解析参数。",
+        "evidence": [
+          {
+            "path": "packages/zod/src/v4/core/parse.ts",
+            "start_line": 251,
+            "end_line": 255
+          },
+          {
+            "path": "packages/zod/src/v4/core/parse.ts",
+            "start_line": 10,
+            "end_line": 12
+          }
+        ]
+      }
+    ],
+    "primary_dependencies": [],
+    "read_requests": []
+  },
+  "用量": {
+    "prompt_tokens": 14589,
+    "completion_tokens": 2174,
+    "total_tokens": 16763
+  },
+  "可见函数数": 3,
+  "讲解数": 3,
+  "结束时间UTC": "2026-10-12T05:02:39.526600+00:00",
+  "请求账本": [
+    {
+      "id": "d8d4296a-c0d6-43e1-96d3-13f4045cdd34",
+      "project_id": "827eecf6-388c-4f2d-ba46-fbfd0f91a7b7",
+      "version_id": "372458ea-3da1-4925-b87a-94c38266f5cb",
+      "job_id": "d6c07973-c5fe-48ec-943f-8f636dc0fcb4",
+      "unit_id": "7a5cd1c4-9dc7-45a0-8dfa-bf43427e0541",
+      "attempt": 1,
+      "phase": "compact_diagnostic",
+      "recipient": "https://www.cctq.ai/v1",
+      "model": "gpt-6-luna",
+      "status": "success",
+      "created_at": "2026-10-12T05:00:55.175640+00:00",
+      "sent_at": "2026-10-12T05:00:55.216640+00:00",
+      "finished_at": "2026-10-12T05:02:39.518341+00:00",
+      "payload_hash": "9339387336993fa4874066ce9bfd882b824c63bfbc6f6ebfe20f39d4b50c4f53",
+      "source_chars": 12572,
+      "usage": {
+        "prompt_tokens": 14589,
+        "completion_tokens": 2174,
+        "total_tokens": 16763
+      },
+      "cost": null,
+      "currency": null,
+      "price_snapshot": null,
+      "http_status": 200,
+      "error_code": null
+    }
+  ],
+  "其余契约检查": "调用判断引用真实ID校验未通过；无效关系未发布。模块和讲解引用检查通过不代表全部契约通过。"
+}

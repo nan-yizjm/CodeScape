@@ -1,0 +1,65 @@
+{
+  "日期": "2026-10-12",
+  "核对时间UTC": "2026-10-12T05:55:36.652920+00:00",
+  "产品提交": "d521612",
+  "固定对照材料": {
+    "path": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\output\\public-quality-artifacts\\c3ef40ef5ce9d5b6df9cb78849dd1de0bc5fbf8f0db9c8937510781e106dafa1.json",
+    "sha256": "c3ef40ef5ce9d5b6df9cb78849dd1de0bc5fbf8f0db9c8937510781e106dafa1"
+  },
+  "源码复核而非用户验收": true,
+  "新模型请求": 0,
+  "结论": {
+    "Flask": {
+      "身份": {
+        "报告": "flask-python-narrow真实模型验证.json",
+        "sha256": "5827f515cd932769a5a70a733b318ee0a6b8f1fdba4698d9da7747493a74da9c"
+      },
+      "讲解覆盖": "19/19",
+      "局部通过": [
+        "get_load_dotenv假值返回default、显式关闭字符串的方向",
+        "_prepare_send_file_kwargs严格None默认替换、max_age为0保留",
+        "get_root_path区分None和非空/真值；后备loader及RuntimeError"
+      ],
+      "措辞余留": "loader为空应明确为None；hasattr(__file__)存在性没有逐项展开，不计穷尽准确率"
+    },
+    "Hiredis": {
+      "身份": {
+        "报告": "hiredis-c-narrow真实模型验证.json",
+        "sha256": "9786f62381821d1593750bc40fb5efa2c4018b6e8f5b60efe672d2cfeccf0298"
+      },
+      "讲解覆盖": "18/18",
+      "缺口": [
+        "redisReaderFeed重建缓冲的r->len==0和sdsavail(r->buf)>maxbuf联合条件表述模糊",
+        "redisReaderGetReply丢弃结果时漏r->reply、r->fn和freeObject存在性前提"
+      ],
+      "结果": "不能计完整语义通过"
+    },
+    "spdlog": {
+      "身份": {
+        "报告": "spdlog-cpp-narrow真实模型验证.json",
+        "sha256": "268df8985417c9749f3f902a0035ce5c8fc813743c4964a68458b2fba43bd972"
+      },
+      "讲解覆盖": "58/58",
+      "未完成模块": 1,
+      "局部通过": "should_flush_明确阈值且off排除；窄字符log_提及std::exception处理与未知异常重抛",
+      "缺口": "sink_it_、flush_和宽字符log_仍未清晰列出已补读宏条件分支，不能只写配置相关；归属冲突仍有1未完成模块"
+    },
+    "Zod": {
+      "身份": {
+        "报告": "zod-typescript-narrow真实模型验证.json",
+        "sha256": "818381aa29647885949eb4d16606faa2e3d06362aafef37242a625133df5347f"
+      },
+      "讲解覆盖": "2/3",
+      "缺失": "validateFallback",
+      "缺口": "模块职责仅围绕三个可见函数，未充分归纳_parse/_safeParse等匿名工厂持有的同步/异步及编解码主要能力；隐藏实体不能创建为普通函数但职责仍需解释",
+      "结果": "结构发布，质量未通过"
+    }
+  },
+  "真实诊断": {
+    "短请求": "同一固定parse.ts，3549已知tokens成功，不能替代架构分析",
+    "紧凑schema诊断": "结构与讲解验证通过，但完整调用判断ID校验失败；未发布架构，不计正式产品成功",
+    "生产精简提示": "Zod正式验证保留产品全部契约检查后结构发布，仍有上述缺口"
+  },
+  "范围对照": "最新完整工程尚未发布，同接收端/模型/流水线完整和缩小对照未完成。",
+  "边界": "只核对列出的源码事实；引用有效、唯一归属及测试数量不等于全部解释正确。历史报告与原文没有改写。"
+}

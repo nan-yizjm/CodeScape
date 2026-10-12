@@ -1,0 +1,88 @@
+{
+  "日期": "2026-10-12",
+  "核对时间UTC": "2026-10-12T06:26:47.706158+00:00",
+  "产品提交": "cc1233f",
+  "Commit": "d6c93f38a08b4ea0f8ffcfd7f7857307d5d5c3fa",
+  "流水线": "architecture/4-repairs/3-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
+  "接收端": "https://www.cctq.ai/v1",
+  "模型": "gpt-6-luna",
+  "源码快照hash": "d4586f715383197a4fccb3ccc33326112d0d5f8441eb5d02fbb79ab7ea70245d",
+  "正式请求": {
+    "id": "fbcb5658-52b1-4e30-87cc-a850f6a9b8bf",
+    "phase": "source_read",
+    "usage": {
+      "prompt_tokens": 37220,
+      "completion_tokens": 2985,
+      "total_tokens": 40205
+    }
+  },
+  "固定批次制品": {
+    "path": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\output\\public-quality-artifacts\\c9a00611e5a00cc6954e8fd69b794b53ef2946097c24465457a0fb2b68e12d17.json",
+    "sha256": "c9a00611e5a00cc6954e8fd69b794b53ef2946097c24465457a0fb2b68e12d17"
+  },
+  "首批原始文件": [
+    "CMakeLists.txt",
+    "README.md",
+    "include/spdlog/async.h",
+    "include/spdlog/async_logger-inl.h",
+    "include/spdlog/async_logger.h"
+  ],
+  "实际授权自动补读": [
+    {
+      "path": "include/spdlog/common.h",
+      "start_line": 107,
+      "end_line": 121
+    },
+    {
+      "path": "include/spdlog/logger.h",
+      "start_line": 30,
+      "end_line": 46
+    }
+  ],
+  "跨文件真实讲解证据": [
+    {
+      "entity_id": "55c00898-174b-5b89-9d5d-1f167c1b036a",
+      "path": "include/spdlog/common.h",
+      "start_line": 107,
+      "end_line": 121
+    },
+    {
+      "entity_id": "55c00898-174b-5b89-9d5d-1f167c1b036a",
+      "path": "include/spdlog/logger.h",
+      "start_line": 30,
+      "end_line": 46
+    },
+    {
+      "entity_id": "f1b0e5ad-d3ec-5d70-adfd-ba3c712c62e4",
+      "path": "include/spdlog/common.h",
+      "start_line": 107,
+      "end_line": 121
+    },
+    {
+      "entity_id": "f1b0e5ad-d3ec-5d70-adfd-ba3c712c62e4",
+      "path": "include/spdlog/logger.h",
+      "start_line": 30,
+      "end_line": 46
+    },
+    {
+      "entity_id": "b2359250-2cb7-5346-8429-8cdc4e705884",
+      "path": "include/spdlog/logger.h",
+      "start_line": 30,
+      "end_line": 46
+    },
+    {
+      "entity_id": "d40f46fa-f379-5d2d-b88d-e82bb521b417",
+      "path": "include/spdlog/logger.h",
+      "start_line": 30,
+      "end_line": 46
+    }
+  ],
+  "可见函数": 12,
+  "实际讲解": 12,
+  "旧文件集合拒绝在新真实输出上复现": true,
+  "修订后文件和实际读取行范围通过": true,
+  "模块归属未扩张": true,
+  "本次复核模型请求": 0,
+  "执行目标源码": false,
+  "结论": "合法跨文件宏证据的误拒绝在正式模型路径实测修复；完整工程和全部语义质量仍待完成，不能据此计整体P0通过。"
+}
