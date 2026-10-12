@@ -104,6 +104,19 @@ def test_failed_disk_flush_does_not_replace_verified_output(tmp_path, monkeypatc
     assert load_output(tmp_path, "v", descriptor)["architecture"] == {"saved": True}
 
 
+def test_prepared_receiver_identity_excludes_secrets_and_detects_model_mismatch(tmp_path):
+    config = {'base_url': 'https://relay.invalid/v1', 'model': '固定模型',
+              'key': 'private-credential-marker', 'has_key': True}
+    descriptor = prepare_output(tmp_path, 'v', 'hash', 'pipeline', {}, {}, {}, provider_config=config)
+    value = load_output(tmp_path, 'v', descriptor)
+    assert value['provider_config'] == {'base_url': config['base_url'], 'model': config['model']}
+    assert 'private-credential-marker' not in (tmp_path / 'version-v.json').read_text(encoding='utf-8')
+    assert 'key' not in json.dumps(descriptor)
+    changed = {**descriptor, 'provider_config': {**descriptor['provider_config'], 'model': '另一个模型'}}
+    with pytest.raises(ValueError, match='缺失或损坏'):
+        load_output(tmp_path, 'v', changed)
+
+
 def wait(client, url, expected):
     for _ in range(250):
         value = client.get(url).json()["data"]
@@ -113,14 +126,16 @@ def wait(client, url, expected):
     raise AssertionError(value)
 
 
-@pytest.mark.parametrize("failure", ["transaction", "corrupt", "cleanup"])
+@pytest.mark.parametrize("failure", ["transaction", "corrupt", "cleanup", "receiver", "model"])
 def test_explicit_resume_reuses_prepared_output_without_new_model_request(tmp_path, monkeypatch, failure):
     source = tmp_path / "source"
     source.mkdir()
     (source / "owned.py").write_bytes(b"def owned(): return 1\n")
     runs = []
+    resumed_counts = []
     async def fixed(provider, analysis, files, **callbacks):
         runs.append(files)
+        resumed_counts.append(len(callbacks['completed_batches']))
         arch = Architecture(modules=[Module(id="leaf", name="验证", summary="返回固定值", code_paths=["owned.py"],
             entity_ids=[entity.id for entity in analysis.entities if entity.visible])],
             overview=Overview(introduction="固定验证", capabilities=["返回固定值"], principle="读取输入", limitations=[]))
@@ -145,6 +160,8 @@ def test_explicit_resume_reuses_prepared_output_without_new_model_request(tmp_pa
     app = create_app(root, "test", architecture_runner=fixed)
     with TestClient(app) as client:
         client.headers["x-csrf-token"] = client.post("/api/v1/session/exchange", json={"nonce": "test"}).json()["data"]["csrf_token"]
+        assert client.put('/api/v1/settings/ai', json={'base_url': 'https://api.deepseek.com',
+                                                     'model': '固定模型', 'key': None}).status_code == 200
         imported = client.post("/api/v1/imports", json={"path": str(source)}).json()["data"]
         url = "/api/v1/projects/" + imported["id"]
         old = wait(client, url, "indexed")
@@ -160,9 +177,17 @@ def test_explicit_resume_reuses_prepared_output_without_new_model_request(tmp_pa
     with TestClient(create_app(root, "again", architecture_runner=fixed)) as client:
         client.headers["x-csrf-token"] = client.post("/api/v1/session/exchange", json={"nonce": "again"}).json()["data"]["csrf_token"]
         assert client.get(url).json()["data"]["status"] == "paused" and len(runs) == 1
+        changed = failure in {'receiver', 'model'}
+        if changed:
+            config = client.get('/api/v1/settings/ai').json()['data']
+            config = {'base_url': 'https://relay.invalid/v1' if failure == 'receiver' else config['base_url'],
+                      'model': '另一个模型' if failure == 'model' else config['model'], 'key': None}
+            assert client.put('/api/v1/settings/ai', json=config).status_code == 200
+            assert client.post(url + '/consent', json={'accepted': True}).status_code == 200
         assert client.post("/api/v1/tasks/" + started["task_id"] + "/start", json={}).status_code == 200
         result = wait(client, url, "paused" if failure == "corrupt" else "ready")
-        assert len(runs) == 1
+        assert len(runs) == (2 if changed else 1)
+        assert resumed_counts == ([0, 0] if changed else [0])
         if failure == "corrupt":
             assert "损坏" in result["error"]
         else:

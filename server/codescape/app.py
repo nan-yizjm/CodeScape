@@ -40,7 +40,7 @@ from .models import (
     SessionRequest,
 )
 from .provider import PIPELINE_VERSION, Provider, ProviderError, validate_architecture
-from .publication import load_output, prepare_output
+from .publication import load_output, prepare_output, receiver_identity
 from .reads import VersionReads
 from .security import data_root
 from .snapshots import create_snapshot, read_snapshot
@@ -775,6 +775,7 @@ def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=
             )
             try:
                 await asyncio.sleep(0)
+                model_config = receiver_identity(provider.settings())
                 if candidate and not project["result"]:
                     await index_project(project_id, candidate["id"])
                     project["result"] = database.version(project_id, candidate["id"])["value"]["result"]
@@ -787,6 +788,7 @@ def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=
                             saved.get("version_id") == project["version_id"]
                             and saved.get("snapshot_hash") == project["snapshot"]["hash"]
                             and saved.get("pipeline_version") == PIPELINE_VERSION
+                            and saved.get('provider_config') == model_config
                         ):
                             checkpoint = [Architecture.model_validate(item) for item in saved.get("batches", [])]
                     except (OSError, ValueError, TypeError):
@@ -825,6 +827,7 @@ def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=
                                 "version_id": project["version_id"],
                                 "snapshot_hash": project["snapshot"]["hash"],
                                 "pipeline_version": PIPELINE_VERSION,
+                                "provider_config": model_config,
                                 "batches": [item.model_dump() for item in saved_batches],
                             },
                             handle, ensure_ascii=False,
@@ -839,7 +842,8 @@ def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=
                 source_analysis = Analysis.model_validate(project["result"])
                 prepared_version = database.version(project_id, project["version_id"])
                 prepared = prepared_version["value"].get("prepared_output") if prepared_version else None
-                if prepared and prepared.get("pipeline_version") == PIPELINE_VERSION:
+                if (prepared and prepared.get("pipeline_version") == PIPELINE_VERSION
+                        and prepared.get('provider_config') == model_config):
                     saved = load_output(root / "projects" / project_id, project["version_id"], prepared)
                     if saved["snapshot_hash"] != project["snapshot"]["hash"] or saved["result"] != project["result"]:
                         raise ValueError("已保存的分析产物与当前快照不一致，未重新请求模型。")
@@ -864,7 +868,8 @@ def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=
                 read_snapshot(snapshot_root, project["snapshot"])
                 # Both first analysis and reanalysis save and verify output before a short transaction.
                 descriptor = prepare_output(root / "projects" / project_id, project["version_id"],
-                    project["snapshot"]["hash"], PIPELINE_VERSION, project["result"], architecture.model_dump(), usage)
+                    project["snapshot"]["hash"], PIPELINE_VERSION, project["result"], architecture.model_dump(), usage,
+                    provider_config=model_config)
                 database.prepare_publication(project_id, project["version_id"], job["id"], descriptor, candidate=bool(candidate))
                 if candidate:
                     database.publish_candidate(project_id, candidate["id"], job["id"], architecture.model_dump())

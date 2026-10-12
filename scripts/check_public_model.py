@@ -42,6 +42,8 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--id',required=True,choices=['hiredis-c','spdlog-cpp','flask-python','zod-typescript'])
     parser.add_argument('--narrow',action='store_true')
+    parser.add_argument('--base-url', default='https://api.deepseek.com', help='核对已授权接收端，不接受密钥参数')
+    parser.add_argument('--model', default='deepseek-flash', help='核对实际模型ID')
     mode = parser.add_mutually_exclusive_group()
     mode.add_argument('--resume',action='store_true',help='从该样本已有暂停记录和检查点主动恢复，不创建新的快照')
     mode.add_argument('--refresh-overview',action='store_true',help='仅重测已发布结果的概览，架构及源码保持不变')
@@ -91,15 +93,16 @@ def main():
     # Only encrypted bytes are copied; the key is decoded solely inside Provider.
     actual = Path(os.environ['LOCALAPPDATA'])/'CodeScape'
     config = Provider(actual).settings()
-    assert config['base_url']=='https://api.deepseek.com' and config['model']=='deepseek-flash' and config['has_key']
-    if not previous:
-        (root/'credentials').mkdir()
-        shutil.copyfile(actual/'credentials/provider.dpapi',root/'credentials/provider.dpapi')
-        (root/'provider.json').write_text(json.dumps({'base_url':config['base_url'],'model':config['model']}),encoding='utf-8')
+    assert config['base_url']==arguments.base_url and config['model']==arguments.model and config['has_key']
+    if previous and (previous['接收端'] != config['base_url'] or previous['模型'] != config['model']):
+        raise RuntimeError('旧评测接收端或模型不同，不能直接恢复；请新建评测，历史结果已保留。')
+    (root/'credentials').mkdir(exist_ok=True)
+    shutil.copyfile(actual/'credentials/provider.dpapi',root/'credentials/provider.dpapi')
+    (root/'provider.json').write_text(json.dumps({'base_url':config['base_url'],'model':config['model']}),encoding='utf-8')
     nonce = 'public-model-validation'
     record = {'日期':(datetime.now(UTC) + timedelta(hours=8)).date().isoformat(),
         '检查开始时间UTC':datetime.now(UTC).isoformat(),'样本':arguments.id,'Commit':selected['commit'],
-        '范围':'缩小范围' if arguments.narrow else '约定完整范围','授权':'用户允许四个固定公开样本真实评测',
+        '范围':'缩小范围' if arguments.narrow else '约定完整范围','授权':'用户允许四个固定公开样本向当前配置接收端上传并评测',
         '接收端':config['base_url'],'模型':config['model'],'流水线':PIPELINE_VERSION,'数据目录':str(root),
         '原始快照hash':old_manifest['hash'],'实际文件':list(files),'状态':'进行中','执行目标代码':False}
     destination = reports/f"{arguments.id}-{'narrow' if arguments.narrow else 'full'}真实模型验证.json"
@@ -189,7 +192,7 @@ def main():
             record['费用'] = None
             diagnostics = root/'validation-errors.jsonl'
             record['脱敏校验记录'] = [json.loads(line) for line in diagnostics.read_text(encoding='utf-8').splitlines()] if diagnostics.exists() else []
-            record['边界'] = '真实官方模型，固定响应与质量复核分开；尚未代表用户验收；价格未知不记零费用。'
+            record['边界'] = '真实配置接口，固定响应与质量复核分开；尚未代表用户验收；价格未知不记零费用。'
             save()
             print(json.dumps({key:record[key] for key in ['样本','范围','状态','请求状态','已知total_tokens','未知用量请求']},ensure_ascii=False),flush=True)
     finally:
