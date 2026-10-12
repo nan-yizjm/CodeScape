@@ -78,6 +78,94 @@ def test_long_function_evidence_reports_span_limit_and_accepts_split_references(
         validate_explanations(result, analysis, {entity.id}, files, {'owned.py': [(1, 412)]})
 
 
+def test_file_surrounding_function_evidence_is_repaired_with_explicit_bounds(tmp_path, monkeypatch):
+    files = {'owned.py': '# private-source-marker\n' + '\n' * 64 + 'def short():\n    value = 1\n    return value\n' + '\n' * 22}
+    analysis = python_analysis(files, 'v')
+    entity = next(item for item in analysis.entities if item.visible)
+    result = architecture(analysis)
+    result.explanations = [FunctionExplanation(entity_id=entity.id, summary='返回数值。',
+        details='赋值后返回数值。', evidence=[{'path': 'owned.py', 'start_line': 1, 'end_line': 90}])]
+    received = []
+    def handle(request):
+        payload = json.loads(request.content)
+        received.append(payload)
+        if len(received) == 2:
+            feedback = payload['messages'][0]['content']
+            assert '必须都落在 implementation_lines 内' in feedback
+            assert '[66, 68]' in feedback and '整文件引用' in feedback
+            assert 'private-source-marker' not in feedback
+            result.explanations[0].evidence[0].start_line = 66
+            result.explanations[0].evidence[0].end_line = 68
+        return httpx.Response(200, json={'choices': [{'message': {'content': result.model_dump_json()}}],
+                                        'usage': {'total_tokens': 7}})
+    original = httpx.AsyncClient
+    monkeypatch.setattr(httpx, 'AsyncClient', lambda **kw: original(transport=httpx.MockTransport(handle), **kw))
+    database = Database(tmp_path)
+    provider = Provider(tmp_path, database)
+    provider.configure('https://example.invalid/v1', '固定响应验证', 'local-test-key')
+    saved, usage = asyncio.run(provider.architecture(analysis, files))
+    assert len(received) == 2 and usage['total_tokens'] == 14
+    assert saved.explanations[0].evidence[0].start_line == 66
+    receipts = RequestLedger(database).summary()['records']
+    assert {row['status'] for row in receipts} == {'success', 'failed'}
+    database.engine.dispose()
+
+
+@pytest.mark.parametrize('read_first', [True, False])
+def test_other_authorized_file_evidence_requires_actual_supplemental_read(tmp_path, monkeypatch, read_first):
+    files = {'a.py': 'def first():\n    return ANSWER\n', 'constants.py': 'ANSWER = 42\n'}
+    analysis = python_analysis(files, 'v')
+    entity = next(item for item in analysis.entities if item.visible)
+    result = architecture(analysis)
+    result.explanations = [FunctionExplanation(entity_id=entity.id, summary='返回共享数值。',
+        details='返回共享常量的值。', evidence=[{'path': 'a.py', 'start_line': 2, 'end_line': 2},
+                                              {'path': 'constants.py', 'start_line': 1, 'end_line': 1}])]
+    calls = []
+    async def request(self, system, user, max_tokens=8000):
+        payload = json.loads(user)
+        calls.append(payload)
+        assert {e['id'] for e in payload['entities']} == {entity.id}
+        if read_first and len(calls) == 1:
+            return {'read_requests': [{'kind': 'code', 'reference': {
+                'path': 'constants.py', 'start_line': 1, 'end_line': 1}}]}, {}
+        if read_first:
+            assert payload['supplemental_reads'][0]['text'] == files['constants.py']
+        return result.model_dump(), {}
+    monkeypatch.setattr(Provider, 'request', request)
+    monkeypatch.setattr(Provider, '_plan_batches', lambda self, a, f: [({'a.py': f['a.py']}, {'a.py': (1, 2)})])
+    provider = Provider(tmp_path)
+    if read_first:
+        saved, _ = asyncio.run(provider.architecture(analysis, files))
+        assert len(calls) == 2 and saved.modules[0].code_paths == ['a.py']
+        assert saved.modules[0].entity_ids == [entity.id]
+    else:
+        with pytest.raises(ProviderError, match='结构校验'):
+            asyncio.run(provider.architecture(analysis, files))
+        assert len(calls) == 3
+
+
+def test_checkpoint_batch_merge_preserves_validated_other_file_evidence(tmp_path):
+    files = {'a.py': 'def first():\n    return 1\ndef second():\n    return 2\n',
+             'constants.py': 'ANSWER = 42\n'}
+    analysis = python_analysis(files, 'v')
+    parts = []
+    for entity in analysis.entities:
+        if not entity.visible:
+            continue
+        result = Architecture(modules=[Module(id=entity.id, name=entity.name, summary='独立返回数值。',
+            entity_ids=[entity.id], code_paths=['a.py'])], overview=architecture(analysis).overview)
+        result.explanations = [FunctionExplanation(entity_id=entity.id, summary='返回数值。', details='返回固定数值。',
+            evidence=[{'path': 'a.py', 'start_line': entity.location.start_line, 'end_line': entity.location.end_line},
+                      {'path': 'constants.py', 'start_line': 1, 'end_line': 1}])]
+        parts.append(result)
+    # 检查点原批次已校验补读；新规划将两批合并，不能丢弃原证据或扩张模块归属。
+    saved = Provider(tmp_path)._align_completed_batches(parts,
+        [({'a.py': files['a.py']}, {'a.py': (1, 4)})], analysis, set(files))
+    assert len(saved) == 1 and len(saved[0].explanations) == 2
+    assert all(module.code_paths == ['a.py'] for module in saved[0].modules)
+    assert all(note.evidence[1].path == 'constants.py' for note in saved[0].explanations)
+
+
 def test_supplemental_read_and_final_explanation_share_ledger_budget(tmp_path, monkeypatch):
     files, analysis = fixture()
     result = architecture(analysis)

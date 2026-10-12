@@ -75,16 +75,26 @@ def test_partial_json_is_not_success_even_with_finish_reason_and_usage(tmp_path,
     db.engine.dispose()
 
 
-@pytest.mark.parametrize('value', [b'data: private-response\n\n', b'data: [DONE]\n\n',
-    b'data: {"choices":[{"delta":{"content":42}}]}\n\n', b'data: \xff\n\n'])
-def test_invalid_stream_is_sanitized_and_not_retried(tmp_path, monkeypatch, value):
+@pytest.mark.parametrize('value,code', [
+    (b'data: private-response\n\n', 'INVALID_JSON'),
+    (b'data: [DONE]\n\n', 'DONE_WITHOUT_FINISH'),
+    (b'data: {"choices":[{"delta":{"content":42}}]}\n\n', 'INVALID_CONTENT'),
+    (b'data: \xff\n\n', 'INVALID_UTF8'),
+    (b'data: {"error":{"message":"private-response"}}\n\n', 'ERROR_EVENT'),
+    (b'data: {"choices":[{"finish_reason":"stop"}]}\n\n'
+     b'data: {"choices":[{"finish_reason":"stop"}]}\n\n', 'DUPLICATE_FINISH'),
+    (b'data: {"choices":[{"finish_reason":"stop"}]}\n\n'
+     b'data: {"choices":[{"delta":{"content":"private-response"}}]}\n\n', 'CONTENT_AFTER_FINISH'),
+])
+def test_invalid_stream_is_sanitized_and_not_retried(tmp_path, monkeypatch, value, code):
     db, provider, ledger = setup(tmp_path, monkeypatch, lambda _:
         httpx.Response(200, headers={'content-type': 'text/event-stream'}, stream=Bytes(value)))
     with pytest.raises(ProviderError, match='未发布部分结果') as error:
         asyncio.run(provider.request('固定验证', '非源码'))
     assert 'private-' not in str(error.value)
     record = ledger.summary()['records'][0]
-    assert ledger.summary()['request_count'] == 1 and record['error_code'] == 'INVALID_STREAM'
+    assert ledger.summary()['request_count'] == 1 and record['error_code'] == 'INVALID_STREAM_'+code
+    assert 'private-' not in json.dumps(record)
     db.engine.dispose()
 
 
@@ -97,7 +107,7 @@ def test_multiline_events_missing_usage_and_content_limit(tmp_path, monkeypatch)
     monkeypatch.setattr('codescape.streaming.MAX_RESPONSE_BYTES', 25)
     with pytest.raises(ProviderError, match='接收契约'):
         asyncio.run(provider.request('固定验证', '非源码'))
-    assert ledger.summary()['records'][0]['error_code'] == 'INVALID_STREAM'
+    assert ledger.summary()['records'][0]['error_code'] == 'INVALID_STREAM_RESPONSE_TOO_LARGE'
     db.engine.dispose()
 
 

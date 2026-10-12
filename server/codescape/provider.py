@@ -37,7 +37,7 @@ from .validation import SourceContractError
 MAX_CONTEXT_CHARS = 180_000
 BATCH_TARGET_CHARS = 150_000
 BATCH_MAX_ENTITIES = 12
-PIPELINE_VERSION = "architecture/4-repairs/2-explanations/3-reads/2-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1"
+PIPELINE_VERSION = "architecture/4-repairs/3-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1"
 ProgressCallback = Callable[[int, int, str], Awaitable[None]]
 BatchCallback = Callable[[int, int, Architecture], Awaitable[None]]
 
@@ -109,6 +109,13 @@ def validation_feedback(error: ValueError) -> str:
                                         '父模块 entity_ids 为空。只使用本批 entities 的原始ID，'
                                         '不要把候选目标、相关函数或补读实体加入本批归属集合。'
                                         '保留有依据的职责与讲解；不能用虚构实体填补缺口。')
+        if message == "函数讲解缺少实现自身的依据":
+            details['repair_action'] = ('为该 entity_or_call_id 提供至少一条 evidence，'
+                                        'start_line 和 end_line 必须都落在 implementation_lines 内，'
+                                        '且不超过已提供的 supplied_lines；不能用包围函数的整文件引用替代。'
+                                        '其他函数或宏定义的补充引用不能替代这条自身依据。'
+                                        '若自身范围超过200行，选择其中实际支持讲解的短片段；'
+                                        '没有依据时省略该讲解，明确保留未完成，不伪造引用。')
         return message + '。已知索引依据：' + json.dumps(details, ensure_ascii=False)
     return message
 
@@ -322,9 +329,9 @@ class Provider:
                         ledger.finish(identifier, "outcome_unknown" if sent else "failed", usage=usage,
                                       error_code="CANCELLED_AFTER_SEND" if sent else "NOT_SENT")
                     raise
-                except StreamContractError:
+                except StreamContractError as error:
                     ledger.finish(identifier, 'failed', usage=usage, http_status=response.status_code,
-                                  error_code='INVALID_STREAM')
+                                  error_code='INVALID_STREAM_'+error.code)
                     raise ProviderError('流式响应不符合接收契约，未发布部分结果。') from None
                 except (httpx.HTTPError, TimeoutError):
                     ledger.finish(identifier, "outcome_unknown" if sent else "failed", usage=usage,
@@ -708,6 +715,7 @@ class Provider:
         completed_batches: list[Architecture],
         batches: list[tuple[dict[str, str], dict[str, tuple[int, int]]]],
         analysis: Analysis,
+        evidence_paths: set[str] | None = None,
     ) -> list[Architecture]:
         """按实体集合恢复检查点，避免动态拆批后仅按数量造成错位。"""
         assigned_sets = [
@@ -740,7 +748,8 @@ class Provider:
             aligned.append(
                 group[0]
                 if len(group) == 1
-                else merge_architectures(group, len(group), analysis, set(batch_files), expected)
+                else merge_architectures(group, len(group), analysis, set(batch_files), expected,
+                                         evidence_paths=evidence_paths)
             )
         return aligned
 
@@ -755,7 +764,7 @@ class Provider:
         batches = self._plan_batches(analysis, files)
         if not batches:
             raise ProviderError("当前源码范围没有可发送的内容。")
-        results = self._align_completed_batches(list(completed_batches or []), batches, analysis)
+        results = self._align_completed_batches(list(completed_batches or []), batches, analysis, set(files))
         await self._progress(
             on_progress,
             len(results),
@@ -794,7 +803,8 @@ class Provider:
                     raise SourceContractError("函数归属不唯一或与真实实体不一致。", None,
                                               allowed_identifiers=sorted(expected))
                 repair_batch_architecture(architecture, analysis, expected, set(batch_files))
-                validate_architecture(architecture, analysis, set(batch_files), expected_entity_ids=expected)
+                validate_architecture(architecture, analysis, set(batch_files), expected_entity_ids=expected,
+                                      evidence_paths=set(files))
                 return architecture
 
             try:
@@ -852,6 +862,8 @@ def merge_architectures(
     analysis: Analysis,
     paths: set[str],
     expected_entity_ids: set[str] | None = None,
+    *,
+    evidence_paths: set[str] | None = None,
 ) -> Architecture:
     merged: dict[tuple[str, tuple[str, ...]], Module] = {}
     local_keys: list[dict[str, tuple[str, tuple[str, ...]]]] = []
@@ -904,7 +916,8 @@ def merge_architectures(
             if conflicting_entities else [],
         ),
     )
-    validate_architecture(architecture, analysis, paths, expected_entity_ids=expected_entity_ids)
+    validate_architecture(architecture, analysis, paths, expected_entity_ids=expected_entity_ids,
+                          evidence_paths=evidence_paths)
     # Cross-batch target conflicts remove certainty, including its primary selection.
     confirmed = {call.id for call in reconcile_judgments(analysis, architecture).calls if call.resolution == "confirmed"}
     architecture.primary_dependencies = [item.model_copy(update={"call_ids": [identifier for identifier in item.call_ids if identifier in confirmed]})
@@ -995,6 +1008,8 @@ def validate_architecture(
     analysis: Analysis,
     paths: set[str],
     expected_entity_ids: set[str] | None = None,
+    *,
+    evidence_paths: set[str] | None = None,
 ) -> None:
     if not architecture.modules:
         raise ValueError("架构至少需要一个真实模块。")
@@ -1006,7 +1021,8 @@ def validate_architecture(
     if len(explained) != len(set(explained)) or not set(explained).issubset(expected):
         raise SourceContractError("讲解实体不唯一或不属于当前范围。", None,
             allowed_identifiers=sorted(expected))
-    if any(ref.path not in paths for note in architecture.explanations for ref in note.evidence):
+    if any(ref.path not in (paths if evidence_paths is None else evidence_paths)
+           for note in architecture.explanations for ref in note.evidence):
         raise ValueError("讲解源码依据超出当前范围。")
     entity_paths = {entity.id: entity.location.path for entity in analysis.entities if entity.visible}
     assigned: list[str] = []

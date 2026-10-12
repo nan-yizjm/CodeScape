@@ -21,6 +21,15 @@ repository = Path(__file__).resolve().parents[1]
 reports = repository/'docs/reports/p0'
 
 
+def implementation_hash():
+    digest = hashlib.sha256()
+    for path in sorted((repository/'server/codescape').rglob('*.py')):
+        digest.update(path.relative_to(repository).as_posix().encode())
+        digest.update(b'\0')
+        digest.update(path.read_bytes())
+    return digest.hexdigest()
+
+
 def saved_snapshot(selected):
     if selected['id'] == 'hiredis-c':
         record = json.loads((reports/'C工程语义解析验证.json').read_text(encoding='utf-8'))
@@ -107,6 +116,7 @@ def main():
         '接收端':config['base_url'],'模型':config['model'],'流式接收':config.get('stream_response',False),
         '流水线':PIPELINE_VERSION,'数据目录':str(root),
         '原始快照hash':old_manifest['hash'],'实际文件':list(files),'状态':'进行中','执行目标代码':False}
+    record['实施代码起始sha256'] = implementation_hash()
     destination = reports/f"{arguments.id}-{'narrow' if arguments.narrow else 'full'}真实模型验证.json"
     if previous:
         record['恢复前已知total_tokens'] = previous.get('已知total_tokens')
@@ -195,6 +205,10 @@ def main():
             diagnostics = root/'validation-errors.jsonl'
             record['脱敏校验记录'] = [json.loads(line) for line in diagnostics.read_text(encoding='utf-8').splitlines()] if diagnostics.exists() else []
             record['边界'] = '真实配置接口，固定响应与质量复核分开；尚未代表用户验收；价格未知不记零费用。'
+            record['实施代码结束sha256'] = implementation_hash()
+            record['评测期间实施代码一致'] = record['实施代码起始sha256'] == record['实施代码结束sha256']
+            if not record['评测期间实施代码一致']:
+                record['边界'] += '评测期间实施代码发生修订，本记录不能计为同一实现版本完整验收。'
             save()
             print(json.dumps({key:record[key] for key in ['样本','范围','状态','请求状态','已知total_tokens','未知用量请求']},ensure_ascii=False),flush=True)
     finally:

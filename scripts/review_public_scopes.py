@@ -40,7 +40,9 @@ def load(sample, scope):
     visible = {entity.id for entity in analysis.entities if entity.visible}
     explained = {note['entity_id'] for note in document['architecture']['explanations']}
     owned = [identifier for module in document['architecture']['modules'] for identifier in module['entity_ids']]
-    assert visible == explained == set(owned)
+    # 发布允许显式部分讲解；缺失是质量缺口，不能令对照中断或冒称全覆盖。
+    assert explained <= visible
+    assert visible == set(owned)
     assert len(owned) == len(set(owned))
     return document, analysis, files, path
 
@@ -60,7 +62,8 @@ def excerpts(document, analysis, files, names):
         selected.append({
             '函数': entity.name, '位置': location.model_dump(),
             '源码': '\n'.join(files[location.path].decode('utf-8').splitlines()[location.start_line-1:location.end_line]),
-            '实际讲解': notes[entity.id],
+            '实际讲解': notes.get(entity.id),
+            '讲解状态': '有实际讲解，待源码复核' if entity.id in notes else '尚未生成讲解',
             '实际模块': [{key: module[key] for key in ('name', 'summary', 'incomplete')}
                        for module in document['architecture']['modules'] if entity.id in module['entity_ids']],
         })
@@ -83,11 +86,20 @@ def main():
                 '语义质量结论': '待源码逐项复核，不能由本脚本自动判定。'}
         assert full['Commit'] == narrow['Commit']
         if small:
+            visible_ids = {entity.id for entity in small.entities if entity.visible}
+            explained_ids = {note['entity_id'] for note in narrow['architecture']['explanations']}
+            item['缩小范围讲解覆盖'] = {'可见函数': len(visible_ids), '有讲解': len(explained_ids),
+                '缺失函数': [entity.name for entity in small.entities if entity.id in visible_ids - explained_ids]}
             item['缩小范围抽查材料'] = excerpts(narrow, small, small_files, names)
             item['缩小范围模块摘要'] = [{key: module[key] for key in ('name', 'summary', 'incomplete')}
                                   for module in narrow['architecture']['modules']]
             item['缩小范围未完成模块'] = sum(module['incomplete'] for module in narrow['architecture']['modules'])
         if large and small and item['同一接收端与模型'] and item['同一模型流水线']:
+            item['完整范围讲解覆盖'] = {
+                '可见函数': sum(entity.visible for entity in large.entities),
+                '有讲解': len(full['architecture']['explanations']),
+                '缺失函数': [entity.name for entity in large.entities if entity.visible
+                           and entity.id not in {note['entity_id'] for note in full['architecture']['explanations']}]}
             assert all(files.get(name) == raw for name, raw in small_files.items())
             identities = {identity(entity) for entity in large.entities if entity.visible}
             assert all(identity(entity) in identities for entity in small.entities if entity.visible)
