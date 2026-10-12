@@ -163,7 +163,7 @@ def main():
                 jobs = [job for job in database.list_jobs()
                         if job['project_id'] == value['id'] and job['status'] == 'running']
                 if jobs:
-                    stopped = client.post(f"/api/v1/tasks/{jobs[0]['id']}/pause")
+                    stopped = client.post(f"/api/v1/tasks/{jobs[0]['id']}/pause", json={})
                     if stopped.status_code == 200:
                         record['开发评测主动暂停'] = '达到评测截止时间，已调用产品暂停接口；在途远端用量可能未知。'
                         save()
@@ -185,16 +185,24 @@ def main():
                 project = imported.json()['data']
             url = f"/api/v1/projects/{project['id']}"
             indexed = project if arguments.refresh_overview else wait(client,url,{'indexed','paused'})
-            assert indexed['status']=='indexed' or previous,indexed.get('error')
+            index_paused = indexed['status'] == 'paused' and not previous
+            assert indexed['status']=='indexed' or previous or index_paused,indexed.get('error')
             record['project_id'] = project['id']
             record['version_id'] = indexed['version_id']
             row = database.get(project['id'])
-            assert set(row['snapshot']['files']) == set(files)
+            if index_paused:
+                record['索引未完成'] = '索引阶段已通过任务接口暂停，本次没有开始AI分析；恢复需先完成静态索引。'
+                record['索引暂停时快照文件'] = list(row['snapshot']['files'])
+            else:
+                assert set(row['snapshot']['files']) == set(files)
             record['实际快照hash'] = row['snapshot']['hash']
             record['scope_hash'] = row['snapshot']['scope_hash']
-            consent = client.post(url+'/consent',json={'accepted':True,'version_id':indexed['version_id']})
-            assert consent.status_code == 200
-            if arguments.refresh_overview:
+            if not index_paused:
+                consent = client.post(url+'/consent',json={'accepted':True,'version_id':indexed['version_id']})
+                assert consent.status_code == 200
+            if index_paused:
+                result = indexed
+            elif arguments.refresh_overview:
                 before_modules = indexed['architecture']['modules']
                 begun = client.post(url+'/overview',json={})
                 record['概览重测状态码'] = begun.status_code

@@ -21,6 +21,12 @@ from .dependencies import validate_primary_dependencies
 from .ledger import RequestLedger, ai_scope, known_usage, model_budget, model_unit, request_scope
 from .macro_context import macro_reads
 from .models import Analysis, Architecture, Module, Overview
+from .module_organization import (
+    ModuleOrganization,
+    apply_organization,
+    organization_context,
+    organization_prompt,
+)
 from .overview import ConciseOverview, overview_context
 from .prompts import architecture_prompt
 from .responsibility_context import non_node_implementations
@@ -38,11 +44,16 @@ from .validation import SourceContractError
 MAX_CONTEXT_CHARS = 180_000
 BATCH_TARGET_CHARS = 150_000
 BATCH_MAX_ENTITIES = 12
-PIPELINE_VERSION = "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1"
+SOURCE_PIPELINE_VERSION = "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1"
+PIPELINE_VERSION = SOURCE_PIPELINE_VERSION + '-organization/1'
 ProgressCallback = Callable[[int, int, str], Awaitable[None]]
 BatchCallback = Callable[[int, int, Architecture], Awaitable[None]]
 
 SAFE_VALIDATION_MESSAGES = {
+    '全局归并必须使每个原模块恰好出现一次，不能遗漏、重复或添加未知模块。',
+    '全局归并模块ID重复。', '全局归并存在环或无效父模块。',
+    '全局归并的父模块不能直接持有函数。', '全局归并不能建立没有实际源码依据的空模块。',
+    '全局归并改变了函数集合。',
     '本批已提供完整实现的可见函数缺少讲解。',
     'None身份比较需要明确说明None，不能笼统概括成空值或非空。',
     "缺少项目概览", "补读参数错误", "补读超出当前授权快照", "补读范围超过保护上限", "补读片段超过保护上限",
@@ -68,6 +79,12 @@ SAFE_VALIDATION_FIELDS = {
     "details", "evidence", "path", "start_line", "end_line", "call_id", "target_id", "reason", "call_ids",
     "kind", "reference", "ids",
 }
+
+
+def compatible_source_checkpoint(saved: dict) -> bool:
+    """只复用明确相同的源码生成阶段，不复用旧的最终组织或发布结果。"""
+    return (isinstance(saved, dict) and saved.get('pipeline_version') in {SOURCE_PIPELINE_VERSION, PIPELINE_VERSION}
+            and saved.get('source_pipeline_version', SOURCE_PIPELINE_VERSION) == SOURCE_PIPELINE_VERSION)
 
 
 def validation_feedback(error: ValueError) -> str:
@@ -464,6 +481,28 @@ class Provider:
                 *architecture.overview.limitations,
             ])),
         ), usage
+
+    async def organize_modules(self, architecture: Architecture, analysis: Analysis) -> tuple[Architecture, dict]:
+        if len(architecture.modules) <= 1:
+            return architecture, {}
+        context = organization_context(architecture, analysis)
+        if len(context) > MAX_CONTEXT_CHARS:
+            raise ProviderError('全局职责整理材料超过上限，源码检查点已保留；尚未发布整理结果。')
+
+        def checked(document):
+            plan = ModuleOrganization.model_validate(document)
+            organized = apply_organization(architecture, plan)
+            validate_architecture(organized, analysis, set(analysis.file_hashes) | {
+                path for module in architecture.modules for path in module.code_paths})
+            self._organization_plan = plan.model_dump()
+            return organized
+
+        try:
+            with ai_scope(phase='organization', source_chars=0):
+                return await self.structured(organization_prompt(ModuleOrganization.model_json_schema()),
+                                             context, checked, max_tokens=16000)
+        except ProviderError as error:
+            raise ProviderError('全局职责整理未完成，源码检查点已保留，原结果未被替换。' + str(error)) from None
 
     def _context(
         self,
@@ -879,6 +918,11 @@ class Provider:
                         usage_total[key] = usage_total.get(key,0) + int(value)
             return results[0], usage_total
         architecture = merge_architectures(results, len(batches), analysis, set(files))
+        await self._progress(on_progress, len(batches), len(batches), '正在统一全局职责与模块层级')
+        architecture, organization_usage = await self.organize_modules(architecture, reconcile_judgments(analysis, architecture))
+        for key, value in organization_usage.items():
+            if isinstance(value, int) and not isinstance(value, bool):
+                usage_total[key] = usage_total.get(key, 0) + value
         await self._progress(on_progress, len(batches), len(batches), "正在归纳全局用途与主要能力")
         architecture.overview, overview_usage = await self.project_overview(architecture, reconcile_judgments(analysis, architecture))
         for key, value in overview_usage.items():

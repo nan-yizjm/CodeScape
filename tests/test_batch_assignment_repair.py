@@ -97,7 +97,13 @@ def test_each_batch_has_its_own_single_assignment_repair(tmp_path, monkeypatch):
     counts = {}
 
     async def fixed(system, context, **kwargs):
-        entities = json.loads(context)['entities']
+        payload = json.loads(context)
+        if payload.get('modules') and 'role' in payload['modules'][0]:
+            return {'modules': [
+                {'id': item['id'], 'parent_id': item['parent_id'], 'name': item['name'], 'summary': item['summary'],
+                 'source_module_ids': [item['id']], 'merge_reason': '固定响应保留职责'}
+                for item in payload['modules']]}, {}
+        entities = payload['entities']
         assert len(entities) == 1
         entity = entities[0]
         path = entity['location']['path']

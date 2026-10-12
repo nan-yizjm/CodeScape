@@ -330,6 +330,11 @@ def test_architecture_splits_large_context_and_merges_checked_batches(tmp_path, 
     async def fake_request(self, system, user, max_tokens=8000):
         requests.append(user)
         payload = json.loads(user)
+        if payload.get('modules') and 'role' in payload['modules'][0]:
+            return {'modules': [
+                {'id': item['id'], 'parent_id': item['parent_id'], 'name': item['name'], 'summary': item['summary'],
+                 'source_module_ids': [item['id']], 'merge_reason': '固定响应保留不同职责'}
+                for item in payload['modules']]}, {'total_tokens': 2}
         if "confirmed_collaboration" in payload:
             assert len(payload["modules"]) == 2
             return {"introduction": "这是一个示例项目。", "capabilities": ["处理两类输入"],
@@ -358,17 +363,17 @@ def test_architecture_splits_large_context_and_merges_checked_batches(tmp_path, 
     )
     assert len(architecture.modules) == 2
     assert {entity_id for module in architecture.modules for entity_id in module.entity_ids} == {"one-f", "two-f"}
-    assert usage["total_tokens"] == 23
+    assert usage["total_tokens"] == 25
     assert architecture.overview.synthesized
     assert architecture.overview.introduction == "这是一个示例项目。"
     assert progress[0][0] == 0 and progress[-1][0] == progress[-1][1] == 2
-    assert len(requests) == 3 and len(batches) == 2
+    assert len(requests) == 4 and len(batches) == 2
     requests.clear()
     resumed, resumed_usage = asyncio.run(
         provider.architecture(analysis, files, completed_batches=batches[:1], on_batch=on_batch)
     )
     assert len(resumed.modules) == 2
-    assert len(requests) == 2 and resumed_usage["total_tokens"] == 13
+    assert len(requests) == 3 and resumed_usage["total_tokens"] == 15
 
 
 def test_ai_analysis_resumes_from_last_checkpoint(client, monkeypatch):
@@ -453,6 +458,11 @@ def test_architecture_replans_when_model_output_is_truncated(monkeypatch, tmp_pa
         if calls == 1:
             raise ProviderError("模型输出被截断，请缩小分析批次。")
         payload = json.loads(user)
+        if payload.get('modules') and 'role' in payload['modules'][0]:
+            return {'modules': [
+                {'id': item['id'], 'parent_id': item['parent_id'], 'name': item['name'], 'summary': item['summary'],
+                 'source_module_ids': [item['id']], 'merge_reason': '固定响应保留不同职责'}
+                for item in payload['modules']]}, {'total_tokens': 1}
         if "confirmed_collaboration" in payload:
             return {"introduction": "这是一个示例项目。", "capabilities": ["处理输入"],
                     "principle": "两个模块共同处理输入。", "limitations": []}, {"total_tokens": 1}
@@ -471,7 +481,7 @@ def test_architecture_replans_when_model_output_is_truncated(monkeypatch, tmp_pa
 
     monkeypatch.setattr(Provider, "request", fake_request)
     architecture, _ = asyncio.run(provider.architecture(analysis, files))
-    assert calls == 4
+    assert calls == 5
     assert {entity_id for module in architecture.modules for entity_id in module.entity_ids} == {
         entity.id for entity in analysis.entities
     }

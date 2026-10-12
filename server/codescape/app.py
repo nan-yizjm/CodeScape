@@ -39,7 +39,14 @@ from .models import (
     ProjectDeleteRequest,
     SessionRequest,
 )
-from .provider import PIPELINE_VERSION, Provider, ProviderError, validate_architecture
+from .provider import (
+    PIPELINE_VERSION,
+    SOURCE_PIPELINE_VERSION,
+    Provider,
+    ProviderError,
+    compatible_source_checkpoint,
+    validate_architecture,
+)
 from .publication import load_output, prepare_output, receiver_identity
 from .reads import VersionReads
 from .security import data_root
@@ -785,9 +792,10 @@ def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=
                     try:
                         saved = json.loads(checkpoint_path.read_text(encoding="utf-8"))
                         if (
-                            saved.get("version_id") == project["version_id"]
+                            isinstance(saved, dict)
+                            and saved.get("version_id") == project["version_id"]
                             and saved.get("snapshot_hash") == project["snapshot"]["hash"]
-                            and saved.get("pipeline_version") == PIPELINE_VERSION
+                            and compatible_source_checkpoint(saved)
                             and saved.get('provider_config') == model_config
                         ):
                             checkpoint = [Architecture.model_validate(item) for item in saved.get("batches", [])]
@@ -827,6 +835,7 @@ def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=
                                 "version_id": project["version_id"],
                                 "snapshot_hash": project["snapshot"]["hash"],
                                 "pipeline_version": PIPELINE_VERSION,
+                                "source_pipeline_version": SOURCE_PIPELINE_VERSION,
                                 "provider_config": model_config,
                                 "batches": [item.model_dump() for item in saved_batches],
                             },

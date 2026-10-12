@@ -1,14 +1,14 @@
 {
-  "核对时间UTC": "2026-10-12T15:06:07.705531+00:00",
+  "核对时间UTC": "2026-10-12T15:27:54.539785+00:00",
   "执行目标代码": false,
   "模型请求": 0,
   "样本": {
     "hiredis-c": {
-      "完整状态": "分析暂停",
-      "缩小范围状态": "分析暂停",
+      "完整状态": "进行中",
+      "缩小范围状态": "结构检查通过，待源码质量复核",
       "报告": {
-        "hiredis-c-full真实模型验证.json": "d81fdc883502799dea70ff2ebac95c6e8d1f31338741f50bdf2ca2dff3a1252f",
-        "hiredis-c-narrow真实模型验证.json": "9dae25b783c6d18f09a67caf8be84fe5953f42d84efc9193a50adb376affd9fb"
+        "hiredis-c-full真实模型验证.json": "e39ed150360b2bdafcb02cff19a1fd9c082fc7126d40cf56eca51be38afb46eb",
+        "hiredis-c-narrow真实模型验证.json": "4653d59be46d28072529f6f5bb758a702ee033dd8ce5c8d9dedbe662a7877e9c"
       },
       "完整流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
       "缩小范围流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
@@ -23,13 +23,140 @@
       "同一接收端与模型": true,
       "同一模型流水线": true,
       "语义质量结论": "待源码逐项复核，不能由本脚本自动判定。",
+      "缩小范围讲解覆盖": {
+        "可见函数": 18,
+        "有讲解": 18,
+        "缺失函数": []
+      },
+      "缩小范围抽查材料": [
+        {
+          "函数": "redisReaderFeed",
+          "位置": {
+            "path": "read.c",
+            "start_line": 789,
+            "end_line": 818,
+            "start_byte": 24832,
+            "end_byte": 25615
+          },
+          "源码": "int redisReaderFeed(redisReader *r, const char *buf, size_t len) {\n    sds newbuf;\n\n    /* Return early when this reader is in an erroneous state. */\n    if (r->err)\n        return REDIS_ERR;\n\n    /* Copy the provided buffer. */\n    if (buf != NULL && len >= 1) {\n        /* Destroy internal buffer when it is empty and is quite large. */\n        if (r->len == 0 && r->maxbuf != 0 && sdsavail(r->buf) > r->maxbuf) {\n            sdsfree(r->buf);\n            r->buf = sdsempty();\n            if (r->buf == 0) goto oom;\n\n            r->pos = 0;\n        }\n\n        newbuf = sdscatlen(r->buf,buf,len);\n        if (newbuf == NULL) goto oom;\n\n        r->buf = newbuf;\n        r->len = sdslen(r->buf);\n    }\n\n    return REDIS_OK;\noom:\n    __redisReaderSetErrorOOM(r);\n    return REDIS_ERR;\n}",
+          "实际讲解": {
+            "entity_id": "1dbd1461-2f13-5945-b282-9e59934ddf0e",
+            "summary": "追加输入并按条件回收闲置缓冲",
+            "details": "接收读取器、字节缓冲指针及长度。已有错误状态时立即返回REDIS_ERR；否则仅在buf非NULL且len至少为1时复制追加数据，空指针或零长度输入直接成功而不修改缓冲。追加前，仅当内部长度为零、maxbuf非零且闲置容量超过阈值三个条件同时成立，才销毁旧缓冲并重建空缓冲、重置位置；maxbuf为零关闭此回收机制，而非禁止输入。追加成功后更新缓冲指针和总长度，返回REDIS_OK；重建或追加分配失败时调用内存不足错误处理并返回REDIS_ERR。本函数不推进协议解析，也不检查读取器指针是否为NULL。",
+            "evidence": [
+              {
+                "path": "read.c",
+                "start_line": 789,
+                "end_line": 818
+              }
+            ]
+          },
+          "讲解状态": "有实际讲解，待源码复核",
+          "实际模块": [
+            {
+              "name": "增量输入与响应交付",
+              "summary": "追加输入数据，推进未完成的解析任务，压缩已消费缓冲区，并交付或按条件释放完整响应。",
+              "incomplete": false
+            }
+          ]
+        },
+        {
+          "函数": "redisReaderGetReply",
+          "位置": {
+            "path": "read.c",
+            "start_line": 820,
+            "end_line": 871,
+            "start_byte": 25617,
+            "end_byte": 27093
+          },
+          "源码": "int redisReaderGetReply(redisReader *r, void **reply) {\n    /* Default target pointer to NULL. */\n    if (reply != NULL)\n        *reply = NULL;\n\n    /* Return early when this reader is in an erroneous state. */\n    if (r->err)\n        return REDIS_ERR;\n\n    /* When the buffer is empty, there will never be a reply. */\n    if (r->len == 0)\n        return REDIS_OK;\n\n    /* Set first item to process when the stack is empty. */\n    if (r->ridx == -1) {\n        r->task[0]->type = -1;\n        r->task[0]->elements = -1;\n        r->task[0]->idx = -1;\n        r->task[0]->obj = NULL;\n        r->task[0]->parent = NULL;\n        r->task[0]->privdata = r->privdata;\n        r->ridx = 0;\n    }\n\n    /* Process items in reply. */\n    while (r->ridx >= 0)\n        if (processItem(r) != REDIS_OK)\n            break;\n\n    /* Return ASAP when an error occurred. */\n    if (r->err)\n        return REDIS_ERR;\n\n    /* Discard part of the buffer when we've consumed at least 1k, to avoid\n     * doing unnecessary calls to memmove() in sds.c. */\n    if (r->pos >= 1024) {\n        if (sdsrange(r->buf,r->pos,-1) < 0) return REDIS_ERR;\n        r->pos = 0;\n        r->len = sdslen(r->buf);\n    }\n\n    /* Emit a reply when there is one. */\n    if (r->ridx == -1) {\n        if (reply != NULL) {\n            *reply = r->reply;\n        } else if (r->reply != NULL && r->fn && r->fn->freeObject) {\n            r->fn->freeObject(r->reply);\n        }\n        r->reply = NULL;\n    }\n    return REDIS_OK;\n}",
+          "实际讲解": {
+            "entity_id": "a4f62374-c765-542d-b785-2127a593b000",
+            "summary": "推进增量解析并交付一个完整响应",
+            "details": "接收读取器及可选输出地址，先将可用输出置NULL。已有错误返回REDIS_ERR；内部缓冲长度为零返回REDIS_OK。无活动任务时初始化根任务，否则沿用未完成状态，并循环处理直到完成或某项返回非成功；此后仅r->err非零才作为已记录错误返回，因此输入不足可成功返回且不交付响应。消费位置至少达到1024字节时裁去已消费前缀；裁剪失败直接返回REDIS_ERR，此分支未显式设置错误标志。任务索引回到-1才交付响应：输出地址存在时转出对象，否则仅在响应、回调表和释放回调均存在时销毁对象，随后清空内部响应指针。每次最多交付一个响应，后续数据留待再次调用。",
+            "evidence": [
+              {
+                "path": "read.c",
+                "start_line": 820,
+                "end_line": 871
+              }
+            ]
+          },
+          "讲解状态": "有实际讲解，待源码复核",
+          "实际模块": [
+            {
+              "name": "增量输入与响应交付",
+              "summary": "追加输入数据，推进未完成的解析任务，压缩已消费缓冲区，并交付或按条件释放完整响应。",
+              "incomplete": false
+            }
+          ]
+        }
+      ],
+      "缩小范围模块摘要": [
+        {
+          "name": "RESP 回复读取器",
+          "summary": "将缓冲区中的 Redis 回复解析为类型化结果，以任务栈维护嵌套进度，并集中处理协议与内存错误。",
+          "incomplete": false
+        },
+        {
+          "name": "错误记录与诊断",
+          "summary": "格式化非法类型字节，记录协议或内存错误，并清理输入及重置解析状态；回复释放受回调可用性保护。",
+          "incomplete": false
+        },
+        {
+          "name": "缓冲读取与整数校验",
+          "summary": "提供定长读取、CRLF 查找、行提取及严格的有符号整数转换，为类型解析提供基础操作。",
+          "incomplete": false
+        },
+        {
+          "name": "标量与块字符串解析",
+          "summary": "解析行式标量和长度前缀字符串，校验类型内容，通过可选工厂回调创建结果，并提交已完成任务。",
+          "incomplete": false
+        },
+        {
+          "name": "嵌套任务推进与扩容",
+          "summary": "完成子项后回退父层或准备下一兄弟项，并按每次九个任务扩展嵌套解析栈。",
+          "incomplete": false
+        },
+        {
+          "name": "浮点解析编译集成",
+          "summary": "顶层条件编译在未定义 HIREDIS_FLOAT_STRTOD 时通过 FFC_IMPL 引入 ffc 实现，并针对 Clang 局部屏蔽头文件警告；另一配置采用 strtod。本批末尾的集合处理标题没有对应实现，不能据此认定函数绑定。",
+          "incomplete": false
+        },
+        {
+          "name": "RESP响应读取器",
+          "summary": "将分批输入的Redis协议数据解析为响应对象，统筹解析任务、缓冲区和对象生命周期。",
+          "incomplete": false
+        },
+        {
+          "name": "类型分派与聚合解析",
+          "summary": "识别RESP类型标记并分派处理；解析聚合长度，通过任务栈组织嵌套子项，执行深度、数量和整数范围保护。",
+          "incomplete": false
+        },
+        {
+          "name": "读取器生命周期",
+          "summary": "创建缓冲区和任务存储，保存对象回调及默认限制；释放读取器，并支持创建中途失败时的部分资源清理。",
+          "incomplete": false
+        },
+        {
+          "name": "增量输入与响应交付",
+          "summary": "追加输入数据，推进未完成的解析任务，压缩已消费缓冲区，并交付或按条件释放完整响应。",
+          "incomplete": false
+        },
+        {
+          "name": "公开数据与配置契约",
+          "summary": "read.h定义响应类型、错误码、任务与读取器结构及对象回调表。“Public API for the protocol parser”附近声明公开入口；未独立成节点的宏负责设置私有数据、读取暂存响应和错误字符串，默认配置宏给出缓冲区、聚合数量及嵌套深度限制。",
+          "incomplete": false
+        }
+      ],
+      "缩小范围未完成模块": 0,
       "范围对照限制": "需两份均已发布且使用同一接收端、模型及流水线，才能生成本轮范围对照；局部材料单独保留。"
     },
     "flask-python": {
-      "完整状态": "分析暂停",
+      "完整状态": "进行中",
       "缩小范围状态": "结构检查通过，待源码质量复核",
       "报告": {
-        "flask-python-full真实模型验证.json": "511a0d321a83346bb08d662b7791dcf487234a7109a6e030f8e864f33010ce9f",
+        "flask-python-full真实模型验证.json": "1d8220cd55aeb2bf0cd2974f67e85aa95af0458f1e60fc3ba3540da2c93717c2",
         "flask-python-narrow真实模型验证.json": "0987f3fa797d61ce226cf3915d31b9bb829b0a8aeaf073449a5cfb55034db844"
       },
       "完整流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
@@ -233,10 +360,10 @@
     },
     "spdlog-cpp": {
       "完整状态": "分析暂停",
-      "缩小范围状态": "分析暂停",
+      "缩小范围状态": "结构检查通过，待源码质量复核",
       "报告": {
-        "spdlog-cpp-full真实模型验证.json": "a3b01a7521c12a0c60ea2cfb7b41a49f1c75ac6d7e616873cca3ab16a0bdcfd9",
-        "spdlog-cpp-narrow真实模型验证.json": "bef6dd56cf2fd75c0382aa669f6d50d2f0958bfcef55beeae207a8d9072199b0"
+        "spdlog-cpp-full真实模型验证.json": "1a88252c449214e03f786b390e24c24f9be642bdee38edeb0c42e9d3131b535f",
+        "spdlog-cpp-narrow真实模型验证.json": "e9c12794978bcf5d66daecce7fb22b385735ceeb2a3e12f09aa1d66e7e9c36db"
       },
       "完整流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
       "缩小范围流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
@@ -251,13 +378,313 @@
       "同一接收端与模型": true,
       "同一模型流水线": true,
       "语义质量结论": "待源码逐项复核，不能由本脚本自动判定。",
+      "缩小范围讲解覆盖": {
+        "可见函数": 58,
+        "有讲解": 58,
+        "缺失函数": []
+      },
+      "缩小范围抽查材料": [
+        {
+          "函数": "logger::sink_it_",
+          "位置": {
+            "path": "include/spdlog/logger-inl.h",
+            "start_line": 135,
+            "end_line": 146,
+            "start_byte": 4456,
+            "end_byte": 4757
+          },
+          "源码": "SPDLOG_INLINE void logger::sink_it_(const details::log_msg &msg) {\n    for (auto &sink : sinks_) {\n        if (sink->should_log(msg.level)) {\n            SPDLOG_TRY { sink->log(msg); }\n            SPDLOG_LOGGER_CATCH(msg.source)\n        }\n    }\n\n    if (should_flush_(msg)) {\n        flush_();\n    }\n}",
+          "实际讲解": {
+            "entity_id": "372e6852-6a2d-5ed3-8db4-e0920aac755c",
+            "summary": "按目标等级输出并决定是否刷新",
+            "details": "接收消息，遍历 sinks_，只向 should_log(msg.level) 为真的目标写入；遍历后独立检查刷新条件，即使没有目标接收消息，也可能进入刷新流程。没有目标空指针保护，should_log 位于异常包装之外。未定义 SPDLOG_NO_EXCEPTIONS 时，写入处捕获 std::exception：源文件指针存在则附文件及行号，否则仅报告异常文本；未知异常先报告再重抛。处理器或格式化本身仍可能抛出。定义该宏时 try/catch 包装为空，不执行上述捕获。",
+            "evidence": [
+              {
+                "path": "include/spdlog/logger-inl.h",
+                "start_line": 135,
+                "end_line": 146
+              },
+              {
+                "path": "include/spdlog/common.h",
+                "start_line": 107,
+                "end_line": 121
+              },
+              {
+                "path": "include/spdlog/logger.h",
+                "start_line": 30,
+                "end_line": 46
+              }
+            ]
+          },
+          "讲解状态": "有实际讲解，待源码复核",
+          "实际模块": [
+            {
+              "name": "消息分流、输出与刷新",
+              "summary": "根据独立开关分流消息，按输出目标等级过滤，并以等级阈值决定刷新；属于源码 protected methods 标题下的运行实现。",
+              "incomplete": false
+            }
+          ]
+        },
+        {
+          "函数": "logger::flush_",
+          "位置": {
+            "path": "include/spdlog/logger-inl.h",
+            "start_line": 148,
+            "end_line": 153,
+            "start_byte": 4759,
+            "end_byte": 4916
+          },
+          "源码": "SPDLOG_INLINE void logger::flush_() {\n    for (auto &sink : sinks_) {\n        SPDLOG_TRY { sink->flush(); }\n        SPDLOG_LOGGER_CATCH(source_loc())\n    }\n}",
+          "实际讲解": {
+            "entity_id": "89b5a4bf-6017-5046-be2f-5012de776678",
+            "summary": "逐个刷新全部输出目标",
+            "details": "无输入和返回值，遍历所有 sinks_ 执行刷新，不按等级过滤；集合为空时不执行任何操作，也没有空指针检查。异常支持开启时，每个目标的刷新分别捕获 std::exception 并交给错误处理器，使用默认 source_loc 表达无显式消息来源；宏仍以 filename 指针决定是否附位置。未知异常报告后重抛，错误处理器自身异常也可能中断遍历。定义 SPDLOG_NO_EXCEPTIONS 时包装为空，不能保证刷新失败后继续处理其他目标。",
+            "evidence": [
+              {
+                "path": "include/spdlog/logger-inl.h",
+                "start_line": 148,
+                "end_line": 153
+              },
+              {
+                "path": "include/spdlog/common.h",
+                "start_line": 107,
+                "end_line": 121
+              },
+              {
+                "path": "include/spdlog/logger.h",
+                "start_line": 30,
+                "end_line": 46
+              }
+            ]
+          },
+          "讲解状态": "有实际讲解，待源码复核",
+          "实际模块": [
+            {
+              "name": "消息分流、输出与刷新",
+              "summary": "根据独立开关分流消息，按输出目标等级过滤，并以等级阈值决定刷新；属于源码 protected methods 标题下的运行实现。",
+              "incomplete": false
+            }
+          ]
+        },
+        {
+          "函数": "logger::should_flush_",
+          "位置": {
+            "path": "include/spdlog/logger-inl.h",
+            "start_line": 166,
+            "end_line": 168,
+            "start_byte": 5369,
+            "end_byte": 5518
+          },
+          "源码": "SPDLOG_INLINE bool logger::should_flush_(const details::log_msg &msg) const {\n    return (msg.level >= flush_level()) && (msg.level != level::off);\n}",
+          "实际讲解": {
+            "entity_id": "cbe58a18-6c0f-5ca4-a84f-3b6c2cfde5f3",
+            "summary": "联合判断等级阈值与非关闭等级",
+            "details": "输入日志消息，返回消息等级大于或等于 flush_level() 且消息等级不为 level::off 的布尔结果。两个条件必须同时满足，不能只依据阈值比较判断刷新；off 消息即使比较达到阈值，也不会触发刷新。表达式短路求值，第一个条件失败时不再求值第二个。此函数只给出策略结果，不执行刷新；本批未提供阈值初始值。",
+            "evidence": [
+              {
+                "path": "include/spdlog/logger-inl.h",
+                "start_line": 166,
+                "end_line": 168
+              }
+            ]
+          },
+          "讲解状态": "有实际讲解，待源码复核",
+          "实际模块": [
+            {
+              "name": "消息分流、输出与刷新",
+              "summary": "根据独立开关分流消息，按输出目标等级过滤，并以等级阈值决定刷新；属于源码 protected methods 标题下的运行实现。",
+              "incomplete": false
+            }
+          ]
+        },
+        {
+          "函数": "log_",
+          "位置": {
+            "path": "include/spdlog/logger.h",
+            "start_line": 324,
+            "end_line": 343,
+            "start_byte": 11134,
+            "end_byte": 11911
+          },
+          "源码": "    template <typename... Args>\n    void log_(source_loc loc, level::level_enum lvl, string_view_t fmt, Args &&...args) {\n        bool log_enabled = should_log(lvl);\n        bool traceback_enabled = tracer_.enabled();\n        if (!log_enabled && !traceback_enabled) {\n            return;\n        }\n        SPDLOG_TRY {\n            memory_buf_t buf;\n#ifdef SPDLOG_USE_STD_FORMAT\n            fmt_lib::vformat_to(std::back_inserter(buf), fmt, fmt_lib::make_format_args(args...));\n#else\n            fmt::vformat_to(fmt::appender(buf), fmt, fmt::make_format_args(args...));\n#endif\n\n            details::log_msg log_msg(loc, name_, lvl, string_view_t(buf.data(), buf.size()));\n            log_it_(log_msg, log_enabled, traceback_enabled);\n        }\n        SPDLOG_LOGGER_CATCH(loc)\n    }",
+          "实际讲解": {
+            "entity_id": "3609fb45-05a8-5a05-8037-ebfebe0d6f78",
+            "summary": "格式化窄字符消息并交付日志记录",
+            "details": "输入来源 loc、级别 lvl、窄字符格式视图及可变参数，返回 void。先分别求日志开关和回溯开关，仅当两者均为 false 时返回，故未达到阈值但启用回溯时仍会格式化。SPDLOG_USE_STD_FORMAT 分支使用 fmt_lib 与 back_inserter，否则使用 fmt 与 appender；随后以缓冲区内容、名称、来源和级别构造 log_msg，把两个开关一起传入 log_it_。启用异常包装时捕获 std::exception：filename 指针非空则附加文件和行号，再交给 err_handler_，否则只传 what()；其他异常先通知处理器再重抛。处理器本身可能抛异常。SPDLOG_NO_EXCEPTIONS 下 TRY 和捕获宏为空，不提供这层保护。参数无默认值，level_ 初始为 info。",
+            "evidence": [
+              {
+                "path": "include/spdlog/logger.h",
+                "start_line": 324,
+                "end_line": 343
+              },
+              {
+                "path": "include/spdlog/logger.h",
+                "start_line": 30,
+                "end_line": 46
+              },
+              {
+                "path": "include/spdlog/common.h",
+                "start_line": 107,
+                "end_line": 121
+              }
+            ]
+          },
+          "讲解状态": "有实际讲解，待源码复核",
+          "实际模块": [
+            {
+              "name": "格式化与消息交付",
+              "summary": "在普通日志或回溯至少一项启用时格式化消息，构造携带来源、名称和级别的日志记录并交付 log_it_；宽字符分支额外转换为 UTF-8，并按宏配置包装异常。",
+              "incomplete": false
+            }
+          ]
+        },
+        {
+          "函数": "log_",
+          "位置": {
+            "path": "include/spdlog/logger.h",
+            "start_line": 346,
+            "end_line": 365,
+            "start_byte": 11953,
+            "end_byte": 12843
+          },
+          "源码": "    template <typename... Args>\n    void log_(source_loc loc, level::level_enum lvl, wstring_view_t fmt, Args &&...args) {\n        bool log_enabled = should_log(lvl);\n        bool traceback_enabled = tracer_.enabled();\n        if (!log_enabled && !traceback_enabled) {\n            return;\n        }\n        SPDLOG_TRY {\n            // format to wmemory_buffer and convert to utf8\n            wmemory_buf_t wbuf;\n            fmt_lib::vformat_to(std::back_inserter(wbuf), fmt,\n                                fmt_lib::make_format_args<fmt_lib::wformat_context>(args...));\n\n            memory_buf_t buf;\n            details::os::wstr_to_utf8buf(wstring_view_t(wbuf.data(), wbuf.size()), buf);\n            details::log_msg log_msg(loc, name_, lvl, string_view_t(buf.data(), buf.size()));\n            log_it_(log_msg, log_enabled, traceback_enabled);\n        }\n        SPDLOG_LOGGER_CATCH(loc)\n    }",
+          "实际讲解": {
+            "entity_id": "558636e6-2520-52a8-9a4d-8087eb4ab785",
+            "summary": "格式化宽字符消息并转换为 UTF-8",
+            "details": "此重载仅在定义 SPDLOG_WCHAR_TO_UTF8_SUPPORT 时提供，输入来源、级别、宽字符格式视图及可变参数，返回 void。先独立求日志与回溯开关，仅两者均关闭才跳过处理；否则用宽字符格式上下文写入 wmemory_buf_t，再将完整宽字符缓冲区转为 UTF-8，构造 log_msg 并把两个开关传给 log_it_。参数无默认值。未禁用异常时，std::exception 交给 err_handler_，filename 指针非空时附带文件与行号；其他异常先报告再重抛，不保证处理器本身不抛异常。定义 SPDLOG_NO_EXCEPTIONS 时 TRY 与捕获宏为空，此处没有捕获保护。转换函数和最终输出的内部实现不在本批。",
+            "evidence": [
+              {
+                "path": "include/spdlog/logger.h",
+                "start_line": 346,
+                "end_line": 365
+              },
+              {
+                "path": "include/spdlog/logger.h",
+                "start_line": 30,
+                "end_line": 46
+              },
+              {
+                "path": "include/spdlog/common.h",
+                "start_line": 107,
+                "end_line": 121
+              }
+            ]
+          },
+          "讲解状态": "有实际讲解，待源码复核",
+          "实际模块": [
+            {
+              "name": "格式化与消息交付",
+              "summary": "在普通日志或回溯至少一项启用时格式化消息，构造携带来源、名称和级别的日志记录并交付 log_it_；宽字符分支额外转换为 UTF-8，并按宏配置包装异常。",
+              "incomplete": false
+            }
+          ]
+        }
+      ],
+      "缩小范围模块摘要": [
+        {
+          "name": "details::make_unique兼容实现",
+          "summary": "为C++14之前的环境提供非数组对象的唯一所有权构造。",
+          "incomplete": false
+        },
+        {
+          "name": "details::conditional_static_cast",
+          "summary": "按类型是否相同选择静态转换或直接传值。",
+          "incomplete": false
+        },
+        {
+          "name": "日志器状态与级别",
+          "summary": "维护日志器级别、刷新级别及交换语义",
+          "incomplete": false
+        },
+        {
+          "name": "日志格式配置",
+          "summary": "向各输出目标配置格式化器和模式",
+          "incomplete": false
+        },
+        {
+          "name": "回溯日志控制",
+          "summary": "启停并输出日志回溯缓冲内容",
+          "incomplete": false
+        },
+        {
+          "name": "刷新与输出目标访问",
+          "summary": "执行刷新并暴露日志输出目标集合",
+          "incomplete": false
+        },
+        {
+          "name": "日志器运行核心",
+          "summary": "管理日志器配置与复制，协调输出、刷新、回溯记录及错误报告。",
+          "incomplete": false
+        },
+        {
+          "name": "输出集合与日志器复制",
+          "summary": "开放输出目标集合的可变访问，并通过复制当前日志器、替换名称创建新实例；对应源码中的复制日志器标题。",
+          "incomplete": false
+        },
+        {
+          "name": "消息分流、输出与刷新",
+          "summary": "根据独立开关分流消息，按输出目标等级过滤，并以等级阈值决定刷新；属于源码 protected methods 标题下的运行实现。",
+          "incomplete": false
+        },
+        {
+          "name": "回溯缓存回放",
+          "summary": "在缓存启用且非空时输出首尾标记并消费缓存。未单独成节点的局部 lambda 捕获 this，将缓存消息交给输出流程；没有可见的顶层匿名实现。",
+          "incomplete": false
+        },
+        {
+          "name": "错误处理配置与限频报告",
+          "summary": "对应 error handler 标题：保存自定义处理器；未配置时以共享锁和计数器限频报告，并按编译条件选择 R 输出或标准错误。",
+          "incomplete": false
+        },
+        {
+          "name": "日志记录与级别便捷接口",
+          "summary": "提供 logger 的格式化、文本及级别快捷日志入口，负责过滤与转发。",
+          "incomplete": false
+        },
+        {
+          "name": "宽字符日志核心处理",
+          "summary": "处理宽字符格式化、转换、过滤与日志投递。",
+          "incomplete": false
+        },
+        {
+          "name": "宽字符级别便捷接口",
+          "summary": "提供各日志级别的宽字符格式化快捷入口。",
+          "incomplete": false
+        },
+        {
+          "name": "日志器",
+          "summary": "提供分级消息入口、日志与回溯开关判断，以及格式化后交付的公共处理流程。类成员保存名称、输出端、阈值、错误处理器和回溯状态。",
+          "incomplete": false
+        },
+        {
+          "name": "分级消息入口",
+          "summary": "六个模板入口接受任意类型消息，固定对应严重级别后转交 log 表达式，不自行格式化或判断是否输出。",
+          "incomplete": false
+        },
+        {
+          "name": "日志与回溯状态判断",
+          "summary": "分别查询消息级别是否达到日志器阈值，以及回溯记录是否启用；这两个条件独立决定消息是否仍需处理。",
+          "incomplete": false
+        },
+        {
+          "name": "格式化与消息交付",
+          "summary": "在普通日志或回溯至少一项启用时格式化消息，构造携带来源、名称和级别的日志记录并交付 log_it_；宽字符分支额外转换为 UTF-8，并按宏配置包装异常。",
+          "incomplete": false
+        },
+        {
+          "name": "命名空间与集成配置",
+          "summary": "未单独成函数节点的顶层宏默认将外层命名空间设为 spdlog，并允许分别覆盖命名空间开始与结束宏，以支持内联子命名空间等封装。logger.h 的顶层条件包含在 SPDLOG_HEADER_ONLY 下引入 logger-inl.h。",
+          "incomplete": false
+        }
+      ],
+      "缩小范围未完成模块": 0,
       "范围对照限制": "需两份均已发布且使用同一接收端、模型及流水线，才能生成本轮范围对照；局部材料单独保留。"
     },
     "zod-typescript": {
       "完整状态": "分析暂停",
       "缩小范围状态": "结构检查通过，待源码质量复核",
       "报告": {
-        "zod-typescript-full真实模型验证.json": "ba7c4411dbd8b19073ac58efa36830454e6aa6fb911bcda240debd1e8a32c2d4",
+        "zod-typescript-full真实模型验证.json": "f34e7d832dbb311946040377b56bf0935fbdd7148c012e3622e62c64ff46a75d",
         "zod-typescript-narrow真实模型验证.json": "1aa1f3f09f2667f1d72fc3d1cd27cf71a89a91fac4350f5c09fa4fd7f3a03719"
       },
       "完整流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
