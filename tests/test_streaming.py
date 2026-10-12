@@ -136,3 +136,15 @@ def test_cancelled_stream_closes_and_records_unknown_once(tmp_path, monkeypatch)
     assert stream.closed and ledger.summary()['request_count'] == 1
     assert ledger.summary()['records'][0]['error_code'] == 'CANCELLED_AFTER_SEND'
     db.engine.dispose()
+
+
+def test_diagnostic_can_reduce_but_never_increase_send_budget(tmp_path, monkeypatch):
+    db, provider, ledger = setup(tmp_path, monkeypatch, lambda _: httpx.Response(503, text='private-html'))
+    for value in [0, 4, True]:
+        with pytest.raises(ProviderError, match='1至3'):
+            asyncio.run(provider.request('固定验证', '非源码', max_attempts=value))
+    assert ledger.summary()['request_count'] == 0
+    with pytest.raises(ProviderError):
+        asyncio.run(provider.request('固定验证', '非源码', max_attempts=1))
+    assert ledger.summary()['request_count'] == 1
+    db.engine.dispose()

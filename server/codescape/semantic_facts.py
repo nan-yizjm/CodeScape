@@ -5,6 +5,50 @@ import ast
 import re
 
 
+def null_identity_facts(analysis, files):
+    """Keep Python None identity comparisons in their actual function scope."""
+    entities = {(e.location.path, e.location.start_line): e for e in analysis.entities
+                if e.visible and e.language == 'python'}
+    result = {}
+    for path, text in files.items():
+        if not path.endswith('.py'):
+            continue
+        try:
+            tree = ast.parse(text)
+        except SyntaxError:
+            continue
+        for function in ast.walk(tree):
+            if not isinstance(function, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                continue
+            entity = entities.get((path, function.lineno))
+            if not entity or function.end_lineno != entity.location.end_line:
+                continue
+            guards, pending = [], [function]
+            while pending:
+                node = pending.pop()
+                if node is not function and isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef, ast.Lambda)):
+                    continue
+                if (isinstance(node, ast.Compare) and len(node.ops) == 1
+                        and isinstance(node.ops[0], (ast.Is, ast.IsNot))
+                        and any(isinstance(value, ast.Constant) and value.value is None
+                                for value in [node.left, *node.comparators])):
+                    expression = ast.get_source_segment(text, node)
+                    if expression and len(expression) <= 256:
+                        guards.append({'expression': expression, 'start_line': node.lineno, 'end_line': node.end_lineno})
+                pending.extend(reversed(list(ast.iter_child_nodes(node))))
+            if guards:
+                result[entity.id] = {'entity_id': entity.id, 'kind': 'null_identity_guards', 'path': path,
+                                     'guards': guards[:12],
+                                     'meaning': '这些条件比较对象是否为None，不等于空字符串、零值或真值检查。'}
+    return result
+
+
+def validate_null_wording(architecture, facts):
+    for note in architecture.explanations:
+        if note.entity_id in facts and re.search(r'非空|为空|空值|不为空', note.details) and 'None' not in note.details:
+            raise ValueError('None身份比较需要明确说明None，不能笼统概括成空值或非空。')
+
+
 def defaulted_flag_facts(analysis, files):
     """Describe a small, complete source pattern without importing its environment reader."""
     facts = {}
