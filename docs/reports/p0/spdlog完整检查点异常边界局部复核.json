@@ -1,0 +1,164 @@
+{
+  "日期": "2026-10-12",
+  "核对时间UTC": "2026-10-12T06:46:20.835709+00:00",
+  "样本": "spdlog-cpp",
+  "产品提交": "cc1233f",
+  "流水线": "architecture/4-repairs/3-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
+  "Commit": "d6c93f38a08b4ea0f8ffcfd7f7857307d5d5c3fa",
+  "固定检查点": {
+    "path": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\output\\public-quality-artifacts\\49b494581518ec0ef0ee69bcfef049fcee40b4ddba139202efa9ae77470488a2.json",
+    "sha256": "49b494581518ec0ef0ee69bcfef049fcee40b4ddba139202efa9ae77470488a2"
+  },
+  "部分结构覆盖": {
+    "已保存批次": 14,
+    "归属函数": 152,
+    "有讲解": 152,
+    "未完成模块": 0
+  },
+  "实际抽查": [
+    {
+      "函数": "<宏命名空间待确认>::async_logger::backend_sink_it_",
+      "位置": {
+        "path": "include/spdlog/async_logger-inl.h",
+        "start_line": 62,
+        "end_line": 73,
+        "start_byte": 2070,
+        "end_byte": 2458
+      },
+      "源码": "SPDLOG_INLINE void async_logger::backend_sink_it_(const details::log_msg &incoming_log_msg) {\n    for (auto &sink : sinks_) {\n        if (sink->should_log(incoming_log_msg.level)) {\n            SPDLOG_TRY { sink->log(incoming_log_msg); }\n            SPDLOG_LOGGER_CATCH(incoming_log_msg.source)\n        }\n    }\n\n    if (should_flush_(incoming_log_msg)) {\n        backend_flush_();\n    }\n}",
+      "实际讲解": {
+        "entity_id": "b2359250-2cb7-5346-8429-8cdc4e705884",
+        "summary": "后台按 sink 过滤并写入日志",
+        "details": "后台线程收到消息后遍历 sinks_，仅对 should_log(level) 为真的 sink 调用 log。每个 sink 的写入位于 SPDLOG_TRY 中，标准异常由 logger 错误处理器处理，未知异常会通知并重抛。所有 sink 处理完后再检查 should_flush_(incoming_log_msg)；条件成立才调用 backend_flush_，因此自动刷新是消息级联合条件，而不是每条消息无条件刷新。",
+        "evidence": [
+          {
+            "path": "include/spdlog/async_logger-inl.h",
+            "start_line": 62,
+            "end_line": 73
+          },
+          {
+            "path": "include/spdlog/logger.h",
+            "start_line": 30,
+            "end_line": 46
+          }
+        ]
+      }
+    },
+    {
+      "函数": "<宏命名空间待确认>::async_logger::backend_flush_",
+      "位置": {
+        "path": "include/spdlog/async_logger-inl.h",
+        "start_line": 75,
+        "end_line": 80,
+        "start_byte": 2460,
+        "end_byte": 2631
+      },
+      "源码": "SPDLOG_INLINE void async_logger::backend_flush_() {\n    for (auto &sink : sinks_) {\n        SPDLOG_TRY { sink->flush(); }\n        SPDLOG_LOGGER_CATCH(source_loc())\n    }\n}",
+      "实际讲解": {
+        "entity_id": "d40f46fa-f379-5d2d-b88d-e82bb521b417",
+        "summary": "后台刷新全部日志 sink",
+        "details": "函数遍历 sinks_，对每个 sink 调用 flush。每次刷新都使用 SPDLOG_TRY 与 SPDLOG_LOGGER_CATCH(source_loc()) 包装：标准异常交给错误处理器，未知异常在通知后重抛；因此某个 sink 的异常可能中断后续 sink 的刷新，并非保证所有 sink 都完成。SPDLOG_NO_EXCEPTIONS 配置会移除该捕获宏。",
+        "evidence": [
+          {
+            "path": "include/spdlog/async_logger-inl.h",
+            "start_line": 75,
+            "end_line": 80
+          },
+          {
+            "path": "include/spdlog/logger.h",
+            "start_line": 30,
+            "end_line": 46
+          }
+        ]
+      }
+    },
+    {
+      "函数": "<宏命名空间待确认>::logger::sink_it_",
+      "位置": {
+        "path": "include/spdlog/logger-inl.h",
+        "start_line": 135,
+        "end_line": 146,
+        "start_byte": 4456,
+        "end_byte": 4757
+      },
+      "源码": "SPDLOG_INLINE void logger::sink_it_(const details::log_msg &msg) {\n    for (auto &sink : sinks_) {\n        if (sink->should_log(msg.level)) {\n            SPDLOG_TRY { sink->log(msg); }\n            SPDLOG_LOGGER_CATCH(msg.source)\n        }\n    }\n\n    if (should_flush_(msg)) {\n        flush_();\n    }\n}",
+      "实际讲解": {
+        "entity_id": "4e3617fe-c5a7-5106-8561-88cc5fc036f7",
+        "summary": "将消息送给符合级别条件的sink并按需刷新。",
+        "details": "接收日志消息，遍历sinks_，对每个sink先检查should_log(msg.level)，通过后才调用log(msg)。写入外围使用SPDLOG_TRY和SPDLOG_LOGGER_CATCH(msg.source)：提供的宏定义显示，有异常时标准异常会交给err_handler_并附带可用的源位置；未知异常会调用错误处理器后重抛。循环结束后独立检查should_flush_，满足时调用flush_。无异常构建下相关捕获宏为空，不能据此认为写入异常会被吞掉。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger-inl.h",
+            "start_line": 135,
+            "end_line": 146
+          },
+          {
+            "path": "include/spdlog/logger.h",
+            "start_line": 30,
+            "end_line": 46
+          }
+        ]
+      }
+    },
+    {
+      "函数": "<宏命名空间待确认>::logger::flush_",
+      "位置": {
+        "path": "include/spdlog/logger-inl.h",
+        "start_line": 148,
+        "end_line": 153,
+        "start_byte": 4759,
+        "end_byte": 4916
+      },
+      "源码": "SPDLOG_INLINE void logger::flush_() {\n    for (auto &sink : sinks_) {\n        SPDLOG_TRY { sink->flush(); }\n        SPDLOG_LOGGER_CATCH(source_loc())\n    }\n}",
+      "实际讲解": {
+        "entity_id": "f5fedfc2-0f33-5766-b917-d270eaee7d5e",
+        "summary": "逐个刷新logger持有的sink。",
+        "details": "无参遍历sinks_并调用每个sink的flush()。每次刷新外围使用SPDLOG_TRY和SPDLOG_LOGGER_CATCH(source_loc())：提供的异常宏定义中，启用异常时标准异常会调用err_handler_，并在源文件名可用时附加位置；未知异常会报告后重抛。无异常构建时捕获宏为空，因此异常处理取决于构建模式。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger-inl.h",
+            "start_line": 148,
+            "end_line": 153
+          },
+          {
+            "path": "include/spdlog/logger.h",
+            "start_line": 30,
+            "end_line": 46
+          }
+        ]
+      }
+    },
+    {
+      "函数": "<宏命名空间待确认>::logger::should_flush_",
+      "位置": {
+        "path": "include/spdlog/logger-inl.h",
+        "start_line": 166,
+        "end_line": 168,
+        "start_byte": 5369,
+        "end_byte": 5518
+      },
+      "源码": "SPDLOG_INLINE bool logger::should_flush_(const details::log_msg &msg) const {\n    return (msg.level >= flush_level()) && (msg.level != level::off);\n}",
+      "实际讲解": {
+        "entity_id": "3f99dae5-d625-5bf1-acc5-5fb179a578d0",
+        "summary": "判断消息是否达到刷新级别并排除off级别。",
+        "details": "输入为日志消息，返回布尔值。先要求msg.level大于或等于flush_level()，并且还要求msg.level不等于level::off；两项通过才返回真。这里的off排除是显式条件，不能仅凭级别比较推断off消息会刷新。函数不修改消息，也没有异常处理。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger-inl.h",
+            "start_line": 166,
+            "end_line": 168
+          }
+        ]
+      }
+    }
+  ],
+  "局部结论": [
+    "logger::sink_it_与flush_现在明确标准异常处理、未知异常重抛及无异常构建分支，较旧小范围笼统宏未知改善",
+    "should_flush_保留阈值且显式排除off的联合条件",
+    "async_logger后端写入与刷新明确逐sink、条件自动刷新及异常可能中断，不能保证所有sink完成"
+  ],
+  "未全部验证": "完整工程仍14/53因INVALID_STREAM_ERROR_EVENT暂停；没有发布，未穷尽152份说明，不计整体质量或用户验收通过。",
+  "评测期间实施代码一致": true,
+  "本次复核模型请求": 0,
+  "执行目标代码": false
+}
