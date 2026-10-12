@@ -277,6 +277,34 @@ def test_length_feedback_ignores_arbitrary_error_context():
     assert 'private' not in feedback
 
 
+def test_repairs_keep_earlier_length_and_reference_constraints(tmp_path, monkeypatch):
+    from codescape.models import FunctionExplanation
+    from codescape.validation import SourceContractError
+    calls = []
+    def handler(request):
+        payload = json.loads(request.content)
+        calls.append(payload)
+        value = {'entity_id': 'a' * 32, 'summary': '归纳主要流程。',
+                 'details': 'x' * 1201 if len(calls) == 1 else '保留关键分支与默认行为。',
+                 'evidence': [{'path': 'owned.py', 'start_line': 1, 'end_line': 201 if len(calls) == 2 else 200}]}
+        return httpx.Response(200, json=document(json.dumps(value), {'total_tokens': 5}))
+    def checked(value):
+        note = FunctionExplanation.model_validate(value)
+        if note.evidence[0].end_line - note.evidence[0].start_line >= 200:
+            raise SourceContractError('单条讲解源码引用最多200行，请拆为多个已提供范围内的引用',
+                                      note.entity_id, (1, 412), [(1, 412)])
+        return note
+    database, provider, _ = configured(tmp_path, monkeypatch, handler)
+    result, usage = asyncio.run(provider.structured('schema', 'context', checked))
+    assert len(calls) == 3 and usage['total_tokens'] == 15 and result.evidence[0].end_line == 200
+    feedback = calls[2]['messages'][0]['content']
+    assert '最多1200个字符' in feedback and '最多200行' in feedback
+    lines = (tmp_path / 'validation-errors.jsonl').read_text(encoding='utf-8').splitlines()
+    assert len(lines) == 2 and '1200' in json.loads(lines[0])['feedback']
+    assert '1200' not in json.loads(lines[1])['feedback']
+    database.engine.dispose()
+
+
 def test_source_feedback_contains_only_trusted_ids_and_numeric_ranges():
     from codescape.provider import validation_feedback
     from codescape.validation import SourceContractError

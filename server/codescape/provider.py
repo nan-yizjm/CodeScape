@@ -28,7 +28,7 @@ from .validation import SourceContractError
 MAX_CONTEXT_CHARS = 180_000
 BATCH_TARGET_CHARS = 150_000
 BATCH_MAX_ENTITIES = 12
-PIPELINE_VERSION = "architecture/3-repairs/1-explanations/3-reads/1-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/2-index/3-ts-bindings/2-python-declarations/1"
+PIPELINE_VERSION = "architecture/3-repairs/2-explanations/3-reads/1-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/2-index/3-ts-bindings/2-python-declarations/1"
 ProgressCallback = Callable[[int, int, str], Awaitable[None]]
 BatchCallback = Callable[[int, int, Architecture], Awaitable[None]]
 
@@ -304,6 +304,7 @@ class Provider:
         """Two repairs share the six-send budget with transport retries."""
         usage_total = {}
         feedback = ''
+        feedback_history = []
         with model_unit() as budget:
             for repair in range(3):
                 try:
@@ -318,9 +319,12 @@ class Provider:
                         return validator(document), usage_total
                     except ValueError as error:
                         # Only application-authored feedback is echoed; never arbitrary validation input.
-                        feedback = validation_feedback(error)
+                        current_feedback = validation_feedback(error)
+                        if current_feedback not in feedback_history:
+                            feedback_history.append(current_feedback)
+                        feedback = '；'.join(feedback_history)
                         diagnostic = {'time': datetime.now(UTC).isoformat(), 'request_id': budget.last_request,
-                                      'feedback': feedback}
+                                      'feedback': current_feedback}
                         try:
                             self.root.mkdir(parents=True, exist_ok=True)
                             with (self.root / 'validation-errors.jsonl').open('a', encoding='utf-8') as stream:
@@ -711,7 +715,10 @@ class Provider:
             "overview 用通俗中文说明用途、核心能力、工作原理和局限。简介最多160字，原理最多240字，"
             "能力最多5项、每项最多40字；不要堆砌函数名、文件路径和实现参数，不能宣称完整运行时行为。"
             "为本批每个可见函数生成 explanations：summary 用一句中文说明功能，details 简述输入、关键处理、输出及代码可见边界，"
+            "details 通常100至400字符，复杂函数也建议控制在800字符以内，硬上限1200字符；英文代码、空白和标点同样计入。"
+            "按职责和关键分支归纳，不逐行复述；必须保留改变行为的保护条件、默认值和异常边界。"
             "evidence 至少引用该函数实现内部真实行范围。不要重复空泛说明，不能凭函数名猜测。"
+            "每条 evidence 最多200行，长函数用多个短引用覆盖关键分支，不能用整个长函数的一条引用。"
             "行号使用原文件绝对行号和 JSON 整数；file_ranges 给出本批片段原始范围。讲解依据必须在对应 entity.location 实现内。"
             "禁止添加 schema 未定义的状态、思考过程、说明字段；缺少依据时应补读或省略该讲解，不制造不存在的行号。"
             "实际分支、表达式和返回值优先于注释或名称；说明递归统计时核对基例与累加，区分叶节点数量与全部节点数量。"
