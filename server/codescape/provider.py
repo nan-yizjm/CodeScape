@@ -47,10 +47,12 @@ BATCH_TARGET_CHARS = 150_000
 BATCH_MAX_ENTITIES = 12
 LEGACY_SOURCE_PIPELINE_VERSION = "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1"
 PREVIOUS_SOURCE_PIPELINE_VERSION = LEGACY_SOURCE_PIPELINE_VERSION + '-evidence-localization/1'
-SOURCE_PIPELINE_VERSION = PREVIOUS_SOURCE_PIPELINE_VERSION + '-semantics-guidance/1'
+GUIDANCE_SOURCE_PIPELINE_VERSION = PREVIOUS_SOURCE_PIPELINE_VERSION + '-semantics-guidance/1'
+SOURCE_PIPELINE_VERSION = GUIDANCE_SOURCE_PIPELINE_VERSION + '-compact-batches/1'
 PIPELINE_VERSION = SOURCE_PIPELINE_VERSION + '-organization/1'
 KNOWN_SOURCE_PIPELINE_VERSIONS = frozenset({LEGACY_SOURCE_PIPELINE_VERSION,
-                                          PREVIOUS_SOURCE_PIPELINE_VERSION, SOURCE_PIPELINE_VERSION})
+                                          PREVIOUS_SOURCE_PIPELINE_VERSION, GUIDANCE_SOURCE_PIPELINE_VERSION,
+                                          SOURCE_PIPELINE_VERSION})
 ProgressCallback = Callable[[int, int, str], Awaitable[None]]
 BatchCallback = Callable[[int, int, Architecture], Awaitable[None]]
 
@@ -713,6 +715,44 @@ class Provider:
             ),
         ]
 
+    def _compact_batches(self, analysis, batches):
+        """优先沿完整函数边界缩小剩余批次，不修改原始源码或引用行号。"""
+        pending, compact = list(reversed(batches)), []
+        visible = [entity for entity in analysis.entities if entity.visible]
+        while pending:
+            batch_files, ranges = pending.pop()
+            context, identifiers = self._context(analysis, batch_files, ranges)
+            if len(identifiers) <= 4 and len(context) <= 30_000:
+                compact.append((batch_files, ranges))
+                continue
+            if len(batch_files) > 1:
+                pending.extend(reversed(self._split_batch(batch_files, ranges)))
+                continue
+            path, text = next(iter(batch_files.items()))
+            start, end = ranges[path]
+            local = [entity for entity in visible if entity.location.path == path]
+            boundaries = {entity.location.start_line for entity in local if start < entity.location.start_line <= end}
+            safe = [line for line in boundaries if not any(
+                entity.location.start_line < line <= entity.location.end_line for entity in local)]
+            if not safe:
+                compact.append((batch_files, ranges))
+                continue
+            cut = min(safe, key=lambda line: (abs(line - (start + end) / 2), line))
+            lines = text.splitlines(keepends=True)
+            offset = cut - start
+            pending.extend([({path: ''.join(lines[offset:])}, {path: (cut, end)}),
+                            ({path: ''.join(lines[:offset])}, {path: (start, cut - 1)})])
+        return compact
+
+    def _execution_batches(self, analysis, files, completed_batches):
+        base = self._plan_batches(analysis, files)
+        # 历史大批次继续复用；尚未组成完整大批次的已存小批次在精简计划上再次匹配。
+        prefix = self._align_completed_batches(completed_batches, base, analysis, set(files), files=files,
+                                               allow_merge=False)
+        remaining = self._compact_batches(analysis, base[len(prefix):])
+        small_prefix = self._align_completed_batches(completed_batches, remaining, analysis, set(files), files=files)
+        return base[:len(prefix)] + remaining, prefix + small_prefix
+
     async def _progress(self, callback: ProgressCallback | None, completed: int, total: int, detail: str) -> None:
         if callback:
             result = callback(completed, total, detail)
@@ -823,7 +863,7 @@ class Provider:
                     raise ProviderError("补读后的上下文超过保护上限，请缩小范围后主动恢复。")
                 source_chars = sum(len(text) for text in json.loads(context)["files"].values()) + sum(len(item.get("text", "")) for item in supplements)
                 with ai_scope(phase="source_read" if supplements else "architecture", source_chars=source_chars):
-                    result, usage = await self.structured(system, payload, checked)
+                    result, usage = await self.structured(system, payload, checked, max_tokens=4096)
                 for key, value in usage.items():
                     usage_total[key] = usage_total.get(key, 0) + value
                 if isinstance(result, Architecture):
@@ -843,6 +883,7 @@ class Provider:
         evidence_paths: set[str] | None = None,
         *,
         files: dict[str, str] | None = None,
+        allow_merge: bool = True,
     ) -> list[Architecture]:
         """按实体集合恢复检查点，避免动态拆批后仅按数量造成错位。"""
         assigned_sets = [
@@ -882,6 +923,8 @@ class Provider:
             _, expected = self._context(analysis, batch_files, batch_ranges)
             if not result_indices:
                 break
+            if not allow_merge and len(result_indices) != 1:
+                break
             group = [completed_batches[index] for index in result_indices]
             union = {entity_id for result in group for module in result.modules for entity_id in module.entity_ids}
             if union != expected:
@@ -902,10 +945,9 @@ class Provider:
         on_batch: BatchCallback | None = None,
         completed_batches: list[Architecture] | None = None,
     ) -> tuple[Architecture, dict]:
-        batches = self._plan_batches(analysis, files)
+        batches, results = self._execution_batches(analysis, files, list(completed_batches or []))
         if not batches:
             raise ProviderError("当前源码范围没有可发送的内容。")
-        results = self._align_completed_batches(list(completed_batches or []), batches, analysis, set(files), files=files)
         await self._progress(
             on_progress,
             len(results),
