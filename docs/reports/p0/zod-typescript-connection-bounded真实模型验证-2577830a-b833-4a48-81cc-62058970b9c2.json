@@ -1,0 +1,48 @@
+{
+  "日期": "2026-10-13",
+  "核对时间UTC": "2026-10-13T07:02:35.433878+00:00",
+  "性质": "真实模型无源码连接检查，不替代架构与质量验收",
+  "数据目录": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\.runtime\\public-model-validation\\b3b943c1-e2db-46de-aab0-42958eb79f1e",
+  "接收端": "https://www.cctq.ai/v1",
+  "模型": "gpt-6.1-sol",
+  "流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1-compact-batches/1-organization/1",
+  "流式接收": true,
+  "实际文件": [],
+  "源码发送": false,
+  "最多请求": 1,
+  "等待上限秒": 60,
+  "执行目标代码": false,
+  "服务错误事件白名单": [],
+  "状态": "连接通过",
+  "请求账本": [
+    {
+      "id": "318d83e1-a8a7-49df-895f-24d677c0aef1",
+      "project_id": null,
+      "version_id": null,
+      "job_id": null,
+      "unit_id": "fdffb1ab-f8c5-4571-a594-4b2edc725704",
+      "attempt": 1,
+      "phase": "connection",
+      "recipient": "https://www.cctq.ai/v1",
+      "model": "gpt-6.1-sol",
+      "status": "success",
+      "created_at": "2026-10-13T07:02:35.440877+00:00",
+      "sent_at": "2026-10-13T07:02:35.496372+00:00",
+      "finished_at": "2026-10-13T07:02:44.398163+00:00",
+      "payload_hash": "24a50281295790048301f2ac6d536e7980dbad3e52cad0ad43ddecfb2d767651",
+      "source_chars": 0,
+      "usage": {
+        "prompt_tokens": 60,
+        "completion_tokens": 12,
+        "total_tokens": 72
+      },
+      "cost": null,
+      "currency": null,
+      "price_snapshot": null,
+      "http_status": 200,
+      "error_code": null
+    }
+  ],
+  "已知total_tokens": 72,
+  "未知用量请求": 0
+}

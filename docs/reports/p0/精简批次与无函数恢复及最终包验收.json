@@ -1,0 +1,160 @@
+{
+  "核对时间UTC": "2026-10-13T07:58:48.340077+00:00",
+  "产品代码": "1455df1",
+  "构建号": "20261013T073908Z",
+  "自动检查": {
+    "后端": 466,
+    "Ruff": "通过",
+    "前端": "未改，35项与类型/构建沿用先前证据"
+  },
+  "实现": "剩余上下文精简；大/小批次及无函数可读源码单元按真实依据复用；范围有歧义不猜测。",
+  "真实检查点恢复": {
+    "源程序": "精简批次真实检查点恢复核对.json",
+    "独立程序": "独立包真实检查点恢复验证.json",
+    "复用批数": 47,
+    "模型请求": 0
+  },
+  "新讲解局部核对": {
+    "报告": "精简批次新讲解局部源码复核.json",
+    "数量": 16,
+    "边界": "不代替完整语义、核心协作和目标Flask helpers措辞的正式发布验证"
+  },
+  "最新完整范围": {
+    "hiredis-c": {
+      "状态": "分析暂停",
+      "进度": {
+        "phase": "paused",
+        "completed": 9,
+        "total": 187,
+        "detail": "分析已中断，请主动重新启动"
+      },
+      "来源版本": [
+        "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1",
+        "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1-compact-batches/1"
+      ],
+      "全程实施代码一致": true,
+      "全局结果已发布": false
+    },
+    "spdlog-cpp": {
+      "状态": "分析暂停",
+      "进度": {
+        "phase": "paused",
+        "completed": 13,
+        "total": 210,
+        "detail": "分析已中断，请主动重新启动"
+      },
+      "来源版本": [
+        "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
+        "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1-compact-batches/1"
+      ],
+      "全程实施代码一致": true,
+      "全局结果已发布": false
+    },
+    "flask-python": {
+      "状态": "分析暂停",
+      "进度": {
+        "phase": "paused",
+        "completed": 22,
+        "total": 76,
+        "detail": "网络请求超时或失败；远端用量可能不确定。"
+      },
+      "来源版本": [
+        "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1",
+        "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1",
+        "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1-compact-batches/1"
+      ],
+      "全程实施代码一致": true,
+      "全局结果已发布": false
+    },
+    "zod-typescript": {
+      "状态": "分析暂停",
+      "进度": {
+        "phase": "paused",
+        "completed": 3,
+        "total": 352,
+        "detail": "网络请求超时或失败；远端用量可能不确定。"
+      },
+      "来源版本": [
+        "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1-compact-batches/1"
+      ],
+      "全程实施代码一致": true,
+      "全局结果已发布": false
+    }
+  },
+  "最新Flask窄范围": {
+    "状态": "分析暂停",
+    "错误": "网络请求超时或失败；远端用量可能不确定。",
+    "进度": {
+      "phase": "paused",
+      "completed": 0,
+      "total": 9,
+      "detail": "网络请求超时或失败；远端用量可能不确定。"
+    },
+    "请求状态": {
+      "outcome_unknown": 5,
+      "failed": 1
+    },
+    "评测期间实施代码一致": true
+  },
+  "AC状态": {
+    "已验证": 33,
+    "部分验证": 2,
+    "待真实工程或用户验证": 1
+  },
+  "AC06复核": "AC06中文概览既有真实结果复核.json；按PRD简单项目步骤核对已有二文件真实发布概览，不重标为新提示生成。",
+  "实验与需求边界": "同流水线及单一来源一致性是额外实验条件；PRD原步骤、代表性语言/职责/范围与真实作用域要求仍保留，不能用实验条件扩增AC06，也不能隐藏实际质量缺口。",
+  "Windows验证": {
+    "独立运行": "通过",
+    "安装升级卸载": "通过",
+    "实际升级": "062514Z→073908Z",
+    "模型请求": 0,
+    "边界": "当前Win11开发机，同版本0.1.0两构建；干净矩阵按CHG-13免除本轮门槛，不冒称跨正式版本。"
+  },
+  "制品": {
+    "CodeScape-0.1.0-Windows-x64-Portable.zip": {
+      "sha256": "5bba7213622a8c277e0acf5d5023c405426cb640a9038a187b16a04fb6fcd20f",
+      "bytes": 158247238
+    },
+    "CodeScape-0.1.0-Windows-x64-Setup.exe": {
+      "sha256": "b0e6f38fcef2bc34fef61b78d15b25a3c2054470e2e0b78a0635bac82bbcd466",
+      "bytes": 115282736
+    }
+  },
+  "中间构建不交付": "20261013T072644Z",
+  "本轮公开账本增量": {
+    "请求数": 47,
+    "已知total_tokens": 203457,
+    "缺少总用量请求": 23,
+    "费用": null
+  },
+  "累计公开账本": {
+    "去重请求数": 898,
+    "已知total_tokens": 19795192,
+    "缺少用量请求数": 127,
+    "在途请求数": 0,
+    "费用": null,
+    "说明": "包含历史失败、截断、修复及重新评测，按请求ID去重；在途属于尚未返回用量，未知不记零，缺少价格不估算费用。"
+  },
+  "主工作区": {
+    "逐列摘要一致": true,
+    "摘要": {
+      "prototype_projects": {
+        "count": 4,
+        "sha256": "15bbe92d40491eba630d1239fc7779d60caa0f07271720cdb13160a9a72a10ba"
+      },
+      "prototype_learning": {
+        "count": 2,
+        "sha256": "b7a1862f475a357ee85bc27b685d6ca587a7ccb4ec64c294c5542e4713484de2"
+      },
+      "requests": 13
+    },
+    "URL": "http://127.0.0.1:8125/",
+    "浏览器恢复": "四项目、原配置模块6节点2协作线",
+    "截图": "output/playwright/P0精简批次修复后工作区.png"
+  },
+  "外部阻塞": "普通JSON及流式响应均出现上游错误或连续传输超时；成功批次保留，未发布新全局结果。",
+  "剩余": "AC-29整体用途/职责/有证据核心协作，AC-30跨目录与同文件职责质量，AC-31完整/缩小范围全局概览对照及用户验收；已有讲解问题的真实产品修订验证未完成。",
+  "P0全部通过": false,
+  "执行目标代码": false,
+  "修改用户原始源码": false
+}

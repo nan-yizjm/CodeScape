@@ -1,0 +1,445 @@
+{
+  "核对时间UTC": "2026-10-13T07:58:48.119167+00:00",
+  "性质": "开发代理逐条阅读固定快照与真实已保存讲解后的局部核对",
+  "模型请求": 0,
+  "执行目标代码": false,
+  "样本": {
+    "hiredis-c": {
+      "Commit": "058ebcdf36c5b05b759c613564fb958ec363c90f",
+      "快照hash": "82b41a5fac7fc0468d890af4da5f8c71822c07c7fa90d9ff9a7a5fab487c31c2",
+      "原报告sha256": "d44b90a55d7041c329ce8eeafa3f2d8e2317a2409f40f73f104eb585960555bb",
+      "检查点sha256": "86fc4fef4f9c4226da297e477cdc89e18084d217cfc4899e504193f541e983b6",
+      "文件": "dict.c",
+      "文件sha256": "3d03513f88eca566db6f6c49b79c2b7bb20481ad1b8afda7e28903dc889f825a",
+      "抽查": [
+        {
+          "名称": "dictCreate",
+          "位置": {
+            "path": "dict.c",
+            "start_line": 74,
+            "end_line": 81,
+            "start_byte": 3091,
+            "end_byte": 3285
+          },
+          "原讲解": {
+            "entity_id": "f6589367-6191-5ff0-a425-2f07249a4d19",
+            "summary": "分配并初始化字典对象",
+            "details": "输入类型策略指针type和私有上下文privDataPtr，先通过hi_malloc分配一个字典对象；结果为NULL时立即返回NULL，不执行初始化。成功后调用_dictInit保存输入配置并设置空存储状态，返回对象指针。此时尚未分配桶数组，也没有复制或校验类型策略。具体分配器实现受配置影响，本层只明确处理其返回空指针的情况。",
+            "evidence": [
+              {
+                "path": "dict.c",
+                "start_line": 74,
+                "end_line": 81
+              }
+            ]
+          }
+        },
+        {
+          "名称": "_dictInit",
+          "位置": {
+            "path": "dict.c",
+            "start_line": 84,
+            "end_line": 89,
+            "start_byte": 3319,
+            "end_byte": 3481
+          },
+          "原讲解": {
+            "entity_id": "9ff03abd-c108-50c6-be60-de651777bf72",
+            "summary": "重置字典状态并绑定类型与上下文",
+            "details": "输入待初始化字典ht、类型策略type和私有上下文privDataPtr。调用_dictReset将桶指针置为NULL，并将容量、掩码和已用条目数设为0；随后直接保存两个配置指针，返回DICT_OK。本函数不分配存储，也不校验输入指针。重置实现没有释放原存储，因此不能将此接口理解为自动清理一个已持有条目的字典。",
+            "evidence": [
+              {
+                "path": "dict.c",
+                "start_line": 84,
+                "end_line": 89
+              },
+              {
+                "path": "dict.c",
+                "start_line": 66,
+                "end_line": 71
+              }
+            ]
+          }
+        },
+        {
+          "名称": "dictExpand",
+          "位置": {
+            "path": "dict.c",
+            "start_line": 92,
+            "end_line": 138,
+            "start_byte": 3520,
+            "end_byte": 4918
+          },
+          "原讲解": {
+            "entity_id": "233e138e-6588-5b61-9f23-6d980313c22f",
+            "summary": "创建新桶数组并迁移原字典条目",
+            "details": "输入字典ht和请求容量size，先计算实际容量；若已有条目数大于原始请求size，则返回DICT_ERR。容量辅助函数从初始容量倍增，达到LONG_MAX的请求直接取LONG_MAX。临时字典沿用类型与上下文，设置容量及容量减一的掩码，并分配清零桶数组；分配失败返回DICT_ERR，原字典尚未修改。迁移循环同时要求桶索引未越界且原条目数大于0，逐链保存后继、计算新桶并头插，减少原计数，不重新分配条目。随后断言原计数为0，释放旧桶数组，整体替换字典并返回DICT_OK。虽然名为扩展，只要请求不少于条目数，本层并未禁止缩容；也未校验ht是否为空。",
+            "evidence": [
+              {
+                "path": "dict.c",
+                "start_line": 92,
+                "end_line": 108
+              },
+              {
+                "path": "dict.c",
+                "start_line": 113,
+                "end_line": 138
+              },
+              {
+                "path": "dict.c",
+                "start_line": 311,
+                "end_line": 320
+              }
+            ]
+          }
+        },
+        {
+          "名称": "dictAdd",
+          "位置": {
+            "path": "dict.c",
+            "start_line": 141,
+            "end_line": 163,
+            "start_byte": 4966,
+            "end_byte": 5566
+          },
+          "原讲解": {
+            "entity_id": "04d95d6f-ab3e-5b02-b8d9-53a6695c9b53",
+            "summary": "为字典新增键值条目并维护桶链与计数",
+            "details": "输入字典指针ht以及键、值指针key和val。先调用_dictKeyIndex获取插入位置，返回-1便立即返回DICT_ERR；本层不能仅将其解释为重复键。随后分配一个dictEntry，分配结果为NULL同样返回DICT_ERR。取得节点后将其挂到对应桶链头，通过dictSetHashKey和dictSetHashVal设置键值，再递增ht->used并返回DICT_OK。函数没有显式检查ht、key或val是否为空，也没有提供默认值；键值所有权及复制策略取决于未展示的宏定义。本层未展示键值设置失败后的回滚逻辑。",
+            "evidence": [
+              {
+                "path": "dict.c",
+                "start_line": 141,
+                "end_line": 163
+              }
+            ]
+          }
+        },
+        {
+          "名称": "dictReplace",
+          "位置": {
+            "path": "dict.c",
+            "start_line": 169,
+            "end_line": 191,
+            "start_byte": 5796,
+            "end_byte": 6628
+          },
+          "原讲解": {
+            "entity_id": "0b84a0f2-230c-5165-92f3-7a0ec51be53a",
+            "summary": "尝试新增条目，失败后查找并替换旧值",
+            "details": "输入字典ht、键key和新值val。先调用dictAdd，只有返回DICT_OK才返回1，表示新增成功。其余情况均继续调用dictFind，因此新增失败并不必然证明键已存在；查找结果为NULL时直接返回0。找到条目后复制整个旧条目到局部auxentry，通过dictSetHashVal设置新值，再通过dictFreeEntryVal处理副本中的旧值，最终返回0。先设置后释放的顺序旨在兼顾新旧值相同、设置动作可能增加引用等情况，但实际生命周期效果依赖宏实现。替换分支不重新设置键，也不直接修改条目计数；返回0无法区分完成替换与未找到条目。",
+            "evidence": [
+              {
+                "path": "dict.c",
+                "start_line": 169,
+                "end_line": 191
+              }
+            ]
+          }
+        }
+      ],
+      "局部结论": "空指针保护、实际容量条件、迁移链表与计数、新增失败不等于重复键、先设置后释放及返回0的歧义均与源码相符；宏实现边界仍明确。"
+    },
+    "spdlog-cpp": {
+      "Commit": "d6c93f38a08b4ea0f8ffcfd7f7857307d5d5c3fa",
+      "快照hash": "d4586f715383197a4fccb3ccc33326112d0d5f8441eb5d02fbb79ab7ea70245d",
+      "原报告sha256": "17e9031cb737c91651525340b5a80321cc5344666c91469de78a5ba8d84363b0",
+      "检查点sha256": "f32d05dc424d3b762d576ab7887547c7f8d7fd6aeb23724e01f8b344f0a0e0e6",
+      "文件": "include/spdlog/pattern_formatter-inl.h",
+      "文件sha256": "f9c0f5223b991488224ed23a661e3bfd68e02237aa099a6442d3708cba385ba1",
+      "抽查": [
+        {
+          "名称": "<宏命名空间待确认>::details::scoped_padder::count_digits",
+          "位置": {
+            "path": "include/spdlog/pattern_formatter-inl.h",
+            "start_line": 63,
+            "end_line": 66,
+            "start_byte": 1660,
+            "end_byte": 1775
+          },
+          "原讲解": {
+            "entity_id": "86518dc6-d544-5f0a-a339-0a8dad20d9ad",
+            "summary": "将数字位数查询委托给格式辅助函数",
+            "details": "这是 scoped_padder 的静态模板接口，接收类型为 T 的值 n，将其传给 fmt_helper::count_digits，并以 unsigned int 返回结果。本层没有默认值、输入校验、特殊分支或异常捕获，也不直接访问填充配置和目标缓冲区。用途是在填充策略接口内提供数字长度查询；当前提供的函数体只能证明委托及返回，具体计数算法、类型适用范围和异常行为需依据目标实现，不能由本层推定。",
+            "evidence": [
+              {
+                "path": "include/spdlog/pattern_formatter-inl.h",
+                "start_line": 63,
+                "end_line": 66
+              }
+            ]
+          }
+        },
+        {
+          "名称": "<宏命名空间待确认>::details::scoped_padder::pad_it",
+          "位置": {
+            "path": "include/spdlog/pattern_formatter-inl.h",
+            "start_line": 81,
+            "end_line": 84,
+            "start_byte": 2153,
+            "end_byte": 2329
+          },
+          "原讲解": {
+            "entity_id": "5a7d6efa-dc37-5b8f-8b7d-d4355bc1e4c4",
+            "summary": "用固定空格区向目标缓冲区追加填充",
+            "details": "接收 long 类型的 count，将其转换为 size_t，以 spaces_.data() 和该长度构造字符串视图，再把视图与 dest_ 传给 fmt_helper::append_string_view；本函数返回 void。空格区固定为64字节，本层没有负数检查、长度上限检查或分块处理。已展示的构造逻辑只在剩余量大于零时调用，析构逻辑只在剩余量非负时调用，因此这些路径避免传入负数，但仍未在此类内证明长度不超过64。函数没有异常捕获，不能保证追加失败被消化。",
+            "evidence": [
+              {
+                "path": "include/spdlog/pattern_formatter-inl.h",
+                "start_line": 81,
+                "end_line": 84
+              },
+              {
+                "path": "include/spdlog/pattern_formatter-inl.h",
+                "start_line": 81,
+                "end_line": 89
+              },
+              {
+                "path": "include/spdlog/pattern_formatter-inl.h",
+                "start_line": 44,
+                "end_line": 61
+              },
+              {
+                "path": "include/spdlog/pattern_formatter-inl.h",
+                "start_line": 68,
+                "end_line": 78
+              }
+            ]
+          }
+        },
+        {
+          "名称": "<宏命名空间待确认>::details::null_scoped_padder::count_digits",
+          "位置": {
+            "path": "include/spdlog/pattern_formatter-inl.h",
+            "start_line": 97,
+            "end_line": 100,
+            "start_byte": 2707,
+            "end_byte": 2807
+          },
+          "原讲解": {
+            "entity_id": "f9b45bbb-ef5c-5751-a682-9f3a603b195d",
+            "summary": "忽略数字输入并恒返回零",
+            "details": "这是 null_scoped_padder 的静态模板接口，接受类型为 T 的参数，但参数未命名且不参与计算，输出固定为 unsigned int 类型的零。它提供与实际填充策略相同的位数查询接口，供无填充策略使用，而不是计算输入的真实位数。零值并非异常或假值输入的回退结果：所有能够调用该模板的输入都走同一返回路径。函数体不读取目标缓冲区、不调用计数辅助函数，也没有异常包装。",
+            "evidence": [
+              {
+                "path": "include/spdlog/pattern_formatter-inl.h",
+                "start_line": 97,
+                "end_line": 100
+              },
+              {
+                "path": "include/spdlog/pattern_formatter-inl.h",
+                "start_line": 91,
+                "end_line": 101
+              }
+            ]
+          }
+        },
+        {
+          "名称": "<宏命名空间待确认>::details::name_formatter::format",
+          "位置": {
+            "path": "include/spdlog/pattern_formatter-inl.h",
+            "start_line": 109,
+            "end_line": 112,
+            "start_byte": 2998,
+            "end_byte": 3219
+          },
+          "原讲解": {
+            "entity_id": "84c3c25a-42b0-5639-8098-be16925af997",
+            "summary": "将日志器名称追加到目标缓冲区",
+            "details": "输入日志消息 msg 和可修改的 dest，时间结构参数未使用。函数以 msg.logger_name 的长度、成员 padinfo_ 和 dest 构造局部 ScopedPadder，再将该名称视图交给追加辅助函数。输出通过缓冲区参数承载，没有返回值。本层没有空名称判断、默认名称替换或异常捕获；具体填充效果与追加行为取决于未展示的相关实现，不保证空名称完全没有输出，也不假定失败时缓冲区保持不变。",
+            "evidence": [
+              {
+                "path": "include/spdlog/pattern_formatter-inl.h",
+                "start_line": 109,
+                "end_line": 112
+              }
+            ]
+          }
+        },
+        {
+          "名称": "<宏命名空间待确认>::details::level_formatter::format",
+          "位置": {
+            "path": "include/spdlog/pattern_formatter-inl.h",
+            "start_line": 122,
+            "end_line": 126,
+            "start_byte": 3434,
+            "end_byte": 3721
+          },
+          "原讲解": {
+            "entity_id": "eb975e71-e003-5ab9-9c50-f66b198115bd",
+            "summary": "转换日志级别并追加其文本表示",
+            "details": "接收日志消息和目标缓冲区，不使用时间结构参数。先调用 level::to_string_view(msg.level)，以常量字符串视图引用保存结果，再用其长度、padinfo_ 和 dest 构造 ScopedPadder，最后将该视图交给追加辅助函数。附近构造函数把传入的 padding_info 转交给基类，本层没有设置默认填充值。函数无返回值，也没有级别有效性检查、回退分支或异常捕获；非法级别处理及填充细节不能由当前实现确定。",
+            "evidence": [
+              {
+                "path": "include/spdlog/pattern_formatter-inl.h",
+                "start_line": 122,
+                "end_line": 126
+              },
+              {
+                "path": "include/spdlog/pattern_formatter-inl.h",
+                "start_line": 119,
+                "end_line": 126
+              }
+            ]
+          }
+        }
+      ],
+      "局部结论": "短委托不展开底层机制；空格区64、负数转换与未验证上界、恒返回0、名称与级别格式化的实际参数及无异常捕获均与源码相符。"
+    },
+    "flask-python": {
+      "Commit": "d086db856be187255b8ec61ef409357393020f32",
+      "快照hash": "05de006763cb3d83f9ef72708e199156697402cb13031070f51225a50852b8c7",
+      "原报告sha256": "44484453b422c20330d39f1ea2c473dc0813219e0dfeea6f5881aa17825cb0b9",
+      "检查点sha256": "fdba2559121669bdc23e20db9430fe4642faa099db3f89312a76e59a14beff38",
+      "文件": "src/flask/testing.py",
+      "文件sha256": "629d481658aaec7076a55913eda38c270ec45d430b34b2f9d38b2eec2b0ad3da",
+      "抽查": [
+        {
+          "名称": "FlaskClient.__enter__",
+          "位置": {
+            "path": "src/flask/testing.py",
+            "start_line": 249,
+            "end_line": 253,
+            "start_byte": 8421,
+            "end_byte": 8612
+          },
+          "原讲解": {
+            "entity_id": "7fdc7df1-6b66-58e9-b8e2-25a96825c891",
+            "summary": "启用客户端上下文保留并拒绝嵌套",
+            "details": "作为客户端上下文管理器的进入入口，仅接收实例自身。先检查 preserve_context 的真值；若已开启，抛出 RuntimeError，阻止再次进入，不执行后续赋值。否则将该标志设为 True，并返回同一个客户端实例，供 with 语句绑定使用。本层只切换保留标志，没有展示创建或压入具体上下文的操作。",
+            "evidence": [
+              {
+                "path": "src/flask/testing.py",
+                "start_line": 249,
+                "end_line": 253
+              }
+            ]
+          }
+        },
+        {
+          "名称": "FlaskClient.__exit__",
+          "位置": {
+            "path": "src/flask/testing.py",
+            "start_line": 255,
+            "end_line": 262,
+            "start_byte": 8618,
+            "end_byte": 8840
+          },
+          "原讲解": {
+            "entity_id": "9f903e9f-d2fe-5b6a-bc61-e5e6d64b011d",
+            "summary": "关闭客户端上下文保留并清理上下文栈",
+            "details": "接收上下文管理协议传入的异常类型、异常对象和追踪信息，但实现不读取这些参数。无论正常退出还是因异常退出，均先把 preserve_context 设为 False，再调用 _context_stack.close()。正常完成时隐式返回 None，不通过真值返回来抑制 with 块异常。本层没有捕获 close 调用产生的异常；其内部清理及异常语义不由本段源码确定。",
+            "evidence": [
+              {
+                "path": "src/flask/testing.py",
+                "start_line": 255,
+                "end_line": 262
+              }
+            ]
+          }
+        },
+        {
+          "名称": "FlaskCliRunner.__init__",
+          "位置": {
+            "path": "src/flask/testing.py",
+            "start_line": 271,
+            "end_line": 273,
+            "start_byte": 9066,
+            "end_byte": 9180
+          },
+          "原讲解": {
+            "entity_id": "989aadc8-811e-5441-804c-8055290fd9d2",
+            "summary": "绑定应用并转交运行器初始化参数",
+            "details": "构造函数接收被测 Flask 应用和任意关键字配置，先将应用引用保存到 self.app，再把全部 kwargs 原样传给父类初始化方法。保存的应用供 invoke 选择默认命令及构建应用加载回调使用。本层没有参数校验、配置默认值或显式返回值，也没有捕获父类初始化异常；不能由这段短委托推断父类内部如何设置运行环境。",
+            "evidence": [
+              {
+                "path": "src/flask/testing.py",
+                "start_line": 271,
+                "end_line": 273
+              }
+            ]
+          }
+        },
+        {
+          "名称": "FlaskCliRunner.invoke",
+          "位置": {
+            "path": "src/flask/testing.py",
+            "start_line": 275,
+            "end_line": 298,
+            "start_byte": 9186,
+            "end_byte": 10133
+          },
+          "原讲解": {
+            "entity_id": "664f70b9-e94b-5a24-b40c-534c98756deb",
+            "summary": "补齐应用命令与加载信息后委托执行",
+            "details": "接收 cli、args 和额外关键字参数，前两者默认均为 None。只有 cli is None 时才采用 self.app.cli；空字符串、零或其他假值不会触发此默认分支。只有 kwargs 不含 obj 键时，才写入 ScriptInfo(create_app=lambda: self.app)；显式传入 obj=None 也会保留。局部 lambda 被调用时返回运行器当前保存的应用，此处是提供回调而非立即调用。最后把 cli、args 和更新后的 kwargs 交给父类 invoke，并直接返回其结果。本层不捕获构造或执行异常，也不展开父类的隔离环境实现。",
+            "evidence": [
+              {
+                "path": "src/flask/testing.py",
+                "start_line": 275,
+                "end_line": 298
+              }
+            ]
+          }
+        }
+      ],
+      "局部结论": "嵌套进入抛错、退出隐式None、保存应用与父类委托、仅cli is None回退、obj键存在与真值区别、lambda未立即调用均与源码相符。"
+    },
+    "zod-typescript": {
+      "Commit": "0b216ef674e297ebe41d8bf902262e56f8755822",
+      "快照hash": "c179e795ed4cac054e4cc4ff09bfd53aeca57c44706f8eba1969db3400a39955",
+      "原报告sha256": "232d0a2ee7e5fe26dbe0d21e6e0eb8f465c3fc1262d1cb834610374d0d4d993a",
+      "检查点sha256": "d31bb59a8f0761587fcee8b94451c73043ef94e95a6f8240c82974f782ddad54",
+      "文件": "packages/zod/src/v4/classic/coerce.ts",
+      "文件sha256": "9cf6429965d7d55dc4e50999af50cbad5b57b5f3372bba13038133aba62ba600",
+      "抽查": [
+        {
+          "名称": "string",
+          "位置": {
+            "path": "packages/zod/src/v4/classic/coerce.ts",
+            "start_line": 5,
+            "end_line": 7,
+            "start_byte": 190,
+            "end_byte": 355
+          },
+          "原讲解": {
+            "entity_id": "4c97a0f2ab19ec4845aa995789d1ea02",
+            "summary": "创建强制字符串 schema",
+            "details": "函数接收可选的字符串参数或 $ZodStringParams 配置，并将经典层的 schemas.ZodString 与该参数传给 core._coercedString。返回值是核心构造器生成的对象，再通过 any 断言适配 ZodCoercedString<T> 类型。该函数本身不执行字符串转换、不设置默认参数，也不捕获异常；具体强制转换、配置处理和异常边界由被委托的核心实现决定。",
+            "evidence": [
+              {
+                "path": "packages/zod/src/v4/classic/coerce.ts",
+                "start_line": 5,
+                "end_line": 7
+              }
+            ]
+          }
+        },
+        {
+          "名称": "number",
+          "位置": {
+            "path": "packages/zod/src/v4/classic/coerce.ts",
+            "start_line": 10,
+            "end_line": 12,
+            "start_byte": 463,
+            "end_byte": 644
+          },
+          "原讲解": {
+            "entity_id": "53b0537ef395652d7fe6aba51ad0dffd",
+            "summary": "创建强制数字 schema",
+            "details": "函数接收可选的字符串参数或 $ZodNumberParams 配置，将 schemas.ZodNumber 和参数交给 core._coercedNumber，并把其结果断言为 ZodCoercedNumber<T> 返回。函数自身没有数字转换、校验、默认值或异常包装逻辑；传入 undefined 时仍按原样透传，核心构造器的实际处理规则不由本函数决定。",
+            "evidence": [
+              {
+                "path": "packages/zod/src/v4/classic/coerce.ts",
+                "start_line": 10,
+                "end_line": 12
+              }
+            ]
+          }
+        }
+      ],
+      "局部结论": "本层构建schema并委托核心构造器，不直接转换数据；可选参数透传，类型断言不当作运行时校验，无异常捕获。"
+    }
+  },
+  "边界": "仅下列16份讲解；不计全局概览、完整工程职责、范围对照、目标Flask helpers措辞修复或用户验收通过。"
+}

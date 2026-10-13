@@ -1,5 +1,5 @@
 {
-  "核对时间UTC": "2026-10-13T06:45:24.656351+00:00",
+  "核对时间UTC": "2026-10-13T07:58:49.366397+00:00",
   "模型请求": 0,
   "执行目标代码": false,
   "修改原始源码": false,
@@ -8,12 +8,12 @@
     "hiredis-c": {
       "完整范围来源": {
         "报告": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\docs\\reports\\p0\\hiredis-c-full真实模型验证.json",
-        "报告sha256": "2948c1cdaa22e6e6e4500c16604d12999042201eb4c8fa7ce79a6ef59854ac37",
+        "报告sha256": "d44b90a55d7041c329ce8eeafa3f2d8e2317a2409f40f73f104eb585960555bb",
         "索引来源报告": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\docs\\reports\\p0\\hiredis-c-full真实模型验证.json",
-        "索引来源报告sha256": "2948c1cdaa22e6e6e4500c16604d12999042201eb4c8fa7ce79a6ef59854ac37",
+        "索引来源报告sha256": "d44b90a55d7041c329ce8eeafa3f2d8e2317a2409f40f73f104eb585960555bb",
         "索引sha256": "3038a16bd172ad44dc17a54fcbd374eae81fc521454b347f32673abb49178075",
-        "检查点sha256": "3776e23306e6ef49651e02ea611cde08e3327a1aeeefdbe7eca93653d576be1c",
-        "检查点流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-organization/1",
+        "检查点sha256": "86fc4fef4f9c4226da297e477cdc89e18084d217cfc4899e504193f541e983b6",
+        "检查点流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1-compact-batches/1-organization/1",
         "数据库状态": "paused"
       },
       "缩小范围来源": {
@@ -26,10 +26,11 @@
         "检查点流水线": null,
         "数据库状态": "ready"
       },
-      "完整范围流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-organization/1",
+      "完整范围流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1-compact-batches/1-organization/1",
       "缩小范围流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
       "完整范围源码生成来源": [
-        "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1"
+        "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1",
+        "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1-compact-batches/1"
       ],
       "缩小范围源码生成来源": [
         "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1"
@@ -45,7 +46,7 @@
       "窄范围未匹配函数": [],
       "完整范围结果已发布": false,
       "缩小范围结果已发布": true,
-      "完整范围检查点批数": 5,
+      "完整范围检查点批数": 9,
       "共同函数在完整范围有唯一讲解数": 0,
       "静态确认关系对照": {
         "共同关系数": 0,
@@ -1767,12 +1768,12 @@
     "spdlog-cpp": {
       "完整范围来源": {
         "报告": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\docs\\reports\\p0\\spdlog-cpp-full真实模型验证.json",
-        "报告sha256": "b82cd2cfcaf4493af2b2a4421a44a20d3b294d07d7c64baa8a29024f217369e6",
+        "报告sha256": "17e9031cb737c91651525340b5a80321cc5344666c91469de78a5ba8d84363b0",
         "索引来源报告": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\docs\\reports\\p0\\spdlog-cpp-full真实模型验证.json",
-        "索引来源报告sha256": "b82cd2cfcaf4493af2b2a4421a44a20d3b294d07d7c64baa8a29024f217369e6",
+        "索引来源报告sha256": "17e9031cb737c91651525340b5a80321cc5344666c91469de78a5ba8d84363b0",
         "索引sha256": "25bd3c34a5566920973027b9157cea9a61c578981dfeb552849afaaada2c5325",
-        "检查点sha256": "a38db1cdfa0582fcb5ec455cbd2916deb4160dd34e5e1695b138be7b1ae6f1fb",
-        "检查点流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-organization/1",
+        "检查点sha256": "f32d05dc424d3b762d576ab7887547c7f8d7fd6aeb23724e01f8b344f0a0e0e6",
+        "检查点流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1-compact-batches/1-organization/1",
         "数据库状态": "paused"
       },
       "缩小范围来源": {
@@ -1785,15 +1786,16 @@
         "检查点流水线": null,
         "数据库状态": "ready"
       },
-      "完整范围流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1-organization/1",
+      "完整范围流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1-compact-batches/1-organization/1",
       "缩小范围流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
       "完整范围源码生成来源": [
-        "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1"
+        "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
+        "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1-compact-batches/1"
       ],
       "缩小范围源码生成来源": [
         "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1"
       ],
-      "源码生成阶段一致": true,
+      "源码生成阶段一致": false,
       "最终流水线一致": false,
       "共同文件数": 4,
       "共同文件字节一致": true,
@@ -1804,8 +1806,8 @@
       "窄范围未匹配函数": [],
       "完整范围结果已发布": false,
       "缩小范围结果已发布": true,
-      "完整范围检查点批数": 6,
-      "共同函数在完整范围有唯一讲解数": 48,
+      "完整范围检查点批数": 13,
+      "共同函数在完整范围有唯一讲解数": 58,
       "静态确认关系对照": {
         "共同关系数": 0,
         "仅完整范围关系": [],
@@ -3422,8 +3424,26 @@
           "实现sha256": "1f49c9dc84df39eeb6b3fd34f9042a354c7527267de6248c9ca50f5ea645f0e5",
           "索引名称一致": true,
           "完整范围讲解": {
-            "状态": "未找到唯一讲解",
-            "讲解数量": 0
+            "状态": "有讲解",
+            "摘要": "格式化窄字符日志并提交消息",
+            "详情": "输入来源位置 loc、级别 lvl、窄字符格式视图 fmt 和可变参数，无默认实参，返回 void。先分别取得 log_enabled 与 traceback_enabled；只有二者都为 false 才提前返回，因此仅回溯开启时也会格式化。SPDLOG_USE_STD_FORMAT 分支使用 fmt_lib 与后插入迭代器，否则使用 fmt::appender；均将参数格式化到局部缓冲区。随后以缓冲区视图、name_、loc 和 lvl 构造消息，将消息及两个状态传给 log_it_，本层不直接证明后续输出或存储行为。未定义 SPDLOG_NO_EXCEPTIONS 时，try 内的标准异常交给 err_handler_；loc.filename 非空指针时附加文件与行号，不要求文件名字符串非空。其他异常报告后重抛；处理器自身抛出的异常没有本层保证。定义该宏时，try/catch 包装均为空。两个状态查询位于包装之前。",
+            "依据": [
+              {
+                "path": "include/spdlog/logger.h",
+                "start_line": 324,
+                "end_line": 343
+              },
+              {
+                "path": "include/spdlog/logger.h",
+                "start_line": 30,
+                "end_line": 46
+              },
+              {
+                "path": "include/spdlog/common.h",
+                "start_line": 107,
+                "end_line": 121
+              }
+            ]
           },
           "缩小范围讲解": {
             "状态": "有讲解",
@@ -3447,7 +3467,18 @@
               }
             ]
           },
-          "完整范围归属": [],
+          "完整范围归属": [
+            {
+              "状态": "归属唯一",
+              "层级": [
+                {
+                  "名称": "日志消息格式化与提交",
+                  "职责": "logger 的两个模板重载负责联合检查日志与回溯开关，将格式串及参数转换为消息载荷，附带来源、名称和级别交给后续日志处理；宽字符路径先转换为 UTF-8。异常包装按编译宏决定是否启用。",
+                  "未完成": false
+                }
+              ]
+            }
+          ],
           "缩小范围归属": [
             {
               "状态": "归属唯一",
@@ -3479,8 +3510,31 @@
           "实现sha256": "be80142b0a2102ff250422d043dbe7319b3877dde04010c118cdc0d292ee3c33",
           "索引名称一致": true,
           "完整范围讲解": {
-            "状态": "未找到唯一讲解",
-            "讲解数量": 0
+            "状态": "有讲解",
+            "摘要": "格式化宽字符日志并转换为 UTF-8",
+            "详情": "此重载仅在定义 SPDLOG_WCHAR_TO_UTF8_SUPPORT 时提供。输入 loc、lvl、宽字符格式视图 fmt 及可变参数，无默认实参，返回 void。先查询日志与回溯状态，仅二者都关闭时返回；任一开启便继续处理。使用宽字符格式上下文将参数写入 wmemory_buf_t，再调用 wstr_to_utf8buf 将宽字符载荷转换到窄字符缓冲区。以转换后的视图、来源、name_ 和级别构造 log_msg，连同两个状态交给 log_it_；本层不展开转换器及提交目标内部行为。启用异常包装时，格式化、转换和提交中的标准异常交给错误处理器，loc.filename 非空指针时附加文件行号；未知异常报告后重抛，错误处理器本身仍可能抛异常。定义 SPDLOG_NO_EXCEPTIONS 时无该捕获包装；前置状态查询也不在 try 范围内。",
+            "依据": [
+              {
+                "path": "include/spdlog/logger.h",
+                "start_line": 346,
+                "end_line": 365
+              },
+              {
+                "path": "include/spdlog/logger.h",
+                "start_line": 345,
+                "end_line": 366
+              },
+              {
+                "path": "include/spdlog/logger.h",
+                "start_line": 30,
+                "end_line": 46
+              },
+              {
+                "path": "include/spdlog/common.h",
+                "start_line": 107,
+                "end_line": 121
+              }
+            ]
           },
           "缩小范围讲解": {
             "状态": "有讲解",
@@ -3504,7 +3558,18 @@
               }
             ]
           },
-          "完整范围归属": [],
+          "完整范围归属": [
+            {
+              "状态": "归属唯一",
+              "层级": [
+                {
+                  "名称": "日志消息格式化与提交",
+                  "职责": "logger 的两个模板重载负责联合检查日志与回溯开关，将格式串及参数转换为消息载荷，附带来源、名称和级别交给后续日志处理；宽字符路径先转换为 UTF-8。异常包装按编译宏决定是否启用。",
+                  "未完成": false
+                }
+              ]
+            }
+          ],
           "缩小范围归属": [
             {
               "状态": "归属唯一",
@@ -5060,8 +5125,16 @@
           "实现sha256": "4f62cc6cbd024e4af5f9e37fe508738528edf3c25185a5f440071277db74cf0f",
           "索引名称一致": true,
           "完整范围讲解": {
-            "状态": "未找到唯一讲解",
-            "讲解数量": 0
+            "状态": "有讲解",
+            "摘要": "以 trace 级别委托提交单条消息",
+            "详情": "模板入口接收 const T &msg，用于省去调用者显式填写日志级别。函数将 level::trace 和 msg 传给 log，没有显式复制、转换或修改消息的语句，返回类型为 void。本层没有默认参数、级别判断、空值检查或异常捕获，也不能据此保证消息最终输出。具体重载绑定尚未确认；格式化、过滤和输出行为不由本层实现证明，下游若有异常逸出，本层不予捕获。",
+            "依据": [
+              {
+                "path": "include/spdlog/logger.h",
+                "start_line": 239,
+                "end_line": 242
+              }
+            ]
           },
           "缩小范围讲解": {
             "状态": "有讲解",
@@ -5075,7 +5148,18 @@
               }
             ]
           },
-          "完整范围归属": [],
+          "完整范围归属": [
+            {
+              "状态": "归属唯一",
+              "层级": [
+                {
+                  "名称": "按级别提交单消息",
+                  "职责": "logger 的模板便捷入口，以常量日志级别和原消息调用 log；本层不执行过滤、格式化或输出。",
+                  "未完成": false
+                }
+              ]
+            }
+          ],
           "缩小范围归属": [
             {
               "状态": "归属唯一",
@@ -5107,8 +5191,16 @@
           "实现sha256": "0b8e16d9a5843c8f38f2886acc24591cbadc193d06fac84c2a4057689d6180ba",
           "索引名称一致": true,
           "完整范围讲解": {
-            "状态": "未找到唯一讲解",
-            "讲解数量": 0
+            "状态": "有讲解",
+            "摘要": "以 debug 级别委托提交单条消息",
+            "详情": "模板入口通过 const T &msg 接收消息，供调用者使用固定的 debug 日志级别。实现仅调用 log(level::debug, msg)，随后结束，不返回处理结果。本层不提供默认参数，不自行检查日志是否启用，也没有消息校验、格式化或输出操作。实际 log 重载尚未确认，因此不推断内部状态变化；本层没有异常捕获，不能将这次委托解释为保证成功或吞掉异常。",
+            "依据": [
+              {
+                "path": "include/spdlog/logger.h",
+                "start_line": 244,
+                "end_line": 247
+              }
+            ]
           },
           "缩小范围讲解": {
             "状态": "有讲解",
@@ -5122,7 +5214,18 @@
               }
             ]
           },
-          "完整范围归属": [],
+          "完整范围归属": [
+            {
+              "状态": "归属唯一",
+              "层级": [
+                {
+                  "名称": "按级别提交单消息",
+                  "职责": "logger 的模板便捷入口，以常量日志级别和原消息调用 log；本层不执行过滤、格式化或输出。",
+                  "未完成": false
+                }
+              ]
+            }
+          ],
           "缩小范围归属": [
             {
               "状态": "归属唯一",
@@ -5154,8 +5257,16 @@
           "实现sha256": "0fb33bf3ec1e9078ce3959f341f95dd60ac9e6d358c0b723d030e7c9006b32cb",
           "索引名称一致": true,
           "完整范围讲解": {
-            "状态": "未找到唯一讲解",
-            "讲解数量": 0
+            "状态": "有讲解",
+            "摘要": "以 info 级别委托提交单条消息",
+            "详情": "模板入口接收常量引用消息 msg，将 level::info 与该消息传给 log，用于提供无需显式指定级别的单消息调用方式。函数返回 void，本层没有默认参数、过滤条件、格式化步骤或直接输出动作，也没有显式修改 msg。调用的重载目标尚未得到静态确认，不能推断其内部处理或输出结果；本层没有 try/catch，下游逸出的异常不会在这里被捕获。",
+            "依据": [
+              {
+                "path": "include/spdlog/logger.h",
+                "start_line": 249,
+                "end_line": 252
+              }
+            ]
           },
           "缩小范围讲解": {
             "状态": "有讲解",
@@ -5169,7 +5280,18 @@
               }
             ]
           },
-          "完整范围归属": [],
+          "完整范围归属": [
+            {
+              "状态": "归属唯一",
+              "层级": [
+                {
+                  "名称": "按级别提交单消息",
+                  "职责": "logger 的模板便捷入口，以常量日志级别和原消息调用 log；本层不执行过滤、格式化或输出。",
+                  "未完成": false
+                }
+              ]
+            }
+          ],
           "缩小范围归属": [
             {
               "状态": "归属唯一",
@@ -5201,8 +5323,16 @@
           "实现sha256": "1beab667e3fbe0b719bb88a0f5ed5f600827d2fe3ea6be05671c8c4ba951965e",
           "索引名称一致": true,
           "完整范围讲解": {
-            "状态": "未找到唯一讲解",
-            "讲解数量": 0
+            "状态": "有讲解",
+            "摘要": "以警告级别委托记录消息",
+            "详情": "接收模板类型 T 的消息常量引用，无返回值。实现仅调用 log(level::warn, msg)，为调用方固定警告级别，不在本层进行格式化、阈值判断或容器修改。该入口没有默认参数，也没有异常捕获；若委托过程抛出异常，本层没有拦截逻辑。当前证据仅证明这次委托及实参，不能确定具体重载、消息是否最终写出或下层状态变化。",
+            "依据": [
+              {
+                "path": "include/spdlog/logger.h",
+                "start_line": 254,
+                "end_line": 257
+              }
+            ]
           },
           "缩小范围讲解": {
             "状态": "有讲解",
@@ -5216,7 +5346,18 @@
               }
             ]
           },
-          "完整范围归属": [],
+          "完整范围归属": [
+            {
+              "状态": "归属唯一",
+              "层级": [
+                {
+                  "名称": "固定级别日志入口",
+                  "职责": "为任意类型消息提供警告、错误和严重错误入口，固定日志级别后委托给 log；本层不实现格式化、过滤或输出。",
+                  "未完成": false
+                }
+              ]
+            }
+          ],
           "缩小范围归属": [
             {
               "状态": "归属唯一",
@@ -5248,8 +5389,16 @@
           "实现sha256": "e74c6020de07aba40b45c2f7abb1ff53172eafb814c68ae83b5f2f487970a747",
           "索引名称一致": true,
           "完整范围讲解": {
-            "状态": "未找到唯一讲解",
-            "讲解数量": 0
+            "状态": "有讲解",
+            "摘要": "以错误级别委托记录消息",
+            "详情": "输入为模板类型 T 的消息常量引用，输出为 void。函数将级别固定为 level::err，并把 msg 交给 log；名称为 error，但实际级别常量是 err。本层没有默认参数、过滤条件、显式格式化或异常捕获。具体重载绑定尚未确认，因此这里只能说明固定级别的委托行为，不能推断下层是否记录、如何输出或是否修改内部状态。",
+            "依据": [
+              {
+                "path": "include/spdlog/logger.h",
+                "start_line": 259,
+                "end_line": 262
+              }
+            ]
           },
           "缩小范围讲解": {
             "状态": "有讲解",
@@ -5263,7 +5412,18 @@
               }
             ]
           },
-          "完整范围归属": [],
+          "完整范围归属": [
+            {
+              "状态": "归属唯一",
+              "层级": [
+                {
+                  "名称": "固定级别日志入口",
+                  "职责": "为任意类型消息提供警告、错误和严重错误入口，固定日志级别后委托给 log；本层不实现格式化、过滤或输出。",
+                  "未完成": false
+                }
+              ]
+            }
+          ],
           "缩小范围归属": [
             {
               "状态": "归属唯一",
@@ -5295,8 +5455,16 @@
           "实现sha256": "7f022587e930c0ba05cf63c7a454239a0de008fe56d2fbd228eb0d9e9d9d302e",
           "索引名称一致": true,
           "完整范围讲解": {
-            "状态": "未找到唯一讲解",
-            "讲解数量": 0
+            "状态": "有讲解",
+            "摘要": "以严重错误级别委托记录消息",
+            "详情": "接收模板类型 T 的消息常量引用，将其与 level::critical 一起传入 log，无返回值。职责是提供固定严重程度的便捷入口；源码没有额外保护条件、默认参数、终止程序操作或异常捕获。因此不能把 critical 名称解释为必然退出，也不能保证一定写出日志。当前实现只支持说明委托及参数传递，具体过滤、输出和异常策略由实际下层实现决定。",
+            "依据": [
+              {
+                "path": "include/spdlog/logger.h",
+                "start_line": 264,
+                "end_line": 267
+              }
+            ]
           },
           "缩小范围讲解": {
             "状态": "有讲解",
@@ -5310,7 +5478,18 @@
               }
             ]
           },
-          "完整范围归属": [],
+          "完整范围归属": [
+            {
+              "状态": "归属唯一",
+              "层级": [
+                {
+                  "名称": "固定级别日志入口",
+                  "职责": "为任意类型消息提供警告、错误和严重错误入口，固定日志级别后委托给 log；本层不实现格式化、过滤或输出。",
+                  "未完成": false
+                }
+              ]
+            }
+          ],
           "缩小范围归属": [
             {
               "状态": "归属唯一",
@@ -5342,8 +5521,16 @@
           "实现sha256": "67adc60728cee3e264a0fdc7b6957044207eba3cd7a3b6c319e4361a56b2dd6e",
           "索引名称一致": true,
           "完整范围讲解": {
-            "状态": "未找到唯一讲解",
-            "讲解数量": 0
+            "状态": "有讲解",
+            "摘要": "判断消息级别是否达到当前阈值",
+            "详情": "输入为 level::level_enum 类型的 msg_level，返回布尔值。函数以 std::memory_order_relaxed 读取 level_，再计算 msg_level >= 读取值；相等时返回 true，小于阈值时返回 false。本层没有检查其他开关、回溯状态或日志接收端，也不直接写出消息。方法为 const，没有默认实参、显式赋值或异常捕获；阈值初始值和底层 load 类型未在本批展示，不能额外推断同步保证或异常行为。",
+            "依据": [
+              {
+                "path": "include/spdlog/logger.h",
+                "start_line": 270,
+                "end_line": 272
+              }
+            ]
           },
           "缩小范围讲解": {
             "状态": "有讲解",
@@ -5362,7 +5549,18 @@
               }
             ]
           },
-          "完整范围归属": [],
+          "完整范围归属": [
+            {
+              "状态": "归属唯一",
+              "层级": [
+                {
+                  "名称": "日志阈值判定",
+                  "职责": "读取 logger 当前级别阈值，判断传入消息级别是否达到阈值，提供布尔判定接口。",
+                  "未完成": false
+                }
+              ]
+            }
+          ],
           "缩小范围归属": [
             {
               "状态": "归属唯一",
@@ -5394,8 +5592,16 @@
           "实现sha256": "8d29291a2997d9c0d507d3b8b178389be9a9d5c6f9d23ad55fc0b28c611bfd87",
           "索引名称一致": true,
           "完整范围讲解": {
-            "状态": "未找到唯一讲解",
-            "讲解数量": 0
+            "状态": "有讲解",
+            "摘要": "返回日志器当前的回溯追踪启用状态。",
+            "详情": "函数无参数，读取 logger 成员 tracer_，调用其 enabled() 并直接返回结果。它只承担状态查询，不启用或禁用回溯、不改变缓冲内容，也没有本地默认值、条件分支或异常包装。enabled() 的具体判定逻辑未在本批源码中提供，因此这里只能确认该层的委托关系，不能进一步断言返回值对应的容量、计数或其他内部状态。",
+            "依据": [
+              {
+                "path": "include/spdlog/logger.h",
+                "start_line": 275,
+                "end_line": 275
+              }
+            ]
           },
           "缩小范围讲解": {
             "状态": "有讲解",
@@ -5409,7 +5615,18 @@
               }
             ]
           },
-          "完整范围归属": [],
+          "完整范围归属": [
+            {
+              "状态": "归属唯一",
+              "层级": [
+                {
+                  "名称": "日志器回溯状态查询",
+                  "职责": "查询日志器是否启用回溯追踪。",
+                  "未完成": false
+                }
+              ]
+            }
+          ],
           "缩小范围归属": [
             {
               "状态": "归属唯一",
@@ -5433,6 +5650,7 @@
         "完整范围尚未发布完整架构，检查点不作为全局概览",
         "最终流水线不同；相同源码生成阶段不能替代最终组织与概览对照",
         "源码生成阶段不同",
+        "实际源码生成来源混合、不同或缺失，不能按当前处理版本视为同一生成阶段",
         "需要人工核对四部分概览、职责差异、条件语义和核心协作；字符串差异不等于语义冲突"
       ],
       "验收通过": false
@@ -5440,29 +5658,30 @@
     "flask-python": {
       "完整范围来源": {
         "报告": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\docs\\reports\\p0\\flask-python-full真实模型验证.json",
-        "报告sha256": "207946fac5bbd4e43ddf4a5ffc642f788b0a92ce06c9fb6db346a7d1cf2a6978",
+        "报告sha256": "44484453b422c20330d39f1ea2c473dc0813219e0dfeea6f5881aa17825cb0b9",
         "索引来源报告": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\docs\\reports\\p0\\flask-python-full真实模型验证.json",
-        "索引来源报告sha256": "207946fac5bbd4e43ddf4a5ffc642f788b0a92ce06c9fb6db346a7d1cf2a6978",
+        "索引来源报告sha256": "44484453b422c20330d39f1ea2c473dc0813219e0dfeea6f5881aa17825cb0b9",
         "索引sha256": "d971981601aa60f9559090c929941a31ffedeea92e329e5242d70e8ec348cf2a",
-        "检查点sha256": "d8136ce4fb3443501853751777752687bae13fef280207549779ab2667755b6f",
-        "检查点流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1-organization/1",
+        "检查点sha256": "fdba2559121669bdc23e20db9430fe4642faa099db3f89312a76e59a14beff38",
+        "检查点流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1-compact-batches/1-organization/1",
         "数据库状态": "paused"
       },
       "缩小范围来源": {
         "报告": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\docs\\reports\\p0\\flask-python-narrow真实模型验证.json",
-        "报告sha256": "ef8fffccc82c2974094d128eb0e035c657b429b5cca16884d4705cced2c0c1dd",
+        "报告sha256": "c66a96549d02fc9358ab607593f5f79e6adfe44b5eff1a55fefa90d47283979a",
         "索引来源报告": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\docs\\reports\\p0\\flask-python-narrow真实模型验证.json",
-        "索引来源报告sha256": "ef8fffccc82c2974094d128eb0e035c657b429b5cca16884d4705cced2c0c1dd",
+        "索引来源报告sha256": "c66a96549d02fc9358ab607593f5f79e6adfe44b5eff1a55fefa90d47283979a",
         "索引sha256": "1fcb6ee59bea6807f6bf956f9ff93d2c98f9bc796d0600a64e1f0530964da9c7",
         "检查点sha256": null,
         "检查点流水线": null,
         "数据库状态": "paused"
       },
-      "完整范围流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1-organization/1",
-      "缩小范围流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1-organization/1",
+      "完整范围流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1-compact-batches/1-organization/1",
+      "缩小范围流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1-compact-batches/1-organization/1",
       "完整范围源码生成来源": [
         "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1",
-        "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1"
+        "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1",
+        "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1-compact-batches/1"
       ],
       "缩小范围源码生成来源": [],
       "源码生成阶段一致": false,
@@ -5476,7 +5695,7 @@
       "窄范围未匹配函数": [],
       "完整范围结果已发布": false,
       "缩小范围结果已发布": false,
-      "完整范围检查点批数": 17,
+      "完整范围检查点批数": 22,
       "共同函数在完整范围有唯一讲解数": 19,
       "静态确认关系对照": {
         "共同关系数": 2,
@@ -6387,12 +6606,12 @@
     "zod-typescript": {
       "完整范围来源": {
         "报告": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\docs\\reports\\p0\\zod-typescript-full真实模型验证.json",
-        "报告sha256": "91bd01247c9e31ba3f6186ef4b0fcaa2c2ffdfaf28c999df860bc8b192d5ebc1",
+        "报告sha256": "232d0a2ee7e5fe26dbe0d21e6e0eb8f465c3fc1262d1cb834610374d0d4d993a",
         "索引来源报告": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\docs\\reports\\p0\\zod-typescript-full真实模型验证.json",
-        "索引来源报告sha256": "91bd01247c9e31ba3f6186ef4b0fcaa2c2ffdfaf28c999df860bc8b192d5ebc1",
+        "索引来源报告sha256": "232d0a2ee7e5fe26dbe0d21e6e0eb8f465c3fc1262d1cb834610374d0d4d993a",
         "索引sha256": "9b20c143b120c8297df7f14e19aa3e53b2e4d1fe98f49d28dcd129bd302c55ea",
-        "检查点sha256": null,
-        "检查点流水线": null,
+        "检查点sha256": "d31bb59a8f0761587fcee8b94451c73043ef94e95a6f8240c82974f782ddad54",
+        "检查点流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1-compact-batches/1-organization/1",
         "数据库状态": "paused"
       },
       "缩小范围来源": {
@@ -6405,15 +6624,15 @@
         "检查点流水线": null,
         "数据库状态": "ready"
       },
-      "完整范围流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-organization/1",
+      "完整范围流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1-compact-batches/1-organization/1",
       "缩小范围流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
       "完整范围源码生成来源": [
-        "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1"
+        "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1-compact-batches/1"
       ],
       "缩小范围源码生成来源": [
         "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1"
       ],
-      "源码生成阶段一致": true,
+      "源码生成阶段一致": false,
       "最终流水线一致": false,
       "共同文件数": 1,
       "共同文件字节一致": true,
@@ -6424,7 +6643,7 @@
       "窄范围未匹配函数": [],
       "完整范围结果已发布": false,
       "缩小范围结果已发布": true,
-      "完整范围检查点批数": 0,
+      "完整范围检查点批数": 3,
       "共同函数在完整范围有唯一讲解数": 0,
       "静态确认关系对照": {
         "共同关系数": 7,
@@ -6602,6 +6821,8 @@
       "尚缺": [
         "完整范围尚未发布完整架构，检查点不作为全局概览",
         "最终流水线不同；相同源码生成阶段不能替代最终组织与概览对照",
+        "源码生成阶段不同",
+        "实际源码生成来源混合、不同或缺失，不能按当前处理版本视为同一生成阶段",
         "需要人工核对四部分概览、职责差异、条件语义和核心协作；字符串差异不等于语义冲突"
       ],
       "验收通过": false
