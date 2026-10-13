@@ -191,6 +191,8 @@ def main():
         process.wait(timeout=5)
         assert process.returncode == 0
         result = {"date": (datetime.now(UTC) + timedelta(hours=8)).date().isoformat(), "platform": platform.platform(), "architecture": platform.machine(),
+            "build_id": json.loads((executable.parent / '_internal/build-info.json').read_text(encoding='utf-8'))['build_id'],
+            "application_manifest_sha256": hashlib.sha256((executable.parent / 'SHA256-files.json').read_bytes()).hexdigest(),
             "executable": str(executable), "executable_sha256": hashlib.sha256(executable.read_bytes()).hexdigest(),
             "data_root": str(root), "developer_path_removed": True, "duplicate_launch_reused": True,
             "static_sample_functions": 8, "confirmed_call_languages": sorted(confirmed_languages),

@@ -27,11 +27,26 @@ def main():
         receipt = json.loads((reports / f'{sample}-full真实模型验证.json').read_text(encoding='utf-8'))
         original = Path(receipt['数据目录'])
         checkpoint = original / 'projects' / receipt['project_id'] / 'architecture-checkpoint.json'
-        raw = checkpoint.read_bytes()
-        saved = json.loads(raw)
         with sqlite3.connect((original / 'app.db').as_uri() + '?mode=ro', uri=True) as connection:
             analysis = json.loads(connection.execute('SELECT result FROM prototype_projects WHERE id=?',
                                                      (receipt['project_id'],)).fetchone()[0])
+            state = connection.execute('SELECT status FROM prototype_projects WHERE id=?',
+                                       (receipt['project_id'],)).fetchone()[0]
+        historical = not checkpoint.exists()
+        if historical:
+            # 正常发布会删除运行检查点；只验证同版本同快照的已保存源码阶段。
+            assert state == 'ready' and receipt['状态'] == '结构检查通过，待源码质量复核'
+            candidates = []
+            for path in (original / 'checkpoint-history').glob('*.json'):
+                path.resolve(strict=True).relative_to((original / 'checkpoint-history').resolve(strict=True))
+                candidate = json.loads(path.read_text(encoding='utf-8'))
+                if (candidate.get('version_id') == receipt['version_id']
+                        and candidate.get('snapshot_hash') == receipt['实际快照hash']):
+                    candidates.append((len(candidate.get('batches', [])), path))
+            assert candidates, '已发布样本没有可核对的同快照源码检查点归档'
+            checkpoint = max(candidates, key=lambda item: item[0])[1]
+        raw = checkpoint.read_bytes()
+        saved = json.loads(raw)
         target = root / sample
         target.mkdir()
         assert not (target / 'credentials').exists()
@@ -52,10 +67,17 @@ def main():
             assert connection.execute('SELECT count(*) FROM ai_requests').fetchone()[0] == 0
         assert checkpoint.read_bytes() == raw
         record['样本'][sample] = {'检查点sha256': hashlib.sha256(raw).hexdigest(),
+            '检查点来源': str(checkpoint), '原项目状态': state, '使用发布前历史源码检查点': historical,
             '恢复批数': progress['completed'], '规划批数': progress['total'], '模型请求': 0,
             '真实原检查点未改写': True, '隔离根无凭据': True, '新请求前受控停止': True}
         print(json.dumps({sample: record['样本'][sample]}, ensure_ascii=False), flush=True)
-    (reports / '独立包真实检查点恢复验证.json').write_text(
+    destination = reports / '独立包真实检查点恢复验证.json'
+    if destination.exists():
+        prior_raw = destination.read_bytes()
+        archive = destination.with_name(destination.stem + '-' + hashlib.sha256(prior_raw).hexdigest()[:16] + '.json')
+        if not archive.exists():
+            archive.write_bytes(prior_raw)
+    destination.write_text(
         json.dumps(record, ensure_ascii=False, indent=2), encoding='utf-8', newline='\n')
 
 

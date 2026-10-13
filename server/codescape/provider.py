@@ -50,7 +50,7 @@ PREVIOUS_SOURCE_PIPELINE_VERSION = LEGACY_SOURCE_PIPELINE_VERSION + '-evidence-l
 GUIDANCE_SOURCE_PIPELINE_VERSION = PREVIOUS_SOURCE_PIPELINE_VERSION + '-semantics-guidance/1'
 COMPACT_SOURCE_PIPELINE_VERSION = GUIDANCE_SOURCE_PIPELINE_VERSION + '-compact-batches/1'
 SOURCE_PIPELINE_VERSION = COMPACT_SOURCE_PIPELINE_VERSION + '-reasoning-config/1'
-PIPELINE_VERSION = SOURCE_PIPELINE_VERSION + '-organization/1'
+PIPELINE_VERSION = SOURCE_PIPELINE_VERSION + '-organization/1-overview-guidance/1'
 KNOWN_SOURCE_PIPELINE_VERSIONS = frozenset({LEGACY_SOURCE_PIPELINE_VERSION,
                                           PREVIOUS_SOURCE_PIPELINE_VERSION, GUIDANCE_SOURCE_PIPELINE_VERSION,
                                           COMPACT_SOURCE_PIPELINE_VERSION, SOURCE_PIPELINE_VERSION})
@@ -89,18 +89,29 @@ SAFE_VALIDATION_FIELDS = {
 }
 
 
+def source_pipeline_version(pipeline):
+    """全局整理/概览升级不改变已知源码阶段；未知版本不猜测兼容。"""
+    if not isinstance(pipeline, str):
+        return pipeline
+    for source in KNOWN_SOURCE_PIPELINE_VERSIONS:
+        if pipeline in {source, source + '-organization/1',
+                        source + '-organization/1-overview-guidance/1'}:
+            return source
+    return pipeline
+
+
 def compatible_source_checkpoint(saved: dict) -> bool:
     """仅接受已知源码契约；旧结果还须通过恢复时的严格引用和关系校验。"""
     if not isinstance(saved, dict):
         return False
     pipeline = saved.get('pipeline_version')
-    source = pipeline.removesuffix('-organization/1') if isinstance(pipeline, str) else None
+    source = source_pipeline_version(pipeline) if isinstance(pipeline, str) else None
     return source in KNOWN_SOURCE_PIPELINE_VERSIONS and saved.get('source_pipeline_version', source) == source
 
 
 def checkpoint_source_generations(saved: dict) -> set[str]:
     """保留复用批次的来源集合，当前处理版本不代替历史生成版本。"""
-    source = saved.get('pipeline_version', '').removesuffix('-organization/1')
+    source = source_pipeline_version(saved.get('pipeline_version', ''))
     values = saved.get('source_generation_versions', [source])
     if (not isinstance(values, list) or not values or len(values) > len(KNOWN_SOURCE_PIPELINE_VERSIONS)
             or any(not isinstance(value, str) or value not in KNOWN_SOURCE_PIPELINE_VERSIONS for value in values)):
@@ -490,6 +501,9 @@ class Provider:
             "列为核心能力；将订阅、开放接入说成读者听得懂的话，不堆砌协议缩写。"
             "principle 用 2～3 句（建议 100 字以内）说明输入如何经过核心处理变为用户得到的结果；"
             "不得将静态依赖假称为已运行的执行顺序。不要列函数名、文件路径、框架参数和底层术语。"
+            "必须区分返回值、输出参数、回调和事件，不把一种交付方式改写成另一种。"
+            "只有材料明确证明某阶段使用回调，才称该阶段为回调；构造或释放回调不证明结果交付也使用回调。"
+            "材料仅能证明产生或交付结果时，用中性描述，不补造交付机制。"
             "不要使用‘本批源码’、‘本次批次’；不能凭名字猜测用途，证据不足就明确限定范围。"
             "只写已确认能力，保留关键缺口，不声称完整运行时行为。不要推荐阅读路线。"
             "‘安全’或 safe 名称、返回失败包装不等于任何情况下都不抛异常；材料没有明确穷尽异常边界时，"

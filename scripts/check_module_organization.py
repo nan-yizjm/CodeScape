@@ -23,6 +23,7 @@ from codescape.provider import (
     Provider,
     ProviderError,
     compatible_source_checkpoint,
+    source_pipeline_version,
 )
 
 
@@ -66,7 +67,7 @@ async def main(args):
         'detail': '隔离验证全局职责整理，不发布或更改原结果'})
     record = {key: prior[key] for key in ('样本', 'Commit', '接收端', '模型', '实际文件', 'project_id', 'version_id')}
     record.update({'数据目录': str(root), '流水线': PIPELINE_VERSION, '原报告流水线': prior['流水线'],
-        '源码生成阶段': prior['流水线'].removesuffix('-organization/1'), '核对时间UTC': datetime.now(UTC).isoformat(),
+        '源码生成阶段': source_pipeline_version(prior['流水线']), '核对时间UTC': datetime.now(UTC).isoformat(),
         '原报告sha256': hashlib.sha256(origin_path.read_bytes()).hexdigest(), '新建job_id': job_id,
         '实施代码起始sha256': implementation_hash(), '原始源码发送': False, '执行目标代码': False,
         '实际快照hash': prior['实际快照hash'], '性质': '真实模型全局职责整理，使用已有验证数据，不重新生成源码讲解；不是完整工程或发布验收',

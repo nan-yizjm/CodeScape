@@ -29,6 +29,13 @@ def registered():
         return False
 
 
+def changed_application_files(before, after):
+    """前端等随包资源也是程序内容；构建号元数据变化本身不证明更新。"""
+    metadata = {'_internal/build-info.json', 'SHA256-files.json'}
+    return sorted(path for path in before.keys() | after.keys()
+                  if path not in metadata and before.get(path) != after.get(path))
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--previous-build', type=Path, help='从应用自有已校验预发布目录安装后升级；不是跨正式版本验收')
@@ -128,8 +135,9 @@ def main():
         upgraded_build_id = json.loads((installed/'_internal/build-info.json').read_text(encoding='utf-8'))['build_id']
         assert upgraded_build_id == build['build_id']
         upgraded_program_hash = hashlib.sha256(executable.read_bytes()).hexdigest()
+        changed_files = changed_application_files(manifest, upgraded_manifest)
         if previous:
-            assert upgraded_program_hash != initial_program_hash
+            assert changed_files, '两个构建的实际程序或随包资源未变化，仅构建号变化不能计更新'
         with sqlite3.connect(f"{(data / 'app.db').as_uri()}?mode=ro", uri=True) as connection:
             assert connection.execute("PRAGMA quick_check").fetchone()[0] == "ok"
             assert connection.execute("SELECT state FROM prototype_learning WHERE entity_id=?", (entity["id"],)).fetchone()[0] == "mastered"
@@ -174,6 +182,7 @@ def main():
             'previous_build_id':initial_build_id,'upgraded_build_id':upgraded_build_id,
             'initial_program_sha256':initial_program_hash,'upgraded_program_sha256':upgraded_program_hash,
             'different_program_bytes':upgraded_program_hash!=initial_program_hash,
+            'changed_application_files':changed_files,
             'upgraded_program_started_and_learning_read':True,
             'upgraded_files_match_current_manifest':True,
             "upgrade_while_running": "通过；应用先正常退出，返回码 0", "learning_retained": True,

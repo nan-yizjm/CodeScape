@@ -3,7 +3,12 @@ import json
 from copy import deepcopy
 
 import pytest
-from codescape.provider import PIPELINE_VERSION, PREVIOUS_SOURCE_PIPELINE_VERSION, SOURCE_PIPELINE_VERSION
+from codescape.provider import (
+    PIPELINE_VERSION,
+    PREVIOUS_SOURCE_PIPELINE_VERSION,
+    SOURCE_PIPELINE_VERSION,
+    source_pipeline_version,
+)
 
 from scripts.compare_public_scope import (
     acceptance_gaps,
@@ -35,7 +40,7 @@ def architecture(identifier):
 
 def scope(identifier, *, published=True, pipeline=PIPELINE_VERSION):
     return {'record': {'流水线': pipeline, '模型': '固定响应', '接收端': '本地', '评测期间实施代码一致': True,
-                       '源码生成版本集合': [pipeline.removesuffix('-organization/1')]},
+                       '源码生成版本集合': [source_pipeline_version(pipeline)]},
             'published': published, 'architecture': architecture(identifier) if published else None,
             'batches': [] if published else [architecture(identifier)],
             'analysis': {'entities': [entity(identifier)], 'calls': [], 'scopes': []},
