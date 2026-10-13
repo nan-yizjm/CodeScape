@@ -72,7 +72,7 @@ def main():
                 '进度': progress or document.get('进度'),
                 '请求状态': dict(Counter(row['status'] for row in rows)),
                 '已知total_tokens': sum((row['usage'] or {}).get('total_tokens', 0) for row in rows),
-                '未知用量请求': sum(not row['usage'] for row in rows),
+                '未知用量请求': sum('total_tokens' not in (row['usage'] or {}) for row in rows),
                 '原快照字节未变': document.get('原快照字节未变'),
             }
             if scope == 'full':
@@ -111,7 +111,7 @@ def main():
     summary['账本汇总'] = {
         '去重请求数': len(rows),
         '已知total_tokens': sum((row['usage'] or {}).get('total_tokens', 0) for row in rows),
-        '缺少用量请求数': sum(not row['usage'] for row in rows),
+        '缺少用量请求数': sum('total_tokens' not in (row['usage'] or {}) for row in rows),
         '在途请求数': sum(row['status'] in {'prepared', 'sent'} for row in rows),
         '费用': None,
         '说明': '包含历史失败、截断、修复及重新评测，按请求ID去重；在途属于尚未返回用量，未知不记零，缺少价格不估算费用。',

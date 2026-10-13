@@ -148,3 +148,89 @@ def test_selection_does_not_create_notes_for_anonymous_or_unexplained_functions(
     context, _, ids = review.review_context(architecture, analysis, files,
                                           selected_entity_ids={entity.id for entity in analysis.entities})
     assert not ids and json.loads(context)['functions'] == []
+
+
+@pytest.mark.parametrize('failure', ['provider', 'checkpoint'])
+def test_review_preserves_accepted_batch_and_stops_on_next_error(failure):
+    from codescape.provider import ProviderError
+
+    architecture, _, _, _ = fixture()
+    files = {'a.py': 'def write():\n    return 1\n' + ''.join(
+        f'\ndef wrap{number}():\n    return write()\n' for number in range(13))}
+    analysis = python_analysis(files, 'fixed')
+    architecture.explanations = [FunctionExplanation(entity_id=entity.id, summary=entity.name, details='旧讲解',
+        evidence=[entity.location.model_dump(include={'path', 'start_line', 'end_line'})])
+        for entity in analysis.entities]
+    requests, saved = [], []
+
+    class FixedProvider:
+        async def structured(self, system, context, validator, max_tokens):
+            requests.append(context)
+            if len(requests) > 1:
+                raise ProviderError('固定响应服务故障')
+            cards = json.loads(context)['functions']
+            return validator({'items': [{'entity_id': card['entity_id'], 'decision': 'corrected',
+                'reason': '固定响应修订', 'explanation': {**card['existing'], 'details': '已核对的委托'}}
+                for card in cards]}), {'total_tokens': 12}
+
+    def persist(result, plans, total):
+        if failure == 'checkpoint':
+            raise OSError('固定响应磁盘故障，不能回显')
+        saved.append((result, plans, total))
+
+    provider = FixedProvider()
+    with pytest.raises(ProviderError, match='保存失败' if failure == 'checkpoint' else '服务故障'):
+        asyncio.run(review.review_explanations(provider, architecture, analysis, files, on_batch=persist))
+    assert all(note.details == '旧讲解' for note in architecture.explanations)
+    if failure == 'checkpoint':
+        assert len(requests) == 1 and not saved and not provider._explanation_review_plans
+        assert provider._explanation_review_architecture == architecture
+    else:
+        assert len(requests) == 2 and len(saved) == 1
+        result, plans, total = saved[0]
+        assert len(plans) == 1 and total == 2
+        assert provider._explanation_review_plans == plans
+        assert provider._explanation_review_architecture == result
+        assert sum(note.details == '已核对的委托' for note in result.explanations) == 12
+        assert sum(note.details == '旧讲解' for note in result.explanations) == 2
+        assert result.modules == architecture.modules and result.call_judgments == architecture.call_judgments
+
+
+def test_review_resumes_only_validated_prefix_without_repaying_and_rejects_stale_ids():
+    architecture, _, _, _ = fixture()
+    files = {'a.py': 'def write():\n    return 1\n' + ''.join(
+        f'\ndef wrap{number}():\n    return write()\n' for number in range(13))}
+    analysis = python_analysis(files, 'fixed')
+    architecture.explanations = [FunctionExplanation(entity_id=entity.id, summary=entity.name, details='旧讲解',
+        evidence=[entity.location.model_dump(include={'path', 'start_line', 'end_line'})])
+        for entity in analysis.entities]
+    batches = review.review_batches(architecture, analysis, files)
+    first_ids = batches[0][2]
+    prefix = {'items': [{'entity_id': note.entity_id, 'decision': 'corrected', 'reason': '固定响应',
+        'explanation': {**note.model_dump(), 'details': '检查点讲解'}}
+        for note in architecture.explanations if note.entity_id in first_ids]}
+    requested, saved = [], []
+
+    class FixedProvider:
+        async def structured(self, system, context, validator, max_tokens):
+            cards = json.loads(context)['functions']
+            requested.extend(card['entity_id'] for card in cards)
+            return validator({'items': [{'entity_id': card['entity_id'], 'decision': 'unchanged', 'reason': '准确'}
+                                        for card in cards]}), {'total_tokens': 5}
+
+    provider = FixedProvider()
+    result, usage = asyncio.run(review.review_explanations(provider, architecture, analysis, files,
+        completed_plans=[prefix], on_batch=lambda result, plans, total: saved.append((result, plans, total))))
+    assert requested == list(batches[1][2]) and len(requested) == 1
+    assert usage == {'total_tokens': 5} and len(saved[0][1]) == saved[0][2] == 2
+    assert sum(note.details == '检查点讲解' for note in result.explanations) == 12
+    assert all(note.details == '旧讲解' for note in architecture.explanations)
+    requested.clear()
+    cached, usage = asyncio.run(review.review_explanations(provider, architecture, analysis, files,
+                                                          completed_plans=saved[0][1]))
+    assert not requested and cached == result and usage == {}
+    prefix['items'][0]['entity_id'] = '旧快照ID'
+    prefix['items'][0]['explanation']['entity_id'] = '旧快照ID'
+    with pytest.raises(ValueError, match='恰好出现一次'):
+        asyncio.run(review.review_explanations(provider, architecture, analysis, files, completed_plans=[prefix]))
+    assert not requested

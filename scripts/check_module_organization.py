@@ -97,7 +97,7 @@ async def main(args):
                 database.requests.c.job_id == job_id)).mappings()]
         record.update({'请求账本': rows, '请求状态': dict(Counter(row['status'] for row in rows)),
             '已知total_tokens': sum((row['usage'] or {}).get('total_tokens', 0) for row in rows),
-            '未知用量请求': sum(row['usage'] is None for row in rows), '费用': None,
+            '未知用量请求': sum('total_tokens' not in (row['usage'] or {}) for row in rows), '费用': None,
             '实施代码结束sha256': implementation_hash()})
         record['评测期间实施代码一致'] = record['实施代码起始sha256'] == record['实施代码结束sha256']
         assert hashlib.sha256(origin_path.read_bytes()).hexdigest() == record['原报告sha256']

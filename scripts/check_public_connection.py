@@ -68,7 +68,7 @@ async def main(expected_model):
         summary = RequestLedger(database).summary()
         assert summary['request_count'] <= 1
         record.update({'请求账本': summary['records'], '已知total_tokens': summary['known_total_tokens'],
-                       '未知用量请求': sum(row['usage'] is None for row in summary['records'])})
+                       '未知用量请求': summary['unknown_usage_count']})
         path = repository / 'docs/reports/p0' / f'zod-typescript-connection-bounded真实模型验证-{uuid.uuid4()}.json'
         path.write_text(json.dumps(record, ensure_ascii=False, indent=2), encoding='utf-8')
         database.engine.dispose()

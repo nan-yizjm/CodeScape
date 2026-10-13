@@ -160,11 +160,23 @@ def review_prompt(schema):
             'reason简短说明修订或保留原因，仅输出以下schema的JSON：'+json.dumps(schema,ensure_ascii=False))
 
 
-async def review_explanations(provider, architecture, analysis, files, *, selected_entity_ids=None):
+async def review_explanations(provider, architecture, analysis, files, *, selected_entity_ids=None, on_batch=None,
+                              completed_plans=()):
     batches = review_batches(architecture, analysis, files, selected_entity_ids=selected_entity_ids)
     result = architecture.model_copy(deep=True)
     usage_total, plans = {}, []
-    for context, ranges, expected in batches:
+    provider._explanation_review_plans = []
+    provider._explanation_review_architecture = result.model_copy(deep=True)
+    if len(completed_plans) > len(batches):
+        raise ValueError('独立讲解复核检查点超过当前批次数。')
+    # 只复用连续前缀；每批仍以固定源材料严格校验ID和引用，不信任保存的候选架构。
+    for document, (_, ranges, expected) in zip(completed_plans, batches):
+        plan = ExplanationReview.model_validate(document)
+        result = apply_review(result, plan, analysis, files, ranges, expected)
+        plans.append(plan.model_dump())
+    provider._explanation_review_plans = list(plans)
+    provider._explanation_review_architecture = result.model_copy(deep=True)
+    for context, ranges, expected in batches[len(plans):]:
         def checked(document):
             plan = ExplanationReview.model_validate(document)
             return apply_review(result, plan, analysis, files, ranges, expected), plan
@@ -174,9 +186,18 @@ async def review_explanations(provider, architecture, analysis, files, *, select
                 for ref in [card['implementation'], *card['provided_evidence']])):
             (result, plan), usage = await provider.structured(
                 review_prompt(ExplanationReview.model_json_schema()), context, checked, max_tokens=8192)
-        plans.append(plan.model_dump())
+        accepted_plans = [*plans, plan.model_dump()]
+        if on_batch is not None:
+            try:
+                on_batch(result.model_copy(deep=True), accepted_plans, len(batches))
+            except OSError:
+                from codescape.provider import ProviderError
+
+                raise ProviderError('独立讲解复核检查点保存失败，已停止后续请求；原发布结果不变。') from None
+        plans = accepted_plans
+        provider._explanation_review_plans = plans
+        provider._explanation_review_architecture = result.model_copy(deep=True)
         for key, value in usage.items():
             if isinstance(value, int) and not isinstance(value, bool):
                 usage_total[key] = usage_total.get(key, 0) + value
-    provider._explanation_review_plans = plans
     return result, usage_total

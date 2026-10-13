@@ -226,7 +226,7 @@ def main():
             record['请求账本'] = rows
             record['请求状态'] = dict(Counter(row['status'] for row in rows))
             record['已知total_tokens'] = sum((row.get('usage') or {}).get('total_tokens',0) for row in rows)
-            record['未知用量请求'] = sum(row.get('usage') is None for row in rows)
+            record['未知用量请求'] = sum('total_tokens' not in (row.get('usage') or {}) for row in rows)
             record['费用'] = None
             diagnostics = root/'validation-errors.jsonl'
             record['脱敏校验记录'] = [json.loads(line) for line in diagnostics.read_text(encoding='utf-8').splitlines()] if diagnostics.exists() else []

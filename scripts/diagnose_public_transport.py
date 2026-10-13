@@ -152,7 +152,7 @@ async def diagnose(sample, json_response):
         assert len(rows) <= 1
         record.update({'请求账本': rows, '请求状态': dict(Counter(row['status'] for row in rows)),
             '已知total_tokens': sum((row.get('usage') or {}).get('total_tokens', 0) for row in rows),
-            '未知用量请求': sum(row.get('usage') is None for row in rows),
+            '未知用量请求': sum('total_tokens' not in (row.get('usage') or {}) for row in rows),
             '原源码字节未变': all(hashlib.sha256((original / 'owned-source' / name).read_bytes()).hexdigest()
                                    == checksum for name, checksum in hashes.items()),
             '耗时秒': round(time.monotonic() - started, 3)})

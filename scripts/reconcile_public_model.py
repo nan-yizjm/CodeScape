@@ -70,7 +70,7 @@ def main():
         '静态索引制品': {'path': str(artifact), 'sha256': digest, 'bytes': len(raw)},
         '请求账本': rows, '请求状态': dict(Counter(row['status'] for row in rows)),
         '已知total_tokens': sum((row['usage'] or {}).get('total_tokens', 0) for row in rows),
-        '未知用量请求': sum(row['usage'] is None for row in rows), '费用': None,
+        '未知用量请求': sum('total_tokens' not in (row['usage'] or {}) for row in rows), '费用': None,
         '中断报告核对时间UTC': datetime.now(UTC).isoformat(),
         '核对时原快照字节未变': True,
         '核对时实施代码sha256': implementation_hash(), '评测期间实施代码一致': None,
