@@ -1,0 +1,78 @@
+{
+  "核对时间UTC": "2026-10-13T01:27:21.509580+00:00",
+  "性质": "P0继续评测与局部质量核对，非全部验收通过",
+  "产品代码提交": "6d7839b",
+  "产品构建": "20261012T161950Z",
+  "产品默认流程未修改": true,
+  "后端实际检查": 421,
+  "Ruff": "通过",
+  "前端与安装验证": "本轮未改前端或打包代码，沿用161950Z已实跑证据；不冒称本轮重跑",
+  "完整范围终态": {
+    "hiredis-c": {
+      "完成批数": 2,
+      "总批数": 49,
+      "流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-organization/1",
+      "全程实施代码一致": true,
+      "原快照字节未变": true,
+      "全局结果已发布": false
+    },
+    "spdlog-cpp": {
+      "完成批数": 6,
+      "总批数": 53,
+      "流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-organization/1",
+      "全程实施代码一致": true,
+      "原快照字节未变": true,
+      "全局结果已发布": false
+    },
+    "flask-python": {
+      "完成批数": 13,
+      "总批数": 33,
+      "流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-organization/1",
+      "全程实施代码一致": true,
+      "原快照字节未变": true,
+      "全局结果已发布": false
+    },
+    "zod-typescript": {
+      "完成批数": 0,
+      "总批数": 76,
+      "流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-organization/1",
+      "全程实施代码一致": true,
+      "原快照字节未变": true,
+      "全局结果已发布": false
+    }
+  },
+  "公开历史账本": {
+    "去重请求数": 822,
+    "已知total_tokens": 19437561,
+    "缺少用量请求数": 88,
+    "在途请求数": 0,
+    "费用": null,
+    "说明": "包含历史失败、截断、修复及重新评测，按请求ID去重；在途属于尚未返回用量，未知不记零，缺少价格不估算费用。"
+  },
+  "本轮账本增量": {
+    "请求数": 37,
+    "已知total_tokens": 440080,
+    "缺少用量": 11
+  },
+  "主工作区模型请求": 13,
+  "新增只读范围对照": "全窄范围源码与结果对照.json",
+  "局部共同函数有讲解": {
+    "spdlog-cpp": 48,
+    "flask-python": 19
+  },
+  "讲解复核真实效果": "两个spdlog回溯包装删除了无依据的sink/级别恢复机制，函数模块概览和关系保持；独立工具未改写原发布结果。",
+  "已发现仍需解决": [
+    "完整四工程均未发布全局结果，范围概览对照不能通过。",
+    "Flask窄范围stream_with_context的装饰器分支措辞需精确为iter抛TypeError；get_flashed_messages不应承诺输入迭代器状态不变。",
+    "短委托独立复核29个候选的完整真实分批效果尚未通过，只实测两个针对性修订；默认产品流程未接入。",
+    "用户最终验收尚未完成。"
+  ],
+  "AC状态": {
+    "已验证": 32,
+    "部分验证": 2,
+    "待真实工程或用户验证": 2
+  },
+  "模型费用": null,
+  "执行目标源码": false,
+  "修改原始源码": false
+}

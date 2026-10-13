@@ -44,22 +44,22 @@
       ],
       "接收端": "https://www.cctq.ai/v1",
       "模型": "gpt-6.1-sol",
-      "模型流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
+      "模型流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-organization/1",
       "状态": "分析暂停",
-      "错误": "网络请求超时或失败；远端用量可能不确定。",
+      "错误": "AI 服务在流式响应中返回错误，未发布部分结果；检查点已保留，请检查服务后主动恢复。",
       "进度": {
         "phase": "paused",
         "completed": 2,
         "total": 49,
-        "detail": "网络请求超时或失败；远端用量可能不确定。"
+        "detail": "AI 服务在流式响应中返回错误，未发布部分结果；检查点已保留，请检查服务后主动恢复。"
       },
       "请求状态": {
         "success": 2,
-        "failed": 3,
+        "failed": 5,
         "outcome_unknown": 3
       },
-      "已知total_tokens": 77098,
-      "未知用量请求": 4,
+      "已知total_tokens": 99390,
+      "未知用量请求": 5,
       "原快照字节未变": true,
       "修订后本地批次检查": {
         "批次数": 49,
@@ -67,7 +67,7 @@
         "超过180000字符": 0,
         "仅静态规划": true,
         "规划流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-organization/1",
-        "索引所属模型流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
+        "索引所属模型流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-organization/1",
         "索引sha256": "3038a16bd172ad44dc17a54fcbd374eae81fc521454b347f32673abb49178075"
       }
     },
@@ -179,30 +179,30 @@
       ],
       "接收端": "https://www.cctq.ai/v1",
       "模型": "gpt-6.1-sol",
-      "模型流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
+      "模型流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-organization/1",
       "状态": "分析暂停",
-      "错误": "网络请求超时或失败；远端用量可能不确定。",
+      "错误": "任务已暂停，请主动恢复。",
       "进度": {
         "phase": "paused",
-        "completed": 1,
+        "completed": 6,
         "total": 53,
-        "detail": "网络请求超时或失败；远端用量可能不确定。"
+        "detail": "分析已中断，请主动重新启动"
       },
       "请求状态": {
-        "failed": 2,
-        "success": 1,
-        "outcome_unknown": 4
+        "failed": 5,
+        "success": 6,
+        "outcome_unknown": 6
       },
-      "已知total_tokens": 109098,
-      "未知用量请求": 4,
-      "原快照字节未变": null,
+      "已知total_tokens": 310585,
+      "未知用量请求": 6,
+      "原快照字节未变": true,
       "修订后本地批次检查": {
         "批次数": 53,
         "最大上下文字符": 145998,
         "超过180000字符": 0,
         "仅静态规划": true,
         "规划流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-organization/1",
-        "索引所属模型流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
+        "索引所属模型流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-organization/1",
         "索引sha256": "25bd3c34a5566920973027b9157cea9a61c578981dfeb552849afaaada2c5325"
       }
     },
@@ -239,22 +239,22 @@
       ],
       "接收端": "https://www.cctq.ai/v1",
       "模型": "gpt-6.1-sol",
-      "模型流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
+      "模型流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-organization/1",
       "状态": "分析暂停",
-      "错误": "AI 服务在流式响应中返回错误，未发布部分结果；检查点已保留，请检查服务后主动恢复。",
+      "错误": "任务已暂停，请主动恢复。",
       "进度": {
         "phase": "paused",
-        "completed": 7,
+        "completed": 13,
         "total": 33,
-        "detail": "AI 服务在流式响应中返回错误，未发布部分结果；检查点已保留，请检查服务后主动恢复。"
+        "detail": "分析已中断，请主动重新启动"
       },
       "请求状态": {
-        "success": 7,
-        "failed": 4,
-        "outcome_unknown": 1
+        "success": 15,
+        "failed": 7,
+        "outcome_unknown": 4
       },
-      "已知total_tokens": 158859,
-      "未知用量请求": 3,
+      "已知total_tokens": 335338,
+      "未知用量请求": 6,
       "原快照字节未变": true,
       "修订后本地批次检查": {
         "批次数": 33,
@@ -262,7 +262,7 @@
         "超过180000字符": 0,
         "仅静态规划": true,
         "规划流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-organization/1",
-        "索引所属模型流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
+        "索引所属模型流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-organization/1",
         "索引sha256": "d971981601aa60f9559090c929941a31ffedeea92e329e5242d70e8ec348cf2a"
       }
     },
@@ -383,9 +383,9 @@
       ],
       "接收端": "https://www.cctq.ai/v1",
       "模型": "gpt-6.1-sol",
-      "模型流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
+      "模型流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-organization/1",
       "状态": "分析暂停",
-      "错误": "分析已中断，请主动重新启动。",
+      "错误": "任务已暂停，请主动恢复。",
       "进度": {
         "phase": "paused",
         "completed": 0,
@@ -393,18 +393,19 @@
         "detail": "分析已中断，请主动重新启动"
       },
       "请求状态": {
-        "outcome_unknown": 5
+        "outcome_unknown": 8,
+        "failed": 1
       },
-      "已知total_tokens": 0,
-      "未知用量请求": 5,
-      "原快照字节未变": null,
+      "已知total_tokens": 25665,
+      "未知用量请求": 8,
+      "原快照字节未变": true,
       "修订后本地批次检查": {
         "批次数": 76,
         "最大上下文字符": 168299,
         "超过180000字符": 0,
         "仅静态规划": true,
         "规划流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-organization/1",
-        "索引所属模型流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
+        "索引所属模型流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-organization/1",
         "索引sha256": "9b20c143b120c8297df7f14e19aa3e53b2e4d1fe98f49d28dcd129bd302c55ea"
       }
     }
@@ -618,16 +619,16 @@
     }
   },
   "账本汇总": {
-    "去重请求数": 785,
-    "已知total_tokens": 18997481,
-    "缺少用量请求数": 77,
+    "去重请求数": 822,
+    "已知total_tokens": 19437561,
+    "缺少用量请求数": 88,
     "在途请求数": 0,
     "费用": null,
     "说明": "包含历史失败、截断、修复及重新评测，按请求ID去重；在途属于尚未返回用量，未知不记零，缺少价格不估算费用。"
   },
   "外部阻塞": "已按授权切换新接收端，实际终态和错误见各样本；历史DeepSeek官方余额查询不用于判定中转站可用性。",
   "验收结论": "真实评测与源码质量复核尚未完成；结构发布不代表质量通过，不能宣称全部P0完成。",
-  "汇总时间UTC": "2026-10-12T16:18:37.837009+00:00",
+  "汇总时间UTC": "2026-10-13T01:23:46.466862+00:00",
   "本轮本地修订说明": {
     "新流水线": "cpp-config/8",
     "新模型请求": 0,
