@@ -46,8 +46,11 @@ MAX_CONTEXT_CHARS = 180_000
 BATCH_TARGET_CHARS = 150_000
 BATCH_MAX_ENTITIES = 12
 LEGACY_SOURCE_PIPELINE_VERSION = "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1"
-SOURCE_PIPELINE_VERSION = LEGACY_SOURCE_PIPELINE_VERSION + '-evidence-localization/1'
+PREVIOUS_SOURCE_PIPELINE_VERSION = LEGACY_SOURCE_PIPELINE_VERSION + '-evidence-localization/1'
+SOURCE_PIPELINE_VERSION = PREVIOUS_SOURCE_PIPELINE_VERSION + '-semantics-guidance/1'
 PIPELINE_VERSION = SOURCE_PIPELINE_VERSION + '-organization/1'
+KNOWN_SOURCE_PIPELINE_VERSIONS = frozenset({LEGACY_SOURCE_PIPELINE_VERSION,
+                                          PREVIOUS_SOURCE_PIPELINE_VERSION, SOURCE_PIPELINE_VERSION})
 ProgressCallback = Callable[[int, int, str], Awaitable[None]]
 BatchCallback = Callable[[int, int, Architecture], Awaitable[None]]
 
@@ -87,10 +90,19 @@ def compatible_source_checkpoint(saved: dict) -> bool:
     """仅接受已知源码契约；旧结果还须通过恢复时的严格引用和关系校验。"""
     if not isinstance(saved, dict):
         return False
-    sources = {LEGACY_SOURCE_PIPELINE_VERSION, SOURCE_PIPELINE_VERSION}
     pipeline = saved.get('pipeline_version')
     source = pipeline.removesuffix('-organization/1') if isinstance(pipeline, str) else None
-    return source in sources and saved.get('source_pipeline_version', source) == source
+    return source in KNOWN_SOURCE_PIPELINE_VERSIONS and saved.get('source_pipeline_version', source) == source
+
+
+def checkpoint_source_generations(saved: dict) -> set[str]:
+    """保留复用批次的来源集合，当前处理版本不代替历史生成版本。"""
+    source = saved.get('pipeline_version', '').removesuffix('-organization/1')
+    values = saved.get('source_generation_versions', [source])
+    if (not isinstance(values, list) or not values or len(values) > len(KNOWN_SOURCE_PIPELINE_VERSIONS)
+            or any(not isinstance(value, str) or value not in KNOWN_SOURCE_PIPELINE_VERSIONS for value in values)):
+        raise ProviderError('源码检查点的生成来源版本无效，原记录保留，本次未继续请求模型。')
+    return set(values)
 
 
 def validation_feedback(error: ValueError) -> str:

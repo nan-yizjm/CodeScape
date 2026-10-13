@@ -44,6 +44,7 @@ from .provider import (
     SOURCE_PIPELINE_VERSION,
     Provider,
     ProviderError,
+    checkpoint_source_generations,
     compatible_source_checkpoint,
     validate_architecture,
 )
@@ -774,6 +775,7 @@ def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=
         async def work():
             checkpoint_path = root / "projects" / project_id / (f"checkpoint-{project['version_id']}.json" if candidate else "architecture-checkpoint.json")
             checkpoint: list[Architecture] = []
+            source_generations: set[str] = set()
             published = False
             database.update(project_id, status="analyzing", error=None)
             database.analysis_progress(
@@ -799,6 +801,8 @@ def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=
                             and saved.get('provider_config') == model_config
                         ):
                             checkpoint = [Architecture.model_validate(item) for item in saved.get("batches", [])]
+                            if checkpoint:
+                                source_generations = checkpoint_source_generations(saved)
                     except (OSError, ValueError, TypeError):
                         checkpoint = []
                 if checkpoint:
@@ -828,6 +832,7 @@ def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=
                     if not current_job or current_job["status"] != "running":
                         raise asyncio.CancelledError
                     saved_batches = checkpoint + [architecture]
+                    saved_generations = source_generations | {SOURCE_PIPELINE_VERSION}
                     temporary = checkpoint_path.with_suffix(".tmp")
                     with temporary.open("w", encoding="utf-8") as handle:
                         json.dump(
@@ -836,6 +841,7 @@ def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=
                                 "snapshot_hash": project["snapshot"]["hash"],
                                 "pipeline_version": PIPELINE_VERSION,
                                 "source_pipeline_version": SOURCE_PIPELINE_VERSION,
+                                "source_generation_versions": sorted(saved_generations),
                                 "provider_config": model_config,
                                 "batches": [item.model_dump() for item in saved_batches],
                             },
@@ -846,6 +852,7 @@ def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=
                     temporary.replace(checkpoint_path)
                     checkpoint.clear()
                     checkpoint.extend(saved_batches)
+                    source_generations.update(saved_generations)
 
                 source_files = read_snapshot(snapshot_root, project["snapshot"])
                 source_analysis = Analysis.model_validate(project["result"])
@@ -857,6 +864,7 @@ def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=
                     if saved["snapshot_hash"] != project["snapshot"]["hash"] or saved["result"] != project["result"]:
                         raise ValueError("已保存的分析产物与当前快照不一致，未重新请求模型。")
                     architecture, usage = Architecture.model_validate(saved["architecture"]), saved["usage"]
+                    source_generations = checkpoint_source_generations(saved)
                 else:
                     with ai_scope(project_id=project_id, version_id=project["version_id"], job_id=job["id"]):
                         callbacks = {"on_progress": progress, "on_batch": save_batch, "completed_batches": checkpoint}
@@ -878,7 +886,8 @@ def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=
                 # Both first analysis and reanalysis save and verify output before a short transaction.
                 descriptor = prepare_output(root / "projects" / project_id, project["version_id"],
                     project["snapshot"]["hash"], PIPELINE_VERSION, project["result"], architecture.model_dump(), usage,
-                    provider_config=model_config)
+                    provider_config=model_config,
+                    source_generation_versions=sorted(source_generations or {SOURCE_PIPELINE_VERSION}))
                 database.prepare_publication(project_id, project["version_id"], job["id"], descriptor, candidate=bool(candidate))
                 if candidate:
                     database.publish_candidate(project_id, candidate["id"], job["id"], architecture.model_dump())

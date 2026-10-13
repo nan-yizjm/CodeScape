@@ -3,7 +3,7 @@ import json
 from copy import deepcopy
 
 import pytest
-from codescape.provider import PIPELINE_VERSION, SOURCE_PIPELINE_VERSION
+from codescape.provider import PIPELINE_VERSION, PREVIOUS_SOURCE_PIPELINE_VERSION, SOURCE_PIPELINE_VERSION
 
 from scripts.compare_public_scope import (
     acceptance_gaps,
@@ -34,7 +34,8 @@ def architecture(identifier):
 
 
 def scope(identifier, *, published=True, pipeline=PIPELINE_VERSION):
-    return {'record': {'流水线': pipeline, '模型': '固定响应', '接收端': '本地', '评测期间实施代码一致': True},
+    return {'record': {'流水线': pipeline, '模型': '固定响应', '接收端': '本地', '评测期间实施代码一致': True,
+                       '源码生成版本集合': [pipeline.removesuffix('-organization/1')]},
             'published': published, 'architecture': architecture(identifier) if published else None,
             'batches': [] if published else [architecture(identifier)],
             'analysis': {'entities': [entity(identifier)], 'calls': [], 'scopes': []},
@@ -68,6 +69,19 @@ def test_identical_machine_results_still_require_semantic_review():
     report = compare(scope('full'), scope('narrow'))
     assert report['完整范围结果已发布'] and report['最终流水线一致']
     assert not report['验收通过'] and len(report['尚缺']) == 1
+
+
+def test_same_processing_version_does_not_hide_reused_historical_generation():
+    full, narrow = scope('full'), scope('narrow')
+    full['source_generation_versions'] = [PREVIOUS_SOURCE_PIPELINE_VERSION, SOURCE_PIPELINE_VERSION]
+    report = compare(full, narrow)
+    assert report['最终流水线一致'] and not report['源码生成阶段一致']
+    assert any('实际源码生成来源混合' in gap for gap in report['尚缺'])
+    for values in ([], ['unknown'], None):
+        full.pop('source_generation_versions')
+        full['record']['源码生成版本集合'] = values
+        assert not compare(full, narrow)['源码生成阶段一致']
+        full['source_generation_versions'] = values
 
 
 def test_source_checkpoint_compatibility_does_not_imply_final_pipeline_equivalence():

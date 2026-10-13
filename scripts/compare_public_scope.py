@@ -9,7 +9,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from codescape.models import Analysis
-from codescape.provider import LEGACY_SOURCE_PIPELINE_VERSION, SOURCE_PIPELINE_VERSION
+from codescape.provider import KNOWN_SOURCE_PIPELINE_VERSIONS, SOURCE_PIPELINE_VERSION
 
 REPOSITORY = Path(__file__).resolve().parents[1]
 REPORTS = REPOSITORY / 'docs/reports/p0'
@@ -68,7 +68,7 @@ def explanation(architectures, entity_id):
 def source_stage(pipeline):
     if isinstance(pipeline, str):
         source = pipeline.removesuffix('-organization/1')
-        if source in {LEGACY_SOURCE_PIPELINE_VERSION, SOURCE_PIPELINE_VERSION}:
+        if source in KNOWN_SOURCE_PIPELINE_VERSIONS:
             return source
     return pipeline
 
@@ -102,7 +102,25 @@ def acceptance_gaps(full, narrow):
         gaps.append('接收端或模型不同')
     if source_stage(full['record']['流水线']) != source_stage(narrow['record']['流水线']):
         gaps.append('源码生成阶段不同')
+    a, b = generation_versions(full), generation_versions(narrow)
+    if not a or not b or len(a) != 1 or len(b) != 1 or a != b:
+        gaps.append('实际源码生成来源混合、不同或缺失，不能按当前处理版本视为同一生成阶段')
     return gaps
+
+
+def generation_versions(scope):
+    values = scope.get('source_generation_versions')
+    if values is None:
+        values = scope['record'].get('源码生成版本集合')
+    if values is None:
+        source = source_stage(scope['record']['流水线'])
+        if source == SOURCE_PIPELINE_VERSION:
+            return frozenset()
+        return frozenset([source]) if source else frozenset()
+    if (not isinstance(values, list) or not values
+            or any(not isinstance(value, str) or value not in KNOWN_SOURCE_PIPELINE_VERSIONS for value in values)):
+        return frozenset()
+    return frozenset(values)
 
 
 def confirmed_calls(analysis, common_ids, common_paths):
@@ -162,6 +180,7 @@ def load_scope(sample, scope, commit):
         assert checkpoint['provider_config'] == {'base_url': record['接收端'], 'model': record['模型']}
         checkpoint_hash = hashlib.sha256(checkpoint_raw).hexdigest()
     return {'record': record, 'analysis': analysis, 'published': published, 'architecture': architecture,
+            'source_generation_versions': (checkpoint or {}).get('source_generation_versions'),
             'batches': (checkpoint or {}).get('batches', []), 'file_hashes': hashes,
             'proof': {'报告': str(path), '报告sha256': hashlib.sha256(raw).hexdigest(),
                       '索引来源报告': str(index_receipt_path), '索引来源报告sha256': index_receipt_hash,
@@ -196,7 +215,10 @@ def compare(full, narrow):
         gaps.append('存在共同函数身份歧义，未猜测配对')
     return {'完整范围来源': full['proof'], '缩小范围来源': narrow['proof'],
             '完整范围流水线': full['record']['流水线'], '缩小范围流水线': narrow['record']['流水线'],
-            '源码生成阶段一致': source_stage(full['record']['流水线']) == source_stage(narrow['record']['流水线']),
+            '完整范围源码生成来源': sorted(generation_versions(full)),
+            '缩小范围源码生成来源': sorted(generation_versions(narrow)),
+            '源码生成阶段一致': (len(generation_versions(full)) == len(generation_versions(narrow)) == 1
+                                and generation_versions(full) == generation_versions(narrow)),
             '最终流水线一致': full['record']['流水线'] == narrow['record']['流水线'],
             '共同文件数': len(same_files), '共同文件字节一致': True,
             '仅完整范围文件数': len(full['file_hashes'].keys() - narrow['file_hashes'].keys()),

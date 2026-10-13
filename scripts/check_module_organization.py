@@ -19,11 +19,10 @@ from codescape.database import Database, now
 from codescape.ledger import ai_scope
 from codescape.models import Analysis, Architecture
 from codescape.provider import (
-    LEGACY_SOURCE_PIPELINE_VERSION,
     PIPELINE_VERSION,
-    SOURCE_PIPELINE_VERSION,
     Provider,
     ProviderError,
+    compatible_source_checkpoint,
 )
 
 
@@ -35,8 +34,7 @@ async def main(args):
     approved = next(item for item in json.loads((repository / 'docs/benchmark_sources.json').read_text(
         encoding='utf-8'))['repositories'] if item['id'] == args.id)
     assert prior['Commit'] == approved['commit'] and prior['状态'] == '结构检查通过，待源码质量复核'
-    assert prior['流水线'] in {LEGACY_SOURCE_PIPELINE_VERSION, LEGACY_SOURCE_PIPELINE_VERSION + '-organization/1',
-                            SOURCE_PIPELINE_VERSION, PIPELINE_VERSION}
+    assert compatible_source_checkpoint({'pipeline_version': prior['流水线']})
     original = Path(prior['数据目录']).resolve(strict=True)
     original.relative_to(repository / '.runtime/public-model-validation')
     index_path = Path(prior['静态索引制品']['path']).resolve(strict=True)

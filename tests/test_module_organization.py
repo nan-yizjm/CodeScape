@@ -8,9 +8,11 @@ from codescape.module_organization import ModuleOrganization, apply_organization
 from codescape.provider import (
     LEGACY_SOURCE_PIPELINE_VERSION,
     PIPELINE_VERSION,
+    PREVIOUS_SOURCE_PIPELINE_VERSION,
     SOURCE_PIPELINE_VERSION,
     Provider,
     ProviderError,
+    checkpoint_source_generations,
     compatible_source_checkpoint,
     validate_architecture,
 )
@@ -137,6 +139,10 @@ def test_failed_organization_keeps_source_result_and_stops_after_finite_repairs(
     ({'pipeline_version': LEGACY_SOURCE_PIPELINE_VERSION}, True),
     ({'pipeline_version': LEGACY_SOURCE_PIPELINE_VERSION + '-organization/1',
       'source_pipeline_version': LEGACY_SOURCE_PIPELINE_VERSION}, True),
+    ({'pipeline_version': PREVIOUS_SOURCE_PIPELINE_VERSION}, True),
+    ({'pipeline_version': PREVIOUS_SOURCE_PIPELINE_VERSION + '-organization/1',
+      'source_pipeline_version': PREVIOUS_SOURCE_PIPELINE_VERSION}, True),
+    ({'pipeline_version': PIPELINE_VERSION, 'source_pipeline_version': PREVIOUS_SOURCE_PIPELINE_VERSION}, False),
     ({'pipeline_version': SOURCE_PIPELINE_VERSION}, True),
     ({'pipeline_version': PIPELINE_VERSION, 'source_pipeline_version': SOURCE_PIPELINE_VERSION}, True),
     ({'pipeline_version': PIPELINE_VERSION}, True),
@@ -146,3 +152,15 @@ def test_failed_organization_keeps_source_result_and_stops_after_finite_repairs(
 ])
 def test_only_known_source_contract_checkpoints_can_enter_strict_revalidation(saved, expected):
     assert compatible_source_checkpoint(saved) is expected
+
+
+def test_reused_generation_origins_are_preserved_and_invalid_origins_stop_recovery():
+    saved = {'pipeline_version': PREVIOUS_SOURCE_PIPELINE_VERSION + '-organization/1'}
+    assert checkpoint_source_generations(saved) == {PREVIOUS_SOURCE_PIPELINE_VERSION}
+    saved.update(pipeline_version=PIPELINE_VERSION,
+                 source_generation_versions=[PREVIOUS_SOURCE_PIPELINE_VERSION, SOURCE_PIPELINE_VERSION])
+    assert checkpoint_source_generations(saved) == {PREVIOUS_SOURCE_PIPELINE_VERSION, SOURCE_PIPELINE_VERSION}
+    for wrong in ([], 'unknown', [None], ['not-a-known-version']):
+        saved['source_generation_versions'] = wrong
+        with pytest.raises(ProviderError, match='生成来源版本无效'):
+            checkpoint_source_generations(saved)

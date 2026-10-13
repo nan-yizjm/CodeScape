@@ -29,6 +29,15 @@ def setup_publication(root, candidate=False):
     return db, version, architecture, descriptor
 
 
+def test_published_output_digest_also_binds_source_generation_origins(tmp_path):
+    origins = ['source-old', 'source-current']
+    descriptor = prepare_output(tmp_path, 'v', 'snapshot', 'processing-current', {}, {}, {},
+                                source_generation_versions=origins)
+    assert load_output(tmp_path, 'v', descriptor)['source_generation_versions'] == sorted(origins)
+    with pytest.raises(ValueError, match='缺失或损坏'):
+        load_output(tmp_path, 'v', {**descriptor, 'source_generation_versions': ['source-current']})
+
+
 @pytest.mark.parametrize("candidate", [False, True])
 def test_publication_commits_output_project_job_and_event_together(tmp_path, candidate):
     db, version, architecture, _ = setup_publication(tmp_path, candidate)

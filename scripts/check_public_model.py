@@ -220,6 +220,15 @@ def main():
                 analysis=result.get('analysis'),architecture=result.get('architecture'))
             assert original_files == read_snapshot(snapshot,old_manifest)
             record['原快照字节未变'] = True
+            checkpoint_path = root/'projects'/record['project_id']/'architecture-checkpoint.json'
+            if checkpoint_path.exists():
+                from codescape.provider import checkpoint_source_generations
+                saved_checkpoint = json.loads(checkpoint_path.read_text(encoding='utf-8'))
+                record['源码生成版本集合'] = sorted(checkpoint_source_generations(saved_checkpoint))
+            else:
+                version = database.version(record['project_id'], record['version_id'])
+                prepared = (version or {}).get('value', {}).get('prepared_output') or {}
+                record['源码生成版本集合'] = prepared.get('source_generation_versions')
             with database.engine.connect() as connection:
                 from sqlalchemy import select
                 rows = [dict(row) for row in connection.execute(select(database.requests)).mappings()]
