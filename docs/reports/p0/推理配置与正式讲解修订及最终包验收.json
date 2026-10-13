@@ -1,5 +1,6 @@
 {
-  "核对时间UTC": "2026-10-13T10:33:15.691188+00:00",
+  "日期": "2026-10-14",
+  "核对时间UTC": "2026-10-13T16:11:55.000192+00:00",
   "产品代码": "5b5afa7",
   "后端代码": "7bda520",
   "范围对照工具": "143c9bf",
@@ -260,23 +261,31 @@
       "接收端": "https://www.cctq.ai/v1",
       "模型": "gpt-6.1-sol",
       "模型流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1-compact-batches/1-reasoning-config/1-organization/1",
-      "状态": "进行中",
-      "错误": null,
+      "状态": "分析暂停",
+      "错误": "本轮评测已中断，检查点已保留，请主动恢复。",
       "进度": {
-        "phase": "batching",
-        "completed": 49,
+        "phase": "paused",
+        "completed": 76,
         "total": 76,
-        "detail": "正在分析第 50/76 批 · 1 个文件"
+        "detail": "源码批次完整保留，全局职责整理未完成；本轮已中断"
       },
       "请求状态": {
-        "success": 53,
+        "success": 80,
         "failed": 12,
-        "outcome_unknown": 20,
-        "sent": 1
+        "outcome_unknown": 30
       },
-      "已知total_tokens": 642256,
-      "未知用量请求": 28,
-      "原快照字节未变": null
+      "已知total_tokens": 870005,
+      "未知用量请求": 37,
+      "原快照字节未变": null,
+      "修订后本地批次检查": {
+        "批次数": 33,
+        "最大上下文字符": 51704,
+        "超过180000字符": 0,
+        "仅静态规划": true,
+        "规划流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1-compact-batches/1-reasoning-config/1-organization/1",
+        "索引所属模型流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1-compact-batches/1-reasoning-config/1-organization/1",
+        "索引sha256": "d971981601aa60f9559090c929941a31ffedeea92e329e5242d70e8ec348cf2a"
+      }
     },
     "zod-typescript": {
       "Commit": "0b216ef674e297ebe41d8bf902262e56f8755822",
@@ -423,19 +432,20 @@
       }
     }
   },
+  "本轮结束": "用户中断后已暂停所有评测；Flask源码76/76，全局职责整理未完成。普通JSON全局整理三次传输失败，流式对照被中断，不能判定其效果。",
   "累计公开账本快照": {
-    "去重请求数": 1010,
-    "已知total_tokens": 20358864,
-    "缺少用量请求数": 173,
-    "在途请求数": 1,
+    "去重请求数": 1046,
+    "已知total_tokens": 20586613,
+    "缺少用量请求数": 182,
+    "在途请求数": 0,
     "费用": null,
     "说明": "包含历史失败、截断、修复及重新评测，按请求ID去重；在途属于尚未返回用量，未知不记零，缺少价格不估算费用。"
   },
-  "仍有在途": true,
+  "仍有在途": false,
   "本轮公开账本增量快照": {
-    "请求数": 112,
-    "已知total_tokens": 563672,
-    "缺少总用量请求": 46,
+    "请求数": 148,
+    "已知total_tokens": 791421,
+    "缺少总用量请求": 55,
     "费用": null
   },
   "Windows验证": {
@@ -443,7 +453,7 @@
     "实际升级": "073908Z→082929Z",
     "独立启动声明边界": "通过",
     "升级卸载数据保留": "通过",
-    "真实检查点恢复批数": 83,
+    "真实检查点恢复批数": 123,
     "模型请求": 0,
     "边界": "当前Win11开发机，同0.1.0两构建；不声称干净Win10/11或正式版本升级"
   },

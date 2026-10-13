@@ -1,5 +1,5 @@
 {
-  "核对时间UTC": "2026-10-13T10:22:01.461028+00:00",
+  "核对时间UTC": "2026-10-13T16:07:34.689840+00:00",
   "模型请求": 0,
   "执行目标代码": false,
   "修改原始源码": false,
@@ -5660,11 +5660,11 @@
     "flask-python": {
       "完整范围来源": {
         "报告": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\docs\\reports\\p0\\flask-python-full真实模型验证.json",
-        "报告sha256": "60cd6739a19a22399f38c7406a5175f21f2f072696a44f23ad28fc6f977418c5",
+        "报告sha256": "8fa8f0a39f6f5bf1ff88d6f03a713e65dd6d8e4434001fdd001b7dc0bfafd131",
         "索引来源报告": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\docs\\reports\\p0\\flask-python-full真实模型验证.json",
-        "索引来源报告sha256": "60cd6739a19a22399f38c7406a5175f21f2f072696a44f23ad28fc6f977418c5",
+        "索引来源报告sha256": "8fa8f0a39f6f5bf1ff88d6f03a713e65dd6d8e4434001fdd001b7dc0bfafd131",
         "索引sha256": "d971981601aa60f9559090c929941a31ffedeea92e329e5242d70e8ec348cf2a",
-        "检查点sha256": "b51852a1da9dc9b1e6eeb04b774b4e365610a808d7e3e6089bea26f17ddd9099",
+        "检查点sha256": "72608d8301c401bfc465dc1f3ccae7449e22331db381a0f469dd818d754d828c",
         "检查点流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1-compact-batches/1-reasoning-config/1-organization/1",
         "数据库状态": "paused"
       },
@@ -5700,7 +5700,7 @@
       "窄范围未匹配函数": [],
       "完整范围结果已发布": false,
       "缩小范围结果已发布": true,
-      "完整范围检查点批数": 35,
+      "完整范围检查点批数": 76,
       "共同函数在完整范围有唯一讲解数": 19,
       "静态确认关系对照": {
         "共同关系数": 2,
@@ -7082,6 +7082,7 @@
       ],
       "尚缺": [
         "完整范围尚未发布完整架构，检查点不作为全局概览",
+        "完整范围缺少评测全程实施代码一致的终态证明",
         "实际源码生成来源混合、不同或缺失，不能按当前处理版本视为同一生成阶段",
         "需要人工核对四部分概览、职责差异、条件语义和核心协作；字符串差异不等于语义冲突"
       ],
