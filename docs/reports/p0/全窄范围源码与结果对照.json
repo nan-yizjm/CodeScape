@@ -1,5 +1,5 @@
 {
-  "核对时间UTC": "2026-10-13T02:13:59.864038+00:00",
+  "核对时间UTC": "2026-10-13T06:06:05.831297+00:00",
   "模型请求": 0,
   "执行目标代码": false,
   "修改原始源码": false,
@@ -8,12 +8,12 @@
     "hiredis-c": {
       "完整范围来源": {
         "报告": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\docs\\reports\\p0\\hiredis-c-full真实模型验证.json",
-        "报告sha256": "cc9ef9c781821bbbd37510a36b7c92333b16599d3087774760f196e1444ea044",
+        "报告sha256": "2948c1cdaa22e6e6e4500c16604d12999042201eb4c8fa7ce79a6ef59854ac37",
         "索引来源报告": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\docs\\reports\\p0\\hiredis-c-full真实模型验证.json",
-        "索引来源报告sha256": "cc9ef9c781821bbbd37510a36b7c92333b16599d3087774760f196e1444ea044",
+        "索引来源报告sha256": "2948c1cdaa22e6e6e4500c16604d12999042201eb4c8fa7ce79a6ef59854ac37",
         "索引sha256": "3038a16bd172ad44dc17a54fcbd374eae81fc521454b347f32673abb49178075",
-        "检查点sha256": "fc9977134246bb0f64cec44a3f30f802aec6ae3e2efee45f0d9b777885579e98",
-        "检查点流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
+        "检查点sha256": "3776e23306e6ef49651e02ea611cde08e3327a1aeeefdbe7eca93653d576be1c",
+        "检查点流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-organization/1",
         "数据库状态": "paused"
       },
       "缩小范围来源": {
@@ -26,9 +26,9 @@
         "检查点流水线": null,
         "数据库状态": "ready"
       },
-      "完整范围流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-organization/1",
+      "完整范围流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-organization/1",
       "缩小范围流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
-      "源码生成阶段一致": true,
+      "源码生成阶段一致": false,
       "最终流水线一致": false,
       "共同文件数": 2,
       "共同文件字节一致": true,
@@ -39,7 +39,7 @@
       "窄范围未匹配函数": [],
       "完整范围结果已发布": false,
       "缩小范围结果已发布": true,
-      "完整范围检查点批数": 2,
+      "完整范围检查点批数": 5,
       "共同函数在完整范围有唯一讲解数": 0,
       "静态确认关系对照": {
         "共同关系数": 0,
@@ -1752,6 +1752,7 @@
       "尚缺": [
         "完整范围尚未发布完整架构，检查点不作为全局概览",
         "最终流水线不同；相同源码生成阶段不能替代最终组织与概览对照",
+        "源码生成阶段不同",
         "需要人工核对四部分概览、职责差异、条件语义和核心协作；字符串差异不等于语义冲突"
       ],
       "验收通过": false
@@ -5425,12 +5426,12 @@
     "flask-python": {
       "完整范围来源": {
         "报告": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\docs\\reports\\p0\\flask-python-full真实模型验证.json",
-        "报告sha256": "0a335059c268b912b8681b75c369142b1025d692e36362cdf1b4a78f29f9b7de",
+        "报告sha256": "a9374bce0d8618c0ed17ebabbae07f225dd633d59c6c196675e67552eafe9440",
         "索引来源报告": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\docs\\reports\\p0\\flask-python-full真实模型验证.json",
-        "索引来源报告sha256": "0a335059c268b912b8681b75c369142b1025d692e36362cdf1b4a78f29f9b7de",
+        "索引来源报告sha256": "a9374bce0d8618c0ed17ebabbae07f225dd633d59c6c196675e67552eafe9440",
         "索引sha256": "d971981601aa60f9559090c929941a31ffedeea92e329e5242d70e8ec348cf2a",
-        "检查点sha256": "7ea78d2bbd8d120c68830ec102c4cd3cb22d1b8d04e7cc614cc09ed3c94ca779",
-        "检查点流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-organization/1",
+        "检查点sha256": "ff0e3af05923640ef53eda07fc4293e2c082793f89733f4558c2982ae42dcc54",
+        "检查点流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-organization/1",
         "数据库状态": "paused"
       },
       "缩小范围来源": {
@@ -5443,9 +5444,9 @@
         "检查点流水线": null,
         "数据库状态": "ready"
       },
-      "完整范围流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-organization/1",
+      "完整范围流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-organization/1",
       "缩小范围流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
-      "源码生成阶段一致": true,
+      "源码生成阶段一致": false,
       "最终流水线一致": false,
       "共同文件数": 1,
       "共同文件字节一致": true,
@@ -5456,7 +5457,7 @@
       "窄范围未匹配函数": [],
       "完整范围结果已发布": false,
       "缩小范围结果已发布": true,
-      "完整范围检查点批数": 13,
+      "完整范围检查点批数": 16,
       "共同函数在完整范围有唯一讲解数": 19,
       "静态确认关系对照": {
         "共同关系数": 2,
@@ -6756,6 +6757,7 @@
       "尚缺": [
         "完整范围尚未发布完整架构，检查点不作为全局概览",
         "最终流水线不同；相同源码生成阶段不能替代最终组织与概览对照",
+        "源码生成阶段不同",
         "需要人工核对四部分概览、职责差异、条件语义和核心协作；字符串差异不等于语义冲突"
       ],
       "验收通过": false
