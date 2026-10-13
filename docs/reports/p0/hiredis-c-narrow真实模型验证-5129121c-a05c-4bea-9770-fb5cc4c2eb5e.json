@@ -1,0 +1,969 @@
+{
+  "日期": "2026-10-14",
+  "检查开始时间UTC": "2026-10-13T17:01:31.970173+00:00",
+  "样本": "hiredis-c",
+  "Commit": "058ebcdf36c5b05b759c613564fb958ec363c90f",
+  "范围": "缩小范围",
+  "授权": "用户允许四个固定公开样本向当前配置接收端上传并评测",
+  "接收端": "https://www.cctq.ai/v1",
+  "模型": "gpt-6.1-sol",
+  "流式接收": true,
+  "当前请求推理强度": "low",
+  "流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1-compact-batches/1-reasoning-config/1-organization/1",
+  "数据目录": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\.runtime\\public-model-validation\\1d0d9899-1c8b-4dd4-952c-e1dfcd7da9a9",
+  "原始快照hash": "7240fe218f0552729c0343bf54f244013ed1ba2dd982d34f49e4bb421cbb39a2",
+  "实际文件": [
+    "read.c",
+    "read.h"
+  ],
+  "状态": "结构检查通过，待源码质量复核",
+  "执行目标代码": false,
+  "实施代码起始sha256": "510e88d9f474171e36f21f0b07f9b495b2db615b489b811e623639b8a0d0324c",
+  "开发评测截止秒数": 1800,
+  "进度": {
+    "phase": "completed",
+    "completed": 1,
+    "total": 1,
+    "detail": "分批分析完成"
+  },
+  "耗时秒": 472.42,
+  "project_id": "1c89b64c-aa99-4d4d-80ed-792f7dd7109a",
+  "version_id": "541a059e-d346-4437-916a-0375a76e5958",
+  "实际快照hash": "8fd5570b3b8949d0839981e7e5e07a8e4563809c4c6d5820abe4aa081a70a78c",
+  "scope_hash": "64d8fef1eca2d21c0868fb5cb2988d0e4d169bafe184ba5bc3727938f0682e93",
+  "错误": null,
+  "architecture": {
+    "modules": [
+      {
+        "id": "resp_reader",
+        "parent_id": null,
+        "name": "RESP协议读取",
+        "summary": "组织增量输入、协议解析、读取任务管理、错误处理和读取器资源管理；各类回复的校验与构造由独立模块承担。",
+        "entity_ids": [],
+        "code_paths": [
+          "read.c",
+          "read.h"
+        ],
+        "incomplete": true
+      },
+      {
+        "id": "stream_parser_pending",
+        "parent_id": "resp_reader",
+        "name": "流式解析待完成部分",
+        "summary": "已提供职责为缓存RESP数据、解析各类回复并构造回复对象；该模块仍未完成，未提供具体函数说明，不推断其缺失实现。",
+        "entity_ids": [],
+        "code_paths": [
+          "read.c"
+        ],
+        "incomplete": true
+      },
+      {
+        "id": "reader_error_reset",
+        "parent_id": "resp_reader",
+        "name": "错误收尾与状态重置",
+        "summary": "读取器出错时按条件释放回复对象，清空输入缓冲和任务栈位置，保存错误类型及截断后的错误文本。",
+        "entity_ids": [
+          "9225bb1c-28c9-5d5a-9408-c6dbda16532b"
+        ],
+        "code_paths": [
+          "read.c"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "reader_helpers",
+        "parent_id": "resp_reader",
+        "name": "字节消费与错误辅助",
+        "summary": "将协议字节转换为可读转义文本，把非法类型字节包装成协议错误，设置内存不足错误，并从读取器缓冲区消费指定数量的字节。",
+        "entity_ids": [
+          "31e15205-bb04-52ee-9a4b-5709457edd39",
+          "52660522-2f80-5699-b9d5-c7346ab0cc4f",
+          "820a6035-764b-58c2-abd0-ba194d51528f",
+          "2f8fff1d-4e2e-5f01-bc43-ba14706d3ee6"
+        ],
+        "code_paths": [
+          "read.c"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "parse_foundations",
+        "parent_id": "resp_reader",
+        "name": "解析基础",
+        "summary": "提供增量回复解析所需的完整行识别、严格整数校验和嵌套容器任务推进。",
+        "entity_ids": [],
+        "code_paths": [
+          "read.c"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "line_boundaries",
+        "parent_id": "parse_foundations",
+        "name": "协议行定界",
+        "summary": "在有界缓冲区中寻找CRLF，仅在获得完整协议行时推进读取位置。",
+        "entity_ids": [
+          "3b1327c1-9127-5ea8-a747-a7ec03a0aec4",
+          "d9787960-677a-51c6-b5db-593ecc5c0cf8"
+        ],
+        "code_paths": [
+          "read.c"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "strict_integer",
+        "parent_id": "parse_foundations",
+        "name": "严格整数解析",
+        "summary": "验证十进制整数的规范表示及long long范围，支持只校验而不写出结果。",
+        "entity_ids": [
+          "7b1d5b1f-156a-5507-9131-c146bae8c1a3"
+        ],
+        "code_paths": [
+          "read.c"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "nested_task_advance",
+        "parent_id": "parse_foundations",
+        "name": "嵌套任务推进",
+        "summary": "完成当前子项后，根据子项索引回退已完成的容器层级，或重置当前任务以解析下一个兄弟项。",
+        "entity_ids": [
+          "51bc1771-1a62-58d7-8467-d419c7fd8ea6"
+        ],
+        "code_paths": [
+          "read.c"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "reply_processing",
+        "parent_id": "resp_reader",
+        "name": "回复解析与任务存储",
+        "summary": "解析缓冲区中的不同类型回复，并管理解析任务所需的存储空间；类型分派、各类内容处理和扩容分别承担独立分工。",
+        "entity_ids": [],
+        "code_paths": [
+          "read.c"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "line_reply",
+        "parent_id": "reply_processing",
+        "name": "行式回复解析",
+        "summary": "依据当前任务的回复类型校验行内容，通过可选构造回调生成回复或返回类型标记；成功后提交根回复并推进读取任务。",
+        "entity_ids": [
+          "0d9c6126-b170-5d12-959c-eaefce1463a2"
+        ],
+        "code_paths": [
+          "read.c"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "bulk_reply",
+        "parent_id": "reply_processing",
+        "name": "长度前缀字符串解析",
+        "summary": "处理空值、普通字符串及逐字字符串，检查长度与内容格式，待数据齐备后创建结果并推进读取任务。",
+        "entity_ids": [
+          "23fb5f9e-c1b5-52d2-9087-17ea609deb62"
+        ],
+        "code_paths": [
+          "read.c"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "task_storage_growth",
+        "parent_id": "reply_processing",
+        "name": "任务存储扩容",
+        "summary": "按固定增量扩展任务指针数组，逐个分配清零任务，并统一进入内存不足错误路径。",
+        "entity_ids": [
+          "b15871fd-7824-596d-88a1-10868d6a6aa8"
+        ],
+        "code_paths": [
+          "read.c"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "reply_dispatch",
+        "parent_id": "reply_processing",
+        "name": "协议类型分派",
+        "summary": "识别当前读取任务的协议类型，将行值、定长字符串和聚合值交给相应处理入口。",
+        "entity_ids": [
+          "4d63f1bd-dfd1-5e8a-bdbb-b793d7742aae"
+        ],
+        "code_paths": [
+          "read.c"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "aggregate_reply",
+        "parent_id": "reply_processing",
+        "name": "聚合回复解析",
+        "summary": "校验聚合长度及嵌套限制，通过可选构造回调生成对象，并组织子元素读取任务。",
+        "entity_ids": [
+          "87dcd644-d472-5312-ac05-08411d324297"
+        ],
+        "code_paths": [
+          "read.c"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "reader_lifecycle",
+        "parent_id": "resp_reader",
+        "name": "读取器生命周期",
+        "summary": "创建带可配置回复对象操作表的读取器，初始化任务栈及默认限制，并释放完整或部分初始化的资源。",
+        "entity_ids": [
+          "4d7cee08-560b-593b-96ef-fcaef99850b0",
+          "ab72be45-3d63-591a-b53b-67ae15ec8dec"
+        ],
+        "code_paths": [
+          "read.c"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "input_reply_delivery",
+        "parent_id": "resp_reader",
+        "name": "增量输入与回复交付",
+        "summary": "追加并缓存输入字节，按条件回收空缓冲区，驱动任务式回复处理，压缩已消费缓冲区，并交付或按回调释放完成的回复。",
+        "entity_ids": [
+          "a1b83243-7738-5c20-a648-4e94faee8aa3",
+          "48fd0364-2b4c-5bfb-936a-6cddf40326ae"
+        ],
+        "code_paths": [
+          "read.c"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "public_interface_pending",
+        "parent_id": "resp_reader",
+        "name": "读取器公共接口",
+        "summary": "已提供职责为声明协议读取器的数据结构、错误码、回复类型、回调接口和公共API；该模块仍未完成，不补齐未提供内容。",
+        "entity_ids": [],
+        "code_paths": [
+          "read.h"
+        ],
+        "incomplete": true
+      }
+    ],
+    "overview": {
+      "introduction": "这是一个面向客户端和上层应用的 RESP 协议增量读取组件，用于把分段到达的协议字节解析成结构化回复。它负责读取过程、嵌套内容和资源状态管理，并将完成的回复交给调用方。",
+      "capabilities": [
+        "接收分段字节并增量解析协议回复",
+        "处理行式、定长字符串和聚合回复",
+        "解析嵌套结构并限制任务与内容规模",
+        "通过回调构造、交付或释放回复对象",
+        "在输入不足或协议、内存错误时记录失败状态"
+      ],
+      "principle": "调用方追加输入后，读取器缓存尚未消费的字节，按协议类型和长度逐步校验并推进嵌套解析任务；数据完整时构造回复并交付，数据不足则保留状态等待后续输入，明确错误则清理相关状态并记录错误信息。",
+      "limitations": [
+        "流式解析主体和公共接口仍有未完成部分，完整运行时行为无法确认。",
+        "回复对象的具体结构、构造和释放依赖调用方提供的回调。",
+        "材料未覆盖网络收发、命令执行或完整客户端功能。",
+        "缓冲区、读取器状态及部分回调参数的有效性依赖调用方；异常边界未被穷举。",
+        "浮点等特定解析行为受条件配置影响，当前材料未确认实际启用分支。"
+      ],
+      "synthesized": true,
+      "analysis_notes": [
+        "本批 entities 为空，无法将可见函数归属到函数节点。",
+        "仅依据已提供的 read.c 代码，相关头文件和外部对象创建回调实现未展开。",
+        "条件编译下的浮点解析实现取决于 HIREDIS_FLOAT_STRTOD 配置。",
+        "本批仅提供一个错误处理函数，不能据此概括完整协议解析流程。",
+        "读取器指针和错误文本指针未做空值检查，错误文本须可供 strlen 读取。",
+        "释放回复使用动态回调，本批未提供其目标实现；没有异常或非正常返回的恢复保护。",
+        "仅覆盖read.c第98至145行的实现。",
+        "错误设置函数__redisReaderSetError的内部行为未在本批可见函数中提供。",
+        "snprintf和isprint等库调用的具体实现及异常边界未展开。",
+        "本批仅覆盖四个辅助函数，不展示完整回复类型解析、输入补充和对象构建流程。",
+        "缓冲区、长度和任务栈的有效性依赖调用方，本层没有全面的空指针或状态校验。",
+        "任务一致性部分依赖 assert，不能视为始终生效的运行时错误处理。",
+        "范围仅覆盖本批行式回复函数，不代表完整客户端或协议读取器。",
+        "未展示读取行、整数转换和任务推进等辅助实现，不推断其内部行为。",
+        "实际浮点解析配置未确定，分别描述两个条件分支。",
+        "调用关系均未静态确认，本批不补充目标绑定判断。",
+        "范围仅覆盖本批两个函数，不代表完整协议读取器或项目全部能力。",
+        "数据不足与显式错误均返回REDIS_ERR，但数据不足分支本身不设置协议错误。",
+        "本段未显式校验载荷末尾两个字节是否为CRLF。",
+        "已提供的邻近标题提及数组、映射和集合处理，但未展示对应实现，不能据此推断其行为。",
+        "仅依据本批两个函数，不能概括完整客户端、网络层或对象生命周期。",
+        "行值、定长字符串、任务推进和错误处理的目标实现未在本批展示，不推断其内部行为。",
+        "REDIS_ERR 既用于本层输入不足，也用于错误路径，需结合读取器状态区分。",
+        "构造回调的具体对象结构和行为由外部配置决定。",
+        "本批仅包含 read.c 的四个公共入口，不能据此概括整个项目的网络或命令功能。",
+        "条目处理器、内存错误处理器及动态字符串实现未在当前代码片段展示，其内部协议分支和错误清理细节不作推断。",
+        "回复对象释放依赖操作表及其 freeObject 回调同时存在；接口未统一验证读取器指针。",
+        "本批仅提供头文件，没有可见函数实体或实现代码",
+        "无法确认协议解析分支、错误处理和内存分配细节",
+        "条件编译与 C++ extern 兼容边界仅能依据声明判断",
+        "源码范围由 9 批受控上下文完成归纳，跨批次模块边界可能需要人工复核。"
+      ]
+    },
+    "explanations": [
+      {
+        "entity_id": "9225bb1c-28c9-5d5a-9408-c6dbda16532b",
+        "summary": "清理读取器解析状态并保存错误",
+        "details": "输入为读取器指针 r、错误类型 type 和错误文本 str，无返回值。只有 r->reply 非空、r->fn 存在且 freeObject 回调存在时，才调用回调释放回复并将 reply 置空；条件不成立时保留原 reply。随后调用 sdsfree 处理输入缓冲，将 buf 置空、pos 和 len 归零，并把任务栈索引 ridx 设为 -1。最后写入 err，将文本截断到 errstr 容量减一后复制并补零。函数不校验 r 或 str，也不保护释放调用的非正常退出；回调目标内部行为未在本批展示。",
+        "evidence": [
+          {
+            "path": "read.c",
+            "start_line": 74,
+            "end_line": 88
+          },
+          {
+            "path": "read.c",
+            "start_line": 90,
+            "end_line": 96
+          }
+        ]
+      },
+      {
+        "entity_id": "31e15205-bb04-52ee-9a4b-5709457edd39",
+        "summary": "将协议字节转换为带引号的可读转义文本。",
+        "details": "函数接收输出缓冲区、容量和一个字符，按字符类别生成带双引号的表示。反斜杠和双引号会保留字符并加反斜杠；换行、回车、制表、响铃和退格分别使用对应转义。其他字符通过isprint判断：可打印字符直接输出，不可打印字符按无符号字节生成两位十六进制转义。返回格式化操作得到的长度；具体截断行为由snprintf决定，函数本身未额外处理容量不足。",
+        "evidence": [
+          {
+            "path": "read.c",
+            "start_line": 98,
+            "end_line": 120
+          }
+        ]
+      },
+      {
+        "entity_id": "52660522-2f80-5699-b9d5-c7346ab0cc4f",
+        "summary": "把非法协议类型字节包装成协议错误。",
+        "details": "函数为输入字节准备字符缓冲区和错误文本缓冲区，先调用chrtos生成该字节的可读表示，再将其嵌入“Protocol error, got %s as reply type byte”诊断信息，最后以REDIS_ERR_PROTOCOL类型交给统一错误设置函数。它不直接返回错误值，也不在本层判断redisReader指针有效性；格式化长度或底层错误设置行为取决于被调用实现。",
+        "evidence": [
+          {
+            "path": "read.c",
+            "start_line": 122,
+            "end_line": 129
+          }
+        ]
+      },
+      {
+        "entity_id": "820a6035-764b-58c2-abd0-ba194d51528f",
+        "summary": "将读取器标记为内存不足错误。",
+        "details": "函数接收redisReader指针，使用固定文本“Out of memory”和REDIS_ERR_OOM错误类型调用统一错误设置函数。该函数没有本地分支、返回值或资源清理逻辑；错误状态如何保存由__redisReaderSetError负责，本批仅能确认这一层的委托关系和固定错误参数。",
+        "evidence": [
+          {
+            "path": "read.c",
+            "start_line": 131,
+            "end_line": 133
+          }
+        ]
+      },
+      {
+        "entity_id": "2f8fff1d-4e2e-5f01-bc43-ba14706d3ee6",
+        "summary": "在读取器缓冲区中消费指定数量的字节。",
+        "details": "函数根据r->len减去r->pos得到剩余长度，并与请求的bytes比较。剩余长度足够时，保存当前位置对应的缓冲区指针，将r->pos增加bytes后返回该指针；不足时返回NULL且不修改pos。成功路径允许bytes为零，此时返回当前位置并保持位置不变。函数未检查r是否为空，也未校验缓冲区本身，调用方必须保证读取器状态有效。",
+        "evidence": [
+          {
+            "path": "read.c",
+            "start_line": 135,
+            "end_line": 143
+          }
+        ]
+      },
+      {
+        "entity_id": "3b1327c1-9127-5ea8-a747-a7ec03a0aec4",
+        "summary": "在指定字节范围内寻找 CRLF",
+        "details": "输入起始地址 s 和可用长度 len，返回首个 CRLF 中 CR 的地址，找不到则返回 NULL。长度不足两字节时直接失败；其余情况将搜索长度减一，确保找到 CR 后读取下一字节仍在原范围内。若 CR 后不是 LF，则从该 CR 的下一字节继续搜索并缩小剩余范围。函数不修改缓冲区，不要求字符串以零结尾，但调用方必须提供与长度匹配的有效内存。",
+        "evidence": [
+          {
+            "path": "read.c",
+            "start_line": 146,
+            "end_line": 169
+          }
+        ]
+      },
+      {
+        "entity_id": "7b1d5b1f-156a-5507-9131-c146bae8c1a3",
+        "summary": "严格解析并校验 long long 整数",
+        "details": "输入字符串及显式长度，成功返回 REDIS_OK，格式错误或溢出返回 REDIS_ERR。空输入失败，单独的“0”成功；允许负号，但拒绝单独负号、正号、前导零、“-0”、空白及其他尾随字符。逐位使用无符号数累积，分别检查乘十和加数字是否溢出，再按符号检查 LLONG_MAX 或 LLONG_MIN 的幅值界限。正常可达的成功分支仅在 value 非 NULL 时写出结果，因此可只做验证；失败不写结果。输入内存有效性由调用方保证。",
+        "evidence": [
+          {
+            "path": "read.c",
+            "start_line": 183,
+            "end_line": 217
+          },
+          {
+            "path": "read.c",
+            "start_line": 219,
+            "end_line": 244
+          }
+        ]
+      },
+      {
+        "entity_id": "d9787960-677a-51c6-b5db-593ecc5c0cf8",
+        "summary": "读取完整协议行并推进读取位置",
+        "details": "输入读取器 r 和可选长度输出指针，从 buf + pos 开始，在 len - pos 的剩余区域内寻找 CRLF。找到时返回原行起始地址，长度不含 CRLF，并将 pos 向前推进行长加两字节；仅当 _len 非空指针时写出长度。未找到时返回 NULL，不推进 pos，也不写长度，适合等待后续输入。返回值指向原缓冲区，函数不复制数据或补写字符串终止符；读取器指针、位置边界及长度可表示性依赖调用方。",
+        "evidence": [
+          {
+            "path": "read.c",
+            "start_line": 246,
+            "end_line": 259
+          }
+        ]
+      },
+      {
+        "entity_id": "51bc1771-1a62-58d7-8467-d419c7fd8ea6",
+        "summary": "完成当前子项后推进嵌套任务栈",
+        "details": "输入读取器并直接更新任务栈状态，无返回值。ridx 已为负时不处理；位于根任务时将 ridx 减为 -1 并返回。其他层级取当前任务和父任务，断言父类型属于数组、映射、属性、集合或推送。当前索引等于父元素数减一时回退一层，继续判断上层是否完成；否则断言索引小于父元素数，将当前类型和元素数重置为 -1，索引加一后返回，以准备下一个兄弟项。它不释放任务或构建回复对象；断言被禁用时不提供这些一致性保护。",
+        "evidence": [
+          {
+            "path": "read.c",
+            "start_line": 261,
+            "end_line": 288
+          }
+        ]
+      },
+      {
+        "entity_id": "0d9c6126-b170-5d12-959c-eaefce1463a2",
+        "summary": "校验并构造当前行式回复，成功后推进任务",
+        "details": "输入为读取器r，直接取task[ridx]，本层不检查r或任务索引有效性。readLine返回NULL时直接返回REDIS_ERR，不在该分支设置错误；取得行后按类型处理。整数转换返回REDIS_ERR即报告协议错误。浮点行长度须小于326，复制并补零；两种编译分支均大小写不敏感地接受inf、-inf、nan、-nan。默认FFC分支禁用普通解析中的Inf/NaN，要求转换成功、完整消费且结果有限；STRTOD分支要求首字节非零、完整消费且结果有限。空值要求长度零。布尔值要求长度一且字符通过strchr(\"tTfF\", p[0])检查，再以t/T判真；该检查也可能匹配字符串终止零字节。大整数仅逐字符检查数字及首位负号，因此未拒绝空行或单独负号。其他类型按简单字符串处理，拒绝内嵌回车、换行。仅当函数表及对应构造回调均非空时调用回调，否则返回该类型的指针标记。对象为NULL时调用OOM错误处理并返回REDIS_ERR；成功时仅根任务写入reply，再调用moveToNextTask并返回REDIS_OK。辅助函数的内部状态变化不在本段推断。",
+        "evidence": [
+          {
+            "path": "read.c",
+            "start_line": 290,
+            "end_line": 310
+          },
+          {
+            "path": "read.c",
+            "start_line": 312,
+            "end_line": 355
+          },
+          {
+            "path": "read.c",
+            "start_line": 356,
+            "end_line": 384
+          },
+          {
+            "path": "read.c",
+            "start_line": 385,
+            "end_line": 410
+          },
+          {
+            "path": "read.c",
+            "start_line": 411,
+            "end_line": 439
+          },
+          {
+            "path": "read.c",
+            "start_line": 441,
+            "end_line": 453
+          }
+        ]
+      },
+      {
+        "entity_id": "23fb5f9e-c1b5-52d2-9087-17ea609deb62",
+        "summary": "解析完整字符串回复并提交读取进度",
+        "details": "输入为读取器及其当前任务。查找长度行结束符，转换失败或长度小于-1、在LLONG_MAX大于SIZE_MAX时超出SIZE_MAX，均设置协议错误并返回REDIS_ERR。长度-1生成空值；否则等待长度行、载荷及末尾两字节全部到齐。逐字字符串还要求长度至少4且内容第四字节为冒号，短路条件避免短内容访问。仅当回调表及对应回调均存在时调用，否则使用类型标记。创建结果为空时进入OOM错误路径；成功才推进位置，根任务保存回复并调用任务推进函数，返回REDIS_OK。数据不足直接返回REDIS_ERR，不提交位置；本函数不检查载荷末尾两字节的具体值。",
+        "evidence": [
+          {
+            "path": "read.c",
+            "start_line": 455,
+            "end_line": 489
+          },
+          {
+            "path": "read.c",
+            "start_line": 490,
+            "end_line": 525
+          }
+        ]
+      },
+      {
+        "entity_id": "b15871fd-7824-596d-88a1-10868d6a6aa8",
+        "summary": "扩展读取任务数组并分配新增任务",
+        "details": "输入为读取器，目标容量为现有任务数加REDIS_READER_STACK_SIZE。先重分配任务指针数组，成功后立即写回r->task，再逐项用清零分配创建任务；r->tasks在每次成功分配后的循环递增步骤更新。全部完成返回REDIS_OK。任一次分配返回NULL均跳转到统一OOM路径，调用错误设置函数并返回REDIS_ERR。本函数没有显式回滚代码：后续任务分配失败时，数组已写回且可能已有部分新增任务，错误设置函数的内部清理行为不由本段实现证明。",
+        "evidence": [
+          {
+            "path": "read.c",
+            "start_line": 527,
+            "end_line": 550
+          }
+        ]
+      },
+      {
+        "entity_id": "87dcd644-d472-5312-ac05-08411d324297",
+        "summary": "解析聚合长度并组织嵌套读取任务",
+        "details": "输入为读取器及其当前任务，返回 REDIS_OK 或 REDIS_ERR。仅当 maxdepth 大于零且当前索引达到限制时拒绝；任务栈最后一槽需要扩容，失败即返回。长度行不足也返回 REDIS_ERR；转换失败、长度小于 -1、超过适用的 SIZE_MAX 或启用的 maxelements 上限会设置协议错误。-1 使用可选 createNil，否则使用 nil 类型标记；其他长度使用可选 createArray，否则使用当前类型标记。映射和属性在额外检查倍增溢出后将长度乘二，maxelements 的前置检查针对倍增前长度。构造结果为空指针时设置内存错误。非空聚合保存对象和子项数，进入下一层并初始化子任务的类型、索引、父任务和私有数据；零长度或 nil 调用任务推进入口。根任务对象写入 reply。回调须同时满足函数表及对应成员非空；本层不检查读取器空指针，也不捕获回调异常。",
+        "evidence": [
+          {
+            "path": "read.c",
+            "start_line": 553,
+            "end_line": 586
+          },
+          {
+            "path": "read.c",
+            "start_line": 588,
+            "end_line": 625
+          },
+          {
+            "path": "read.c",
+            "start_line": 627,
+            "end_line": 649
+          }
+        ]
+      },
+      {
+        "entity_id": "4d63f1bd-dfd1-5e8a-bdbb-b793d7742aae",
+        "summary": "识别协议前缀并分派当前回复项",
+        "details": "输入为读取器，从当前任务取得已保存类型。仅在类型为负时尝试读取一个前缀字节；无可读字节即返回 REDIS_ERR，已有类型则跳过识别，以便继续当前任务。前缀映射覆盖错误、状态、整数、双精度、nil、字符串、数组、映射、属性、集合、布尔、逐字字符串、推送和大整数；未知前缀调用协议字节错误入口后返回。行型值委托 processLineItem，字符串和逐字字符串委托 processBulkItem，五种聚合类型委托 processAggregateItem，并原样返回处理结果。不支持的已保存类型进入 assert(NULL)，禁用断言时仍返回 REDIS_ERR。本层不负责对象构造，也未对读取器或当前任务作空指针检查。",
+        "evidence": [
+          {
+            "path": "read.c",
+            "start_line": 651,
+            "end_line": 710
+          },
+          {
+            "path": "read.c",
+            "start_line": 712,
+            "end_line": 734
+          }
+        ]
+      },
+      {
+        "entity_id": "4d7cee08-560b-593b-96ef-fcaef99850b0",
+        "summary": "创建读取器并初始化任务栈和默认限制",
+        "details": "输入为回复对象操作表 fn，本层直接保存该指针，不检查其是否为空。先零初始化读取器，再创建空缓冲区、任务指针数组及各任务；tasks 记录成功分配的任务数，便于失败清理。默认缓冲、数组元素和回复深度限制分别取对应宏值，ridx 设为 -1 表示无活动任务。成功返回读取器；首个分配失败直接返回 NULL，其余分配失败调用 redisReaderFree 清理部分初始化资源后返回 NULL。",
+        "evidence": [
+          {
+            "path": "read.c",
+            "start_line": 736,
+            "end_line": 767
+          }
+        ]
+      },
+      {
+        "entity_id": "ab72be45-3d63-591a-b53b-67ae15ec8dec",
+        "summary": "释放读取器及其持有的资源",
+        "details": "输入为读取器指针，无返回值；NULL 输入直接退出，可用于创建失败后的清理。只有残留 reply 非空、fn 存在且 freeObject 存在时，才通过回调释放回复。任务数组存在时，按 tasks 数量释放已分配任务，再释放数组；随后释放缓冲区及读取器本体。缺少释放回调时不会在本层释放回复对象，也没有异常捕获或对回调执行结果的处理。",
+        "evidence": [
+          {
+            "path": "read.c",
+            "start_line": 769,
+            "end_line": 787
+          }
+        ]
+      },
+      {
+        "entity_id": "a1b83243-7738-5c20-a648-4e94faee8aa3",
+        "summary": "追加输入字节并按条件回收空缓冲区",
+        "details": "输入为读取器、字节指针和长度；读取器已有错误时返回 REDIS_ERR。仅在 buf 非 NULL 且 len 至少为1时追加数据，否则无操作并返回 REDIS_OK。回收旧缓冲区还要求内部长度为0、maxbuf 非0且可用容量超过阈值；maxbuf 为0会关闭这一回收分支。重建成功后重置 pos，追加成功后更新缓冲指针和长度。重建或追加分配失败时调用内存错误处理器并返回 REDIS_ERR。本层不执行回复解析，也不检查 r 是否为 NULL。",
+        "evidence": [
+          {
+            "path": "read.c",
+            "start_line": 789,
+            "end_line": 818
+          }
+        ]
+      },
+      {
+        "entity_id": "48fd0364-2b4c-5bfb-936a-6cddf40326ae",
+        "summary": "推进回复处理并交付或释放完成对象",
+        "details": "输入为读取器及可选输出地址；先将有效输出地址置为 NULL。已有错误返回 REDIS_ERR，缓冲长度为0返回 REDIS_OK。任务栈空时初始化根任务并传入 privdata，随后循环调用 processItem，遇到非成功结果停止；只有 r->err 被置位才在该检查处返回错误，因此 REDIS_OK 不保证已有完整回复。消费位置至少1024时裁剪缓冲区，裁剪失败直接返回 REDIS_ERR。ridx 为 -1 时交付回复；未提供输出地址则仅在回复、操作表和释放回调均存在时释放对象，随后清空内部 reply 指针。未完成时保留处理进度。",
+        "evidence": [
+          {
+            "path": "read.c",
+            "start_line": 820,
+            "end_line": 850
+          },
+          {
+            "path": "read.c",
+            "start_line": 852,
+            "end_line": 871
+          }
+        ]
+      }
+    ],
+    "call_judgments": [
+      {
+        "call_id": "9513a3fc-744b-5a82-89d4-52b69226e86f",
+        "target_id": "3b1327c1-9127-5ea8-a747-a7ec03a0aec4",
+        "reason": "readLine 中以缓冲区当前位置和剩余长度直接调用 seekNewline；同文件此前提供完整的 static seekNewline 定义，调用处没有同名局部绑定，支持绑定到该文件内函数。",
+        "evidence": [
+          {
+            "path": "read.c",
+            "start_line": 246,
+            "end_line": 259
+          },
+          {
+            "path": "read.c",
+            "start_line": 146,
+            "end_line": 169
+          }
+        ]
+      },
+      {
+        "call_id": "bc15b833-e0c0-5e00-893f-c15956b07194",
+        "target_id": "ab72be45-3d63-591a-b53b-67ae15ec8dec",
+        "reason": "创建函数的 oom 分支直接以局部读取器 r 调用 redisReaderFree；同一文件提供了该名称对应的完整函数定义，无回调或动态分派，构成部分初始化资源清理的直接调用。",
+        "evidence": [
+          {
+            "path": "read.c",
+            "start_line": 736,
+            "end_line": 767
+          },
+          {
+            "path": "read.c",
+            "start_line": 769,
+            "end_line": 787
+          }
+        ]
+      }
+    ],
+    "primary_dependencies": []
+  },
+  "原快照字节未变": true,
+  "源码生成版本集合": [
+    "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1-compact-batches/1-reasoning-config/1"
+  ],
+  "请求账本": [
+    {
+      "id": "bf2f7b5a-7865-48e7-aeff-7281f52b4ae4",
+      "project_id": "1c89b64c-aa99-4d4d-80ed-792f7dd7109a",
+      "version_id": "541a059e-d346-4437-916a-0375a76e5958",
+      "job_id": "25c1241b-cb6c-4d74-9751-0a25c9d269a0",
+      "unit_id": "f68230a5-d4e8-43b2-8079-e40e9d869236",
+      "attempt": 1,
+      "phase": "architecture",
+      "recipient": "https://www.cctq.ai/v1",
+      "model": "gpt-6.1-sol",
+      "status": "success",
+      "created_at": "2026-10-13T17:01:50.837354+00:00",
+      "sent_at": "2026-10-13T17:01:50.872546+00:00",
+      "finished_at": "2026-10-13T17:02:37.677679+00:00",
+      "payload_hash": "968c94aaabe23e7ba54e4908e66b5834ce62c58fab4428f1ec023ae2c0045ac7",
+      "source_chars": 3091,
+      "usage": {
+        "prompt_tokens": 5755,
+        "completion_tokens": 572,
+        "total_tokens": 6327
+      },
+      "cost": null,
+      "currency": null,
+      "price_snapshot": null,
+      "http_status": 200,
+      "error_code": null
+    },
+    {
+      "id": "4c6d3084-d664-4936-a18b-a55c414bc9fd",
+      "project_id": "1c89b64c-aa99-4d4d-80ed-792f7dd7109a",
+      "version_id": "541a059e-d346-4437-916a-0375a76e5958",
+      "job_id": "25c1241b-cb6c-4d74-9751-0a25c9d269a0",
+      "unit_id": "f68230a5-d4e8-43b2-8079-e40e9d869236",
+      "attempt": 2,
+      "phase": "source_read",
+      "recipient": "https://www.cctq.ai/v1",
+      "model": "gpt-6.1-sol",
+      "status": "success",
+      "created_at": "2026-10-13T17:02:37.690950+00:00",
+      "sent_at": "2026-10-13T17:02:37.701344+00:00",
+      "finished_at": "2026-10-13T17:03:16.997790+00:00",
+      "payload_hash": "9feb9e99954599a0792b073ca3d0954dcd8d13e324cfc7a8f69aafa3be2d3ad2",
+      "source_chars": 27094,
+      "usage": {
+        "prompt_tokens": 13199,
+        "completion_tokens": 436,
+        "total_tokens": 13635
+      },
+      "cost": null,
+      "currency": null,
+      "price_snapshot": null,
+      "http_status": 200,
+      "error_code": null
+    },
+    {
+      "id": "7141047b-3ecd-4b8c-8d5f-284202f9fdd2",
+      "project_id": "1c89b64c-aa99-4d4d-80ed-792f7dd7109a",
+      "version_id": "541a059e-d346-4437-916a-0375a76e5958",
+      "job_id": "25c1241b-cb6c-4d74-9751-0a25c9d269a0",
+      "unit_id": "3580b337-261f-4edd-8aae-cace7b7bdc82",
+      "attempt": 1,
+      "phase": "architecture",
+      "recipient": "https://www.cctq.ai/v1",
+      "model": "gpt-6.1-sol",
+      "status": "success",
+      "created_at": "2026-10-13T17:03:17.016200+00:00",
+      "sent_at": "2026-10-13T17:03:17.040247+00:00",
+      "finished_at": "2026-10-13T17:03:41.092615+00:00",
+      "payload_hash": "95a484bd294efab674077a4f2f28a2ec24fbeec4df0f3fbfad4ded0458f1ebfd",
+      "source_chars": 569,
+      "usage": {
+        "prompt_tokens": 6095,
+        "completion_tokens": 689,
+        "total_tokens": 6784
+      },
+      "cost": null,
+      "currency": null,
+      "price_snapshot": null,
+      "http_status": 200,
+      "error_code": null
+    },
+    {
+      "id": "091bd48c-d4c2-4fb5-8245-8c63a6d2f044",
+      "project_id": "1c89b64c-aa99-4d4d-80ed-792f7dd7109a",
+      "version_id": "541a059e-d346-4437-916a-0375a76e5958",
+      "job_id": "25c1241b-cb6c-4d74-9751-0a25c9d269a0",
+      "unit_id": "eeeb7e6d-840c-4b84-b6e8-38b822e9c800",
+      "attempt": 1,
+      "phase": "architecture",
+      "recipient": "https://www.cctq.ai/v1",
+      "model": "gpt-6.1-sol",
+      "status": "success",
+      "created_at": "2026-10-13T17:03:41.110238+00:00",
+      "sent_at": "2026-10-13T17:03:41.120961+00:00",
+      "finished_at": "2026-10-13T17:04:17.102694+00:00",
+      "payload_hash": "0cde62e5b1a282829b2a6cb54d8e751cc1167e7a0ddd64fbae4e1ad383afa482",
+      "source_chars": 1340,
+      "usage": {
+        "prompt_tokens": 8905,
+        "completion_tokens": 1152,
+        "total_tokens": 10057
+      },
+      "cost": null,
+      "currency": null,
+      "price_snapshot": null,
+      "http_status": 200,
+      "error_code": null
+    },
+    {
+      "id": "c9097f23-1b0a-4081-8b77-60001f1fc899",
+      "project_id": "1c89b64c-aa99-4d4d-80ed-792f7dd7109a",
+      "version_id": "541a059e-d346-4437-916a-0375a76e5958",
+      "job_id": "25c1241b-cb6c-4d74-9751-0a25c9d269a0",
+      "unit_id": "f2ecc14b-729e-4cae-9ceb-de762d242596",
+      "attempt": 1,
+      "phase": "architecture",
+      "recipient": "https://www.cctq.ai/v1",
+      "model": "gpt-6.1-sol",
+      "status": "success",
+      "created_at": "2026-10-13T17:04:17.120709+00:00",
+      "sent_at": "2026-10-13T17:04:17.138638+00:00",
+      "finished_at": "2026-10-13T17:05:10.828180+00:00",
+      "payload_hash": "270658f8000c75fb12d3652fc8f407e5e6e2615d7842d387c3b9462c039e02a7",
+      "source_chars": 3910,
+      "usage": {
+        "prompt_tokens": 8200,
+        "completion_tokens": 1803,
+        "total_tokens": 10003
+      },
+      "cost": null,
+      "currency": null,
+      "price_snapshot": null,
+      "http_status": 200,
+      "error_code": null
+    },
+    {
+      "id": "11316bc7-c232-458a-9cc8-e27fc974e530",
+      "project_id": "1c89b64c-aa99-4d4d-80ed-792f7dd7109a",
+      "version_id": "541a059e-d346-4437-916a-0375a76e5958",
+      "job_id": "25c1241b-cb6c-4d74-9751-0a25c9d269a0",
+      "unit_id": "f9304b30-84da-409f-99b2-1d4875c489a4",
+      "attempt": 1,
+      "phase": "architecture",
+      "recipient": "https://www.cctq.ai/v1",
+      "model": "gpt-6.1-sol",
+      "status": "success",
+      "created_at": "2026-10-13T17:05:10.841713+00:00",
+      "sent_at": "2026-10-13T17:05:10.852722+00:00",
+      "finished_at": "2026-10-13T17:05:42.096309+00:00",
+      "payload_hash": "bbb23dc4f07abb41222921493d83b2c1242bc46e32ca099a674c6423a623ad64",
+      "source_chars": 6373,
+      "usage": {
+        "prompt_tokens": 12745,
+        "completion_tokens": 984,
+        "total_tokens": 13729
+      },
+      "cost": null,
+      "currency": null,
+      "price_snapshot": null,
+      "http_status": 200,
+      "error_code": null
+    },
+    {
+      "id": "42a286d0-56ae-4ae7-b1b5-a9b09138b8ed",
+      "project_id": "1c89b64c-aa99-4d4d-80ed-792f7dd7109a",
+      "version_id": "541a059e-d346-4437-916a-0375a76e5958",
+      "job_id": "25c1241b-cb6c-4d74-9751-0a25c9d269a0",
+      "unit_id": "94edcf28-8589-493d-b801-062f23cf5485",
+      "attempt": 1,
+      "phase": "architecture",
+      "recipient": "https://www.cctq.ai/v1",
+      "model": "gpt-6.1-sol",
+      "status": "success",
+      "created_at": "2026-10-13T17:05:42.111755+00:00",
+      "sent_at": "2026-10-13T17:05:42.136758+00:00",
+      "finished_at": "2026-10-13T17:06:21.725728+00:00",
+      "payload_hash": "46f2db69de3e31958e98f28266e7a1ee3f091263c7d924a74d97d9658c742d02",
+      "source_chars": 2938,
+      "usage": {
+        "prompt_tokens": 8738,
+        "completion_tokens": 1163,
+        "total_tokens": 9901
+      },
+      "cost": null,
+      "currency": null,
+      "price_snapshot": null,
+      "http_status": 200,
+      "error_code": null
+    },
+    {
+      "id": "6f0a27fd-efbb-4fc6-8053-84ea3254006a",
+      "project_id": "1c89b64c-aa99-4d4d-80ed-792f7dd7109a",
+      "version_id": "541a059e-d346-4437-916a-0375a76e5958",
+      "job_id": "25c1241b-cb6c-4d74-9751-0a25c9d269a0",
+      "unit_id": "71c6fede-1b67-411f-818f-10bdc1431270",
+      "attempt": 1,
+      "phase": "architecture",
+      "recipient": "https://www.cctq.ai/v1",
+      "model": "gpt-6.1-sol",
+      "status": "success",
+      "created_at": "2026-10-13T17:06:21.745501+00:00",
+      "sent_at": "2026-10-13T17:06:21.758012+00:00",
+      "finished_at": "2026-10-13T17:07:00.502011+00:00",
+      "payload_hash": "cfb5eab041f798d86d8fa75d61f8c7f276324e79bfebdbc5b2e76e0dca18b374",
+      "source_chars": 5410,
+      "usage": {
+        "prompt_tokens": 10884,
+        "completion_tokens": 1217,
+        "total_tokens": 12101
+      },
+      "cost": null,
+      "currency": null,
+      "price_snapshot": null,
+      "http_status": 200,
+      "error_code": null
+    },
+    {
+      "id": "1fb53906-d50b-4d67-9431-6b9324d64853",
+      "project_id": "1c89b64c-aa99-4d4d-80ed-792f7dd7109a",
+      "version_id": "541a059e-d346-4437-916a-0375a76e5958",
+      "job_id": "25c1241b-cb6c-4d74-9751-0a25c9d269a0",
+      "unit_id": "8108c3d7-efc5-4fda-a674-417086067711",
+      "attempt": 1,
+      "phase": "architecture",
+      "recipient": "https://www.cctq.ai/v1",
+      "model": "gpt-6.1-sol",
+      "status": "success",
+      "created_at": "2026-10-13T17:07:00.514949+00:00",
+      "sent_at": "2026-10-13T17:07:00.531180+00:00",
+      "finished_at": "2026-10-13T17:07:49.906321+00:00",
+      "payload_hash": "acd7d0930e21615595e99ce62baf291ee10510da8f7f1e18edb84b9afd27f520",
+      "source_chars": 3463,
+      "usage": {
+        "prompt_tokens": 10781,
+        "completion_tokens": 1676,
+        "total_tokens": 12457
+      },
+      "cost": null,
+      "currency": null,
+      "price_snapshot": null,
+      "http_status": 200,
+      "error_code": null
+    },
+    {
+      "id": "9f2dcbdb-9436-478d-b77e-b86b04d97386",
+      "project_id": "1c89b64c-aa99-4d4d-80ed-792f7dd7109a",
+      "version_id": "541a059e-d346-4437-916a-0375a76e5958",
+      "job_id": "25c1241b-cb6c-4d74-9751-0a25c9d269a0",
+      "unit_id": "441df8b0-d99c-4351-b151-605895ebc204",
+      "attempt": 1,
+      "phase": "architecture",
+      "recipient": "https://www.cctq.ai/v1",
+      "model": "gpt-6.1-sol",
+      "status": "success",
+      "created_at": "2026-10-13T17:07:49.932879+00:00",
+      "sent_at": "2026-10-13T17:07:49.960561+00:00",
+      "finished_at": "2026-10-13T17:08:02.024810+00:00",
+      "payload_hash": "03a90588542ea87dd2a417acacec213252740227b1e5ce29692bfecbab57c8e9",
+      "source_chars": 5076,
+      "usage": {
+        "prompt_tokens": 6263,
+        "completion_tokens": 391,
+        "total_tokens": 6654
+      },
+      "cost": null,
+      "currency": null,
+      "price_snapshot": null,
+      "http_status": 200,
+      "error_code": null
+    },
+    {
+      "id": "b181c658-9dae-4427-8610-733b30a3657b",
+      "project_id": "1c89b64c-aa99-4d4d-80ed-792f7dd7109a",
+      "version_id": "541a059e-d346-4437-916a-0375a76e5958",
+      "job_id": "25c1241b-cb6c-4d74-9751-0a25c9d269a0",
+      "unit_id": "b9af3018-0ac2-48af-881c-77b63b5bd839",
+      "attempt": 1,
+      "phase": "organization",
+      "recipient": "https://www.cctq.ai/v1",
+      "model": "gpt-6.1-sol",
+      "status": "success",
+      "created_at": "2026-10-13T17:08:02.051409+00:00",
+      "sent_at": "2026-10-13T17:08:02.060823+00:00",
+      "finished_at": "2026-10-13T17:08:52.847687+00:00",
+      "payload_hash": "64e205c938a19be2d613b89d6394b11de07ae7f4c5b43c7b1ba6ae8f98091719",
+      "source_chars": 0,
+      "usage": {
+        "prompt_tokens": 2990,
+        "completion_tokens": 1848,
+        "total_tokens": 4838
+      },
+      "cost": null,
+      "currency": null,
+      "price_snapshot": null,
+      "http_status": 200,
+      "error_code": null
+    },
+    {
+      "id": "b78c2b73-a4c1-45c9-b80a-00c5a4b4b922",
+      "project_id": "1c89b64c-aa99-4d4d-80ed-792f7dd7109a",
+      "version_id": "541a059e-d346-4437-916a-0375a76e5958",
+      "job_id": "25c1241b-cb6c-4d74-9751-0a25c9d269a0",
+      "unit_id": "9adf1727-2d26-4892-947d-eaacc3cf9451",
+      "attempt": 1,
+      "phase": "overview",
+      "recipient": "https://www.cctq.ai/v1",
+      "model": "gpt-6.1-sol",
+      "status": "success",
+      "created_at": "2026-10-13T17:08:52.858473+00:00",
+      "sent_at": "2026-10-13T17:08:52.868223+00:00",
+      "finished_at": "2026-10-13T17:09:24.245540+00:00",
+      "payload_hash": "1581ffb56f52b8d0ec0424bc9b6f116cff83ecf5aa8e68fa26ec0fd723ec32b6",
+      "source_chars": 0,
+      "usage": {
+        "prompt_tokens": 3337,
+        "completion_tokens": 393,
+        "total_tokens": 3730
+      },
+      "cost": null,
+      "currency": null,
+      "price_snapshot": null,
+      "http_status": 200,
+      "error_code": null
+    }
+  ],
+  "请求状态": {
+    "success": 12
+  },
+  "已知total_tokens": 110216,
+  "未知用量请求": 0,
+  "费用": null,
+  "脱敏校验记录": [],
+  "边界": "真实配置接口，固定响应与质量复核分开；尚未代表用户验收；价格未知不记零费用。",
+  "实施代码结束sha256": "510e88d9f474171e36f21f0b07f9b495b2db615b489b811e623639b8a0d0324c",
+  "评测期间实施代码一致": true,
+  "静态索引制品": {
+    "path": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\.runtime\\public-model-validation\\1d0d9899-1c8b-4dd4-952c-e1dfcd7da9a9\\validation-artifacts\\ae116605836868df917bf08b8836561ce76c3a0663e8d1456dd69acb5a0dc87c.json",
+    "sha256": "ae116605836868df917bf08b8836561ce76c3a0663e8d1456dd69acb5a0dc87c",
+    "bytes": 144513
+  }
+}

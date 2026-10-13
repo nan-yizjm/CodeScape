@@ -56,17 +56,17 @@
       "请求状态": {
         "success": 12,
         "failed": 9,
-        "outcome_unknown": 16
+        "outcome_unknown": 19
       },
       "已知total_tokens": 253236,
-      "未知用量请求": 20,
+      "未知用量请求": 23,
       "原快照字节未变": true,
       "修订后本地批次检查": {
         "批次数": 49,
         "最大上下文字符": 79533,
         "超过180000字符": 0,
         "仅静态规划": true,
-        "规划流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1-compact-batches/1-reasoning-config/1-organization/1",
+        "规划流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1-compact-batches/1-reasoning-config/1-organization/1-overview-guidance/1",
         "索引所属模型流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1-compact-batches/1-reasoning-config/1-organization/1",
         "索引sha256": "3038a16bd172ad44dc17a54fcbd374eae81fc521454b347f32673abb49178075"
       }
@@ -201,7 +201,7 @@
         "最大上下文字符": 145998,
         "超过180000字符": 0,
         "仅静态规划": true,
-        "规划流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1-compact-batches/1-reasoning-config/1-organization/1",
+        "规划流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1-compact-batches/1-reasoning-config/1-organization/1-overview-guidance/1",
         "索引所属模型流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1-compact-batches/1-reasoning-config/1-organization/1",
         "索引sha256": "25bd3c34a5566920973027b9157cea9a61c578981dfeb552849afaaada2c5325"
       }
@@ -240,30 +240,30 @@
       "接收端": "https://www.cctq.ai/v1",
       "模型": "gpt-6.1-sol",
       "模型流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1-compact-batches/1-reasoning-config/1-organization/1",
-      "状态": "分析暂停",
-      "错误": "本轮评测已中断，检查点已保留，请主动恢复。",
+      "状态": "结构检查通过，待源码质量复核",
+      "错误": null,
       "进度": {
-        "phase": "paused",
-        "completed": 76,
-        "total": 76,
-        "detail": "源码批次完整保留，全局职责整理未完成；本轮已中断"
+        "phase": "completed",
+        "completed": 1,
+        "total": 1,
+        "detail": "分批分析完成"
       },
       "请求状态": {
-        "success": 80,
+        "success": 82,
         "failed": 12,
         "outcome_unknown": 30
       },
-      "已知total_tokens": 870005,
+      "已知total_tokens": 927287,
       "未知用量请求": 37,
-      "原快照字节未变": null,
+      "原快照字节未变": true,
       "修订后本地批次检查": {
         "批次数": 33,
-        "最大上下文字符": 51704,
+        "最大上下文字符": 55728,
         "超过180000字符": 0,
         "仅静态规划": true,
-        "规划流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1-compact-batches/1-reasoning-config/1-organization/1",
+        "规划流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1-compact-batches/1-reasoning-config/1-organization/1-overview-guidance/1",
         "索引所属模型流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1-compact-batches/1-reasoning-config/1-organization/1",
-        "索引sha256": "d971981601aa60f9559090c929941a31ffedeea92e329e5242d70e8ec348cf2a"
+        "索引sha256": "27ee54ebcd288f11490afbed9a991af18c6530d7397e28ad37bb89366c2730b7"
       }
     },
     "zod-typescript": {
@@ -405,7 +405,7 @@
         "最大上下文字符": 168299,
         "超过180000字符": 0,
         "仅静态规划": true,
-        "规划流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1-compact-batches/1-reasoning-config/1-organization/1",
+        "规划流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1-compact-batches/1-reasoning-config/1-organization/1-overview-guidance/1",
         "索引所属模型流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1-compact-batches/1-reasoning-config/1-organization/1",
         "索引sha256": "9b20c143b120c8297df7f14e19aa3e53b2e4d1fe98f49d28dcd129bd302c55ea"
       }
@@ -493,7 +493,7 @@
         ],
         "接收端": "https://www.cctq.ai/v1",
         "模型": "gpt-6.1-sol",
-        "模型流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
+        "模型流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1-compact-batches/1-reasoning-config/1-organization/1-overview-guidance/1",
         "状态": "结构检查通过，待源码质量复核",
         "错误": null,
         "进度": {
@@ -503,11 +503,10 @@
           "detail": "分批分析完成"
         },
         "请求状态": {
-          "success": 3,
-          "failed": 2
+          "success": 14
         },
-        "已知total_tokens": 52759,
-        "未知用量请求": 2,
+        "已知total_tokens": 116559,
+        "未知用量请求": 0,
         "原快照字节未变": true
       },
       "源码复核": {
@@ -580,7 +579,7 @@
         ],
         "接收端": "https://www.cctq.ai/v1",
         "模型": "gpt-6.1-sol",
-        "模型流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
+        "模型流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1-compact-batches/1-reasoning-config/1-organization/1",
         "状态": "结构检查通过，待源码质量复核",
         "错误": null,
         "进度": {
@@ -590,12 +589,11 @@
           "detail": "分批分析完成"
         },
         "请求状态": {
-          "failed": 6,
-          "success": 7,
-          "outcome_unknown": 1
+          "success": 25,
+          "outcome_unknown": 7
         },
-        "已知total_tokens": 219252,
-        "未知用量请求": 2,
+        "已知total_tokens": 241704,
+        "未知用量请求": 7,
         "原快照字节未变": true
       },
       "源码复核": {
@@ -621,16 +619,16 @@
     }
   },
   "账本汇总": {
-    "去重请求数": 1046,
-    "已知total_tokens": 20586613,
-    "缺少用量请求数": 182,
+    "去重请求数": 1097,
+    "已知total_tokens": 21002158,
+    "缺少用量请求数": 192,
     "在途请求数": 0,
     "费用": null,
     "说明": "包含历史失败、截断、修复及重新评测，按请求ID去重；在途属于尚未返回用量，未知不记零，缺少价格不估算费用。"
   },
   "外部阻塞": "已按授权切换新接收端，实际终态和错误见各样本；历史DeepSeek官方余额查询不用于判定中转站可用性。",
-  "验收结论": "真实评测与源码质量复核尚未完成；结构发布不代表质量通过，不能宣称全部P0完成。",
-  "汇总时间UTC": "2026-10-13T16:10:38.422988+00:00",
+  "验收结论": "P0实现与本轮开发自检已收敛，35项已验证、AC29开发复核通过待用户理解验收。三工程扩展完整范围仍暂停，不宣称四全量质量或全部用户发布验收已通过。",
+  "汇总时间UTC": "2026-10-13T18:29:40.106666+00:00",
   "本轮本地修订说明": {
     "新流水线": "cpp-config/8",
     "新模型请求": 0,
@@ -643,6 +641,12 @@
     "边界": "当前完整进度19/51与缩小范围58讲解为原实际模型/旧索引状态，未修改其检查点或原AI文字；新语法规划非实际原生重索引/全局架构发布，后续须重建索引并核对检查点可复用性。",
     "修订后实际产品索引": "spdlog修订后产品静态索引验证.json：102文件、534可见函数、完整尾部作用域通过；完整静态工作进程未完成后采用明确标识的语法回退，确认调用0，没有上传或AI架构；仍不能当作模型质量通过。"
   },
-  "新完整范围摘要复核": "Flask get_load_dotenv详情正确保留默认分支，但所属模块压缩摘要漏未设置/空值默认加载，记录于完整范围默认分支摘要复核.json；未计整体质量通过。",
-  "历史复核边界": "缩小范围原有源码复核字段属于当时报告；最新重测单独记录，不自动继承历史质量结论。"
+  "历史复核边界": "缩小范围原有源码复核字段属于当时报告；最新重测单独记录，不自动继承历史质量结论。",
+  "历史完整范围摘要复核": "Flask get_load_dotenv详情正确保留默认分支，但所属模块压缩摘要漏未设置/空值默认加载，记录于完整范围默认分支摘要复核.json；未计整体质量通过。",
+  "本轮开发复核": {
+    "Flask": "完整发布职责与全窄范围复核通过，用户理解待确认",
+    "Hiredis": "新窄范围正式职责与关键语义、overview-guidance/1消除交付回调误述，保留部分支持",
+    "spdlog": "新窄范围58函数正式发布，委托机制修订与关键分支复核通过，保留部分支持",
+    "Zod": "原解析入口范围实际复核通过，不外推整个库"
+  }
 }

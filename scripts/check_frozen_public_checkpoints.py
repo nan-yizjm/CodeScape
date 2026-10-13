@@ -58,10 +58,13 @@ def main():
             input=(json.dumps(payload, ensure_ascii=False) + '\n').encode('utf-8'), capture_output=True,
             timeout=180, cwd=target, creationflags=subprocess.CREATE_NO_WINDOW)
         events = [json.loads(line) for line in completed.stdout.decode('utf-8').splitlines()]
+        (target / 'worker-events.json').write_text(json.dumps(events, ensure_ascii=False, indent=2), encoding='utf-8')
         progress = next(item for item in events if item['event'] == 'progress')
         assert progress['completed'] == len(saved['batches'])
-        assert completed.returncode == 1 and events[-1] == {
-            'event': 'error', 'message': '请先配置 API Key 和模型。'}
+        message = '请先配置 API Key 和模型。'
+        if progress['completed'] == progress['total']:
+            message = '全局职责整理未完成，源码检查点已保留，原结果未被替换。' + message
+        assert completed.returncode == 1 and events[-1] == {'event': 'error', 'message': message}
         assert not any(item['event'] in {'batch', 'complete'} for item in events)
         with sqlite3.connect((target / 'app.db').as_uri() + '?mode=ro', uri=True) as connection:
             assert connection.execute('SELECT count(*) FROM ai_requests').fetchone()[0] == 0

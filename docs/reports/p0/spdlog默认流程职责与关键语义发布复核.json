@@ -1,0 +1,479 @@
+{
+  "核对时间UTC": "2026-10-13T18:20:04.343836+00:00",
+  "性质": "真实默认分析正式发布结果的开发代理源码复核；不是候选修订或全部工程验收",
+  "报告": "spdlog-cpp-narrow真实模型验证.json",
+  "报告sha256": "a244187881200cf2872ec8ba28ecd0a50e8dca7d0eaa28359fb3f8395a95f5ab",
+  "Commit": "d6c93f38a08b4ea0f8ffcfd7f7857307d5d5c3fa",
+  "接收端": "https://www.cctq.ai/v1",
+  "模型": "gpt-6.1-sol",
+  "流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1-compact-batches/1-reasoning-config/1-organization/1",
+  "源码生成来源": [
+    "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1-compact-batches/1-reasoning-config/1"
+  ],
+  "实际文件": [
+    "include/spdlog/common.h",
+    "include/spdlog/logger-inl.h",
+    "include/spdlog/logger.h",
+    "include/spdlog/namespace.h"
+  ],
+  "正式发布": true,
+  "可见函数": 58,
+  "唯一归属与讲解": 58,
+  "模块数": 35,
+  "根模块": [
+    {
+      "id": "common",
+      "parent_id": null,
+      "name": "日志公共基础",
+      "summary": "提供日志库的公共类型、编译适配约定和内部模板工具。",
+      "entity_ids": [],
+      "code_paths": [
+        "include/spdlog/common.h",
+        "include/spdlog/namespace.h"
+      ],
+      "incomplete": true
+    },
+    {
+      "id": "logger_state",
+      "parent_id": null,
+      "name": "日志器对象与配置",
+      "summary": "组织日志器构造、状态转移、配置访问和输出格式设置，区分对象生命周期、容器访问及配置委托。",
+      "entity_ids": [],
+      "code_paths": [
+        "include/spdlog/logger.h",
+        "include/spdlog/logger-inl.h"
+      ],
+      "incomplete": false
+    },
+    {
+      "id": "log_input",
+      "parent_id": null,
+      "name": "日志输入适配",
+      "summary": "组织普通对象、窄字符和条件编译宽字符输入，涵盖格式参数适配、默认来源位置、显式时间戳及固定级别便捷入口；各入口是否执行接收判定、转换或仅委托，由子模块分别说明。",
+      "entity_ids": [],
+      "code_paths": [
+        "include/spdlog/logger.h"
+      ],
+      "incomplete": false
+    },
+    {
+      "id": "log_processing",
+      "parent_id": null,
+      "name": "日志处理与运行控制",
+      "summary": "组织级别门控、内部格式化、输出与回溯分流、输出端分发、刷新、回溯控制及异常处理，区分公开委托入口与内部执行职责。",
+      "entity_ids": [],
+      "code_paths": [
+        "include/spdlog/logger.h",
+        "include/spdlog/logger-inl.h"
+      ],
+      "incomplete": true
+    }
+  ],
+  "真实请求数": 32,
+  "已知tokens": 241704,
+  "未知用量请求": 7,
+  "费用": null,
+  "源码批次": 23,
+  "传输边界": "前5批以流式生成，JSON方式完成剩余源码；JSON全局整理两次结果未知后暂停，流式恢复只完成整理与概览。没有据一次成功宣称服务持续稳定。",
+  "复核": [
+    {
+      "项目": "用途与分工",
+      "结果": "范围内通过",
+      "依据": "按级别整理程序消息、配置格式和输出端、控制回溯与刷新；公共基础、对象配置、输入适配、处理运行4个功能域职责不同。只核对已筛选日志器范围，不外推异步队列等整个库。"
+    },
+    {
+      "项目": "enable_backtrace / disable_backtrace",
+      "结果": "正式修订通过",
+      "依据": "实际仅转交启停请求与容量，不再把附近过时注释中的sink迁移、级别恢复等机制当作函数体事实。"
+    },
+    {
+      "项目": "dump_backtrace公开包装",
+      "结果": "通过",
+      "依据": "只证明委托内部方法，本包装不保证回溯已启用、缓存清空或输出落地。"
+    },
+    {
+      "项目": "窄/宽字符log_",
+      "结果": "通过",
+      "依据": "输出与回溯都关闭才跳过；分别保留格式后端与宽字符条件、转换UTF-8、前置读取在try之外，以及标准异常处理和未知异常重抛。"
+    },
+    {
+      "项目": "sink_it_ / flush_",
+      "结果": "所列边界通过",
+      "依据": "每个输出端先判断级别，再在宏包裹中委托写入；刷新判断独立。禁用异常时包装为空，未知异常报告后重抛；整体概览明确处理器自身也可能抛异常。"
+    },
+    {
+      "项目": "should_flush_",
+      "结果": "通过",
+      "依据": "达到阈值且不为off联合成立，函数只判断不执行刷新。"
+    },
+    {
+      "项目": "dump_backtrace_内部",
+      "结果": "主要条件通过，措辞范围保留",
+      "依据": "需启用且非空，输出开始/结束标记并转发缓存原消息；讲解中消息使用info的句子应限于标记，源码回调并未改写缓存消息级别。未宣称该句覆盖所有回放消息或全部58讲解绝无瑕疵。"
+    }
+  ],
+  "核心源码与实际讲解": [
+    {
+      "函数": "<宏命名空间待确认>::logger::enable_backtrace",
+      "位置": {
+        "path": "include/spdlog/logger-inl.h",
+        "start_line": 90,
+        "end_line": 90,
+        "start_byte": 2949,
+        "end_byte": 3043
+      },
+      "源码": "SPDLOG_INLINE void logger::enable_backtrace(size_t n_messages) { tracer_.enable(n_messages); }",
+      "实际讲解": {
+        "entity_id": "76012b07-c4a2-5c40-b234-ac63a36d3ec2",
+        "summary": "向回溯组件转交启用容量",
+        "details": "输入 size_t 类型的 n_messages，用于向成员 tracer_ 发出带容量参数的启用请求。实现仅调用 tracer_.enable(n_messages)，返回 void，没有本地状态检查、参数转换或异常捕获。零值也会原样传入，本层没有规定其是否关闭或如何分配缓冲。附近注释提到创建回溯接收器及移动子接收器，但实际函数体只证明委托，不能据此断言内部迁移行为。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger-inl.h",
+            "start_line": 90,
+            "end_line": 90
+          }
+        ]
+      }
+    },
+    {
+      "函数": "<宏命名空间待确认>::logger::disable_backtrace",
+      "位置": {
+        "path": "include/spdlog/logger-inl.h",
+        "start_line": 93,
+        "end_line": 93,
+        "start_byte": 3107,
+        "end_byte": 3176
+      },
+      "源码": "SPDLOG_INLINE void logger::disable_backtrace() { tracer_.disable(); }",
+      "实际讲解": {
+        "entity_id": "d8b2bcc0-3d40-515e-8b38-72026af45871",
+        "summary": "向回溯组件转交停用请求",
+        "details": "函数没有显式输入参数，直接对日志器成员 tracer_ 调用 disable，返回 void。本层没有判断是否已启用，也没有清空容器、修改级别或更换接收器的语句，且不捕获委托调用产生的异常。附近注释描述恢复原接收器与级别、删除回溯接收器，但这些不是本函数体直接实施的操作；具体状态变化及重复停用的行为需由委托目标实现确定。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger-inl.h",
+            "start_line": 93,
+            "end_line": 93
+          }
+        ]
+      }
+    },
+    {
+      "函数": "<宏命名空间待确认>::logger::dump_backtrace",
+      "位置": {
+        "path": "include/spdlog/logger-inl.h",
+        "start_line": 95,
+        "end_line": 95,
+        "start_byte": 3178,
+        "end_byte": 3244
+      },
+      "源码": "SPDLOG_INLINE void logger::dump_backtrace() { dump_backtrace_(); }",
+      "实际讲解": {
+        "entity_id": "4ef36294-e7ed-5e1d-87ec-c55c740d5221",
+        "summary": "将回溯输出请求委托给内部方法",
+        "details": "该接口无参数、返回 void，用作日志器回溯输出的公开入口。函数体仅执行无参数的 dump_backtrace_() 调用，没有本层条件检查、默认值处理或异常捕获。因此可确认的是本层发出委托请求，不能仅由此保证回溯已启用、缓存被清空或消息已写入某个输出端；这些行为需要目标实现作为依据。若调用产生异常，本层没有显式捕获代码。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger-inl.h",
+            "start_line": 95,
+            "end_line": 95
+          }
+        ]
+      }
+    },
+    {
+      "函数": "<宏命名空间待确认>::logger::sink_it_",
+      "位置": {
+        "path": "include/spdlog/logger-inl.h",
+        "start_line": 135,
+        "end_line": 146,
+        "start_byte": 4456,
+        "end_byte": 4757
+      },
+      "源码": "SPDLOG_INLINE void logger::sink_it_(const details::log_msg &msg) {\n    for (auto &sink : sinks_) {\n        if (sink->should_log(msg.level)) {\n            SPDLOG_TRY { sink->log(msg); }\n            SPDLOG_LOGGER_CATCH(msg.source)\n        }\n    }\n\n    if (should_flush_(msg)) {\n        flush_();\n    }\n}",
+      "实际讲解": {
+        "entity_id": "966eb8a2-08ec-561c-bc37-2c6f517d0ba0",
+        "summary": "过滤并分发日志消息，必要时刷新 logger。",
+        "details": "函数接收一条 log_msg，遍历 logger 当前持有的 sinks_。对每个 sink，先以 msg.level 调用 should_log；只有返回真值时才进入异常保护块并调用 sink->log(msg)，因此不符合级别的 sink 不会收到消息。所有 sink 处理完后调用 should_flush_(msg)；条件成立才调用 flush_。SPDLOG_LOGGER_CATCH(msg.source) 在启用异常时捕获 std::exception，按 source.filename 是否存在决定向 err_handler_ 传格式化位置或异常文本；未知异常会先报告并重新抛出。禁用异常配置下该宏为空。具体 sink 行为、刷新判定和错误处理器实现未在本批提供。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger-inl.h",
+            "start_line": 135,
+            "end_line": 146
+          },
+          {
+            "path": "include/spdlog/logger.h",
+            "start_line": 30,
+            "end_line": 46
+          }
+        ]
+      }
+    },
+    {
+      "函数": "<宏命名空间待确认>::logger::flush_",
+      "位置": {
+        "path": "include/spdlog/logger-inl.h",
+        "start_line": 148,
+        "end_line": 153,
+        "start_byte": 4759,
+        "end_byte": 4916
+      },
+      "源码": "SPDLOG_INLINE void logger::flush_() {\n    for (auto &sink : sinks_) {\n        SPDLOG_TRY { sink->flush(); }\n        SPDLOG_LOGGER_CATCH(source_loc())\n    }\n}",
+      "实际讲解": {
+        "entity_id": "8fc3a6b4-6158-5854-9537-5025af5b47cb",
+        "summary": "遍历所有 sink 并执行刷新。",
+        "details": "函数遍历 logger 的 sinks_，对每个 sink 在 SPDLOG_TRY 保护块中调用 sink->flush()。启用异常时，SPDLOG_LOGGER_CATCH(source_loc()) 捕获 std::exception，并将异常文本及 source_loc() 中的文件和行号交给 err_handler_；若 source_loc().filename 为空，则只传异常文本。未知异常会先报告“Rethrowing unknown exception in logger”并重新抛出。定义 SPDLOG_NO_EXCEPTIONS 时，SPDLOG_TRY 不建立 try 块且 SPDLOG_LOGGER_CATCH 为空，因此这里不提供宏层面的异常捕获。sink 的实际刷新副作用未在快照中展示。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger-inl.h",
+            "start_line": 148,
+            "end_line": 153
+          },
+          {
+            "path": "include/spdlog/common.h",
+            "start_line": 107,
+            "end_line": 121
+          },
+          {
+            "path": "include/spdlog/logger.h",
+            "start_line": 30,
+            "end_line": 46
+          }
+        ]
+      }
+    },
+    {
+      "函数": "<宏命名空间待确认>::logger::dump_backtrace_",
+      "位置": {
+        "path": "include/spdlog/logger-inl.h",
+        "start_line": 155,
+        "end_line": 164,
+        "start_byte": 4918,
+        "end_byte": 5367
+      },
+      "源码": "SPDLOG_INLINE void logger::dump_backtrace_() {\n    using details::log_msg;\n    if (tracer_.enabled() && !tracer_.empty()) {\n        sink_it_(\n            log_msg{name(), level::info, \"****************** Backtrace Start ******************\"});\n        tracer_.foreach_pop([this](const log_msg &msg) { this->sink_it_(msg); });\n        sink_it_(\n            log_msg{name(), level::info, \"****************** Backtrace End ********************\"});\n    }\n}",
+      "实际讲解": {
+        "entity_id": "b7d1b62f-0cf4-56ef-a296-a0f174425aa0",
+        "summary": "输出启用且非空的回溯日志",
+        "details": "函数先同时检查 tracer_.enabled() 和 !tracer_.empty()；任一条件不满足时不产生输出。满足时先向 sink 写入 Backtrace Start 标记，再通过 tracer_.foreach_pop 消费并转发每条回溯消息，最后写入 Backtrace End 标记。消息使用当前 logger 名称和 info 级别构造。逐条回调捕获 this，因此实际写入仍依赖当前 logger 的 sink_it_；该目标实现未在本批完整确认。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger-inl.h",
+            "start_line": 155,
+            "end_line": 164
+          }
+        ]
+      }
+    },
+    {
+      "函数": "<宏命名空间待确认>::logger::should_flush_",
+      "位置": {
+        "path": "include/spdlog/logger-inl.h",
+        "start_line": 166,
+        "end_line": 168,
+        "start_byte": 5369,
+        "end_byte": 5518
+      },
+      "源码": "SPDLOG_INLINE bool logger::should_flush_(const details::log_msg &msg) const {\n    return (msg.level >= flush_level()) && (msg.level != level::off);\n}",
+      "实际讲解": {
+        "entity_id": "4de39959-c1b9-5082-83c1-afcdaeeb6be8",
+        "summary": "判断日志消息是否达到刷新条件",
+        "details": "函数返回两个条件的合取结果：消息级别必须大于或等于 flush_level() 返回的刷新阈值，同时消息级别不能是 level::off。任一条件为假都会返回 false；因此 off 即使与阈值比较结果满足，也会被第二个条件排除。消息参数仅用于读取其 level 字段，刷新阈值的具体来源和默认值未在本批实现中展示。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger-inl.h",
+            "start_line": 166,
+            "end_line": 168
+          }
+        ]
+      }
+    },
+    {
+      "函数": "<宏命名空间待确认>::logger::log_",
+      "位置": {
+        "path": "include/spdlog/logger.h",
+        "start_line": 324,
+        "end_line": 343,
+        "start_byte": 11134,
+        "end_byte": 11911
+      },
+      "源码": "    template <typename... Args>\n    void log_(source_loc loc, level::level_enum lvl, string_view_t fmt, Args &&...args) {\n        bool log_enabled = should_log(lvl);\n        bool traceback_enabled = tracer_.enabled();\n        if (!log_enabled && !traceback_enabled) {\n            return;\n        }\n        SPDLOG_TRY {\n            memory_buf_t buf;\n#ifdef SPDLOG_USE_STD_FORMAT\n            fmt_lib::vformat_to(std::back_inserter(buf), fmt, fmt_lib::make_format_args(args...));\n#else\n            fmt::vformat_to(fmt::appender(buf), fmt, fmt::make_format_args(args...));\n#endif\n\n            details::log_msg log_msg(loc, name_, lvl, string_view_t(buf.data(), buf.size()));\n            log_it_(log_msg, log_enabled, traceback_enabled);\n        }\n        SPDLOG_LOGGER_CATCH(loc)\n    }",
+      "实际讲解": {
+        "entity_id": "56201aef-ca8d-5eda-a674-f674ea7cea63",
+        "summary": "按输出与回溯需求格式化窄字符日志",
+        "details": "输入源码位置 loc、级别 lvl、窄字符格式串及可变参数，无默认参数，返回 void。先分别调用 should_log(lvl) 与 tracer_.enabled()；只有输出许可和回溯状态同时为假才提前返回，因此未获输出许可但回溯开启时仍格式化。SPDLOG_USE_STD_FORMAT 分支使用 fmt_lib 与 back_inserter，否则使用 fmt 与 appender，结果写入局部缓冲区。随后封装位置、name_、级别和字节视图，将消息及两个状态传给 log_it_。异常启用时，格式化至提交阶段的标准异常送往 err_handler_；loc.filename 指针非空时附加文件与行号，这不是非空字符串检查。未知异常先报告再重抛，处理器本身也可能抛异常。SPDLOG_NO_EXCEPTIONS 下包装宏为空；前置状态读取不在包装范围内。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger.h",
+            "start_line": 324,
+            "end_line": 343
+          },
+          {
+            "path": "include/spdlog/logger.h",
+            "start_line": 30,
+            "end_line": 46
+          },
+          {
+            "path": "include/spdlog/common.h",
+            "start_line": 107,
+            "end_line": 121
+          }
+        ]
+      }
+    },
+    {
+      "函数": "<宏命名空间待确认>::logger::log_",
+      "位置": {
+        "path": "include/spdlog/logger.h",
+        "start_line": 346,
+        "end_line": 365,
+        "start_byte": 11953,
+        "end_byte": 12843
+      },
+      "源码": "    template <typename... Args>\n    void log_(source_loc loc, level::level_enum lvl, wstring_view_t fmt, Args &&...args) {\n        bool log_enabled = should_log(lvl);\n        bool traceback_enabled = tracer_.enabled();\n        if (!log_enabled && !traceback_enabled) {\n            return;\n        }\n        SPDLOG_TRY {\n            // format to wmemory_buffer and convert to utf8\n            wmemory_buf_t wbuf;\n            fmt_lib::vformat_to(std::back_inserter(wbuf), fmt,\n                                fmt_lib::make_format_args<fmt_lib::wformat_context>(args...));\n\n            memory_buf_t buf;\n            details::os::wstr_to_utf8buf(wstring_view_t(wbuf.data(), wbuf.size()), buf);\n            details::log_msg log_msg(loc, name_, lvl, string_view_t(buf.data(), buf.size()));\n            log_it_(log_msg, log_enabled, traceback_enabled);\n        }\n        SPDLOG_LOGGER_CATCH(loc)\n    }",
+      "实际讲解": {
+        "entity_id": "46b39546-32a2-54d4-b154-d74ff6935805",
+        "summary": "格式化宽字符日志并转换为 UTF-8",
+        "details": "仅在定义 SPDLOG_WCHAR_TO_UTF8_SUPPORT 时提供。输入源码位置、日志级别、宽字符格式串及可变参数，无默认参数，返回 void。先读取输出许可与回溯状态，仅二者同时为假时跳过处理；回溯开启可使低于输出要求的消息仍进入格式化。使用宽字符格式上下文生成 wmemory_buf_t，再调用 wstr_to_utf8buf 将其转换到字节缓冲区，封装 loc、name_、lvl 和 UTF-8 字节视图后交给 log_it_，同时传入两个状态。异常启用时，格式化、转换及提交处的标准异常交由错误处理器报告；filename 指针非空时附加位置，未知异常报告后重抛。处理器不保证不抛异常。禁用异常配置下 try/catch 包装为空，前置状态读取不受该包装保护。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger.h",
+            "start_line": 346,
+            "end_line": 365
+          },
+          {
+            "path": "include/spdlog/logger.h",
+            "start_line": 345,
+            "end_line": 366
+          },
+          {
+            "path": "include/spdlog/logger.h",
+            "start_line": 30,
+            "end_line": 46
+          },
+          {
+            "path": "include/spdlog/common.h",
+            "start_line": 107,
+            "end_line": 121
+          }
+        ]
+      }
+    }
+  ],
+  "概览": {
+    "introduction": "这是一个面向 C++ 开发者的日志库，用于把程序消息整理成分级、可定制格式的日志，并交给配置的输出端。它还提供回溯记录与刷新控制，帮助开发者排查问题、管理日志输出。",
+    "capabilities": [
+      "按严重程度筛选日志，支持分级快捷记录",
+      "记录文本、普通对象和带参数的格式化消息",
+      "自定义日志格式，并向多个输出端分发",
+      "启停容量可配置的回溯记录，按需输出",
+      "手动刷新日志，或按消息级别触发刷新"
+    ],
+    "principle": "消息入口接收内容、级别及可选来源位置或时间戳，按输出与回溯各自的需求决定是否处理，并在需要时格式化消息。输出侧再按各输出端的级别条件分发，回溯侧独立接收记录；刷新可由显式请求或级别条件触发。",
+    "limitations": [
+      "未提供真实构建配置，格式化后端和异常分支未确定；宽字符转 UTF-8 仅在启用相关支持且为 Windows 时可用。",
+      "输出端和回溯组件的内部实现未完整展示，不能确认具体输出位置、刷新完成时机或整体线程安全性。",
+      "启用异常捕获时，相关内部处理捕获标准异常并交给错误处理器，其他异常报告后重抛；处理器也可能抛出。禁用异常时捕获包装为空，显式抛错机制改为终止。",
+      "仍有四个模块分析未完成，且存在解析诊断和未确认调用绑定；现有归纳不代表完整运行验证。"
+    ],
+    "synthesized": true,
+    "analysis_notes": [
+      "本批仅包含common.h，不能据此解释日志写入、格式化执行或输出端运行流程。",
+      "日志级别转换和日志异常成员在本文件仅有声明，其实现未在本批展示。",
+      "未提供真实构建配置，条件编译分支不代表当前实际启用状态。",
+      "解析存在依赖缺失与未解析调用；命名空间宏的实际名称未确认。",
+      "本批 entities 为空，不能创建函数讲解或将候选实体纳入模块。",
+      "授权源码仅展示第1至59行，不能据此说明该文件其余实现或日志输出行为。",
+      "调用位置存在语义解析缺口，未提供已确认调用关系，不能据名称推定目标绑定。",
+      "异常规格通过宏书写，本批未展示宏定义及相关成员类型实现，不能进一步保证完整异常行为。",
+      "本批仅覆盖基础配置片段，不展示日志过滤、格式化执行或实际输出流程。",
+      "成员 swap、输出端 set_formatter 和 formatter::clone 的目标实现未在本批展示，不推断其内部行为。",
+      "命名空间及部分声明解析存在歧义，调用列表没有已确认关系。",
+      "本批仅覆盖三个配置函数，不展示日志写入、格式器安装及回溯缓冲实现。",
+      "回溯附近注释不能证明实际迁移接收器、恢复级别或删除接收器。",
+      "调用关系尚未获得语义绑定确认，未补充直接调用判断。",
+      "本批函数定义没有展示默认实参，不能据此确定声明端默认值。",
+      "本批源码仅覆盖三个短接口，不据此推断整个项目的完整能力。",
+      "内部委托目标的实现未在当前展示片段中提供，不能据此保证输出位置、刷新完成时机或内部状态变化。",
+      "调用位置仍标记为未解析，未新增直接调用判定；宏命名空间与真实构建配置也未确认。",
+      "仅覆盖两个访问器实现",
+      "限定命名空间因宏或解析恢复未完全确认",
+      "未提供 sink 或原子成员的完整声明",
+      "不能据此判断调用方或运行时线程模型",
+      "本批仅覆盖四个成员实现，不代表完整日志系统。",
+      "复制构造、输出委托和回溯写入的内部实现未在当前片段展示，不能据此推断深复制、线程安全或内部异常处理。",
+      "调用索引没有已确认关系；未解析调用不补写为确定绑定。",
+      "仅提供 logger-inl.h 相关实现，未展示 sink、should_flush_、err_handler_ 的完整定义。",
+      "宏命名空间及具体编译配置未确认，异常行为以已提供宏定义为准。",
+      "调用关系解析未确认，不能据此绑定具体 sink 或辅助函数实体。",
+      "宏命名空间和部分调用绑定未由快照确认",
+      "未提供完整编译配置，R 分支只能按源码条件说明",
+      "依赖的 tracer、sink、刷新级别和时间函数实现未在本批展开",
+      "本批 entities 为空，作用域标识不作为函数实体分配，也不生成逐函数讲解。",
+      "授权源码仅展示第1至77行，不能据此说明日志写入、格式化、回溯或接收端内部行为。",
+      "复制、移动、赋值和交换仅有声明，未据此推断实现。",
+      "编译配置未确定；宏分支和平台约束均按条件说明，不选定实际构建分支。",
+      "未确认调用不补判为直接调用；本批没有已确认关系可列为核心依赖。",
+      "仅覆盖本批三个入口，不能据此描述日志器的完整输出流程。",
+      "调用关系尚未获语义解析确认，因此不补充直接调用绑定判断。",
+      "实际编译配置未提供，不能固定选择任一格式后端分支。",
+      "后续实现已在索引中定位，但本批未展开其内部行为。",
+      "本批仅展示两个入口，不能据此说明完整日志库的输出、格式化与回溯实现。",
+      "调用绑定尚未静态确认，未将同名候选函数推定为已确认调用目标。",
+      "所示入口没有异常捕获；下游异常策略不能由本批代码确定。",
+      "命名空间宏与实际编译配置尚未确认。",
+      "本批仅展示入口层，不能据此确定后续日志输出、回溯存储和格式化的内部行为。",
+      "调用关系尚未由语义解析确认，不将同名调用推断为已确认依赖。",
+      "宏命名空间与真实构建配置未确认。",
+      "本批仅展示便捷入口，不能据此确定下层格式化、日志过滤和输出行为。",
+      "log 调用的具体重载绑定尚未得到静态确认，因此不补充直接调用关系。",
+      "宏命名空间及实际编译配置仍未确认。",
+      "仅概括本批提供的日志入口，不能据此描述完整项目或输出端行为。",
+      "宽字符接口依赖 SPDLOG_WCHAR_TO_UTF8_SUPPORT；格式对象适配还受格式库编译条件影响。",
+      "本批没有已确认调用关系，不对未解析调用作绑定判断。",
+      "委托目标的具体处理及编码转换异常规则未在本批实现中展开。",
+      "本批仅覆盖三个宽字符入口，不代表日志库的全部能力。",
+      "内部处理、编码转换和格式化目标的实现不在当前展示片段中，不据此推断其内部状态变化。",
+      "调用关系尚未得到语义解析确认，未补充直接调用绑定判断；真实构建配置也未确定。",
+      "本批只展示两个便捷入口，不能据此说明下游格式化、编码转换和输出策略。",
+      "log 的具体重载绑定尚未确认，不将候选实体视为已确认调用关系。",
+      "宽字符接口受 SPDLOG_WCHAR_TO_UTF8_SUPPORT 条件控制；未确定实际构建配置。",
+      "接口仅在定义 SPDLOG_WCHAR_TO_UTF8_SUPPORT 时可用。",
+      "本批实现只展示入口转发，不能据此说明底层编码转换、过滤及输出行为。",
+      "调用目标的语义绑定尚未确认，因此不新增直接调用关系。",
+      "本批仅覆盖三个便捷入口，不能据此描述完整日志输出架构。",
+      "log 调用尚未静态解析绑定，候选索引不能证明具体目标。",
+      "本层未展示级别过滤、消息转换、输出及下游异常处理实现。",
+      "概览仅覆盖本批源码，不代表整个日志库的完整能力。",
+      "log 存在多个候选重载，本批未确认具体调用绑定，不推断目标内部行为。",
+      "未提供级别枚举值和阈值初始化，不能据此说明默认级别或特殊枚举的行为。",
+      "宏命名空间及真实构建配置尚未确认。",
+      "本批仅提供一个函数实现，周边接口主要为声明。",
+      "enabled() 的目标实现与调用绑定未在所提供内容中展示，因此不能推断其内部读取方式、默认状态或异常保证。",
+      "未提供真实编译配置，宏命名空间名称尚未确认。",
+      "本批不展示日志落地、回溯保存及 log_it_ 的实现，不推断其内部行为。",
+      "未指定实际编译配置，宽字符支持与格式化后端均按条件分支说明。",
+      "调用绑定尚未静态确认，本次不补充直接调用关系。",
+      "错误处理器的声明旁注描述默认行为，但其实现不在本批讲解依据中。",
+      "未提供实际编译配置，无法确认用户覆盖宏后的最终展开结果",
+      "文件仅定义预处理宏，不包含可见函数或运行时逻辑",
+      "源码范围由 23 批受控上下文完成归纳，跨批次模块边界可能需要人工复核。"
+    ]
+  },
+  "主要协作": [],
+  "解析诊断": {
+    "syntax_recovery": 3,
+    "parse_failed": 5,
+    "condition_unknown": 45,
+    "symbol_name_unresolved": 5,
+    "configuration": 1,
+    "missing_dependency": 3,
+    "unresolved_call": 198
+  },
+  "保留缺口": "四个未完成模块标记、宏命名空间与配置未确认、输出端/回溯内部未提供。没有确定调用边，不将该缩小C++结果独立计为AC-29核心协作通过。",
+  "结论": "此前两处无依据的委托机制描述已在默认源码生成流程正式修订；当前范围用途、4域职责和所列关键分支可解释。其他完整工程及最终用户理解验收不自动继承通过。",
+  "复核新增模型请求": 0,
+  "执行目标代码": false,
+  "修改原始源码": false
+}
