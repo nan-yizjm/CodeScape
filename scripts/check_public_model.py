@@ -54,6 +54,8 @@ def main():
     parser.add_argument('--base-url', default='https://api.deepseek.com', help='核对已授权接收端，不接受密钥参数')
     parser.add_argument('--model', default='deepseek-flash', help='核对实际模型ID')
     parser.add_argument('--json-response', action='store_true', help='仅隔离评测使用非流式JSON，主工作区设置不变')
+    parser.add_argument('--reasoning-effort', choices=['default', 'low', 'medium', 'high'],
+                        help='仅隔离评测使用指定推理强度，未提供时保留配置')
     parser.add_argument('--max-seconds', type=int, default=0, help='开发评测截止秒数；到时通过任务接口主动暂停，0使用产品原有限预算')
     mode = parser.add_mutually_exclusive_group()
     mode.add_argument('--resume',action='store_true',help='从该样本已有暂停记录和检查点主动恢复，不创建新的快照')
@@ -109,17 +111,21 @@ def main():
     assert config['base_url']==arguments.base_url and config['model']==arguments.model and config['has_key']
     if arguments.json_response:
         config['stream_response'] = False
+    if arguments.reasoning_effort is not None:
+        config['reasoning_effort'] = arguments.reasoning_effort
     if previous and (previous['接收端'] != config['base_url'] or previous['模型'] != config['model']):
         raise RuntimeError('旧评测接收端或模型不同，不能直接恢复；请新建评测，历史结果已保留。')
     (root/'credentials').mkdir(exist_ok=True)
     shutil.copyfile(actual/'credentials/provider.dpapi',root/'credentials/provider.dpapi')
     (root/'provider.json').write_text(json.dumps({'base_url':config['base_url'],'model':config['model'],
-                                               'stream_response':config.get('stream_response',False)}),encoding='utf-8')
+                                               'stream_response':config.get('stream_response',False),
+                                               'reasoning_effort':config.get('reasoning_effort','default')}),encoding='utf-8')
     nonce = 'public-model-validation'
     record = {'日期':(datetime.now(UTC) + timedelta(hours=8)).date().isoformat(),
         '检查开始时间UTC':datetime.now(UTC).isoformat(),'样本':arguments.id,'Commit':selected['commit'],
         '范围':'缩小范围' if arguments.narrow else '约定完整范围','授权':'用户允许四个固定公开样本向当前配置接收端上传并评测',
         '接收端':config['base_url'],'模型':config['model'],'流式接收':config.get('stream_response',False),
+        '当前请求推理强度':config.get('reasoning_effort','default'),
         '流水线':PIPELINE_VERSION,'数据目录':str(root),
         '原始快照hash':old_manifest['hash'],'实际文件':list(files),'状态':'进行中','执行目标代码':False}
     record['实施代码起始sha256'] = implementation_hash()

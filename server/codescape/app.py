@@ -686,7 +686,8 @@ def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=
         if run_lock.locked():
             raise HTTPException(409, "任务运行期间不能切换 AI 接收端或模型。")
         try:
-            return envelope(provider.configure(body.base_url, body.model, body.key, body.stream_response))
+            return envelope(provider.configure(body.base_url, body.model, body.key, body.stream_response,
+                                               body.reasoning_effort))
         except ValueError as error:
             raise HTTPException(400, str(error)) from None
 

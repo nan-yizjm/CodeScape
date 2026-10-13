@@ -153,6 +153,7 @@ class AISettings(Contract):
     model: str = ""
     key: str | None = None
     stream_response: bool | None = Field(default=None, strict=True)
+    reasoning_effort: Literal['default', 'low', 'medium', 'high'] | None = None
 
 
 class LearningRequest(Contract):

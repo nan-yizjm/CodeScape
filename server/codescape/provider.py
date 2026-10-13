@@ -48,11 +48,12 @@ BATCH_MAX_ENTITIES = 12
 LEGACY_SOURCE_PIPELINE_VERSION = "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1"
 PREVIOUS_SOURCE_PIPELINE_VERSION = LEGACY_SOURCE_PIPELINE_VERSION + '-evidence-localization/1'
 GUIDANCE_SOURCE_PIPELINE_VERSION = PREVIOUS_SOURCE_PIPELINE_VERSION + '-semantics-guidance/1'
-SOURCE_PIPELINE_VERSION = GUIDANCE_SOURCE_PIPELINE_VERSION + '-compact-batches/1'
+COMPACT_SOURCE_PIPELINE_VERSION = GUIDANCE_SOURCE_PIPELINE_VERSION + '-compact-batches/1'
+SOURCE_PIPELINE_VERSION = COMPACT_SOURCE_PIPELINE_VERSION + '-reasoning-config/1'
 PIPELINE_VERSION = SOURCE_PIPELINE_VERSION + '-organization/1'
 KNOWN_SOURCE_PIPELINE_VERSIONS = frozenset({LEGACY_SOURCE_PIPELINE_VERSION,
                                           PREVIOUS_SOURCE_PIPELINE_VERSION, GUIDANCE_SOURCE_PIPELINE_VERSION,
-                                          SOURCE_PIPELINE_VERSION})
+                                          COMPACT_SOURCE_PIPELINE_VERSION, SOURCE_PIPELINE_VERSION})
 ProgressCallback = Callable[[int, int, str], Awaitable[None]]
 BatchCallback = Callable[[int, int, Architecture], Awaitable[None]]
 
@@ -192,7 +193,8 @@ class Provider:
         self.config_path = root / "provider.json"
 
     def settings(self) -> dict:
-        config = {"base_url": "https://api.deepseek.com", "model": "", "stream_response": False}
+        config = {"base_url": "https://api.deepseek.com", "model": "", "stream_response": False,
+                  "reasoning_effort": "default"}
         if self.config_path.exists():
             config.update(json.loads(self.config_path.read_text(encoding="utf-8")))
         config["has_key"] = self.credentials.exists()
@@ -233,7 +235,8 @@ class Provider:
         if latest["base_url"] != config["base_url"] or latest["model"] != config["model"]:
             raise ProviderError("模型配置已改变，任务已停止，请主动重启分析。")
 
-    def configure(self, base_url: str, model: str, key: str | None, stream_response: bool | None = None) -> dict:
+    def configure(self, base_url: str, model: str, key: str | None, stream_response: bool | None = None,
+                  reasoning_effort: str | None = None) -> dict:
         parsed = urlparse(base_url)
         if (
             parsed.scheme != "https"
@@ -250,12 +253,19 @@ class Provider:
             raise ValueError("请填写模型名称。")
         if stream_response is not None and type(stream_response) is not bool:
             raise ValueError('流式接收设置需为布尔值。')
-        stream_response = self.settings().get('stream_response', False) if stream_response is None else stream_response
+        previous = self.settings()
+        stream_response = previous.get('stream_response', False) if stream_response is None else stream_response
+        if reasoning_effort is None:
+            reasoning_effort = (previous.get('reasoning_effort', 'default')
+                if previous['base_url'] == base_url.rstrip('/') and previous['model'] == model.strip() else 'default')
+        if reasoning_effort not in {'default', 'low', 'medium', 'high'}:
+            raise ValueError('推理强度需为服务默认、较低、标准或深入。')
         self.root.mkdir(parents=True, exist_ok=True)
         if key:
             self.credentials.save(key)
         self.config_path.write_text(
-            json.dumps({"base_url": base_url.rstrip("/"), "model": model.strip(), 'stream_response': stream_response}), encoding="utf-8"
+            json.dumps({"base_url": base_url.rstrip("/"), "model": model.strip(), 'stream_response': stream_response,
+                        'reasoning_effort': reasoning_effort}), encoding="utf-8"
         )
         return self.settings()
 
@@ -277,11 +287,16 @@ class Provider:
         if config.get('stream_response'):
             payload['stream'] = True
             payload['stream_options'] = {'include_usage': True}
+        effort = config.get('reasoning_effort', 'default')
+        if effort not in {'default', 'low', 'medium', 'high'}:
+            raise ProviderError('推理强度配置无效，本次没有请求模型。')
+        if effort != 'default':
+            payload['reasoning_effort'] = effort
         # Official Flash defaults to thinking: its total generation budget must
         # leave room for the final JSON, rather than spending the entire cap before it.
         if config['base_url'].rstrip('/') in {'https://api.deepseek.com','https://api.deepseek.com/v1'} and config['model']=='deepseek-flash':
             payload['thinking'] = {'type':'enabled'}
-            payload['reasoning_effort'] = 'high'
+            payload['reasoning_effort'] = 'high' if effort == 'default' else effort
             payload['max_tokens'] = max(max_tokens,32768)
         from .database import Database
         database = self.database or Database(self.root)

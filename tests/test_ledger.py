@@ -1,4 +1,5 @@
 import asyncio
+import hashlib
 import json
 from datetime import UTC, datetime, timedelta
 from email.utils import format_datetime
@@ -30,6 +31,22 @@ def configured(tmp_path, monkeypatch, handler):
 
 def document(content='{"connected":true}', usage=None):
     return {"choices": [{"message": {"content": content}, "finish_reason": "stop"}], **({"usage": usage} if usage is not None else {})}
+
+
+@pytest.mark.parametrize('effort', ['default', 'low', 'high'])
+def test_reasoning_option_is_in_actual_payload_hash_and_default_is_omitted(tmp_path, monkeypatch, effort):
+    captured = []
+    def handler(request):
+        captured.append(json.loads(request.content))
+        return httpx.Response(200, json=document())
+    database, provider, ledger = configured(tmp_path, monkeypatch, handler)
+    provider.configure('https://example.invalid/v1', '固定响应验证', None, reasoning_effort=effort)
+    asyncio.run(provider.request('固定JSON验证', '自有固定响应'))
+    assert captured[0].get('reasoning_effort') == (None if effort == 'default' else effort)
+    actual_hash = hashlib.sha256(json.dumps(captured[0], ensure_ascii=False, sort_keys=True,
+        separators=(',', ':')).encode()).hexdigest()
+    assert ledger.summary()['records'][0]['payload_hash'] == actual_hash
+    database.engine.dispose()
 
 
 @pytest.mark.parametrize('endpoint,model,thinking',[
