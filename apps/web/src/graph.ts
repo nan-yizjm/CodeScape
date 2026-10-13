@@ -198,14 +198,19 @@ export function abstractModules(modules: Module[]): Module[] {
     }
     for (const [part, branch] of next) {
       const current = [...prefix, part];
+      // 已有职责模块表达单分支范围；已知业务目录仍保留其导航分组语义。
       const singleFile = branch.length === 1 && /\.(tsx?|jsx?|py|cpp|h)$/.test(part);
-      const canGroup = !singleFile && (branch.length > ABSTRACT_THRESHOLD || next.size > 1);
+      const namedDomain = !!ABSTRACT_LABELS[part] || ABSTRACT_BUCKETS.some(bucket => bucket.match.has(part));
+      const canGroup = !singleFile && (branch.length > 1 || namedDomain)
+        && (branch.length > ABSTRACT_THRESHOLD || next.size > 1);
       if (!canGroup) {
         for (const module of branch) result.push({ ...module, parent_id: parentId });
         continue;
       }
       const group: Module = {
-        id: abstractId(current), parent_id: parentId, name: abstractLabel(part, current.length),
+        id: abstractId(current), parent_id: parentId,
+        name: branch.length <= 2 && !ABSTRACT_LABELS[part]
+          ? scopeLabel(branch, modules) : abstractLabel(part, current.length),
         summary: ABSTRACT_SUMMARIES[part] || ABSTRACT_SUMMARIES[part.replace(/\.(tsx?|jsx?|py|cpp|h)$/, '')] || [...new Set(branch.map(module => module.summary.split(/[。；]/)[0]).filter(Boolean))].slice(0, 2).join('；') + '。',
         entity_ids: [], code_paths: [`${current.join('/')}/`], incomplete: branch.some(module => module.incomplete),
       };

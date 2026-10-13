@@ -22,6 +22,29 @@ function fixture(): ProjectDetail {
 }
 
 describe('基于证据生成图形', () => {
+  it('大图保留已有功能域名称和跨目录职责，去掉单模块目录包装后不丢失关系证据', () => {
+    const project = fixture();
+    const base = project.architecture!.modules[0];
+    project.architecture!.modules = [
+      { ...base, id: 'runtime', name: '应用运行核心', entity_ids: ['f'], code_paths: ['src/framework/app.py'] },
+      { ...base, id: 'duration', name: '配置时长归一化', entity_ids: ['g'],
+        code_paths: ['src/framework/app.py', 'src/framework/sansio/app.py'] },
+      { ...base, id: 'json', name: 'JSON处理', entity_ids: [], code_paths: ['src/framework/json/provider.py'], incomplete: true },
+      ...Array.from({ length: 10 }, (_, index) => ({ ...base, id: `feature-${index}`, name: `功能${index}`,
+        entity_ids: [], code_paths: [`src/framework/feature-${index}.py`] })),
+      { ...base, id: 'json-child', parent_id: 'json', name: '文本编解码', entity_ids: [], code_paths: ['src/framework/json/provider.py'] },
+    ];
+    const navigation = abstractModules(project.architecture!.modules);
+    expect(navigation.find(module => module.id === 'json')).toMatchObject({ parent_id: null, name: 'JSON处理', incomplete: true });
+    expect(navigation.find(module => module.id === 'json-child')?.parent_id).toBe('json');
+    expect(navigation.filter(module => module.name === 'json')).toHaveLength(0);
+    const parent = navigation.find(module => module.name === '应用运行核心 · 配置时长归一化')!;
+    expect(parent).toBeDefined();
+    expect(navigation.find(module => module.id === 'duration')).toMatchObject({
+      parent_id: parent.id, entity_ids: ['g'], code_paths: ['src/framework/app.py', 'src/framework/sansio/app.py'],
+    });
+    expect(projectGraph(project, null).relations.flatMap(relation => relation.calls.map(call => call.id))).toContain('c0');
+  });
   it('大图阅读尺寸定位真实入口，远端孤立节点不把视口带到空白区域', () => {
     const entry:ProjectionNode={id:'entry',label:'入口',description:'',kind:'function',count:0,state:'not_started',incomplete:false,external:false,x:20,y:164,width:300,height:126};
     const container={...entry,id:'container',container:true,kind:'module' as const,x:0,y:0,width:60000,height:220000};
