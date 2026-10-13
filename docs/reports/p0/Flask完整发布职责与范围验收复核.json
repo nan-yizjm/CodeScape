@@ -1,0 +1,339 @@
+{
+  "核对时间UTC": "2026-10-13T17:00:55.041160+00:00",
+  "性质": "真实正式发布结果的开发代理源码与独立浏览器复核，不代替用户理解验收",
+  "执行目标代码": false,
+  "修改原始源码": false,
+  "复核模型请求": 0,
+  "报告绑定": {
+    "flask-python-full真实模型验证.json": "dcddfce8f9871b0d2e947a71cd7cf965bcdde32a80c94fb4caae583908798867",
+    "flask-python-narrow真实模型验证.json": "159ce09e277f2f25f914f823b9218778921d6744af22503f188671e052ef5697"
+  },
+  "Commit": "d086db856be187255b8ec61ef409357393020f32",
+  "接收端": "https://www.cctq.ai/v1",
+  "模型": "gpt-6.1-sol",
+  "最终流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1-compact-batches/1-reasoning-config/1-organization/1",
+  "源码生成来源": [
+    "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1",
+    "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1",
+    "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1-compact-batches/1",
+    "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1-compact-batches/1-reasoning-config/1"
+  ],
+  "完整范围": {
+    "文件": 27,
+    "函数": 341,
+    "模块": 166,
+    "原始根模块": 18,
+    "数据库正式发布": true,
+    "函数唯一归属与讲解": 341,
+    "未完成标记": 6,
+    "实际未完成叶片段": [
+      {
+        "id": "m126",
+        "parent_id": "tags",
+        "name": "日期时间标签声明片段",
+        "summary": "已提供片段仅声明标签继承关系、空槽和日期时间标签键，该源模块保持未完成；完整转换职责由独立子模块说明。",
+        "entity_ids": [],
+        "code_paths": [
+          "src/flask/json/tag.py"
+        ],
+        "incomplete": true
+      },
+      {
+        "id": "m135",
+        "parent_id": "base_app",
+        "name": "应用扩展声明片段",
+        "summary": "声明错误中止器、模板环境、全局对象、配置、JSON提供器和路由类扩展入口，以及若干配置代理属性；此声明片段仍未完成，不推断其余类主体实现。",
+        "entity_ids": [],
+        "code_paths": [
+          "src/flask/sansio/app.py"
+        ],
+        "incomplete": true
+      }
+    ]
+  },
+  "范围对照": {
+    "共同文件": 1,
+    "共同函数": 19,
+    "函数身份歧义": 0,
+    "源码字节一致": true,
+    "共同静态确定调用": {
+      "共同关系数": 2,
+      "仅完整范围关系": [],
+      "仅缩小范围关系": [],
+      "边界": "目标为共同可见函数且调用所在文件在共同范围；按实际作用域、位置、关系类型匹配。范围变化可能改变确认能力；不直接判定缺陷，不包含未发布的全局AI判断。"
+    },
+    "四部分概览": "两侧均齐全；完整范围说明Web框架、请求处理和开发支持，窄范围明确仅为辅助能力集合。",
+    "架构一致性": "完整范围包含窄范围的环境开关、流式上下文、HTTP辅助、模板、闪现、文件、资源定位、蓝图名称与错误收集职责；分组粒度变化没有改变函数身份或关键语义。",
+    "范围缺口": "完整范围保留JSON日期标签及无I/O应用扩展声明的两处未完成叶片段和祖先标记；外部依赖未在快照、未执行运行时。窄范围不冒充完整路由、会话持久化或运行时。",
+    "推荐路线": "两侧当前四部分均未生成阅读顺序或起点。",
+    "实验方法边界": "最终流水线相同；源码阶段来源混合，不能归因为统一新提示效果。此额外实验条件不替代PRD AC-31功能步骤。"
+  },
+  "源码语义复核": {
+    "覆盖": "逐一读取helpers.py的19处实现，对照完整与窄范围实际讲解；并核查时长转换两处实现及当前四部分概览。",
+    "环境开关": "保留未设置/空值、default原样返回、非空否定词与不去空白。",
+    "流式上下文": "iter的TypeError装饰路径、is None身份检查、None哨兵及finally关闭，未虚构单独请求检查。",
+    "闪现消息": "会话写回先于信号；仅None触发弹出，空缓存不重读，过滤不改缓存。",
+    "文件适配": "max_age缺失或None采用回调对象，零保留，不调用回调；包装层委托Werkzeug。",
+    "HTTP辅助": "响应按参数数量处理；URL原样委托；redirect默认303且应用分支忽略Response；abort正常返回后仍可继续底层中止。",
+    "模板和资源": "模板属性返回对象不调用宏；加载器缺失回退cwd，导入查询异常与后续异常分开。",
+    "蓝图与清理": "cache装饰的同名递归不冒充确定调用；errors实例初始化、enter返回None、exit按is not None收集并返回True、raise_any不清空。",
+    "已知说明瑕疵": "窄范围__exit__及analysis_notes仍保留单批初始化未展示的局部说明，完整primary_dependencies也有目标未在本批提供的历史语句；属于来源上下文措辞，不能宣称全部341处讲解或所有历史说明无误。当前四部分概览未再声称初始化不在当前范围。"
+  },
+  "跨目录职责": {
+    "模块": {
+      "id": "duration",
+      "parent_id": null,
+      "name": "配置时长归一化",
+      "summary": "将秒数转为timedelta，保留None和已有时长对象；已确认基础应用中用作永久会话有效期属性的读取转换器。",
+      "entity_ids": [
+        "6bc7a394-b3fc-59c9-b293-066285ab369b",
+        "090d44ff-2b96-5818-b74b-c04e828bb89f"
+      ],
+      "code_paths": [
+        "src/flask/app.py",
+        "src/flask/sansio/app.py"
+      ],
+      "incomplete": false
+    },
+    "实现位置": [
+      {
+        "path": "src/flask/app.py",
+        "start_line": 73,
+        "end_line": 77,
+        "start_byte": 2439,
+        "end_byte": 2622
+      },
+      {
+        "path": "src/flask/sansio/app.py",
+        "start_line": 53,
+        "end_line": 57,
+        "start_byte": 1773,
+        "end_byte": 1956
+      }
+    ],
+    "结论": "两处时长转换具有相同实现，归于同一明确职责，保留独立位置和身份。"
+  },
+  "同文件多职责": {
+    "模块": [
+      {
+        "id": "m62",
+        "parent_id": "helpers",
+        "name": "环境开关解析",
+        "summary": "读取调试和dotenv开关，分别处理未设置、空值及大小写不敏感的字符串取值。",
+        "entity_ids": [
+          "433203e6-f972-53f7-b3ea-9c71887412ae",
+          "674f3e36-f996-5919-a593-2bdf9b5153a6"
+        ],
+        "code_paths": [
+          "src/flask/helpers.py"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "m63",
+        "parent_id": "helpers",
+        "name": "流式上下文保持",
+        "summary": "包装迭代器或生成器函数，在迭代期间保持当前上下文，结束时关闭底层迭代器；重载仅提供类型契约。",
+        "entity_ids": [
+          "0dbec555-5399-5d29-9dd5-ef954044a5d1"
+        ],
+        "code_paths": [
+          "src/flask/helpers.py"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "m64",
+        "parent_id": "helpers",
+        "name": "HTTP响应与导航入口",
+        "summary": "提供响应转换、URL构建、重定向和HTTP异常便捷入口；优先委托当前应用，部分入口支持Werkzeug回退。",
+        "entity_ids": [
+          "40e189d8-31e6-573b-be91-99a31cb880a8",
+          "4b866c05-4f35-5d3d-ad1a-9a581917a42a",
+          "18932ae0-1fb2-5145-a08e-1c59227438f7",
+          "7bc8fd1a-0b6d-56e7-b306-32f8a2cce213"
+        ],
+        "code_paths": [
+          "src/flask/helpers.py"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "m65",
+        "parent_id": "helpers",
+        "name": "模板导出访问",
+        "summary": "通过应用Jinja环境取得模板模块导出的宏或变量。",
+        "entity_ids": [
+          "f01c6108-ca6d-5b6c-8a34-df43b901ac36"
+        ],
+        "code_paths": [
+          "src/flask/helpers.py"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "m66",
+        "parent_id": "helpers",
+        "name": "会话闪现消息",
+        "summary": "保存分类消息并发送信号，通过上下文缓存支持重复读取，按类别过滤并按需提取正文。",
+        "entity_ids": [
+          "9d6b99c1-432d-57dc-8d4e-defbfe2f5461",
+          "966e0854-95a1-57f0-85d6-e21ca1cd3a22"
+        ],
+        "code_paths": [
+          "src/flask/helpers.py"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "file_response",
+        "parent_id": "helpers",
+        "name": "文件与目录响应适配",
+        "summary": "补齐请求环境、应用响应类、根路径和缓存策略，将文件发送或目录相对路径发送委托给Werkzeug。",
+        "entity_ids": [
+          "dffde6d5-0153-5f3d-878c-eecf6169e955",
+          "4b1f1f44-9e42-53b9-ab34-d7be527eec4f",
+          "d73f3a3b-73d0-5baf-8e19-3b7e636d859a"
+        ],
+        "code_paths": [
+          "src/flask/helpers.py"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "m69",
+        "parent_id": "helpers",
+        "name": "资源根目录定位",
+        "summary": "依据已加载模块、导入规格及加载器定位资源根目录，处理工作目录回退和无法定位情况。",
+        "entity_ids": [
+          "797859fb-41aa-5791-af2a-ab894354052b"
+        ],
+        "code_paths": [
+          "src/flask/helpers.py"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "m70",
+        "parent_id": "helpers",
+        "name": "蓝图名称层级展开",
+        "summary": "缓存点分蓝图名称展开结果，返回从当前名称到逐级父名称的列表。",
+        "entity_ids": [
+          "1d43a21c-8930-57b8-95eb-c31fa07955a3"
+        ],
+        "code_paths": [
+          "src/flask/helpers.py"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "m71",
+        "parent_id": "helpers",
+        "name": "延迟异常汇总",
+        "summary": "在上下文退出时记录并抑制异常，使后续清理继续执行，随后显式以异常组抛出已收集错误。",
+        "entity_ids": [
+          "5a7f3ac9-0034-511f-bdc9-e67bd44f821c",
+          "fee710a2-b3dd-5623-9cc4-2463019b80b4",
+          "404ac496-70e3-5046-aa90-b0e2bf52f1ed",
+          "26c53e69-ddd7-531f-a7be-a9045d05db9b"
+        ],
+        "code_paths": [
+          "src/flask/helpers.py"
+        ],
+        "incomplete": false
+      }
+    ],
+    "结论": "helpers.py按真实不同功能分组，全部19函数唯一归属。"
+  },
+  "核心协作": {
+    "调用": {
+      "id": "8ab96d0a-7e20-5c0d-913d-0b9cb0ee20ab",
+      "caller_scope_id": "cde5760e-d4f1-5725-8328-b168aeaefc41",
+      "target_id": "dffde6d5-0153-5f3d-878c-eecf6169e955",
+      "expression": "_prepare_send_file_kwargs",
+      "location": {
+        "path": "src/flask/helpers.py",
+        "start_line": 529,
+        "end_line": 539,
+        "start_byte": 19496,
+        "end_byte": 19851
+      },
+      "resolution": "confirmed",
+      "spelling_location": null,
+      "expansion_location": null,
+      "kind": "direct",
+      "interface_evidence": [],
+      "origin": "static",
+      "reason": "词法绑定指向分析范围内唯一实现，无已知重赋值或装饰器改写。",
+      "target_name": "_prepare_send_file_kwargs",
+      "judgment_evidence": []
+    },
+    "调用方": {
+      "path": "src/flask/helpers.py",
+      "start_line": 417,
+      "end_line": 540,
+      "start_byte": 14586,
+      "end_byte": 19857
+    },
+    "目标": {
+      "path": "src/flask/helpers.py",
+      "start_line": 402,
+      "end_line": 414,
+      "start_byte": 14156,
+      "end_byte": 14583
+    },
+    "结论": "send_file将请求与应用配置交给统一参数准备器；真实函数作用域与源码字节一致。"
+  },
+  "独立浏览器": {
+    "URL": "http://127.0.0.1:8326/",
+    "窗口": [
+      1120,
+      900
+    ],
+    "模式": "Playwright CLI独立无界面浏览器",
+    "数据": "正式结果副本，无API凭据，不改变原评测结果及用户工作区",
+    "新增模型请求": 0,
+    "实际操作": [
+      "打开完整概览",
+      "展开应用便捷接口",
+      "进入文件与目录响应适配",
+      "显示8个外层同级模块",
+      "收起返回应用便捷接口及其直属子层",
+      "全屏显示3个函数与2条分离的规范折线",
+      "send_file跳转helpers.py L417–540",
+      "时长转换两个实现分别跳转app.py L73–77与sansio/app.py L53–57"
+    ],
+    "控制台": "Errors 0，Warnings 0",
+    "可读性": "17个投影根节点全览缩放较小；深入模块及全屏后可读。目录抽象显示app/json/sansio，真实职责名称在模块选择及内部保留，不据此声称全景排版已无提升空间。"
+  },
+  "截图": {
+    "P0-Flask完整概览.png": {
+      "path": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\output\\playwright\\P0-Flask完整概览.png",
+      "sha256": "675452e8db0e145cb253db4e93f4cbd140867875b27a16135aeb80a48b817020"
+    },
+    "P0-Flask完整函数依赖全屏.png": {
+      "path": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\output\\playwright\\P0-Flask完整函数依赖全屏.png",
+      "sha256": "be775d8204ac0ae4209b33811d690470c69189e2b506ba3793c5108f4f9b7df9"
+    },
+    "P0-Flask完整源码定位.png": {
+      "path": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\output\\playwright\\P0-Flask完整源码定位.png",
+      "sha256": "c85942118a18c4a11b324d9614226fbb7fd92320e4a10ea92d783b132b48c602"
+    },
+    "P0-Flask跨目录职责.png": {
+      "path": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\output\\playwright\\P0-Flask跨目录职责.png",
+      "sha256": "15f4ca8773c3cbd1d2e6a9de373ed8c0aa3ff03d3a82e11ab935e97ae30b9a23"
+    },
+    "P0-Flask跨目录源码定位.png": {
+      "path": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\output\\playwright\\P0-Flask跨目录源码定位.png",
+      "sha256": "352727993c3cb62bd50278422294fc1ad3c573b739404e9f21294fbedd378522"
+    }
+  },
+  "自动检查": {
+    "命令": "pytest tests/test_public_scope_comparison.py tests/test_module_organization.py -q",
+    "通过": 36,
+    "性质": "固定响应与本地契约，无真实模型请求；不等同语义准确率"
+  },
+  "AC-30": "按PRD职责跨目录、同文件不同职责、唯一归属与实际源码定位步骤，开发复核通过；不外推未抽查全部341讲解。",
+  "AC-31": "同一固定仓库完整和缩小范围均正式发布，四部分概览、架构一致、范围说明及无推荐路线，开发复核通过。",
+  "AC-29": "Flask代表性完整项目用途、职责及有证据核心协作与预先源码基线相符；其他代表性工程质量及最终用户理解验收仍另列，未自动计全部通过。"
+}
