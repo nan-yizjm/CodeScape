@@ -246,7 +246,13 @@ def main():
               '样本': {}}
     for sample in catalogue['repositories']:
         if sample['id'] in {'hiredis-c', 'spdlog-cpp', 'flask-python', 'zod-typescript'}:
-            full, narrow = (load_scope(sample['id'], scope, sample['commit']) for scope in ('full', 'narrow'))
+            try:
+                full, narrow = (load_scope(sample['id'], scope, sample['commit']) for scope in ('full', 'narrow'))
+            except RuntimeError as error:
+                report['样本'][sample['id']] = {
+                    '状态': '待可核对索引或终态', '尚缺': [str(error)], '验收通过': False,
+                }
+                continue
             report['样本'][sample['id']] = compare(full, narrow)
     destination = REPORTS / '全窄范围源码与结果对照.json'
     if destination.exists():
@@ -255,7 +261,7 @@ def main():
         if not archive.exists():
             archive.write_bytes(raw)
     destination.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding='utf-8')
-    print(json.dumps({sample: {key: item[key] for key in ('共同可见函数数', '完整范围检查点批数',
+    print(json.dumps({sample: {key: item.get(key) for key in ('状态', '共同可见函数数', '完整范围检查点批数',
                      '共同函数在完整范围有唯一讲解数', '完整范围结果已发布', '验收通过')}
                      for sample, item in report['样本'].items()}, ensure_ascii=False))
 

@@ -71,6 +71,31 @@ def test_identical_machine_results_still_require_semantic_review():
     assert not report['验收通过'] and len(report['尚缺']) == 1
 
 
+def test_one_unavailable_sample_does_not_suppress_other_scope_comparisons(monkeypatch, tmp_path):
+    import scripts.compare_public_scope as comparator
+
+    (tmp_path / 'docs').mkdir()
+    (tmp_path / 'docs/benchmark_sources.json').write_text(json.dumps({'repositories': [
+        {'id': 'hiredis-c', 'commit': 'fixed'}, {'id': 'flask-python', 'commit': 'fixed'},
+    ]}), encoding='utf-8')
+    monkeypatch.setattr(comparator, 'REPOSITORY', tmp_path)
+    monkeypatch.setattr(comparator, 'REPORTS', tmp_path)
+
+    def load(sample, scope_name, commit):
+        if sample == 'hiredis-c':
+            raise RuntimeError('缺少同一源码阶段的静态索引凭据')
+        return scope(scope_name)
+
+    monkeypatch.setattr(comparator, 'load_scope', load)
+    comparator.main()
+    report = json.loads((tmp_path / '全窄范围源码与结果对照.json').read_text(encoding='utf-8'))
+    pending = report['样本']['hiredis-c']
+    assert not pending['验收通过'] and pending['尚缺'] == ['缺少同一源码阶段的静态索引凭据']
+    assert '完整范围全局概览' not in pending
+    assert report['样本']['flask-python']['共同可见函数数'] == 1
+    assert report['模型请求'] == 0
+
+
 def test_same_processing_version_does_not_hide_reused_historical_generation():
     full, narrow = scope('full'), scope('narrow')
     full['source_generation_versions'] = [PREVIOUS_SOURCE_PIPELINE_VERSION, SOURCE_PIPELINE_VERSION]
