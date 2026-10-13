@@ -904,13 +904,25 @@ class Provider:
                     validate_primary_dependencies(result, analysis, call_ids)
             except ValueError:
                 raise ProviderError('旧源码检查点未通过当前引用与关系校验，原记录保留；本次没有复用或重新发送这些批次。') from None
+        expected_sets = [self._context(analysis, batch_files, batch_ranges)[1]
+                         for batch_files, batch_ranges in batches]
         candidates: list[list[int]] = [[] for _ in batches]
         for result_index, entity_ids in enumerate(assigned_sets):
             if not entity_ids:
+                # 仅有可读源码的模块也是真实完成单元；用唯一文件集合定位，不能按空集匹配所有批次。
+                paths = {path for module in completed_batches[result_index].modules for path in module.code_paths}
+                matches = []
+                for batch_index, (batch_files, _) in enumerate(batches):
+                    if not paths or not paths.issubset(batch_files):
+                        continue
+                    expected = expected_sets[batch_index]
+                    if not expected:
+                        matches.append(batch_index)
+                if len(matches) == 1:
+                    candidates[matches[0]].append(result_index)
                 continue
             ranked: list[tuple[int, int]] = []
-            for batch_index, (batch_files, batch_ranges) in enumerate(batches):
-                _, expected = self._context(analysis, batch_files, batch_ranges)
+            for batch_index, expected in enumerate(expected_sets):
                 overlap = len(entity_ids & expected)
                 if overlap and entity_ids.issubset(expected):
                     ranked.append((overlap, batch_index))
@@ -919,8 +931,8 @@ class Provider:
                 candidates[batch_index].append(result_index)
         aligned: list[Architecture] = []
         for batch_index, result_indices in enumerate(candidates):
-            batch_files, batch_ranges = batches[batch_index]
-            _, expected = self._context(analysis, batch_files, batch_ranges)
+            batch_files, _ = batches[batch_index]
+            expected = expected_sets[batch_index]
             if not result_indices:
                 break
             if not allow_merge and len(result_indices) != 1:
