@@ -1,0 +1,34 @@
+{
+  "核对时间UTC": "2026-10-13T02:10:32.952852+00:00",
+  "当前源码流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-organization/1",
+  "主应用退出": "正常保存退出，通过现有数据库检查",
+  "重开端口": 8125,
+  "项目和学习所有列摘要与退出前一致": true,
+  "退出前": {
+    "prototype_projects": {
+      "count": 4,
+      "sha256": "15bbe92d40491eba630d1239fc7779d60caa0f07271720cdb13160a9a72a10ba"
+    },
+    "prototype_learning": {
+      "count": 2,
+      "sha256": "b7a1862f475a357ee85bc27b685d6ca587a7ccb4ec64c294c5542e4713484de2"
+    },
+    "requests": 13
+  },
+  "重开后": {
+    "prototype_projects": {
+      "count": 4,
+      "sha256": "15bbe92d40491eba630d1239fc7779d60caa0f07271720cdb13160a9a72a10ba"
+    },
+    "prototype_learning": {
+      "count": 2,
+      "sha256": "b7a1862f475a357ee85bc27b685d6ca587a7ccb4ec64c294c5542e4713484de2"
+    },
+    "requests": 13
+  },
+  "接收端": "https://www.cctq.ai/v1",
+  "模型": "gpt-6.1-sol",
+  "流式接收": true,
+  "源码上传": false,
+  "边界": "本次仅验证工作区数据与配置不变，不将历史架构重标为新流水线。"
+}

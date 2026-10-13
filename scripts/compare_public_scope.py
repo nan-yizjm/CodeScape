@@ -9,7 +9,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from codescape.models import Analysis
-from codescape.provider import PIPELINE_VERSION, SOURCE_PIPELINE_VERSION
+from codescape.provider import LEGACY_SOURCE_PIPELINE_VERSION, SOURCE_PIPELINE_VERSION
 
 REPOSITORY = Path(__file__).resolve().parents[1]
 REPORTS = REPOSITORY / 'docs/reports/p0'
@@ -66,7 +66,11 @@ def explanation(architectures, entity_id):
 
 
 def source_stage(pipeline):
-    return SOURCE_PIPELINE_VERSION if pipeline in {SOURCE_PIPELINE_VERSION, PIPELINE_VERSION} else pipeline
+    if isinstance(pipeline, str):
+        source = pipeline.removesuffix('-organization/1')
+        if source in {LEGACY_SOURCE_PIPELINE_VERSION, SOURCE_PIPELINE_VERSION}:
+            return source
+    return pipeline
 
 
 def index_receipt(record, path):

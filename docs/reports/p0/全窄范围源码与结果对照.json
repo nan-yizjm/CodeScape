@@ -1,5 +1,5 @@
 {
-  "核对时间UTC": "2026-10-13T01:23:54.197751+00:00",
+  "核对时间UTC": "2026-10-13T02:13:59.864038+00:00",
   "模型请求": 0,
   "执行目标代码": false,
   "修改原始源码": false,
@@ -5425,9 +5425,9 @@
     "flask-python": {
       "完整范围来源": {
         "报告": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\docs\\reports\\p0\\flask-python-full真实模型验证.json",
-        "报告sha256": "fedee64dc44703653f077f87aa75e2ed7970f11effdadf6415df158219d95d89",
+        "报告sha256": "0a335059c268b912b8681b75c369142b1025d692e36362cdf1b4a78f29f9b7de",
         "索引来源报告": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\docs\\reports\\p0\\flask-python-full真实模型验证.json",
-        "索引来源报告sha256": "fedee64dc44703653f077f87aa75e2ed7970f11effdadf6415df158219d95d89",
+        "索引来源报告sha256": "0a335059c268b912b8681b75c369142b1025d692e36362cdf1b4a78f29f9b7de",
         "索引sha256": "d971981601aa60f9559090c929941a31ffedeea92e329e5242d70e8ec348cf2a",
         "检查点sha256": "7ea78d2bbd8d120c68830ec102c4cd3cb22d1b8d04e7cc614cc09ed3c94ca779",
         "检查点流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-organization/1",

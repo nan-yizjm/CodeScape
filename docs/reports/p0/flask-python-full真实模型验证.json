@@ -1,6 +1,6 @@
 {
   "日期": "2026-10-13",
-  "检查开始时间UTC": "2026-10-13T00:51:55.652865+00:00",
+  "检查开始时间UTC": "2026-10-13T01:33:53.593768+00:00",
   "样本": "flask-python",
   "Commit": "d086db856be187255b8ec61ef409357393020f32",
   "范围": "约定完整范围",
@@ -44,20 +44,19 @@
   "执行目标代码": false,
   "实施代码起始sha256": "d17483b94e323163978b25b362321044edc0c596b4f693590f8edae1eb789df6",
   "开发评测截止秒数": 1800,
-  "恢复前已知total_tokens": 158859,
+  "恢复前已知total_tokens": 335338,
   "进度": {
     "phase": "paused",
     "completed": 13,
     "total": 33,
-    "detail": "分析已中断，请主动重新启动"
+    "detail": "AI 服务在流式响应中返回错误，未发布部分结果；检查点已保留，请检查服务后主动恢复。"
   },
-  "耗时秒": 1801.73,
+  "耗时秒": 18.92,
   "project_id": "b3cc72d3-1ce7-4f05-9085-92b8467dcea4",
   "version_id": "809400d4-2f44-44a9-9503-ef2d26362f2c",
   "实际快照hash": "05de006763cb3d83f9ef72708e199156697402cb13031070f51225a50852b8c7",
   "scope_hash": "64d8fef1eca2d21c0868fb5cb2988d0e4d169bafe184ba5bc3727938f0682e93",
-  "开发评测主动暂停": "达到评测截止时间，已调用产品暂停接口；在途远端用量可能未知。",
-  "错误": "任务已暂停，请主动恢复。",
+  "错误": "AI 服务在流式响应中返回错误，未发布部分结果；检查点已保留，请检查服务后主动恢复。",
   "architecture": null,
   "原快照字节未变": true,
   "请求账本": [
@@ -738,15 +737,38 @@
       "price_snapshot": null,
       "http_status": null,
       "error_code": "PROCESS_INTERRUPTED"
+    },
+    {
+      "id": "515f8619-376a-4faa-ad08-32a3a29f1653",
+      "project_id": "b3cc72d3-1ce7-4f05-9085-92b8467dcea4",
+      "version_id": "809400d4-2f44-44a9-9503-ef2d26362f2c",
+      "job_id": "654569d5-8f3b-4aad-a2b8-cd5089871acc",
+      "unit_id": "0e4eab34-7414-431d-92d9-e843c9472b0e",
+      "attempt": 1,
+      "phase": "architecture",
+      "recipient": "https://www.cctq.ai/v1",
+      "model": "gpt-6.1-sol",
+      "status": "failed",
+      "created_at": "2026-10-13T01:33:55.633121+00:00",
+      "sent_at": "2026-10-13T01:33:55.675987+00:00",
+      "finished_at": "2026-10-13T01:34:11.358349+00:00",
+      "payload_hash": "77b6b37efa67c707598880a913bdef92e4ebf511ab7c65a82fab1bd3c4136c72",
+      "source_chars": 8472,
+      "usage": null,
+      "cost": null,
+      "currency": null,
+      "price_snapshot": null,
+      "http_status": 200,
+      "error_code": "INVALID_STREAM_ERROR_EVENT"
     }
   ],
   "请求状态": {
     "success": 15,
-    "failed": 7,
+    "failed": 8,
     "outcome_unknown": 4
   },
   "已知total_tokens": 335338,
-  "未知用量请求": 6,
+  "未知用量请求": 7,
   "费用": null,
   "脱敏校验记录": [
     {

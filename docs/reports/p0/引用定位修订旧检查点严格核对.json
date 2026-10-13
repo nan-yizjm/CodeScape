@@ -1,0 +1,45 @@
+{
+  "核对时间UTC": "2026-10-13T01:59:02.786989+00:00",
+  "当前流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-organization/1",
+  "性质": "只读旧源码检查点严格校验，不重新生成、不重标旧报告",
+  "模型请求": 0,
+  "执行目标代码": false,
+  "样本": {
+    "hiredis-c": {
+      "原报告流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-organization/1",
+      "原检查点流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
+      "原检查点sha256": "fc9977134246bb0f64cec44a3f30f802aec6ae3e2efee45f0d9b777885579e98",
+      "已保存批数": 2,
+      "严格核对可恢复批数": 2,
+      "规划总批数": 49,
+      "原检查点未修改": true
+    },
+    "spdlog-cpp": {
+      "原报告流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-organization/1",
+      "原检查点流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-organization/1",
+      "原检查点sha256": "a38db1cdfa0582fcb5ec455cbd2916deb4160dd34e5e1695b138be7b1ae6f1fb",
+      "已保存批数": 6,
+      "严格核对可恢复批数": 6,
+      "规划总批数": 53,
+      "原检查点未修改": true
+    },
+    "flask-python": {
+      "原报告流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-organization/1",
+      "原检查点流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-organization/1",
+      "原检查点sha256": "7ea78d2bbd8d120c68830ec102c4cd3cb22d1b8d04e7cc614cc09ed3c94ca779",
+      "已保存批数": 13,
+      "严格核对可恢复批数": 13,
+      "规划总批数": 33,
+      "原检查点未修改": true
+    },
+    "zod-typescript": {
+      "原报告流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-organization/1",
+      "原检查点流水线": null,
+      "原检查点sha256": null,
+      "已保存批数": 0,
+      "严格核对可恢复批数": 0,
+      "规划总批数": 76,
+      "原检查点未修改": true
+    }
+  }
+}
