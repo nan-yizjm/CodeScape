@@ -78,7 +78,7 @@ def test_long_function_evidence_reports_span_limit_and_accepts_split_references(
         validate_explanations(result, analysis, {entity.id}, files, {'owned.py': [(1, 412)]})
 
 
-def test_file_surrounding_function_evidence_is_repaired_with_explicit_bounds(tmp_path, monkeypatch):
+def test_covering_evidence_adds_precise_anchor_and_keeps_original_without_extra_request(tmp_path, monkeypatch):
     files = {'owned.py': '# private-source-marker\n' + '\n' * 64 + 'def short():\n    value = 1\n    return value\n' + '\n' * 22}
     analysis = python_analysis(files, 'v')
     entity = next(item for item in analysis.entities if item.visible)
@@ -89,13 +89,6 @@ def test_file_surrounding_function_evidence_is_repaired_with_explicit_bounds(tmp
     def handle(request):
         payload = json.loads(request.content)
         received.append(payload)
-        if len(received) == 2:
-            feedback = payload['messages'][0]['content']
-            assert '必须都落在 implementation_lines 内' in feedback
-            assert '[66, 68]' in feedback and '整文件引用' in feedback
-            assert 'private-source-marker' not in feedback
-            result.explanations[0].evidence[0].start_line = 66
-            result.explanations[0].evidence[0].end_line = 68
         return httpx.Response(200, json={'choices': [{'message': {'content': result.model_dump_json()}}],
                                         'usage': {'total_tokens': 7}})
     original = httpx.AsyncClient
@@ -104,10 +97,14 @@ def test_file_surrounding_function_evidence_is_repaired_with_explicit_bounds(tmp
     provider = Provider(tmp_path, database)
     provider.configure('https://example.invalid/v1', '固定响应验证', 'local-test-key')
     saved, usage = asyncio.run(provider.architecture(analysis, files))
-    assert len(received) == 2 and usage['total_tokens'] == 14
+    assert len(received) == 1 and usage['total_tokens'] == 7
     assert saved.explanations[0].evidence[0].start_line == 66
     receipts = RequestLedger(database).summary()['records']
-    assert {row['status'] for row in receipts} == {'success', 'failed'}
+    assert {row['status'] for row in receipts} == {'success'}
+    assert saved.explanations[0].evidence[1].start_line == 1
+    audit = json.loads((tmp_path/'reference-localizations.jsonl').read_text(encoding='utf-8'))
+    assert audit['request_id'] == receipts[0]['id']
+    assert audit['adjustments'][0]['original']['end_line'] == 90
     database.engine.dispose()
 
 

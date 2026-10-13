@@ -19,6 +19,7 @@ from codescape.database import Database, now
 from codescape.ledger import ai_scope
 from codescape.models import Analysis, Architecture
 from codescape.provider import (
+    LEGACY_SOURCE_PIPELINE_VERSION,
     MAX_CONTEXT_CHARS,
     PIPELINE_VERSION,
     SOURCE_PIPELINE_VERSION,
@@ -39,7 +40,8 @@ async def main(args):
     approved = next(item for item in json.loads((repository / 'docs/benchmark_sources.json').read_text(
         encoding='utf-8'))['repositories'] if item['id'] == args.id)
     assert prior['Commit'] == approved['commit'] and prior['状态'] == '结构检查通过，待源码质量复核'
-    assert prior['流水线'] in {SOURCE_PIPELINE_VERSION, PIPELINE_VERSION}
+    assert prior['流水线'] in {LEGACY_SOURCE_PIPELINE_VERSION, LEGACY_SOURCE_PIPELINE_VERSION + '-organization/1',
+                            SOURCE_PIPELINE_VERSION, PIPELINE_VERSION}
     original = Path(prior['数据目录']).resolve(strict=True)
     original.relative_to(repository / '.runtime/public-model-validation')
     index_path = Path(prior['静态索引制品']['path']).resolve(strict=True)
@@ -60,7 +62,8 @@ async def main(args):
         path.relative_to(source)
         assert path.read_bytes() == (baseline / name).read_bytes(), '来源字节与固定授权快照不一致'
         files[name] = fixed_files[name]
-    context, ranges, expected = review_module.review_context(architecture, analysis, files)
+    selected = {entity.id for entity in analysis.entities if entity.name in args.functions} if args.targeted else None
+    context, ranges, expected = review_module.review_context(architecture, analysis, files, selected_entity_ids=selected)
     if args.functions:
         allowed = {entity.id for entity in analysis.entities if entity.name in args.functions}
         payload = json.loads(context)
@@ -108,6 +111,7 @@ async def main(args):
         '候选复核实现sha256': hashlib.sha256(draft_path.read_bytes()).hexdigest(),
         '实际快照hash': prior['实际快照hash'], '发送实体': sorted(expected),
         '指定函数筛选': args.functions,
+        '指定完整实现复核': args.targeted,
         '复核材料sha256': hashlib.sha256(context.encode('utf-8')).hexdigest(),
         '分批复核材料sha256': [hashlib.sha256(batch[0].encode('utf-8')).hexdigest() for batch in batches],
         '性质': '候选实现的真实讲解复核，仅已授权窄范围；未集成产品、未发布，不是完整工程验收',
@@ -167,7 +171,10 @@ if __name__ == '__main__':
     parser.add_argument('--max-seconds', type=int, default=600)
     parser.add_argument('--function', dest='functions', action='append', help='仅验证指定实际函数名的短委托，不扩展源码范围')
     parser.add_argument('--preflight', action='store_true', help='只读核对固定授权字节与批次，不调用模型、不创建评测数据')
+    parser.add_argument('--targeted', action='store_true', help='复核指定完整函数实现，不限于短委托形态，必须同时指定--function')
     args = parser.parse_args()
     if not 1 <= args.max_seconds <= 1800:
         parser.error('开发评测等待上限需在1至1800秒之间。')
+    if args.targeted and not args.functions:
+        parser.error('指定实现复核必须通过--function明确选择函数。')
     asyncio.run(main(args))

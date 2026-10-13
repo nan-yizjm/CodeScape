@@ -18,7 +18,13 @@ from codescape.call_judgments import reconcile_judgments
 from codescape.database import Database, now
 from codescape.ledger import ai_scope
 from codescape.models import Analysis, Architecture
-from codescape.provider import PIPELINE_VERSION, SOURCE_PIPELINE_VERSION, Provider, ProviderError
+from codescape.provider import (
+    LEGACY_SOURCE_PIPELINE_VERSION,
+    PIPELINE_VERSION,
+    SOURCE_PIPELINE_VERSION,
+    Provider,
+    ProviderError,
+)
 
 
 async def main(args):
@@ -29,7 +35,8 @@ async def main(args):
     approved = next(item for item in json.loads((repository / 'docs/benchmark_sources.json').read_text(
         encoding='utf-8'))['repositories'] if item['id'] == args.id)
     assert prior['Commit'] == approved['commit'] and prior['状态'] == '结构检查通过，待源码质量复核'
-    assert prior['流水线'] in {SOURCE_PIPELINE_VERSION, PIPELINE_VERSION}
+    assert prior['流水线'] in {LEGACY_SOURCE_PIPELINE_VERSION, LEGACY_SOURCE_PIPELINE_VERSION + '-organization/1',
+                            SOURCE_PIPELINE_VERSION, PIPELINE_VERSION}
     original = Path(prior['数据目录']).resolve(strict=True)
     original.relative_to(repository / '.runtime/public-model-validation')
     index_path = Path(prior['静态索引制品']['path']).resolve(strict=True)
@@ -61,7 +68,7 @@ async def main(args):
         'detail': '隔离验证全局职责整理，不发布或更改原结果'})
     record = {key: prior[key] for key in ('样本', 'Commit', '接收端', '模型', '实际文件', 'project_id', 'version_id')}
     record.update({'数据目录': str(root), '流水线': PIPELINE_VERSION, '原报告流水线': prior['流水线'],
-        '源码生成阶段': SOURCE_PIPELINE_VERSION, '核对时间UTC': datetime.now(UTC).isoformat(),
+        '源码生成阶段': prior['流水线'].removesuffix('-organization/1'), '核对时间UTC': datetime.now(UTC).isoformat(),
         '原报告sha256': hashlib.sha256(origin_path.read_bytes()).hexdigest(), '新建job_id': job_id,
         '实施代码起始sha256': implementation_hash(), '原始源码发送': False, '执行目标代码': False,
         '实际快照hash': prior['实际快照hash'], '性质': '真实模型全局职责整理，使用已有验证数据，不重新生成源码讲解；不是完整工程或发布验收',

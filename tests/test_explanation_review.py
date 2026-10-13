@@ -124,3 +124,27 @@ def test_no_short_forwarders_send_no_request():
 
     result, usage = asyncio.run(review.review_explanations(FixedProvider(), architecture, analysis, files))
     assert result == architecture and usage == {}
+
+
+def test_explicit_selection_can_review_control_flow_without_adding_unselected_entities():
+    architecture, _, _, _ = fixture()
+    files = {'a.py': 'def branch(value):\n    if value is None:\n        return 0\n    return value\n'
+                    'def other():\n    return 1\n'}
+    analysis = python_analysis(files, 'fixed')
+    architecture.explanations = [FunctionExplanation(entity_id=entity.id, summary=entity.name, details='固定响应',
+        evidence=[entity.location.model_dump(include={'path', 'start_line', 'end_line'})]) for entity in analysis.entities]
+    selected = {entity.id for entity in analysis.entities if entity.name == 'branch'}
+    _, _, default_ids = review.review_context(architecture, analysis, files)
+    assert not default_ids
+    context, ranges, ids = review.review_context(architecture, analysis, files, selected_entity_ids=selected)
+    cards = json.loads(context)['functions']
+    assert ids == selected and len(cards) == 1 and cards[0]['review_kind'] == 'explicit_implementation'
+    assert ranges == {'a.py': [(1, 4), (1, 4)]}
+
+
+def test_selection_does_not_create_notes_for_anonymous_or_unexplained_functions():
+    architecture, analysis, files, _ = fixture()
+    architecture.explanations = []
+    context, _, ids = review.review_context(architecture, analysis, files,
+                                          selected_entity_ids={entity.id for entity in analysis.entities})
+    assert not ids and json.loads(context)['functions'] == []

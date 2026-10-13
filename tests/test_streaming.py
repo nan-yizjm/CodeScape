@@ -125,6 +125,35 @@ def test_remote_error_retains_reported_usage_without_exposing_its_message(tmp_pa
     db.engine.dispose()
 
 
+@pytest.mark.parametrize('code', ['upstream_error', 'server_error', 'rate_limit_exceeded', 'insufficient_quota',
+                                 'invalid_api_key', 'model_not_found', 'context_length_exceeded'])
+def test_known_remote_error_code_is_safe_specific_and_still_stops_once(tmp_path, monkeypatch, code):
+    raw = ('data: ' + json.dumps({'error': {'code': code, 'message': 'private-key-and-source'},
+                                 'usage': {'total_tokens': 19}}) + '\n\n').encode()
+    db, provider, ledger = setup(tmp_path, monkeypatch, lambda _:
+        httpx.Response(200, headers={'content-type': 'text/event-stream'}, stream=Bytes(raw)))
+    with pytest.raises(ProviderError, match='服务报告') as error:
+        asyncio.run(provider.request('固定验证', '非源码'))
+    assert 'private-' not in str(error.value)
+    receipt = ledger.summary()['records'][0]
+    assert ledger.summary()['request_count'] == 1 and receipt['error_code'] == 'SERVICE_' + code.upper()
+    assert receipt['usage'] == {'total_tokens': 19} and 'private-' not in json.dumps(receipt)
+    db.engine.dispose()
+
+
+@pytest.mark.parametrize('code', ['private-code', ['upstream_error'], {'name': 'upstream_error'}, 42, None])
+def test_untrusted_remote_codes_are_never_echoed_or_used_as_ledger_codes(tmp_path, monkeypatch, code):
+    raw = ('data: ' + json.dumps({'error': {'code': code, 'message': 'private-message'}}) + '\n\n').encode()
+    db, provider, ledger = setup(tmp_path, monkeypatch, lambda _:
+        httpx.Response(200, headers={'content-type': 'text/event-stream'}, stream=Bytes(raw)))
+    with pytest.raises(ProviderError) as error:
+        asyncio.run(provider.request('固定验证', '非源码'))
+    receipt = ledger.summary()['records'][0]
+    assert 'private-' not in str(error.value) and 'private-' not in json.dumps(receipt)
+    assert receipt['error_code'] == 'INVALID_STREAM_ERROR_EVENT' and ledger.summary()['request_count'] == 1
+    db.engine.dispose()
+
+
 @pytest.mark.parametrize('status', [401, 503])
 def test_http_errors_keep_original_retry_policy_with_html_body(tmp_path, monkeypatch, status):
     db, provider, ledger = setup(tmp_path, monkeypatch, lambda _: httpx.Response(status, text='private-html'))

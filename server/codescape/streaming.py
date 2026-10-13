@@ -7,10 +7,14 @@ import json
 import httpx
 
 MAX_RESPONSE_BYTES = 8 * 1024 * 1024
+KNOWN_PROVIDER_ERRORS = {
+    'upstream_error', 'server_error', 'rate_limit_exceeded', 'insufficient_quota',
+    'invalid_api_key', 'model_not_found', 'context_length_exceeded',
+}
 
 
 class StreamContractError(ValueError):
-    def __init__(self, message, *, code='INVALID_EVENT'):
+    def __init__(self, message, *, code='INVALID_EVENT', provider_code=None):
         super().__init__(message)
         # 仅固定类别进入账本；事件正文、远端错误及请求头不进入错误说明。
         self.code = code if code in {
@@ -18,6 +22,8 @@ class StreamContractError(ValueError):
             'INVALID_CHOICES', 'INVALID_CHOICE', 'INVALID_DELTA', 'INVALID_CONTENT',
             'CONTENT_AFTER_FINISH', 'INVALID_FINISH', 'DUPLICATE_FINISH', 'INVALID_UTF8',
         } else 'INVALID_EVENT'
+        self.provider_code = (provider_code if isinstance(provider_code, str)
+                              and provider_code in KNOWN_PROVIDER_ERRORS else None)
 
 
 async def read_json_response(response):
@@ -52,7 +58,15 @@ async def read_chat_stream(response, on_usage):
                 raise StreamContractError('流式事件不是对象。')
             on_usage(value.get('usage'))
             if 'error' in value:
-                raise StreamContractError('流式服务返回错误事件。', code='ERROR_EVENT')
+                error = value['error']
+                provider_code = None
+                if isinstance(error, dict):
+                    for field in ('code', 'type'):
+                        candidate = error.get(field)
+                        if isinstance(candidate, str) and candidate in KNOWN_PROVIDER_ERRORS:
+                            provider_code = candidate
+                            break
+                raise StreamContractError('流式服务返回错误事件。', code='ERROR_EVENT', provider_code=provider_code)
             choices = value.get('choices', [])
             if not isinstance(choices, list):
                 raise StreamContractError('流式选择项不是列表。', code='INVALID_CHOICES')

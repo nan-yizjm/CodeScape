@@ -6,6 +6,7 @@ from codescape.analyzers import python_analysis
 from codescape.models import Architecture, FunctionExplanation, Module, Overview
 from codescape.module_organization import ModuleOrganization, apply_organization, organization_context
 from codescape.provider import (
+    LEGACY_SOURCE_PIPELINE_VERSION,
     PIPELINE_VERSION,
     SOURCE_PIPELINE_VERSION,
     Provider,
@@ -133,6 +134,9 @@ def test_failed_organization_keeps_source_result_and_stops_after_finite_repairs(
 
 
 @pytest.mark.parametrize('saved,expected', [
+    ({'pipeline_version': LEGACY_SOURCE_PIPELINE_VERSION}, True),
+    ({'pipeline_version': LEGACY_SOURCE_PIPELINE_VERSION + '-organization/1',
+      'source_pipeline_version': LEGACY_SOURCE_PIPELINE_VERSION}, True),
     ({'pipeline_version': SOURCE_PIPELINE_VERSION}, True),
     ({'pipeline_version': PIPELINE_VERSION, 'source_pipeline_version': SOURCE_PIPELINE_VERSION}, True),
     ({'pipeline_version': PIPELINE_VERSION}, True),
@@ -140,5 +144,5 @@ def test_failed_organization_keeps_source_result_and_stops_after_finite_repairs(
     ({'pipeline_version': PIPELINE_VERSION, 'source_pipeline_version': 'different-source-generation'}, False),
     ({'pipeline_version': 'unknown-final-version', 'source_pipeline_version': SOURCE_PIPELINE_VERSION}, False),
 ])
-def test_only_known_identical_source_generation_checkpoints_are_compatible(saved, expected):
+def test_only_known_source_contract_checkpoints_can_enter_strict_revalidation(saved, expected):
     assert compatible_source_checkpoint(saved) is expected

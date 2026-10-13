@@ -18,6 +18,7 @@ from pydantic import ValidationError
 from .call_judgments import callable_name, reconcile_judgments, validate_judgments
 from .context_tools import ArchitectureReply, SnapshotTools, validate_explanations
 from .dependencies import validate_primary_dependencies
+from .evidence_localization import localize_explanation_evidence
 from .ledger import RequestLedger, ai_scope, known_usage, model_budget, model_unit, request_scope
 from .macro_context import macro_reads
 from .models import Analysis, Architecture, Module, Overview
@@ -44,7 +45,8 @@ from .validation import SourceContractError
 MAX_CONTEXT_CHARS = 180_000
 BATCH_TARGET_CHARS = 150_000
 BATCH_MAX_ENTITIES = 12
-SOURCE_PIPELINE_VERSION = "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1"
+LEGACY_SOURCE_PIPELINE_VERSION = "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1"
+SOURCE_PIPELINE_VERSION = LEGACY_SOURCE_PIPELINE_VERSION + '-evidence-localization/1'
 PIPELINE_VERSION = SOURCE_PIPELINE_VERSION + '-organization/1'
 ProgressCallback = Callable[[int, int, str], Awaitable[None]]
 BatchCallback = Callable[[int, int, Architecture], Awaitable[None]]
@@ -82,9 +84,13 @@ SAFE_VALIDATION_FIELDS = {
 
 
 def compatible_source_checkpoint(saved: dict) -> bool:
-    """只复用明确相同的源码生成阶段，不复用旧的最终组织或发布结果。"""
-    return (isinstance(saved, dict) and saved.get('pipeline_version') in {SOURCE_PIPELINE_VERSION, PIPELINE_VERSION}
-            and saved.get('source_pipeline_version', SOURCE_PIPELINE_VERSION) == SOURCE_PIPELINE_VERSION)
+    """仅接受已知源码契约；旧结果还须通过恢复时的严格引用和关系校验。"""
+    if not isinstance(saved, dict):
+        return False
+    sources = {LEGACY_SOURCE_PIPELINE_VERSION, SOURCE_PIPELINE_VERSION}
+    pipeline = saved.get('pipeline_version')
+    source = pipeline.removesuffix('-organization/1') if isinstance(pipeline, str) else None
+    return source in sources and saved.get('source_pipeline_version', source) == source
 
 
 def validation_feedback(error: ValueError) -> str:
@@ -354,9 +360,22 @@ class Provider:
                                       error_code="CANCELLED_AFTER_SEND" if sent else "NOT_SENT")
                     raise
                 except StreamContractError as error:
+                    error_code = ('SERVICE_' + error.provider_code.upper() if error.provider_code
+                                  else 'INVALID_STREAM_' + error.code)
                     ledger.finish(identifier, 'failed', usage=usage, http_status=response.status_code,
-                                  error_code='INVALID_STREAM_'+error.code)
+                                  error_code=error_code)
                     if error.code == 'ERROR_EVENT':
+                        messages = {
+                            'upstream_error': 'AI 服务报告上游请求失败，未发布部分结果；检查点已保留，请检查服务后主动恢复。',
+                            'server_error': 'AI 服务报告内部错误，检查点已保留，请检查服务后主动恢复。',
+                            'rate_limit_exceeded': 'AI 服务报告请求限流，本次已暂停；检查点已保留，请稍后主动恢复。',
+                            'insufficient_quota': 'AI 服务报告用量额度不足，检查点已保留，请检查账户后主动恢复。',
+                            'invalid_api_key': 'AI 服务报告凭据无效，检查点已保留，请检查配置。',
+                            'model_not_found': 'AI 服务报告模型不可用，检查点已保留，请检查模型配置。',
+                            'context_length_exceeded': 'AI 服务报告上下文超过限制，检查点已保留，请调整范围。',
+                        }
+                        if error.provider_code:
+                            raise ProviderError(messages[error.provider_code]) from None
                         raise ProviderError('AI 服务在流式响应中返回错误，未发布部分结果；检查点已保留，请检查服务后主动恢复。') from None
                     raise ProviderError('流式响应不符合接收契约，未发布部分结果。') from None
                 except (httpx.HTTPError, TimeoutError):
@@ -721,6 +740,7 @@ class Provider:
         supplied = {path: [bounds] for path, bounds in ranges.items()}
         explanation_repair_requested = False
         completion_notes = {}
+        completion_localizations = {}
         with model_unit():
             for round_index in range(4):
                 def checked(document):
@@ -739,8 +759,15 @@ class Provider:
                         evidence_ranges.setdefault(path, bounds)
                     expected = {identifier for module in architecture.modules for identifier in module.entity_ids}
                     current_notes = {note.entity_id for note in architecture.explanations}
+                    restored = expected.intersection(completion_notes) - current_notes
                     architecture.explanations.extend(note for identifier, note in completion_notes.items()
                         if identifier in expected and identifier not in current_notes)
+                    architecture, localizations = localize_explanation_evidence(
+                        architecture, analysis, expected, files, evidence_ranges)
+                    for item in localizations:
+                        item['source_request_id'] = model_budget.get().last_request
+                    localizations.extend(completion_localizations[identifier] for identifier in restored
+                                         if identifier in completion_localizations)
                     validate_explanations(architecture, analysis, expected, files, evidence_ranges)
                     validate_fold_wording(architecture, recursive_fold_facts(analysis, files))
                     validate_null_wording(architecture, null_facts)
@@ -756,11 +783,27 @@ class Provider:
                     if explained and missing and not explanation_repair_requested:
                         explanation_repair_requested = True
                         completion_notes.update({note.entity_id: note for note in architecture.explanations})
+                        completion_localizations.update({item['entity_id']: item for item in localizations})
                         entity = missing[0]
                         raise SourceContractError('本批已提供完整实现的可见函数缺少讲解。', entity.id,
                             (entity.location.start_line, entity.location.end_line),
                             evidence_ranges.get(entity.location.path, []),
                             allowed_identifiers=[item.id for item in missing])
+                    if localizations:
+                        scope = request_scope.get()
+                        record = {'time': datetime.now(UTC).isoformat(),
+                                  'project_id': scope.get('project_id'), 'version_id': scope.get('version_id'),
+                                  'job_id': scope.get('job_id'), 'request_id': model_budget.get().last_request,
+                                  'adjustments': localizations}
+                        try:
+                            self.root.mkdir(parents=True, exist_ok=True)
+                            with (self.root / 'reference-localizations.jsonl').open('a', encoding='utf-8') as stream:
+                                stream.write(json.dumps(record, ensure_ascii=False) + '\n')
+                        except OSError:
+                            raise ProviderError('引用定位记录保存失败，结果尚未发布；原引用与检查点未被替换。') from None
+                        architecture.overview.analysis_notes.append(
+                            f'应用为{len(localizations)}条已提供的宽引用补充实现内定位；'
+                            f'原引用仍保留在讲解依据及请求{record["request_id"]}的定位记录中。这不代表讲解语义已全部核对。')
                     return architecture
 
                 payload = context if not supplements else json.dumps({**json.loads(context), "supplemental_reads": supplements}, ensure_ascii=False)
@@ -786,12 +829,28 @@ class Provider:
         batches: list[tuple[dict[str, str], dict[str, tuple[int, int]]]],
         analysis: Analysis,
         evidence_paths: set[str] | None = None,
+        *,
+        files: dict[str, str] | None = None,
     ) -> list[Architecture]:
         """按实体集合恢复检查点，避免动态拆批后仅按数量造成错位。"""
         assigned_sets = [
             {entity_id for module in result.modules for entity_id in module.entity_ids}
             for result in completed_batches
         ]
+        if files is not None:
+            source_ranges = {path: [(1, len(text.splitlines()))] for path, text in files.items()}
+            visible = {entity.id for entity in analysis.entities if entity.visible}
+            call_ids = {call.id for call in analysis.calls}
+            try:
+                for result, assigned in zip(completed_batches, assigned_sets, strict=True):
+                    if not assigned.issubset(visible):
+                        raise ValueError('旧检查点包含当前快照之外的实体。')
+                    validate_architecture(result, analysis, set(files), expected_entity_ids=assigned)
+                    validate_explanations(result, analysis, assigned, files, source_ranges)
+                    validate_judgments(result, analysis, call_ids, files, source_ranges)
+                    validate_primary_dependencies(result, analysis, call_ids)
+            except ValueError:
+                raise ProviderError('旧源码检查点未通过当前引用与关系校验，原记录保留；本次没有复用或重新发送这些批次。') from None
         candidates: list[list[int]] = [[] for _ in batches]
         for result_index, entity_ids in enumerate(assigned_sets):
             if not entity_ids:
@@ -834,7 +893,7 @@ class Provider:
         batches = self._plan_batches(analysis, files)
         if not batches:
             raise ProviderError("当前源码范围没有可发送的内容。")
-        results = self._align_completed_batches(list(completed_batches or []), batches, analysis, set(files))
+        results = self._align_completed_batches(list(completed_batches or []), batches, analysis, set(files), files=files)
         await self._progress(
             on_progress,
             len(results),
