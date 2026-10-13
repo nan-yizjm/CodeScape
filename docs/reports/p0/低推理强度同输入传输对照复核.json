@@ -1,0 +1,52 @@
+{
+  "核对时间UTC": "2026-10-13T08:40:56.895098+00:00",
+  "模型请求": 0,
+  "执行目标代码": false,
+  "成功对照来源": {
+    "path": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\docs\\reports\\p0\\zod-typescript-reasoning-low-transport真实模型验证-16e00061-3cc1-4bc2-b163-296a1cf9e51a.json",
+    "sha256": "94558091f77a0cd22923a558de8b372810cac686e0d07b7fe0fc23f255d20580"
+  },
+  "原始检查点sha256": "d31bb59a8f0761587fcee8b94451c73043ef94e95a6f8240c82974f782ddad54",
+  "default_payload_hash": "9e05d88ca447d9a2eecbd8248478197e93e2309558986296950ad5c4efaca09e",
+  "low_payload_hash": "5ba9612342d974c59c7992b338f8fbda0a30a854e5f35c010f8abd4b72036dc5",
+  "区别": "仅增加reasoning_effort=low；模型、system、user、response_format、max_tokens及stream相同",
+  "默认参数请求": [
+    {
+      "id": "8d35d796-aa6d-4395-91db-c5c5510978a2",
+      "status": "outcome_unknown",
+      "error_code": "TRANSPORT_UNKNOWN",
+      "source_chars": 748
+    },
+    {
+      "id": "19715698-e912-4d71-8a48-9eefb82483f4",
+      "status": "outcome_unknown",
+      "error_code": "TRANSPORT_UNKNOWN",
+      "source_chars": 748
+    },
+    {
+      "id": "5e58b197-b013-478f-8753-c2b09d696314",
+      "status": "outcome_unknown",
+      "error_code": "TRANSPORT_UNKNOWN",
+      "source_chars": 748
+    }
+  ],
+  "正式low参数同输入请求": [
+    {
+      "id": "8e4f28ec-c604-44ca-a073-9eff1ceaf57b",
+      "status": "outcome_unknown",
+      "error_code": "TRANSPORT_UNKNOWN",
+      "source_chars": 748
+    },
+    {
+      "id": "beaf8d6c-1fb1-41da-9e61-23b56c3dbe9a",
+      "status": "success",
+      "error_code": null,
+      "source_chars": 748
+    }
+  ],
+  "源文件": [
+    "packages/zod/src/v4/classic/coerce.ts"
+  ],
+  "结论": "一次low对照41.734秒通过JSON与schema；正式请求亦有相同实际payload。不得据此宣称低强度是超时的唯一原因，或所有正式请求均稳定。",
+  "语义边界": "传输/schema检查不等于引用、职责、作用域或讲解质量通过。"
+}

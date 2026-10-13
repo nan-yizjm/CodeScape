@@ -1,0 +1,67 @@
+{
+  "核对时间UTC": "2026-10-13T07:37:31.910885+00:00",
+  "模型请求": 0,
+  "性质": "只读核对已保存源码批次的恢复；不计全局发布或语义质量通过",
+  "样本": {
+    "hiredis-c": {
+      "Commit": "058ebcdf36c5b05b759c613564fb958ec363c90f",
+      "快照hash": "82b41a5fac7fc0468d890af4da5f8c71822c07c7fa90d9ff9a7a5fab487c31c2",
+      "检查点sha256": "86fc4fef4f9c4226da297e477cdc89e18084d217cfc4899e504193f541e983b6",
+      "已保存批数": 9,
+      "恢复规划批数": 187,
+      "严格实体引用关系校验": "通过",
+      "全部前缀复用": true,
+      "检查点读取期间稳定": true,
+      "源码生成版本集合": [
+        "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1",
+        "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1-compact-batches/1"
+      ],
+      "讲解数": 65
+    },
+    "spdlog-cpp": {
+      "Commit": "d6c93f38a08b4ea0f8ffcfd7f7857307d5d5c3fa",
+      "快照hash": "d4586f715383197a4fccb3ccc33326112d0d5f8441eb5d02fbb79ab7ea70245d",
+      "检查点sha256": "f32d05dc424d3b762d576ab7887547c7f8d7fd6aeb23724e01f8b344f0a0e0e6",
+      "已保存批数": 13,
+      "恢复规划批数": 210,
+      "严格实体引用关系校验": "通过",
+      "全部前缀复用": true,
+      "检查点读取期间稳定": true,
+      "源码生成版本集合": [
+        "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
+        "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1-compact-batches/1"
+      ],
+      "讲解数": 85
+    },
+    "flask-python": {
+      "Commit": "d086db856be187255b8ec61ef409357393020f32",
+      "快照hash": "05de006763cb3d83f9ef72708e199156697402cb13031070f51225a50852b8c7",
+      "检查点sha256": "fdba2559121669bdc23e20db9430fe4642faa099db3f89312a76e59a14beff38",
+      "已保存批数": 22,
+      "恢复规划批数": 76,
+      "严格实体引用关系校验": "通过",
+      "全部前缀复用": true,
+      "检查点读取期间稳定": true,
+      "源码生成版本集合": [
+        "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1",
+        "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1",
+        "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1-compact-batches/1"
+      ],
+      "讲解数": 189
+    },
+    "zod-typescript": {
+      "Commit": "0b216ef674e297ebe41d8bf902262e56f8755822",
+      "快照hash": "c179e795ed4cac054e4cc4ff09bfd53aeca57c44706f8eba1969db3400a39955",
+      "检查点sha256": "d31bb59a8f0761587fcee8b94451c73043ef94e95a6f8240c82974f782ddad54",
+      "已保存批数": 3,
+      "恢复规划批数": 352,
+      "严格实体引用关系校验": "通过",
+      "全部前缀复用": true,
+      "检查点读取期间稳定": true,
+      "源码生成版本集合": [
+        "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1-compact-batches/1"
+      ],
+      "讲解数": 2
+    }
+  }
+}
