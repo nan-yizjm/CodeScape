@@ -1,0 +1,25 @@
+{
+  "核对时间UTC": "2026-10-13T06:06:01.525295+00:00",
+  "模型请求": 0,
+  "性质": "只读严格校验最新已保存批次；不计完整质量通过",
+  "样本": {
+    "hiredis-c": {
+      "检查点sha256": "3776e23306e6ef49651e02ea611cde08e3327a1aeeefdbe7eca93653d576be1c",
+      "已保存批数": 5,
+      "规划批数": 49,
+      "严格校验": "通过",
+      "检查点未改写": true,
+      "实际流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-organization/1",
+      "讲解数": 57
+    },
+    "flask-python": {
+      "检查点sha256": "ff0e3af05923640ef53eda07fc4293e2c082793f89733f4558c2982ae42dcc54",
+      "已保存批数": 16,
+      "规划批数": 33,
+      "严格校验": "通过",
+      "检查点未改写": true,
+      "实际流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-organization/1",
+      "讲解数": 175
+    }
+  }
+}

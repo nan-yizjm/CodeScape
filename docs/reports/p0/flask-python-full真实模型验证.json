@@ -1,6 +1,6 @@
 {
   "日期": "2026-10-13",
-  "检查开始时间UTC": "2026-10-13T05:53:43.299333+00:00",
+  "检查开始时间UTC": "2026-10-13T06:25:51.839705+00:00",
   "样本": "flask-python",
   "Commit": "d086db856be187255b8ec61ef409357393020f32",
   "范围": "约定完整范围",
@@ -8,7 +8,7 @@
   "接收端": "https://www.cctq.ai/v1",
   "模型": "gpt-6.1-sol",
   "流式接收": true,
-  "流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-organization/1",
+  "流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1-organization/1",
   "数据目录": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\.runtime\\public-model-validation\\88d84435-4304-4ce9-91f0-7e80581db311",
   "原始快照hash": "05de006763cb3d83f9ef72708e199156697402cb13031070f51225a50852b8c7",
   "实际文件": [
@@ -42,16 +42,16 @@
   ],
   "状态": "分析暂停",
   "执行目标代码": false,
-  "实施代码起始sha256": "a5a89fd9628efa0fb8d09e540215799bb6b646c25dfbb4e91f16f108033e6866",
+  "实施代码起始sha256": "8ca1461e5996a89d48dde55d87e235630187c3b4249ffc81bf7ef93d1d82fada",
   "开发评测截止秒数": 1800,
-  "恢复前已知total_tokens": 335338,
+  "恢复前已知total_tokens": 376545,
   "进度": {
     "phase": "paused",
-    "completed": 16,
+    "completed": 17,
     "total": 33,
     "detail": "AI 服务报告上游请求失败，未发布部分结果；检查点已保留，请检查服务后主动恢复。"
   },
-  "耗时秒": 291.28,
+  "耗时秒": 46.34,
   "project_id": "b3cc72d3-1ce7-4f05-9085-92b8467dcea4",
   "version_id": "809400d4-2f44-44a9-9503-ef2d26362f2c",
   "实际快照hash": "05de006763cb3d83f9ef72708e199156697402cb13031070f51225a50852b8c7",
@@ -59,6 +59,10 @@
   "错误": "AI 服务报告上游请求失败，未发布部分结果；检查点已保留，请检查服务后主动恢复。",
   "architecture": null,
   "原快照字节未变": true,
+  "源码生成版本集合": [
+    "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1",
+    "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1"
+  ],
   "请求账本": [
     {
       "id": "c0908871-812e-4bfb-be6e-34d53ae9ad20",
@@ -887,15 +891,92 @@
       "price_snapshot": null,
       "http_status": 200,
       "error_code": "SERVICE_UPSTREAM_ERROR"
+    },
+    {
+      "id": "53fef8b1-3d98-4f24-aba9-a068ffebb598",
+      "project_id": "b3cc72d3-1ce7-4f05-9085-92b8467dcea4",
+      "version_id": "809400d4-2f44-44a9-9503-ef2d26362f2c",
+      "job_id": "654569d5-8f3b-4aad-a2b8-cd5089871acc",
+      "unit_id": "cbb2b7d9-e8f7-4383-8e09-acea6ba67da7",
+      "attempt": 1,
+      "phase": "architecture",
+      "recipient": "https://www.cctq.ai/v1",
+      "model": "gpt-6.1-sol",
+      "status": "success",
+      "created_at": "2026-10-13T06:25:54.814422+00:00",
+      "sent_at": "2026-10-13T06:25:54.856800+00:00",
+      "finished_at": "2026-10-13T06:26:03.639635+00:00",
+      "payload_hash": "5716a363dffc1ff8a025afbb4400c60eefdee6ca605d22c9190f93350f907f72",
+      "source_chars": 1280,
+      "usage": {
+        "prompt_tokens": 6202,
+        "completion_tokens": 62,
+        "total_tokens": 6264
+      },
+      "cost": null,
+      "currency": null,
+      "price_snapshot": null,
+      "http_status": 200,
+      "error_code": null
+    },
+    {
+      "id": "218d2013-926a-495a-a77d-988184da3088",
+      "project_id": "b3cc72d3-1ce7-4f05-9085-92b8467dcea4",
+      "version_id": "809400d4-2f44-44a9-9503-ef2d26362f2c",
+      "job_id": "654569d5-8f3b-4aad-a2b8-cd5089871acc",
+      "unit_id": "cbb2b7d9-e8f7-4383-8e09-acea6ba67da7",
+      "attempt": 2,
+      "phase": "source_read",
+      "recipient": "https://www.cctq.ai/v1",
+      "model": "gpt-6.1-sol",
+      "status": "success",
+      "created_at": "2026-10-13T06:26:03.654815+00:00",
+      "sent_at": "2026-10-13T06:26:03.674323+00:00",
+      "finished_at": "2026-10-13T06:26:33.918111+00:00",
+      "payload_hash": "5b713dec6a02bda947a9a2171d68e2c6e2e546ade15291882f6a7c68d0514736",
+      "source_chars": 1821,
+      "usage": {
+        "prompt_tokens": 6569,
+        "completion_tokens": 1196,
+        "total_tokens": 7765
+      },
+      "cost": null,
+      "currency": null,
+      "price_snapshot": null,
+      "http_status": 200,
+      "error_code": null
+    },
+    {
+      "id": "a4ac36fc-2fad-4ab5-9d6e-02c680facec7",
+      "project_id": "b3cc72d3-1ce7-4f05-9085-92b8467dcea4",
+      "version_id": "809400d4-2f44-44a9-9503-ef2d26362f2c",
+      "job_id": "654569d5-8f3b-4aad-a2b8-cd5089871acc",
+      "unit_id": "fecc85ea-14fe-4c18-9c3b-d15dc9723824",
+      "attempt": 1,
+      "phase": "architecture",
+      "recipient": "https://www.cctq.ai/v1",
+      "model": "gpt-6.1-sol",
+      "status": "failed",
+      "created_at": "2026-10-13T06:26:34.177670+00:00",
+      "sent_at": "2026-10-13T06:26:34.194061+00:00",
+      "finished_at": "2026-10-13T06:26:37.779321+00:00",
+      "payload_hash": "39404ea399d48037181a6de8ec5aa32cc6c11778a560e487cc5621b31b3fbabf",
+      "source_chars": 13248,
+      "usage": null,
+      "cost": null,
+      "currency": null,
+      "price_snapshot": null,
+      "http_status": 200,
+      "error_code": "SERVICE_UPSTREAM_ERROR"
     }
   ],
   "请求状态": {
-    "success": 18,
-    "failed": 10,
+    "success": 20,
+    "failed": 11,
     "outcome_unknown": 4
   },
-  "已知total_tokens": 376545,
-  "未知用量请求": 9,
+  "已知total_tokens": 390574,
+  "未知用量请求": 10,
   "费用": null,
   "脱敏校验记录": [
     {
@@ -925,7 +1006,7 @@
     }
   ],
   "边界": "真实配置接口，固定响应与质量复核分开；尚未代表用户验收；价格未知不记零费用。",
-  "实施代码结束sha256": "a5a89fd9628efa0fb8d09e540215799bb6b646c25dfbb4e91f16f108033e6866",
+  "实施代码结束sha256": "8ca1461e5996a89d48dde55d87e235630187c3b4249ffc81bf7ef93d1d82fada",
   "评测期间实施代码一致": true,
   "静态索引制品": {
     "path": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\.runtime\\public-model-validation\\88d84435-4304-4ce9-91f0-7e80581db311\\validation-artifacts\\d971981601aa60f9559090c929941a31ffedeea92e329e5242d70e8ec348cf2a.json",

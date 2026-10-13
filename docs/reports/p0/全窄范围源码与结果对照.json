@@ -1,5 +1,5 @@
 {
-  "核对时间UTC": "2026-10-13T06:06:05.831297+00:00",
+  "核对时间UTC": "2026-10-13T06:45:24.656351+00:00",
   "模型请求": 0,
   "执行目标代码": false,
   "修改原始源码": false,
@@ -28,6 +28,12 @@
       },
       "完整范围流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-organization/1",
       "缩小范围流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
+      "完整范围源码生成来源": [
+        "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1"
+      ],
+      "缩小范围源码生成来源": [
+        "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1"
+      ],
       "源码生成阶段一致": false,
       "最终流水线一致": false,
       "共同文件数": 2,
@@ -1753,6 +1759,7 @@
         "完整范围尚未发布完整架构，检查点不作为全局概览",
         "最终流水线不同；相同源码生成阶段不能替代最终组织与概览对照",
         "源码生成阶段不同",
+        "实际源码生成来源混合、不同或缺失，不能按当前处理版本视为同一生成阶段",
         "需要人工核对四部分概览、职责差异、条件语义和核心协作；字符串差异不等于语义冲突"
       ],
       "验收通过": false
@@ -1760,9 +1767,9 @@
     "spdlog-cpp": {
       "完整范围来源": {
         "报告": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\docs\\reports\\p0\\spdlog-cpp-full真实模型验证.json",
-        "报告sha256": "b11808b9d9d304a470bd5d03926a98db01a302de7a58c8103bab6a0b47b415a8",
+        "报告sha256": "b82cd2cfcaf4493af2b2a4421a44a20d3b294d07d7c64baa8a29024f217369e6",
         "索引来源报告": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\docs\\reports\\p0\\spdlog-cpp-full真实模型验证.json",
-        "索引来源报告sha256": "b11808b9d9d304a470bd5d03926a98db01a302de7a58c8103bab6a0b47b415a8",
+        "索引来源报告sha256": "b82cd2cfcaf4493af2b2a4421a44a20d3b294d07d7c64baa8a29024f217369e6",
         "索引sha256": "25bd3c34a5566920973027b9157cea9a61c578981dfeb552849afaaada2c5325",
         "检查点sha256": "a38db1cdfa0582fcb5ec455cbd2916deb4160dd34e5e1695b138be7b1ae6f1fb",
         "检查点流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-organization/1",
@@ -1778,8 +1785,14 @@
         "检查点流水线": null,
         "数据库状态": "ready"
       },
-      "完整范围流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-organization/1",
+      "完整范围流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1-organization/1",
       "缩小范围流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
+      "完整范围源码生成来源": [
+        "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1"
+      ],
+      "缩小范围源码生成来源": [
+        "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1"
+      ],
       "源码生成阶段一致": true,
       "最终流水线一致": false,
       "共同文件数": 4,
@@ -5419,6 +5432,7 @@
       "尚缺": [
         "完整范围尚未发布完整架构，检查点不作为全局概览",
         "最终流水线不同；相同源码生成阶段不能替代最终组织与概览对照",
+        "源码生成阶段不同",
         "需要人工核对四部分概览、职责差异、条件语义和核心协作；字符串差异不等于语义冲突"
       ],
       "验收通过": false
@@ -5426,28 +5440,33 @@
     "flask-python": {
       "完整范围来源": {
         "报告": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\docs\\reports\\p0\\flask-python-full真实模型验证.json",
-        "报告sha256": "a9374bce0d8618c0ed17ebabbae07f225dd633d59c6c196675e67552eafe9440",
+        "报告sha256": "207946fac5bbd4e43ddf4a5ffc642f788b0a92ce06c9fb6db346a7d1cf2a6978",
         "索引来源报告": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\docs\\reports\\p0\\flask-python-full真实模型验证.json",
-        "索引来源报告sha256": "a9374bce0d8618c0ed17ebabbae07f225dd633d59c6c196675e67552eafe9440",
+        "索引来源报告sha256": "207946fac5bbd4e43ddf4a5ffc642f788b0a92ce06c9fb6db346a7d1cf2a6978",
         "索引sha256": "d971981601aa60f9559090c929941a31ffedeea92e329e5242d70e8ec348cf2a",
-        "检查点sha256": "ff0e3af05923640ef53eda07fc4293e2c082793f89733f4558c2982ae42dcc54",
-        "检查点流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-organization/1",
+        "检查点sha256": "d8136ce4fb3443501853751777752687bae13fef280207549779ab2667755b6f",
+        "检查点流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1-organization/1",
         "数据库状态": "paused"
       },
       "缩小范围来源": {
         "报告": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\docs\\reports\\p0\\flask-python-narrow真实模型验证.json",
-        "报告sha256": "0987f3fa797d61ce226cf3915d31b9bb829b0a8aeaf073449a5cfb55034db844",
+        "报告sha256": "ef8fffccc82c2974094d128eb0e035c657b429b5cca16884d4705cced2c0c1dd",
         "索引来源报告": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\docs\\reports\\p0\\flask-python-narrow真实模型验证.json",
-        "索引来源报告sha256": "0987f3fa797d61ce226cf3915d31b9bb829b0a8aeaf073449a5cfb55034db844",
-        "索引sha256": "7c2384d9e4c7c53577ff8a32a30a47ed0f4560dccdcb7ce5b08028f256955d25",
+        "索引来源报告sha256": "ef8fffccc82c2974094d128eb0e035c657b429b5cca16884d4705cced2c0c1dd",
+        "索引sha256": "1fcb6ee59bea6807f6bf956f9ff93d2c98f9bc796d0600a64e1f0530964da9c7",
         "检查点sha256": null,
         "检查点流水线": null,
-        "数据库状态": "ready"
+        "数据库状态": "paused"
       },
-      "完整范围流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-organization/1",
-      "缩小范围流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
+      "完整范围流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1-organization/1",
+      "缩小范围流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1-organization/1",
+      "完整范围源码生成来源": [
+        "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1",
+        "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1"
+      ],
+      "缩小范围源码生成来源": [],
       "源码生成阶段一致": false,
-      "最终流水线一致": false,
+      "最终流水线一致": true,
       "共同文件数": 1,
       "共同文件字节一致": true,
       "仅完整范围文件数": 26,
@@ -5456,8 +5475,8 @@
       "仅完整范围可见函数数": 322,
       "窄范围未匹配函数": [],
       "完整范围结果已发布": false,
-      "缩小范围结果已发布": true,
-      "完整范围检查点批数": 16,
+      "缩小范围结果已发布": false,
+      "完整范围检查点批数": 17,
       "共同函数在完整范围有唯一讲解数": 19,
       "静态确认关系对照": {
         "共同关系数": 2,
@@ -5466,33 +5485,7 @@
         "边界": "目标为共同可见函数且调用所在文件在共同范围；按实际作用域、位置、关系类型匹配。范围变化可能改变确认能力；不直接判定缺陷，不包含未发布的全局AI判断。"
       },
       "完整范围全局概览": null,
-      "缩小范围全局概览": {
-        "introduction": "这是一个面向 Flask 应用开发者的通用辅助组件集合，集中处理配置开关、请求与响应、路由跳转、模板消息、文件发送和路径解析，帮助应用减少重复的 Web 基础代码。",
-        "capabilities": [
-          "读取环境变量并控制调试、dotenv 等开关",
-          "维护请求上下文并生成标准响应",
-          "生成路由地址、执行重定向和处理 HTTP 异常",
-          "管理模板访问与会话闪现消息",
-          "在限定目录中定位并发送文件"
-        ],
-        "principle": "应用输入环境变量、请求上下文、模块或蓝图信息及文件路径后，组件分别解析配置和路径、维护请求状态，并产出响应、跳转、模板消息或文件结果。文件发送可由目录限定后交给外部发送机制；清理阶段异常会被收集并统一重新抛出，具体异常边界取决于调用条件。",
-        "limitations": [
-          "这是 Web 基础辅助组件，未体现具体业务流程、页面功能或完整应用运行行为。",
-          "文件路径的安全性取决于目录限定和调用方式，文件发送机制本身不替代调用方校验。",
-          "文件实际发送、模块加载及部分请求行为依赖外部 Flask、Werkzeug 和 Python 机制。",
-          "动态生成器调用及其关闭过程未能确认具体行为，相关异常边界不完整。"
-        ],
-        "synthesized": true,
-        "analysis_notes": [
-          "仅分析本批提供的 helpers.py 代码，未覆盖相关 Flask 类和 Werkzeug 的具体实现。",
-          "动态生成器调用及生成器 close 方法未解析到具体实体。",
-          "文件路径安全性依赖调用方，send_file 本身不替代目录安全校验。",
-          "仅覆盖本批 helpers.py 中提供的实现。",
-          "文件安全拼接、实际发送和加载器行为由外部 Werkzeug 或 Python 导入机制决定。",
-          "蓝图拆分调用带缓存装饰器，装饰器改写细节未在本批单独展开。",
-          "源码范围由 2 批受控上下文完成归纳，跨批次模块边界可能需要人工复核。"
-        ]
-      },
+      "缩小范围全局概览": null,
       "函数对照": [
         {
           "名称": "get_template_attribute",
@@ -5519,16 +5512,8 @@
             ]
           },
           "缩小范围讲解": {
-            "状态": "有讲解",
-            "摘要": "取得模板导出的宏或变量。",
-            "详情": "通过 current_app.jinja_env 获取指定模板，再访问其 module 上名为 attribute 的属性并返回。该属性可以是模板宏或其他导出变量。模板不存在、属性不存在或当前应用不可用时，相关异常由模板环境和属性访问直接抛出。",
-            "依据": [
-              {
-                "path": "src/flask/helpers.py",
-                "start_line": 304,
-                "end_line": 323
-              }
-            ]
+            "状态": "未找到唯一讲解",
+            "讲解数量": 0
           },
           "完整范围归属": [
             {
@@ -5547,18 +5532,7 @@
               ]
             }
           ],
-          "缩小范围归属": [
-            {
-              "状态": "归属唯一",
-              "层级": [
-                {
-                  "名称": "模板与消息闪现",
-                  "职责": "访问模板导出值并管理会话闪现消息。",
-                  "未完成": false
-                }
-              ]
-            }
-          ]
+          "缩小范围归属": []
         },
         {
           "名称": "flash",
@@ -5585,16 +5559,8 @@
             ]
           },
           "缩小范围讲解": {
-            "状态": "有讲解",
-            "摘要": "将分类消息写入会话并发出信号。",
-            "详情": "从 session 读取 _flashes，缺失时使用空列表，追加 category 与 message 后重新写回 session，以兼容外部存储会话。随后取得当前应用对象并发送 message_flashed 信号，同时传入应用的 ensure_sync 作为异步包装器。会话或信号处理异常不在函数内捕获。",
-            "依据": [
-              {
-                "path": "src/flask/helpers.py",
-                "start_line": 326,
-                "end_line": 357
-              }
-            ]
+            "状态": "未找到唯一讲解",
+            "讲解数量": 0
           },
           "完整范围归属": [
             {
@@ -5613,18 +5579,7 @@
               ]
             }
           ],
-          "缩小范围归属": [
-            {
-              "状态": "归属唯一",
-              "层级": [
-                {
-                  "名称": "模板与消息闪现",
-                  "职责": "访问模板导出值并管理会话闪现消息。",
-                  "未完成": false
-                }
-              ]
-            }
-          ]
+          "缩小范围归属": []
         },
         {
           "名称": "get_flashed_messages",
@@ -5651,16 +5606,8 @@
             ]
           },
           "缩小范围讲解": {
-            "状态": "有讲解",
-            "摘要": "读取并筛选当前请求的闪现消息。",
-            "详情": "优先使用 app_ctx._flashes 缓存；只有它是 None 时，才从 session 弹出 _flashes（不存在则使用空列表）并缓存，因此同一请求的后续调用复用相同消息。category_filter 为真值时按分类筛选；默认返回纯消息文本，with_categories 为 True 时返回分类与文本元组。输入迭代器本身不会被修改。",
-            "依据": [
-              {
-                "path": "src/flask/helpers.py",
-                "start_line": 360,
-                "end_line": 399
-              }
-            ]
+            "状态": "未找到唯一讲解",
+            "讲解数量": 0
           },
           "完整范围归属": [
             {
@@ -5679,18 +5626,7 @@
               ]
             }
           ],
-          "缩小范围归属": [
-            {
-              "状态": "归属唯一",
-              "层级": [
-                {
-                  "名称": "模板与消息闪现",
-                  "职责": "访问模板导出值并管理会话闪现消息。",
-                  "未完成": false
-                }
-              ]
-            }
-          ]
+          "缩小范围归属": []
         },
         {
           "名称": "_prepare_send_file_kwargs",
@@ -5717,16 +5653,8 @@
             ]
           },
           "缩小范围讲解": {
-            "状态": "有讲解",
-            "摘要": "补齐文件发送所需的 Flask 参数。",
-            "详情": "取得当前应用上下文对象；当 kwargs 中 max_age 严格为 None 时，用 ctx.app.get_send_file_max_age 替换。随后无条件注入当前请求 environ、USE_X_SENDFILE 配置、应用 response_class 和 root_path，最后返回更新后的字典。空字符串、零值或其他非 None 的 max_age 不会触发默认策略。",
-            "依据": [
-              {
-                "path": "src/flask/helpers.py",
-                "start_line": 402,
-                "end_line": 414
-              }
-            ]
+            "状态": "未找到唯一讲解",
+            "讲解数量": 0
           },
           "完整范围归属": [
             {
@@ -5745,18 +5673,7 @@
               ]
             }
           ],
-          "缩小范围归属": [
-            {
-              "状态": "归属唯一",
-              "层级": [
-                {
-                  "名称": "文件响应服务",
-                  "职责": "注入 Flask 请求配置并委托 Werkzeug 发送文件。",
-                  "未完成": false
-                }
-              ]
-            }
-          ]
+          "缩小范围归属": []
         },
         {
           "名称": "send_file",
@@ -5793,21 +5710,8 @@
             ]
           },
           "缩小范围讲解": {
-            "状态": "有讲解",
-            "摘要": "将文件发送请求委托给 Werkzeug。",
-            "详情": "接收路径或二进制文件对象以及 MIME、附件下载、名称、条件请求、ETag、修改时间和缓存参数。调用前通过 _prepare_send_file_kwargs 注入请求环境及 Flask 专属配置，并额外传入 request.environ；随后把完整参数交给 werkzeug.utils.send_file，返回其响应。文件对象模式、路径存在性、范围请求和文本流校验由 Werkzeug 处理，本函数不捕获异常。",
-            "依据": [
-              {
-                "path": "src/flask/helpers.py",
-                "start_line": 417,
-                "end_line": 456
-              },
-              {
-                "path": "src/flask/helpers.py",
-                "start_line": 529,
-                "end_line": 539
-              }
-            ]
+            "状态": "未找到唯一讲解",
+            "讲解数量": 0
           },
           "完整范围归属": [
             {
@@ -5826,18 +5730,7 @@
               ]
             }
           ],
-          "缩小范围归属": [
-            {
-              "状态": "归属唯一",
-              "层级": [
-                {
-                  "名称": "文件响应服务",
-                  "职责": "注入 Flask 请求配置并委托 Werkzeug 发送文件。",
-                  "未完成": false
-                }
-              ]
-            }
-          ]
+          "缩小范围归属": []
         },
         {
           "名称": "stream_with_context",
@@ -5869,21 +5762,8 @@
             ]
           },
           "缩小范围讲解": {
-            "状态": "有讲解",
-            "摘要": "保留请求上下文的流式迭代包装器。",
-            "详情": "函数同时支持传入迭代器或生成器函数。传入可调用对象时，内部 decorator 延迟创建生成器并再次包装；传入迭代器时创建内部 generator，先确认应用上下文存在，再在 with ctx 作用域中以哨兵值预先推进，从而捕获并保持当前上下文。后续迭代委托给原生成器，结束时若对象具有 close 属性则清理。无活动上下文会抛出 RuntimeError；内部动态调用和 close 未绑定到具体实体。",
-            "依据": [
-              {
-                "path": "src/flask/helpers.py",
-                "start_line": 63,
-                "end_line": 118
-              },
-              {
-                "path": "src/flask/helpers.py",
-                "start_line": 120,
-                "end_line": 148
-              }
-            ]
+            "状态": "未找到唯一讲解",
+            "讲解数量": 0
           },
           "完整范围归属": [
             {
@@ -5902,18 +5782,7 @@
               ]
             }
           ],
-          "缩小范围归属": [
-            {
-              "状态": "归属唯一",
-              "层级": [
-                {
-                  "名称": "请求上下文与响应辅助",
-                  "职责": "维护流式请求上下文并构造标准响应。",
-                  "未完成": false
-                }
-              ]
-            }
-          ]
+          "缩小范围归属": []
         },
         {
           "名称": "send_from_directory",
@@ -5945,16 +5814,8 @@
             ]
           },
           "缩小范围讲解": {
-            "状态": "有讲解",
-            "摘要": "安全地从目录发送指定文件。",
-            "详情": "函数接收目录、相对路径和发送参数，将参数交给 Flask 的发送参数准备逻辑，再委托 Werkzeug 的 send_from_directory 实际处理。目录和路径的安全约束、路径穿越防护以及目标不存在或不是普通文件时的 404 行为由 Werkzeug 实现；本函数本身不直接读取文件，也不吞异常。调用者应保证 directory 不是客户端可控值，否则即使路径拼接安全，目录边界本身仍可能不可信。返回 Werkzeug 结果并按 Flask Response 类型标注。",
-            "依据": [
-              {
-                "path": "src/flask/helpers.py",
-                "start_line": 543,
-                "end_line": 584
-              }
-            ]
+            "状态": "未找到唯一讲解",
+            "讲解数量": 0
           },
           "完整范围归属": [
             {
@@ -5968,18 +5829,7 @@
               ]
             }
           ],
-          "缩小范围归属": [
-            {
-              "状态": "归属唯一",
-              "层级": [
-                {
-                  "名称": "安全文件发送",
-                  "职责": "在目录边界内定位并发送文件。",
-                  "未完成": false
-                }
-              ]
-            }
-          ]
+          "缩小范围归属": []
         },
         {
           "名称": "get_root_path",
@@ -6011,16 +5861,8 @@
             ]
           },
           "缩小范围讲解": {
-            "状态": "有讲解",
-            "摘要": "解析模块或包的根目录路径。",
-            "详情": "函数先查 sys.modules：模块存在、具有 __file__ 且该属性不是 None 时，直接返回其文件绝对路径所在目录。否则通过 find_spec 查找加载规范；找不到规范，或查找抛出 ImportError/ValueError 时，将 loader 置为空并回退当前工作目录。存在 loader 时优先使用 get_filename；没有该方法则导入模块并读取 __file__。若导入后文件路径仍为 None，则明确抛出 RuntimeError，提示导入钩子或命名空间包无法推导根路径。最终对文件路径取绝对路径目录。",
-            "依据": [
-              {
-                "path": "src/flask/helpers.py",
-                "start_line": 587,
-                "end_line": 641
-              }
-            ]
+            "状态": "未找到唯一讲解",
+            "讲解数量": 0
           },
           "完整范围归属": [
             {
@@ -6034,18 +5876,7 @@
               ]
             }
           ],
-          "缩小范围归属": [
-            {
-              "状态": "归属唯一",
-              "层级": [
-                {
-                  "名称": "模块根路径解析",
-                  "职责": "根据模块加载信息确定应用根目录。",
-                  "未完成": false
-                }
-              ]
-            }
-          ]
+          "缩小范围归属": []
         },
         {
           "名称": "_split_blueprint_path",
@@ -6077,16 +5908,8 @@
             ]
           },
           "缩小范围讲解": {
-            "状态": "有讲解",
-            "摘要": "递归拆分蓝图名称及其父级名称。",
-            "详情": "函数以完整名称初始化结果列表；只有名称包含点号时，才取最后一个点号之前的前缀递归处理，并将递归结果追加到当前列表。因此输入无点号时只返回自身，分层名称则按从当前名称到逐级父名称的顺序返回。函数带缓存装饰器，重复名称可复用结果；递归调用的装饰器绑定在当前快照中未完全确认，不能进一步断言其运行时目标。",
-            "依据": [
-              {
-                "path": "src/flask/helpers.py",
-                "start_line": 645,
-                "end_line": 651
-              }
-            ]
+            "状态": "未找到唯一讲解",
+            "讲解数量": 0
           },
           "完整范围归属": [
             {
@@ -6100,18 +5923,7 @@
               ]
             }
           ],
-          "缩小范围归属": [
-            {
-              "状态": "归属唯一",
-              "层级": [
-                {
-                  "名称": "蓝图路径拆分",
-                  "职责": "递归拆分蓝图名称及其父级名称。",
-                  "未完成": false
-                }
-              ]
-            }
-          ]
+          "缩小范围归属": []
         },
         {
           "名称": "_CollectErrors.__init__",
@@ -6138,16 +5950,8 @@
             ]
           },
           "缩小范围讲解": {
-            "状态": "有讲解",
-            "摘要": "初始化错误收集列表。",
-            "详情": "构造函数为收集上下文建立 errors 属性，并初始化为空的 BaseException 列表。它不接收业务参数、不执行清理动作，也不主动抛出异常；后续退出处理会向该列表追加捕获到的异常。",
-            "依据": [
-              {
-                "path": "src/flask/helpers.py",
-                "start_line": 659,
-                "end_line": 660
-              }
-            ]
+            "状态": "未找到唯一讲解",
+            "讲解数量": 0
           },
           "完整范围归属": [
             {
@@ -6161,18 +5965,7 @@
               ]
             }
           ],
-          "缩小范围归属": [
-            {
-              "状态": "归属唯一",
-              "层级": [
-                {
-                  "名称": "错误收集上下文",
-                  "职责": "收集清理阶段异常并统一重新抛出。",
-                  "未完成": false
-                }
-              ]
-            }
-          ]
+          "缩小范围归属": []
         },
         {
           "名称": "_CollectErrors.__enter__",
@@ -6199,16 +5992,8 @@
             ]
           },
           "缩小范围讲解": {
-            "状态": "有讲解",
-            "摘要": "进入错误收集上下文。",
-            "详情": "进入上下文时函数不执行任何操作并返回 None。错误收集状态在构造函数中建立，实际异常记录发生在退出阶段，因此该方法不会验证或清空已有错误，也不会改变上下文的异常传播策略。",
-            "依据": [
-              {
-                "path": "src/flask/helpers.py",
-                "start_line": 662,
-                "end_line": 663
-              }
-            ]
+            "状态": "未找到唯一讲解",
+            "讲解数量": 0
           },
           "完整范围归属": [
             {
@@ -6222,18 +6007,7 @@
               ]
             }
           ],
-          "缩小范围归属": [
-            {
-              "状态": "归属唯一",
-              "层级": [
-                {
-                  "名称": "错误收集上下文",
-                  "职责": "收集清理阶段异常并统一重新抛出。",
-                  "未完成": false
-                }
-              ]
-            }
-          ]
+          "缩小范围归属": []
         },
         {
           "名称": "_CollectErrors.__exit__",
@@ -6260,16 +6034,8 @@
             ]
           },
           "缩小范围讲解": {
-            "状态": "有讲解",
-            "摘要": "记录退出阶段异常并抑制即时传播。",
-            "详情": "退出时先判断 exc_val 是否为 None；只有存在异常对象时才追加到 errors。这里是身份比较，不等同于真值判断，因此零值或空字符串等非 None 对象不会被按本条件排除。无论是否发生异常，函数都返回 True，使 with 语句抑制当前异常并允许后续清理流程继续；它不负责重新抛出，统一抛出由 raise_any 完成。",
-            "依据": [
-              {
-                "path": "src/flask/helpers.py",
-                "start_line": 665,
-                "end_line": 674
-              }
-            ]
+            "状态": "未找到唯一讲解",
+            "讲解数量": 0
           },
           "完整范围归属": [
             {
@@ -6283,18 +6049,7 @@
               ]
             }
           ],
-          "缩小范围归属": [
-            {
-              "状态": "归属唯一",
-              "层级": [
-                {
-                  "名称": "错误收集上下文",
-                  "职责": "收集清理阶段异常并统一重新抛出。",
-                  "未完成": false
-                }
-              ]
-            }
-          ]
+          "缩小范围归属": []
         },
         {
           "名称": "_CollectErrors.raise_any",
@@ -6321,16 +6076,8 @@
             ]
           },
           "缩小范围讲解": {
-            "状态": "有讲解",
-            "摘要": "将已收集错误组成异常组抛出。",
-            "详情": "函数接收异常组消息，仅在 errors 列表非空时构造 BaseExceptionGroup 并抛出；没有错误时直接返回。它不会逐个吞掉、转换或丢弃已记录异常，而是保留原异常对象作为异常组成员。消息由调用方提供，异常组构造或抛出本身若失败，不在此函数内被捕获。",
-            "依据": [
-              {
-                "path": "src/flask/helpers.py",
-                "start_line": 676,
-                "end_line": 679
-              }
-            ]
+            "状态": "未找到唯一讲解",
+            "讲解数量": 0
           },
           "完整范围归属": [
             {
@@ -6344,18 +6091,7 @@
               ]
             }
           ],
-          "缩小范围归属": [
-            {
-              "状态": "归属唯一",
-              "层级": [
-                {
-                  "名称": "错误收集上下文",
-                  "职责": "收集清理阶段异常并统一重新抛出。",
-                  "未完成": false
-                }
-              ]
-            }
-          ]
+          "缩小范围归属": []
         },
         {
           "名称": "make_response",
@@ -6382,16 +6118,8 @@
             ]
           },
           "缩小范围讲解": {
-            "状态": "有讲解",
-            "摘要": "把视图返回值转换为响应对象。",
-            "详情": "无参数时创建 current_app.response_class 的空响应；单参数时直接交给 current_app.make_response；多参数时保留参数元组后交给应用的 make_response。该函数本身不捕获转换异常，具体返回类型、状态码和内容处理由当前应用实现决定。",
-            "依据": [
-              {
-                "path": "src/flask/helpers.py",
-                "start_line": 151,
-                "end_line": 197
-              }
-            ]
+            "状态": "未找到唯一讲解",
+            "讲解数量": 0
           },
           "完整范围归属": [
             {
@@ -6410,18 +6138,7 @@
               ]
             }
           ],
-          "缩小范围归属": [
-            {
-              "状态": "归属唯一",
-              "层级": [
-                {
-                  "名称": "请求上下文与响应辅助",
-                  "职责": "维护流式请求上下文并构造标准响应。",
-                  "未完成": false
-                }
-              ]
-            }
-          ]
+          "缩小范围归属": []
         },
         {
           "名称": "url_for",
@@ -6448,16 +6165,8 @@
             ]
           },
           "缩小范围讲解": {
-            "状态": "有讲解",
-            "摘要": "委托当前应用生成端点 URL。",
-            "详情": "接收端点、锚点、HTTP 方法、协议、外部 URL 偏好及路径值，原样转交 current_app.url_for。应用负责蓝图端点解析、变量绑定、查询参数、内外部 URL选择以及构建错误处理。本函数要求存在可用的当前应用上下文，异常不在此处包装。",
-            "依据": [
-              {
-                "path": "src/flask/helpers.py",
-                "start_line": 200,
-                "end_line": 251
-              }
-            ]
+            "状态": "未找到唯一讲解",
+            "讲解数量": 0
           },
           "完整范围归属": [
             {
@@ -6476,18 +6185,7 @@
               ]
             }
           ],
-          "缩小范围归属": [
-            {
-              "状态": "归属唯一",
-              "层级": [
-                {
-                  "名称": "路由与 HTTP 控制",
-                  "职责": "生成 URL、重定向和抛出 HTTP 异常。",
-                  "未完成": false
-                }
-              ]
-            }
-          ]
+          "缩小范围归属": []
         },
         {
           "名称": "get_debug_flag",
@@ -6514,16 +6212,8 @@
             ]
           },
           "缩小范围讲解": {
-            "状态": "有讲解",
-            "摘要": "解析 FLASK_DEBUG 环境变量。",
-            "详情": "读取 FLASK_DEBUG；当值为假值时返回 False。当值存在时，只有忽略大小写后属于“0”“false”“no”才关闭调试，其余非空值均返回 True。函数不接受参数，环境变量读取异常不在本实现内处理。",
-            "依据": [
-              {
-                "path": "src/flask/helpers.py",
-                "start_line": 28,
-                "end_line": 33
-              }
-            ]
+            "状态": "未找到唯一讲解",
+            "讲解数量": 0
           },
           "完整范围归属": [
             {
@@ -6542,18 +6232,7 @@
               ]
             }
           ],
-          "缩小范围归属": [
-            {
-              "状态": "归属唯一",
-              "层级": [
-                {
-                  "名称": "配置标志读取",
-                  "职责": "读取环境变量并解析调试与 dotenv 开关。",
-                  "未完成": false
-                }
-              ]
-            }
-          ]
+          "缩小范围归属": []
         },
         {
           "名称": "redirect",
@@ -6580,16 +6259,8 @@
             ]
           },
           "缩小范围讲解": {
-            "状态": "有讲解",
-            "摘要": "创建应用感知的重定向响应。",
-            "详情": "通过 is not None 判断应用上下文是否存在，而不是判断对象真值。存在时调用 ctx.app.redirect，并使用默认 303 或传入 code；不存在时回退到 Werkzeug redirect，并传递 location、code 和可选 Response 类型。应用分支不会使用传入的 Response 参数，底层异常保持向上传播。",
-            "依据": [
-              {
-                "path": "src/flask/helpers.py",
-                "start_line": 254,
-                "end_line": 278
-              }
-            ]
+            "状态": "未找到唯一讲解",
+            "讲解数量": 0
           },
           "完整范围归属": [
             {
@@ -6608,18 +6279,7 @@
               ]
             }
           ],
-          "缩小范围归属": [
-            {
-              "状态": "归属唯一",
-              "层级": [
-                {
-                  "名称": "路由与 HTTP 控制",
-                  "职责": "生成 URL、重定向和抛出 HTTP 异常。",
-                  "未完成": false
-                }
-              ]
-            }
-          ]
+          "缩小范围归属": []
         },
         {
           "名称": "abort",
@@ -6646,16 +6306,8 @@
             ]
           },
           "缩小范围讲解": {
-            "状态": "有讲解",
-            "摘要": "按当前应用或 Werkzeug 抛出 HTTP 异常。",
-            "详情": "通过上下文对象是否为 None 选择路径。存在上下文时先调用 ctx.app.aborter(code, *args, **kwargs)；代码随后仍有无条件的 _wz_abort 调用，因此只有前者通常抛出异常时才不会继续执行。无上下文时直接使用 Werkzeug abort。参数可为状态码或响应对象，异常不被吞掉。",
-            "依据": [
-              {
-                "path": "src/flask/helpers.py",
-                "start_line": 281,
-                "end_line": 301
-              }
-            ]
+            "状态": "未找到唯一讲解",
+            "讲解数量": 0
           },
           "完整范围归属": [
             {
@@ -6674,18 +6326,7 @@
               ]
             }
           ],
-          "缩小范围归属": [
-            {
-              "状态": "归属唯一",
-              "层级": [
-                {
-                  "名称": "路由与 HTTP 控制",
-                  "职责": "生成 URL、重定向和抛出 HTTP 异常。",
-                  "未完成": false
-                }
-              ]
-            }
-          ]
+          "缩小范围归属": []
         },
         {
           "名称": "get_load_dotenv",
@@ -6712,16 +6353,8 @@
             ]
           },
           "缩小范围讲解": {
-            "状态": "有讲解",
-            "摘要": "决定是否加载默认 dotenv 文件。",
-            "详情": "读取 FLASK_SKIP_DOTENV。若读取结果是假值，直接返回 default；default 默认是 True。若为非假值，则仅当其忽略大小写后为“0”“false”“no”时返回 True，否则返回 False。因此变量名称表示跳过开关，但返回值实际表示是否加载 dotenv，且读取异常不会被本函数捕获。",
-            "依据": [
-              {
-                "path": "src/flask/helpers.py",
-                "start_line": 36,
-                "end_line": 48
-              }
-            ]
+            "状态": "未找到唯一讲解",
+            "讲解数量": 0
           },
           "完整范围归属": [
             {
@@ -6740,24 +6373,13 @@
               ]
             }
           ],
-          "缩小范围归属": [
-            {
-              "状态": "归属唯一",
-              "层级": [
-                {
-                  "名称": "配置标志读取",
-                  "职责": "读取环境变量并解析调试与 dotenv 开关。",
-                  "未完成": false
-                }
-              ]
-            }
-          ]
+          "缩小范围归属": []
         }
       ],
       "尚缺": [
         "完整范围尚未发布完整架构，检查点不作为全局概览",
-        "最终流水线不同；相同源码生成阶段不能替代最终组织与概览对照",
-        "源码生成阶段不同",
+        "缩小范围尚未发布完整架构，检查点不作为全局概览",
+        "实际源码生成来源混合、不同或缺失，不能按当前处理版本视为同一生成阶段",
         "需要人工核对四部分概览、职责差异、条件语义和核心协作；字符串差异不等于语义冲突"
       ],
       "验收通过": false
@@ -6785,6 +6407,12 @@
       },
       "完整范围流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-organization/1",
       "缩小范围流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
+      "完整范围源码生成来源": [
+        "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1"
+      ],
+      "缩小范围源码生成来源": [
+        "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1"
+      ],
       "源码生成阶段一致": true,
       "最终流水线一致": false,
       "共同文件数": 1,
