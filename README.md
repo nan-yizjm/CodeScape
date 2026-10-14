@@ -2,7 +2,7 @@
 
 从语义模块进入函数图，再沿真实调用证据阅读只读源码，记录自己的学习状态。
 
-当前版本是 **v0.1.0 / P0 验收中**，已有独立 Windows 程序、预发布安装包与便携包。完整需求见 [PRD](docs/CodeScape_PRD.md)，实施基线见 [开发设计](docs/CodeScape_Development_Design.md)，逐项状态见 [P0 验收追踪](docs/reports/p0/P0验收追踪.md)，实际证据见 [开发与验收记录](docs/reports/p0/开发与验收记录.md)。真实工程 AI 质量仍待验收；本轮用户已按 CHG-13 免除干净 Windows 10/11 环境门槛，不能将自动检查通过视为全部 P0 完成。
+当前版本是 **v0.1.0 / P0 最终开发候选**，以 `v0.1.0-p0` 作为第一版开发留档，安装包、便携包和源码见 [GitHub 留档版本](https://github.com/nan-yizjm/CodeScape/releases/tag/v0.1.0-p0)。35 项验收已验证，AC-29 的开发复核通过，最后用户理解验收待确认；四个公开仓库的全范围评测未全部完成。完整需求见 [PRD](docs/CodeScape_PRD.md)，实施基线见 [开发设计](docs/CodeScape_Development_Design.md)，逐项状态见 [P0 验收追踪](docs/reports/p0/P0验收追踪.md)，实际证据见 [开发与验收记录](docs/reports/p0/开发与验收记录.md)。本轮用户已按 CHG-13 免除干净 Windows 10/11 环境门槛，不能将自动检查通过视为全部 P0 完成。留档范围和制品校验见 [第一版版本说明](docs/releases/v0.1.0-p0.md)。
 
 ## 本轮可用功能
 
@@ -50,7 +50,7 @@ npm run build
 
 本地实例凭证由当前用户 DPAPI 加密，运行目录使用当前用户权限。静态解析子进程由 Windows Job Object 管理，单任务内存上限 2 GiB；取消、超时或服务退出会终止该进程及其子进程。该机制用于资源与生命周期管理，不是执行用户源码的沙箱。
 
-配置 AI 时点击右上角设置，填写服务地址、模型和 API Key。默认接收端为 `https://api.deepseek.com`；保留 DeepSeek 主要适配。当前用户指定的评测接收端为 `https://www.cctq.ai/v1`、模型为 `gpt-6-luna`，历史 `deepseek-flash` 结果按原身份保留。密钥不写入 `.env`，不进入命令行参数或日志。兼容服务需提供 `/chat/completions` 与 JSON 对象输出；启用流式接收时还需兼容 SSE 完成原因、`[DONE]` 和用量事件。流式片段收齐后仍统一校验，异常流或缺失结束标记不会发布部分响应。
+配置 AI 时点击右上角设置，填写服务地址、模型和 API Key。默认接收端为 `https://api.deepseek.com`；保留 DeepSeek 主要适配。当前用户指定的评测接收端为 `https://www.cctq.ai/v1`、模型为 `gpt-6.1-sol`，历史模型结果按原身份保留。密钥不写入 `.env`，不进入命令行参数或日志。兼容服务需提供 `/chat/completions` 与 JSON 对象输出；启用流式接收时还需兼容 SSE 完成原因、`[DONE]` 和用量事件。流式片段收齐后仍统一校验，异常流或缺失结束标记不会发布部分响应。
 
 ## 开发检查
 
