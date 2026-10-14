@@ -2,7 +2,7 @@
 
 从语义模块进入函数图，再沿真实调用证据阅读只读源码，记录自己的学习状态。
 
-当前版本是 **v0.1.0 / P0 最终开发候选**，以 `v0.1.0-p0.1` 作为第一版开发留档，安装包、便携包和源码见 [GitHub 留档版本](https://github.com/nan-yizjm/CodeScape/releases/tag/v0.1.0-p0.1)。35 项验收已验证，AC-29 的开发复核通过，最后用户理解验收待确认；四个公开仓库的全范围评测未全部完成。完整需求见 [PRD](docs/CodeScape_PRD.md)，实施基线见 [开发设计](docs/CodeScape_Development_Design.md)，逐项状态见 [P0 验收追踪](docs/reports/p0/P0验收追踪.md)，实际证据见 [开发与验收记录](docs/reports/p0/开发与验收记录.md)。本轮用户已按 CHG-13 免除干净 Windows 10/11 环境门槛，不能将自动检查通过视为全部 P0 完成。留档范围和制品校验见 [第一版版本说明](docs/releases/v0.1.0-p0.md)。
+当前版本是 **v0.1.0 / P0 最终开发候选**，以 `v0.1.0-p0.2` 作为第一版开发留档，安装包、便携包和源码见 [GitHub 留档版本](https://github.com/nan-yizjm/CodeScape/releases/tag/v0.1.0-p0.2)。35 项验收已验证，AC-29 的开发复核通过，最后用户理解验收待确认；四个公开仓库的全范围评测未全部完成。完整需求见 [PRD](docs/CodeScape_PRD.md)，实施基线见 [开发设计](docs/CodeScape_Development_Design.md)，逐项状态见 [P0 验收追踪](docs/reports/p0/P0验收追踪.md)，实际证据见 [开发与验收记录](docs/reports/p0/开发与验收记录.md)。本轮用户已按 CHG-13 免除干净 Windows 10/11 环境门槛，不能将自动检查通过视为全部 P0 完成。留档范围和制品校验见 [第一版版本说明](docs/releases/v0.1.0-p0.md)。
 
 ## 本轮可用功能
 

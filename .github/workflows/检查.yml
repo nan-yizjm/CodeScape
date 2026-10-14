@@ -20,6 +20,14 @@ jobs:
         run: uv sync --frozen --python 3.12
       - name: 准备前端与 TypeScript 解析器
         run: npm ci
+      - name: 准备锁定的 C/C++ 系统声明
+        run: |
+          @'
+          import json
+          from scripts.prepare_windows_runtime import download, extract_headers, repository
+          records = json.loads((repository / "packaging/runtime_sources.json").read_text(encoding="utf-8"))
+          extract_headers(download("clang_headers", records["clang_headers"]))
+          '@ | uv run python -
       - name: 检查 Python 与解析边界
         run: |
           uv run ruff check server scripts tests
