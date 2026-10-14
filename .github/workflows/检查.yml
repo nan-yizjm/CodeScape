@@ -6,6 +6,9 @@ jobs:
   verify:
     name: Windows 静态解析与前端检查
     runs-on: windows-latest
+    env:
+      PYTHONIOENCODING: utf-8
+      PYTHONUTF8: '1'
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
