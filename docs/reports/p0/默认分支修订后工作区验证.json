@@ -1,0 +1,16 @@
+{
+  "日期": "2026-10-11",
+  "代码提交": "6d715de",
+  "实际源码流水线": "architecture/2-explanations/3-reads/1-judgments/2-dependencies/1-cpp-config/8-interfaces/1-facts/2-index/2-ts-bindings/2-python-declarations/1",
+  "地址": "http://127.0.0.1:8125/",
+  "项目数": 4,
+  "学习记录": 2,
+  "项目状态版本与架构快照哈希逐项不变": true,
+  "学习状态与revision逐项不变": true,
+  "模型账本数": 7,
+  "新增模型请求": 0,
+  "上传AIHOT": false,
+  "原有结果": "保留，不改写为新流水线结果",
+  "UI复核": "侧边现有AIHOT已恢复：5个顶层模块、2条主要协作线；既有会话恢复，4项目可读。",
+  "截图": "output/playwright/P0默认分支修订后工作区.png"
+}

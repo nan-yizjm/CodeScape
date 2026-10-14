@@ -1,0 +1,72 @@
+{
+  "样本": "flask-python",
+  "Commit": "d086db856be187255b8ec61ef409357393020f32",
+  "接收端": "https://www.cctq.ai/v1",
+  "模型": "gpt-6.1-sol",
+  "实际文件": [
+    "src/flask/helpers.py"
+  ],
+  "project_id": "ea9a431a-8163-4c1d-83ef-02922297b748",
+  "version_id": "c5752f77-d2c3-43eb-a46d-931a931b3395",
+  "数据目录": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\.runtime\\public-model-validation\\8acd93b5-cc32-4864-81cc-88053410dadc",
+  "流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-organization/1",
+  "原报告流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
+  "核对时间UTC": "2026-10-13T01:50:51.583506+00:00",
+  "原报告sha256": "0987f3fa797d61ce226cf3915d31b9bb829b0a8aeaf073449a5cfb55034db844",
+  "新建job_id": "03daf48b-c82c-4e66-a5e7-03b22f64be47",
+  "实施代码起始sha256": "20b0d25ef7419fd48d9ae32f743af1fe19d8f1dc4d9f5f1dabe4ff9571ab1118",
+  "执行目标代码": false,
+  "候选复核实现sha256": "b24fe7dfb3f3f087422191d38d66084b739d5af05ca7aaeb9e5d844ed8b627eb",
+  "实际快照hash": "ad5bdcc28670e5b0b4123226504abb578cf8deb4fcb4c1ff163b063f1748827a",
+  "发送实体": [
+    "bd022233-7c3f-5097-ab15-743555bb3e96",
+    "de59b9c8-912e-55df-aeae-503ab87029c3"
+  ],
+  "指定函数筛选": [
+    "stream_with_context",
+    "get_flashed_messages"
+  ],
+  "指定完整实现复核": true,
+  "复核材料sha256": "e428998ef10038ab991f409111b3f951be80a273bef5232bfbb9ae0a51f80369",
+  "分批复核材料sha256": [
+    "e428998ef10038ab991f409111b3f951be80a273bef5232bfbb9ae0a51f80369"
+  ],
+  "性质": "候选实现的真实讲解复核，仅已授权窄范围；未集成产品、未发布，不是完整工程验收",
+  "状态": "候选复核未完成，原结果保持",
+  "上传前已核对固定授权源码字节": true,
+  "错误": "AI 服务在流式响应中返回错误，未发布部分结果；检查点已保留，请检查服务后主动恢复。",
+  "请求账本": [
+    {
+      "id": "0e5ccde4-16f6-4e31-aad7-491176fcb4dc",
+      "project_id": "ea9a431a-8163-4c1d-83ef-02922297b748",
+      "version_id": "c5752f77-d2c3-43eb-a46d-931a931b3395",
+      "job_id": "03daf48b-c82c-4e66-a5e7-03b22f64be47",
+      "unit_id": "9026fe4c-41bf-44aa-a7d4-b7e8f36e6d70",
+      "attempt": 1,
+      "phase": "explanation_review",
+      "recipient": "https://www.cctq.ai/v1",
+      "model": "gpt-6.1-sol",
+      "status": "failed",
+      "created_at": "2026-10-13T01:50:51.603300+00:00",
+      "sent_at": "2026-10-13T01:50:51.644842+00:00",
+      "finished_at": "2026-10-13T01:50:55.674758+00:00",
+      "payload_hash": "d65d6bf24475aa17e75e8451a7c4fbdd2e8ac3cee214ad2870ce4a0389b346c2",
+      "source_chars": 4858,
+      "usage": null,
+      "cost": null,
+      "currency": null,
+      "price_snapshot": null,
+      "http_status": 200,
+      "error_code": "INVALID_STREAM_ERROR_EVENT"
+    }
+  ],
+  "请求状态": {
+    "failed": 1
+  },
+  "已知total_tokens": 0,
+  "未知用量请求": 1,
+  "费用": null,
+  "实施代码结束sha256": "20b0d25ef7419fd48d9ae32f743af1fe19d8f1dc4d9f5f1dabe4ff9571ab1118",
+  "评测期间实施代码一致": true,
+  "原报告未变": true
+}

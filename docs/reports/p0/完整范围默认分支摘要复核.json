@@ -1,0 +1,39 @@
+{
+  "日期": "2026-10-11",
+  "性质": "完整范围进行中的真实模型结果源码抽查；不替换原结果",
+  "样本": "flask-python",
+  "Commit": "d086db856be187255b8ec61ef409357393020f32",
+  "流水线": "architecture/2-explanations/1-reads/1-judgments/1-dependencies/1-cpp-config/8-interfaces/1-facts/1-index/2-ts-bindings/2-python-declarations/1",
+  "project_id": "4a9bcb54-8709-4877-92ae-03175eb459d3",
+  "version_id": "648e7271-227f-4afd-abb5-eeb9e5165cc2",
+  "检查点sha256": "dc67bce647b3a738fae242355080cfb6cbcf60a292ecce691513526630931150",
+  "实际模块摘要": {
+    "id": "m1",
+    "parent_id": null,
+    "name": "环境开关读取",
+    "summary": "从环境变量读取调试模式与 dotenv 加载开关；两者都只读 os.environ，但解释方向相反：FLASK_DEBUG 取到非否定值即开启调试，FLASK_SKIP_DOTENV 只有取到否定值才继续加载 dotenv。",
+    "entity_ids": [
+      "287a5ce6-c4ee-5865-b277-d8195128f0ff",
+      "481f71ee-ea17-5341-8a0b-17a5d54413c1"
+    ],
+    "code_paths": [
+      "src/flask/helpers.py"
+    ],
+    "incomplete": false
+  },
+  "实际函数说明": {
+    "entity_id": "481f71ee-ea17-5341-8a0b-17a5d54413c1",
+    "summary": "根据 FLASK_SKIP_DOTENV 判断是否加载默认 dotenv 文件。",
+    "details": "取 FLASK_SKIP_DOTENV；取值缺失或为空字符串时直接返回 default（默认 True，即加载）。否则只有取值小写属于 ('0','false','no') 才返回 True，其他取值返回 False。返回值与变量名方向相反：SKIP 取真值才表示不加载。",
+    "evidence": [
+      {
+        "path": "src/flask/helpers.py",
+        "start_line": 43,
+        "end_line": 48
+      }
+    ]
+  },
+  "源码事实": "helpers.py36-48：未设置或空值返回default，默认True；非空值只有0/false/no返回True。",
+  "结论": "函数详情已正确保留默认值分支；模块摘要的“只有取到否定值才继续加载”省略未设置/空值默认加载，属于摘要压缩风险，尚未计整体质量通过。",
+  "边界": "四工程完整结果与范围对照尚在进行；该缺口不因函数详情正确而自动消失。"
+}

@@ -1,0 +1,159 @@
+{
+  "日期": "2026-10-11",
+  "性质": "真实官方模型结果对固定源码的人工抽查，非固定响应",
+  "抽查": [
+    {
+      "样本": "hiredis-c",
+      "流水线": "architecture/2-explanations/1-reads/1-judgments/1-dependencies/1-cpp-config/8-interfaces/1-facts/1-index/2-ts-bindings/2-python-declarations/1",
+      "Commit": "058ebcdf36c5b05b759c613564fb958ec363c90f",
+      "报告": "hiredis-c-narrow真实模型验证.json",
+      "报告sha256": "47539f2e35c29f033e53dff349b0838cac0d6d4926a4ea9c8c30adbca35e7483",
+      "project_id": "570e7019-89b2-44eb-ae05-67275c7902c8",
+      "version_id": "463f6663-63b3-4299-abda-30fe5ecc8902",
+      "结论": "联合保护条件与maxbuf非零前提实际重测复核通过",
+      "函数抽查": [
+        {
+          "函数": "redisReaderGetReply",
+          "函数范围": {
+            "path": "read.c",
+            "start_line": 820,
+            "end_line": 871,
+            "start_byte": 25617,
+            "end_byte": 27093
+          },
+          "实际解释": {
+            "entity_id": "8e13e0ca-e853-5492-aa04-3177a35f5490",
+            "summary": "驱动解析循环，从缓冲解析出完整回复并可选返回给调用方。",
+            "details": "输入 redisReader *r、void **reply。若 reply!=NULL，先令 *reply=NULL。若 r->err 已置位，返回 REDIS_ERR；若 r->len==0，返回 REDIS_OK。若 r->ridx==-1，初始化 task[0] 的 type/elements/idx/obj/parent/privdata 并令 r->ridx=0。随后 while(r->ridx>=0) 反复调用 processItem(r)，遇到非 REDIS_OK 就 break。若 r->err 已置位，返回 REDIS_ERR。若 r->pos>=1024，调用 sdsrange(r->buf,r->pos,-1) 丢弃已消费前缀，返回负数则返回 REDIS_ERR；成功后 r->pos=0、r->len=sdslen(r->buf)。最后若 r->ridx==-1，reply 非空时把 r->reply 赋给 *reply；否则在 r->reply 非空且 r->fn/freeObject 存在时释放该回复；然后 r->reply=NULL。函数返回 REDIS_OK。",
+            "evidence": [
+              {
+                "path": "read.c",
+                "start_line": 820,
+                "end_line": 831
+              },
+              {
+                "path": "read.c",
+                "start_line": 834,
+                "end_line": 841
+              },
+              {
+                "path": "read.c",
+                "start_line": 845,
+                "end_line": 851
+              },
+              {
+                "path": "read.c",
+                "start_line": 855,
+                "end_line": 859
+              },
+              {
+                "path": "read.c",
+                "start_line": 862,
+                "end_line": 870
+              }
+            ]
+          }
+        },
+        {
+          "函数": "redisReaderFeed",
+          "函数范围": {
+            "path": "read.c",
+            "start_line": 789,
+            "end_line": 818,
+            "start_byte": 24832,
+            "end_byte": 25615
+          },
+          "实际解释": {
+            "entity_id": "d2a3a5bb-527c-5a9f-b87f-3bb92a90aeb2",
+            "summary": "把外部字节追加到 reader 的 sds 缓冲；reader 已出错时提前返回失败。",
+            "details": "输入 redisReader *r、const char *buf、size_t len。若 r->err 已置位，直接返回 REDIS_ERR。仅当 buf!=NULL 且 len>=1 时处理：若 r->len==0 且 r->maxbuf!=0 且 sdsavail(r->buf)>r->maxbuf，先 sdsfree 旧缓冲、重新 sdsempty，新缓冲为 0 则 goto oom，并把 r->pos 重置为 0；然后 sdscatlen 追加数据，失败 goto oom；成功更新 r->buf 并令 r->len=sdslen(r->buf)。若不满足追加条件，直接返回 REDIS_OK。oom 标签调用 __redisReaderSetErrorOOM(r) 并返回 REDIS_ERR。",
+            "evidence": [
+              {
+                "path": "read.c",
+                "start_line": 789,
+                "end_line": 794
+              },
+              {
+                "path": "read.c",
+                "start_line": 797,
+                "end_line": 805
+              },
+              {
+                "path": "read.c",
+                "start_line": 807,
+                "end_line": 811
+              },
+              {
+                "path": "read.c",
+                "start_line": 814,
+                "end_line": 817
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "样本": "flask-python",
+      "流水线": "architecture/2-explanations/1-reads/1-judgments/1-dependencies/1-cpp-config/8-interfaces/1-facts/1-index/2-ts-bindings/2-python-declarations/1",
+      "Commit": "d086db856be187255b8ec61ef409357393020f32",
+      "报告": "flask-python-narrow真实模型验证-1a1df21c-ca0a-4d0c-b173-080e2de2bdb9.json",
+      "报告sha256": "428f4ecbaa9100155bcb14c5a1cf4f9b0ce10d6023ac6792490392e927632648",
+      "project_id": "fbf2fdc3-763f-4955-8347-7e5623318255",
+      "version_id": "ca7de233-1746-43cb-88a7-0c19d0b0baf4",
+      "结论": "dotenv开关方向与关键字参数透传实际重测复核通过",
+      "函数抽查": [
+        {
+          "函数": "get_load_dotenv",
+          "函数范围": {
+            "path": "src/flask/helpers.py",
+            "start_line": 36,
+            "end_line": 48,
+            "start_byte": 968,
+            "end_byte": 1381
+          },
+          "实际解释": {
+            "entity_id": "cc3caf0f-ada4-5637-9515-8eb230f3d51d",
+            "summary": "读取 FLASK_SKIP_DOTENV 环境变量，返回是否加载 .env 文件。",
+            "details": "若环境变量未设置或为空，返回调用方传入的 default；否则仅当小写值属于 (\"0\",\"false\",\"no\") 时返回 True，表示应加载 dotenv 文件；其他值返回 False。",
+            "evidence": [
+              {
+                "path": "src/flask/helpers.py",
+                "start_line": 43,
+                "end_line": 48
+              }
+            ]
+          }
+        },
+        {
+          "函数": "send_from_directory",
+          "函数范围": {
+            "path": "src/flask/helpers.py",
+            "start_line": 543,
+            "end_line": 584,
+            "start_byte": 19860,
+            "end_byte": 21440
+          },
+          "实际解释": {
+            "entity_id": "55baf98e-12ce-52b0-9d00-a584c4afa257",
+            "summary": "包装 werkzeug.utils.send_from_directory，安全地从指定目录发送文件。",
+            "details": "接收 directory、path 与任意关键字参数；函数体不显式拼接或校验路径，而是调用 _prepare_send_file_kwargs(**kwargs) 生成 Flask 侧参数，再作为关键字参数传给 werkzeug.utils.send_from_directory，返回 Response。目录必须由开发者提供，不能直接来自客户端；文件不存在时的 404 由 Werkzeug 负责。",
+            "evidence": [
+              {
+                "path": "src/flask/helpers.py",
+                "start_line": 543,
+                "end_line": 547
+              },
+              {
+                "path": "src/flask/helpers.py",
+                "start_line": 582,
+                "end_line": 584
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "边界": "只涵盖列出的四个函数；完整范围、模块职责质量与用户验收仍未完成。"
+}

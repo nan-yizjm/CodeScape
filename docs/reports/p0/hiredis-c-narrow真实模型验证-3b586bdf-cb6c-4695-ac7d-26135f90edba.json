@@ -1,0 +1,768 @@
+{
+  "日期": "2026-10-12",
+  "检查开始时间UTC": "2026-10-12T01:57:54.995987+00:00",
+  "样本": "hiredis-c",
+  "Commit": "058ebcdf36c5b05b759c613564fb958ec363c90f",
+  "范围": "缩小范围",
+  "授权": "用户允许四个固定公开样本真实评测",
+  "接收端": "https://api.deepseek.com",
+  "模型": "deepseek-flash",
+  "流水线": "architecture/3-explanations/3-reads/1-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/2-index/3-ts-bindings/2-python-declarations/1",
+  "数据目录": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\.runtime\\public-model-validation\\390af9e8-a09b-40a0-9113-b0f849badeae",
+  "原始快照hash": "7240fe218f0552729c0343bf54f244013ed1ba2dd982d34f49e4bb421cbb39a2",
+  "实际文件": [
+    "read.c",
+    "read.h"
+  ],
+  "状态": "结构检查通过，待源码质量复核",
+  "执行目标代码": false,
+  "进度": {
+    "phase": "completed",
+    "completed": 1,
+    "total": 1,
+    "detail": "分批分析完成"
+  },
+  "耗时秒": 134.94,
+  "project_id": "c8bd25bf-b698-420c-b4bb-d6cbe9a18975",
+  "version_id": "c8763342-c9b8-4668-88ec-58339fa516f0",
+  "实际快照hash": "8fd5570b3b8949d0839981e7e5e07a8e4563809c4c6d5820abe4aa081a70a78c",
+  "scope_hash": "64d8fef1eca2d21c0868fb5cb2988d0e4d169bafe184ba5bc3727938f0682e93",
+  "错误": null,
+  "architecture": {
+    "modules": [
+      {
+        "id": "m1",
+        "parent_id": null,
+        "name": "RESP 回复读取与解析",
+        "summary": "read.c 首批片段：为 hiredis 读取器提供错误诊断、缓冲扫描/数值解析、任务栈推进与行/块项解析等基础设施。",
+        "entity_ids": [],
+        "code_paths": [
+          "read.c"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "m2",
+        "parent_id": "m1",
+        "name": "错误状态设置与诊断格式化",
+        "summary": "设置读取器错误码与错误文本，释放已建回复与输入缓冲；并提供单字节转义与协议/OOM 错误包装。",
+        "entity_ids": [
+          "9175d64e-3536-5fa8-80cc-69220f73d9cb",
+          "68ef3865-488f-5bd5-b9a6-2494b9719c95",
+          "0364a7f3-ef4a-5c72-8a78-c4076b7c593f",
+          "323f89ed-bdca-58f8-8a9d-fb2af0f68eab"
+        ],
+        "code_paths": [
+          "read.c"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "m3",
+        "parent_id": "m1",
+        "name": "缓冲扫描与数值解析工具",
+        "summary": "在不移动/推进读游标的前提下读取字节、定位 \r\n、取整行并严格解析十进制 long long。",
+        "entity_ids": [
+          "054ee08d-5d13-59c8-8d4a-1edd8e43f776",
+          "c1a2a806-52ad-5f59-b34c-6a6e7128b2d6",
+          "7913aa4b-66f0-5157-a74a-436054ad0529",
+          "9fdd5f5e-3ca7-5a06-a4b0-477a3a9d1179"
+        ],
+        "code_paths": [
+          "read.c"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "m4",
+        "parent_id": "m1",
+        "name": "任务栈推进与扩容",
+        "summary": "维护嵌套回复任务栈：完成后推进到下一个任务槽位，并在栈满时扩容分配新任务。",
+        "entity_ids": [
+          "dab3c5a1-3f05-5e2b-966c-23312f5f9f19",
+          "34314167-f1e8-5ca7-9cf6-5b8384d92977"
+        ],
+        "code_paths": [
+          "read.c"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "m5",
+        "parent_id": "m1",
+        "name": "行项与块项解析",
+        "summary": "按当前任务类型解析单行项（整数/双精度/nil/bool/bignum/状态/错误）与块字符串项，创建回复对象并推进任务栈。",
+        "entity_ids": [
+          "6b547724-f105-5297-b236-66009109f27c",
+          "cb5bc68c-a445-5254-a08c-8e0f51a6ff6d"
+        ],
+        "code_paths": [
+          "read.c"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "m6",
+        "parent_id": null,
+        "name": "回复解析内核",
+        "summary": "识别回复类型字节并分发行、块、聚合三类解析路径；聚合路径校验嵌套深度与元素数量上限，并按多 bulk 语义构建数组或 map/attr 容器。maxdepth>0 才限制深度，maxelements>0 才限制元素数，元素为 -1 生成空回复、为 0 时结束容器。",
+        "entity_ids": [
+          "7e6eda5f-e1fc-510f-8b88-5d5c7d6b2c5e",
+          "797a456b-5b69-52aa-9f2c-4e3fb3e8a5b9"
+        ],
+        "code_paths": [
+          "read.c"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "m7",
+        "parent_id": null,
+        "name": "读取器生命周期",
+        "summary": "创建并初始化读取器：分配结构体、sds 缓冲区与任务栈，记录函数表与默认限制；任一分配失败经 oom 标签调用释放函数并返回 NULL。释放函数对 NULL 输入直接返回，否则释放回复对象、逐层任务与缓冲区。",
+        "entity_ids": [
+          "8f4ede07-3840-5923-aacc-7feb5d958a5e",
+          "017f25ca-6ccc-50c5-913a-4c25690fc0e1"
+        ],
+        "code_paths": [
+          "read.c"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "m8",
+        "parent_id": null,
+        "name": "数据喂入与回复提取",
+        "summary": "向读取器追加输入数据；错误状态已置位时拒绝喂入，缓冲区为空且剩余容量超过非零 maxbuf 时释放重建，追加失败设置 OOM 错误。提取回复时初始化任务栈并循环解析，消费超过 1KB 时压缩缓冲，栈清空后输出回复或在其为空时释放对象。",
+        "entity_ids": [
+          "38b96437-c7b1-5140-97b2-e9e9e1aaa674",
+          "29bb0754-760e-5ca1-8c9c-e2cf334ef6d0"
+        ],
+        "code_paths": [
+          "read.c"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "m9",
+        "parent_id": null,
+        "name": "协议解析接口与数据结构定义",
+        "summary": "定义解析器错误码与回复类型常量、redisReadTask 与 redisReplyObjectFunctions 结构、redisReader 字段布局，以及创建/释放/喂入/取回复的公开声明与 privdata、object、error 访问宏。",
+        "entity_ids": [],
+        "code_paths": [
+          "read.h"
+        ],
+        "incomplete": false
+      }
+    ],
+    "overview": {
+      "introduction": "这是 Redis 客户端库使用的回复读取与解析组件，为开发者把服务端返回的原始字节流解析成结构化回复对象，并处理类型、嵌套和错误。",
+      "capabilities": [
+        "解析单行与块状回复，覆盖整数、双精度、nil、布尔、大数与状态/错误文本。",
+        "解析嵌套聚合回复，构建数组、映射与属性容器，并处理多块字符串元素。",
+        "可配置嵌套深度与元素数量上限，超限时返回错误。",
+        "支持分次喂入网络数据并提取完整回复，自动压缩已消费缓冲。",
+        "创建和释放读取器，统一报告协议错误与内存不足等失败状态。"
+      ],
+      "principle": "用户把收到的字节逐段交给读取器，读取器先识别回复类型，再按单行、块字符串或聚合路径解析；嵌套的聚合内容由内部状态跟踪，元素逐个转成回复对象。解析成功后可取出完整回复；数据不足时取不到完整回复，遇到错误或超限则返回失败结果。深度和元素限制仅在配置为正数时生效。",
+      "limitations": [
+        "完整行为未做运行时验证，诊断记录只表示已解析出的问题，不代表可运行或已通过测试。",
+        "部分数值与浮点解析依赖未提供的条件编译配置和辅助实现，相关行为只能按现有材料限定。",
+        "字符串、数组创建与对象释放等通过回调完成，其目标实现在当前材料中不可静态确认。",
+        "错误路径细节与错误码填充依赖未提供的实现，输入不足时调用方可能需另行判断。",
+        "仅归纳所给模块与已确认协作，未覆盖与外部 Redis 服务的端到端行为。"
+      ],
+      "synthesized": true,
+      "analysis_notes": [
+        "片段仅覆盖 read.c 第 1-552 行，数组/映射/集等完整解析路径不在本批范围",
+        "多处行为依赖编译宏 HIREDIS_FLOAT_STRTOD 与 ffc.h，宏定义文件未提供",
+        "存在未解析调用（如 sdsfree、hi_realloc），其真实实现未在本批确认",
+        "错误路径中 readLine 返回 NULL 时不设置错误码，调用方需另行判断",
+        "本批仅含 read.c 后半段与 read.h，processLineItem、processBulkItem、readLine 等实现不在范围内",
+        "REDIS_READER_STACK_SIZE 等宏与 sds、hi_* 内存接口的实现未提供",
+        "__redisReaderSetError 系列错误函数未在本批出现，只看到调用点",
+        "createString/createArray/freeObject 等经 r->fn 函数指针调用，目标不可静态确认",
+        "错误类型分支与 errstr 填充细节依赖未提供的实现",
+        "源码范围由 2 批受控上下文完成归纳，跨批次模块边界可能需要人工复核。"
+      ]
+    },
+    "explanations": [
+      {
+        "entity_id": "9175d64e-3536-5fa8-80cc-69220f73d9cb",
+        "summary": "重置读取器状态并记录错误码与截断后的错误文本",
+        "details": "无返回值。若 r->reply 非空且 r->fn 与 r->fn->freeObject 均存在，则释放回复对象并置 r->reply=NULL；随后 sdsfree 输入缓冲并置 buf=NULL、pos=len=0，ridx=-1 重置任务栈；写入 r->err=type，用 strlen 取 str 长度并截断到 errstr 容量减一，memcpy 后补 '\\0'。",
+        "evidence": [
+          {
+            "path": "read.c",
+            "start_line": 74,
+            "end_line": 96
+          }
+        ]
+      },
+      {
+        "entity_id": "68ef3865-488f-5bd5-b9a6-2494b9719c95",
+        "summary": "把单个字节转义为带引号的描述字符串并返回写入长度",
+        "details": "返回 snprintf 的写入长度。switch 对 '\\\\'、'\"' 及 \\n/\\r/\\t/\\a/\\b 输出带引号的转义字面量；default 下 isprint 为真时输出引号包裹的原字符，否则输出 \\x%02x 十六进制形式。size 限制写入上限，部分分支格式串未再使用 byte 参数。",
+        "evidence": [
+          {
+            "path": "read.c",
+            "start_line": 98,
+            "end_line": 120
+          }
+        ]
+      },
+      {
+        "entity_id": "0364a7f3-ef4a-5c72-8a78-c4076b7c593f",
+        "summary": "以可读字节形式报告协议类型字节错误",
+        "details": "无返回值。用 chrtos 把 byte 转义写入 cbuf，再 snprintf 拼接成 \"Protocol error, got %s as reply type byte\" 存入 sbuf，最后以 REDIS_ERR_PROTOCOL 调用 __redisReaderSetError 设置错误。",
+        "evidence": [
+          {
+            "path": "read.c",
+            "start_line": 122,
+            "end_line": 129
+          }
+        ]
+      },
+      {
+        "entity_id": "323f89ed-bdca-58f8-8a9d-fb2af0f68eab",
+        "summary": "以固定文案设置内存不足错误",
+        "details": "无返回值。直接以 REDIS_ERR_OOM 与固定字符串 \"Out of memory\" 调用 __redisReaderSetError，不检查其它条件。",
+        "evidence": [
+          {
+            "path": "read.c",
+            "start_line": 131,
+            "end_line": 133
+          }
+        ]
+      },
+      {
+        "entity_id": "054ee08d-5d13-59c8-8d4a-1edd8e43f776",
+        "summary": "在剩余字节足够时取指针并推进读游标",
+        "details": "返回缓冲区指针或 NULL。当 r->len-r->pos >= bytes 时返回 r->buf+r->pos 并把 r->pos 前移 bytes；剩余不足时直接返回 NULL，不修改游标。",
+        "evidence": [
+          {
+            "path": "read.c",
+            "start_line": 135,
+            "end_line": 143
+          }
+        ]
+      },
+      {
+        "entity_id": "c1a2a806-52ad-5f59-b34c-6a6e7128b2d6",
+        "summary": "在给定长度内查找 \\r\\n 并返回其 \\r 位置",
+        "details": "返回指向 '\\r' 的指针或 NULL。len<2 直接返回 NULL，否则 len-- 后循环用 memchr 在剩余范围找 '\\r'；命中且 ret[1]=='\\n' 才跳出返回，否则前移指针并扣减搜索长度继续查找。",
+        "evidence": [
+          {
+            "path": "read.c",
+            "start_line": 146,
+            "end_line": 169
+          }
+        ]
+      },
+      {
+        "entity_id": "7913aa4b-66f0-5157-a74a-436054ad0529",
+        "summary": "严格解析十进制字符串为 long long 并检测溢出",
+        "details": "返回 REDIS_OK/REDIS_ERR。仅接受无前导零的十进制（单个 '0' 特例、可选负号）；空串、仅负号、非法首位均返回 ERR。逐位累加时先查 ULLONG_MAX/10 再乘 10，再查加上当前数字是否溢出；负数分支校验 v 超过 -(LLONG_MIN+1)+1 的边界。仅当 value 指针非 NULL 时写回解析结果。",
+        "evidence": [
+          {
+            "path": "read.c",
+            "start_line": 183,
+            "end_line": 244
+          }
+        ]
+      },
+      {
+        "entity_id": "9fdd5f5e-3ca7-5a06-a4b0-477a3a9d1179",
+        "summary": "从当前游标起取出一整行并跳过行尾 \\r\\n",
+        "details": "返回行首指针或 NULL。p 指向 r->buf+r->pos，用 seekNewline 在 r->len-r->pos 范围内查找；命中时行长 len=s-p，r->pos 前进 len+2 跳过 \\r\\n，_len 非 NULL 时写入行长并返回 p；未命中返回 NULL 且不移动游标。",
+        "evidence": [
+          {
+            "path": "read.c",
+            "start_line": 246,
+            "end_line": 259
+          }
+        ]
+      },
+      {
+        "entity_id": "dab3c5a1-3f05-5e2b-966c-23312f5f9f19",
+        "summary": "推进嵌套任务栈到下一个待处理元素",
+        "details": "无返回值。循环在 r->ridx>=0 时执行：ridx==0 则减一并返回；否则取 cur=task[ridx]、prv=task[ridx-1]，用 assert 断言父任务类型为数组/映射/属性/集/推送之一。若 cur->idx 等于 prv->elements-1 则 ridx-- 继续上溯，否则断言 cur->idx<prv->elements 后把 cur->type、cur->elements 重置为 -1、idx++ 并返回。",
+        "evidence": [
+          {
+            "path": "read.c",
+            "start_line": 261,
+            "end_line": 288
+          }
+        ]
+      },
+      {
+        "entity_id": "6b547724-f105-5297-b236-66009109f27c",
+        "summary": "按当前任务类型解析单行回复项并创建对象",
+        "details": "返回 REDIS_OK/REDIS_ERR；readLine 失败直接返回 ERR。整数用 string2ll，失败报协议错；双精度限长 326 并 memcpy 补 '\\0'，默认走 ffc（NO_INFNAN）或定义 HIREDIS_FLOAT_STRTOD 时走 strtod，单独识别 inf/-inf/nan/-nan，校验失败报协议错；nil 要求空行，bool 要求单字符 tTfF，bignum 逐位校验十进制，其余按简单字符串禁 \\r\\n。无对应 create 回调时退回类型常量指针；obj 为 NULL 报 OOM，根任务写 r->reply 后 moveToNextTask。",
+        "evidence": [
+          {
+            "path": "read.c",
+            "start_line": 290,
+            "end_line": 453
+          },
+          {
+            "path": "read.c",
+            "start_line": 296,
+            "end_line": 307
+          },
+          {
+            "path": "read.c",
+            "start_line": 316,
+            "end_line": 380
+          },
+          {
+            "path": "read.c",
+            "start_line": 442,
+            "end_line": 448
+          }
+        ]
+      },
+      {
+        "entity_id": "cb5bc68c-a445-5254-a08c-8e0f51a6ff6d",
+        "summary": "解析块字符串项（含 nil 与 verbatim 校验）并创建对象",
+        "details": "返回 REDIS_OK/REDIS_ERR。seekNewline 定位长度行，string2ll 解析失败或长度 < -1、超出 SIZE_MAX 时设协议错；len==-1 时建 nil 并置 success；否则把长度加上尾部 \\r\\n 后，仅当 r->pos+bytelen<=r->len 数据完整时才继续，VERB 类型额外要求 len>=4 且 s[5]==':'，随后用 createString 或类型常量指针。success 时 obj 为 NULL 报 OOM，r->pos 前移 bytelen，根任务写 r->reply 并 moveToNextTask；未完成返回 ERR。",
+        "evidence": [
+          {
+            "path": "read.c",
+            "start_line": 455,
+            "end_line": 525
+          },
+          {
+            "path": "read.c",
+            "start_line": 464,
+            "end_line": 484
+          },
+          {
+            "path": "read.c",
+            "start_line": 495,
+            "end_line": 519
+          }
+        ]
+      },
+      {
+        "entity_id": "34314167-f1e8-5ca7-9cf6-5b8384d92977",
+        "summary": "按固定步长扩容任务栈并初始化新槽位",
+        "details": "返回 REDIS_OK/REDIS_ERR。newlen = r->tasks + REDIS_READER_STACK_SIZE，hi_realloc 任务数组失败则 goto oom；成功后循环对 r->tasks 到 newlen 的每个槽位 hi_calloc(1, sizeof(**r->task))，任一失败同样 goto oom；全部成功返回 REDIS_OK。oom 处调用 __redisReaderSetErrorOOM 并返回 REDIS_ERR。",
+        "evidence": [
+          {
+            "path": "read.c",
+            "start_line": 527,
+            "end_line": 550
+          }
+        ]
+      },
+      {
+        "entity_id": "797a456b-5b69-52aa-9f2c-4e3fb3e8a5b9",
+        "summary": "解析多 bulk 聚合回复：校验深度与元素上限，按元素数生成空回复、构建数组或推进任务栈。",
+        "details": "取当前任务 cur=r->task[r->ridx]。当 r->maxdepth>0 且 r->ridx>=r->maxdepth 时设置协议错误 Max nesting depth exceeded 并返回 REDIS_ERR；当 r->ridx==r->tasks-1 时调用 redisReaderGrow，失败即返回 REDIS_ERR。readLine 读不到长度行时返回 REDIS_ERR 且不设错误；string2ll 解析失败设置 Bad multi-bulk length。root 由 r->ridx==0 判定。长度校验覆盖 elements<-1、LLONG_MAX>SIZE_MAX 且 elements>SIZE_MAX、以及 r->maxelements>0 且 elements>r->maxelements，命中报 Multi-bulk length out of range。elements==-1 时优先用 r->fn->createNil，否则退化为 (void*)REDIS_REPLY_NIL，结果为 NULL 走 OOM 错误，然后 moveToNextTask。否则若 cur->type 为 MAP 或 ATTR，先把上限压到 LLONG_MAX/2（SIZE_MAX 更小时取 SIZE_MAX/2），超限报错，否则 elements 翻倍以容纳键值对；再优先用 r->fn->createArray，否则退化为 (void*)(uintptr_t)cur->type，为 NULL 时报 OOM。elements>0 时写入 cur 的 elements/obj、ridx 递增并初始化子任务（type=-1、elements=-1、idx=0、parent=cur、privdata 继承）；elements==0 走 moveToNextTask。root 时把 obj 记入 r->reply，返回 REDIS_OK。",
+        "evidence": [
+          {
+            "path": "read.c",
+            "start_line": 556,
+            "end_line": 563
+          },
+          {
+            "path": "read.c",
+            "start_line": 566,
+            "end_line": 568
+          },
+          {
+            "path": "read.c",
+            "start_line": 571,
+            "end_line": 575
+          },
+          {
+            "path": "read.c",
+            "start_line": 588,
+            "end_line": 600
+          },
+          {
+            "path": "read.c",
+            "start_line": 603,
+            "end_line": 624
+          },
+          {
+            "path": "read.c",
+            "start_line": 627,
+            "end_line": 648
+          }
+        ]
+      },
+      {
+        "entity_id": "7e6eda5f-e1fc-510f-8b88-5d5c7d6b2c5e",
+        "summary": "读取一个类型字节并确定回复类型，再分发给行、块或聚合处理函数。",
+        "details": "取 cur=r->task[r->ridx]。若 cur->type<0，调用 readBytes(r,1)：未读到字节直接返回 REDIS_ERR（缓冲不足，不设错误）；读到则按首字节映射类型，'-'错误、'+'状态、':'整数、','双精度、'_'空、'$'字符串、'*'数组、'%'map、'|'属性、'~'集合、'#'布尔、'='verbatim、'>'推送、'('大数；未知字节调用 __redisReaderSetErrorProtocolByte 并返回 REDIS_ERR。类型确定后按 cur->type 分发：错误/状态/整数/双精度/空/布尔/大数交给 processLineItem；字符串与 verbatim 交给 processBulkItem；数组、map、属性、集合、推送交给 processAggregateItem；其余落入 default，执行 assert(NULL) 后返回 REDIS_ERR。最终返回值取自被调处理函数。",
+        "evidence": [
+          {
+            "path": "read.c",
+            "start_line": 652,
+            "end_line": 656
+          },
+          {
+            "path": "read.c",
+            "start_line": 658,
+            "end_line": 699
+          },
+          {
+            "path": "read.c",
+            "start_line": 700,
+            "end_line": 704
+          },
+          {
+            "path": "read.c",
+            "start_line": 707,
+            "end_line": 732
+          }
+        ]
+      },
+      {
+        "entity_id": "8f4ede07-3840-5923-aacc-7feb5d958a5e",
+        "summary": "分配并初始化读取器：缓冲区、任务栈、函数表与默认限制，失败时释放后返回 NULL。",
+        "details": "用 hi_calloc 分配并清零 sizeof(redisReader)，失败返回 NULL；创建 sds 空缓冲区，失败跳 oom；按 REDIS_READER_STACK_SIZE 分配任务指针数组，失败跳 oom；循环为每个槽位分配 redisReadTask 并递增 r->tasks，任一失败跳 oom。成功后记录传入的函数表 r->fn，并设置默认上限 maxbuf=REDIS_READER_MAX_BUF、maxelements=REDIS_READER_MAX_ARRAY_ELEMENTS、maxdepth=REDIS_READER_MAX_REPLY_DEPTH，ridx 置 -1，返回 r。oom 标签处先调用 redisReaderFree(r) 再返回 NULL，因此半初始化对象也会被安全回收。",
+        "evidence": [
+          {
+            "path": "read.c",
+            "start_line": 738,
+            "end_line": 741
+          },
+          {
+            "path": "read.c",
+            "start_line": 743,
+            "end_line": 753
+          },
+          {
+            "path": "read.c",
+            "start_line": 754,
+            "end_line": 761
+          },
+          {
+            "path": "read.c",
+            "start_line": 762,
+            "end_line": 766
+          }
+        ]
+      },
+      {
+        "entity_id": "017f25ca-6ccc-50c5-913a-4c25690fc0e1",
+        "summary": "释放读取器持有的回复对象、任务栈与缓冲区；输入为 NULL 时直接返回。",
+        "details": "若 r==NULL 立即 return，不做任何操作。否则当 r->reply 非空且 r->fn 及 r->fn->freeObject 均存在时，调用 freeObject 释放回复对象；随后若 r->task 非空，按 i<r->tasks 逐个 hi_free 任务结构，再 hi_free 任务数组本身；最后 sdsfree 输入缓冲区并 hi_free 读取器结构。函数无返回值，也不检查或重置 r->err 等错误状态。",
+        "evidence": [
+          {
+            "path": "read.c",
+            "start_line": 770,
+            "end_line": 776
+          },
+          {
+            "path": "read.c",
+            "start_line": 778,
+            "end_line": 786
+          }
+        ]
+      },
+      {
+        "entity_id": "38b96437-c7b1-5140-97b2-e9e9e1aaa674",
+        "summary": "向读取器追加输入数据；错误状态下拒绝喂入，必要时重建大缓冲区，追加失败报 OOM。",
+        "details": "先检查 r->err，已置位则返回 REDIS_ERR 且不追加数据。仅当 buf!=NULL 且 len>=1 时处理：若 r->len==0 且 r->maxbuf!=0 且 sdsavail(r->buf)>r->maxbuf，则 sdsfree 旧缓冲区并 sdsempty 重建（失败跳 oom），并把 r->pos 置 0；随后 sdscatlen 追加，返回 NULL 跳 oom，成功则更新 r->buf 并把 r->len 设为新缓冲区长度。buf 为 NULL 或 len<1 时缓冲区不变，返回 REDIS_OK。oom 标签调用 __redisReaderSetErrorOOM 后返回 REDIS_ERR。",
+        "evidence": [
+          {
+            "path": "read.c",
+            "start_line": 793,
+            "end_line": 794
+          },
+          {
+            "path": "read.c",
+            "start_line": 796,
+            "end_line": 805
+          },
+          {
+            "path": "read.c",
+            "start_line": 807,
+            "end_line": 813
+          },
+          {
+            "path": "read.c",
+            "start_line": 815,
+            "end_line": 818
+          }
+        ]
+      },
+      {
+        "entity_id": "29bb0754-760e-5ca1-8c9c-e2cf334ef6d0",
+        "summary": "主解析入口：循环调用 processItem 直至需要更多数据或出错，完成后输出回复并压缩缓冲区。",
+        "details": "reply 非空时先把 *reply 置 NULL。若 r->err 已置位返回 REDIS_ERR；缓冲长度 r->len 为 0 时无回复可解析，返回 REDIS_OK。当 r->ridx==-1 时初始化 task[0]（type=-1、elements=-1、idx=-1、obj=NULL、parent=NULL、privdata 取自 r->privdata）并把 ridx 置 0。随后 while(r->ridx>=0) 反复调用 processItem，非 REDIS_OK 即 break；若 r->err 已设置则返回 REDIS_ERR。当 r->pos>=1024 时用 sdsrange 丢弃已消费部分，返回值小于 0 即返回 REDIS_ERR，否则重置 r->pos 与 r->len。最后若 r->ridx==-1 说明一个回复完成：reply 非空时把 r->reply 写出；reply 为空且 r->reply 非空且有 freeObject 时释放该对象；随后 r->reply 置 NULL。函数返回 REDIS_OK。",
+        "evidence": [
+          {
+            "path": "read.c",
+            "start_line": 822,
+            "end_line": 828
+          },
+          {
+            "path": "read.c",
+            "start_line": 830,
+            "end_line": 840
+          },
+          {
+            "path": "read.c",
+            "start_line": 844,
+            "end_line": 852
+          },
+          {
+            "path": "read.c",
+            "start_line": 856,
+            "end_line": 868
+          }
+        ]
+      }
+    ],
+    "call_judgments": [
+      {
+        "call_id": "1521b791-d9d5-5181-afc6-f27bf7c52a7b",
+        "target_id": "9175d64e-3536-5fa8-80cc-69220f73d9cb",
+        "reason": "__redisReaderSetErrorProtocolByte 内部第 128 行以 (r, REDIS_ERR_PROTOCOL, sbuf) 直接调用 __redisReaderSetError；该静态函数在本文件唯一且完整实现位于 74-96 行，名称与调用表达式一致。",
+        "evidence": [
+          {
+            "path": "read.c",
+            "start_line": 128,
+            "end_line": 128
+          },
+          {
+            "path": "read.c",
+            "start_line": 122,
+            "end_line": 129
+          },
+          {
+            "path": "read.c",
+            "start_line": 74,
+            "end_line": 96
+          }
+        ]
+      },
+      {
+        "call_id": "c9f68cb3-224e-5f87-8ef5-efc70b9dce6d",
+        "target_id": "9175d64e-3536-5fa8-80cc-69220f73d9cb",
+        "reason": "__redisReaderSetErrorOOM 函数体第 132 行直接调用 __redisReaderSetError，传 REDIS_ERR_OOM 与固定文案；被调函数为本文件静态定义，实现范围 74-96 行完整可见。",
+        "evidence": [
+          {
+            "path": "read.c",
+            "start_line": 132,
+            "end_line": 132
+          },
+          {
+            "path": "read.c",
+            "start_line": 131,
+            "end_line": 133
+          },
+          {
+            "path": "read.c",
+            "start_line": 74,
+            "end_line": 96
+          }
+        ]
+      },
+      {
+        "call_id": "8bdc63c6-5b48-5339-801a-b12f570b0d68",
+        "target_id": "68ef3865-488f-5bd5-b9a6-2494b9719c95",
+        "reason": "第 125 行在 __redisReaderSetErrorProtocolByte 内以 (cbuf, sizeof(cbuf), byte) 直接调用 chrtos；chrtos 为本文件静态函数，唯一实现覆盖 98-120 行，签名与实参匹配。",
+        "evidence": [
+          {
+            "path": "read.c",
+            "start_line": 125,
+            "end_line": 125
+          },
+          {
+            "path": "read.c",
+            "start_line": 122,
+            "end_line": 129
+          },
+          {
+            "path": "read.c",
+            "start_line": 98,
+            "end_line": 120
+          }
+        ]
+      },
+      {
+        "call_id": "a1ebd2a3-30d6-539d-9ce9-f9777b8e45d2",
+        "target_id": "c1a2a806-52ad-5f59-b34c-6a6e7128b2d6",
+        "reason": "readLine 第 251 行以 (p, r->len-r->pos) 直接调用 seekNewline；seekNewline 为同文件静态函数，完整实现位于 146-169 行，参数类型与调用一致。",
+        "evidence": [
+          {
+            "path": "read.c",
+            "start_line": 251,
+            "end_line": 251
+          },
+          {
+            "path": "read.c",
+            "start_line": 246,
+            "end_line": 259
+          },
+          {
+            "path": "read.c",
+            "start_line": 146,
+            "end_line": 169
+          }
+        ]
+      },
+      {
+        "call_id": "49743995-5444-5c9b-87c1-118a8681aed5",
+        "target_id": "797a456b-5b69-52aa-9f2c-4e3fb3e8a5b9",
+        "reason": "该调用的 caller_scope_id 为 os 中 processItem（af1bfbf4…，read.c 651-734），调用表达式 processAggregateItem 位于其聚合类型分支第 729 行；目标定义完整位于 read.c 553-649，同文件内名称唯一，属直接调用。",
+        "evidence": [
+          {
+            "path": "read.c",
+            "start_line": 728,
+            "end_line": 731
+          },
+          {
+            "path": "read.c",
+            "start_line": 553,
+            "end_line": 649
+          }
+        ]
+      },
+      {
+        "call_id": "b27e78a1-2997-5cd7-ba14-957257c9c0c2",
+        "target_id": "7e6eda5f-e1fc-510f-8b88-5d5c7d6b2c5e",
+        "reason": "该调用位于 redisReaderGetReply（e44c45df…）的解析主循环第 846 行，表达式为 processItem；目标实现完整位于 read.c 651-734，与调用点同文件且名称唯一，属直接调用。",
+        "evidence": [
+          {
+            "path": "read.c",
+            "start_line": 844,
+            "end_line": 847
+          },
+          {
+            "path": "read.c",
+            "start_line": 651,
+            "end_line": 734
+          }
+        ]
+      },
+      {
+        "call_id": "032ca56c-0395-5b90-9691-46061d250e94",
+        "target_id": "017f25ca-6ccc-50c5-913a-4c25690fc0e1",
+        "reason": "该调用位于 redisReaderCreateWithFunctions（f7d49e8a…）的 oom 分支第 765 行，表达式为 redisReaderFree；目标实现完整位于 read.c 769-787，与调用点相邻且名称唯一，属直接调用。",
+        "evidence": [
+          {
+            "path": "read.c",
+            "start_line": 763,
+            "end_line": 766
+          },
+          {
+            "path": "read.c",
+            "start_line": 769,
+            "end_line": 787
+          }
+        ]
+      }
+    ],
+    "primary_dependencies": []
+  },
+  "原快照字节未变": true,
+  "请求账本": [
+    {
+      "id": "29ea2e56-1eeb-42f8-8fb1-af66949766e4",
+      "project_id": "c8bd25bf-b698-420c-b4bb-d6cbe9a18975",
+      "version_id": "c8763342-c9b8-4668-88ec-58339fa516f0",
+      "job_id": "7c4b088c-aa2c-4fd8-a4e0-8dae08f1957b",
+      "unit_id": "14cec0ae-bdd9-4aff-87bb-e4132f001211",
+      "attempt": 1,
+      "phase": "architecture",
+      "recipient": "https://api.deepseek.com",
+      "model": "deepseek-flash",
+      "status": "success",
+      "created_at": "2026-10-12T01:58:15.872909+00:00",
+      "sent_at": "2026-10-12T01:58:15.913213+00:00",
+      "finished_at": "2026-10-12T01:58:57.941320+00:00",
+      "payload_hash": "b2c0fe0005e6296e3a932dcb005772a41fef1c73bc3f8fef5d765615f2e41287",
+      "source_chars": 18221,
+      "usage": {
+        "prompt_tokens": 24441,
+        "completion_tokens": 8112,
+        "total_tokens": 32553,
+        "prompt_cache_hit_tokens": 2688,
+        "prompt_cache_miss_tokens": 21753
+      },
+      "cost": null,
+      "currency": null,
+      "price_snapshot": null,
+      "http_status": 200,
+      "error_code": null
+    },
+    {
+      "id": "31366d2d-9bfd-482e-a243-a5cadad36e65",
+      "project_id": "c8bd25bf-b698-420c-b4bb-d6cbe9a18975",
+      "version_id": "c8763342-c9b8-4668-88ec-58339fa516f0",
+      "job_id": "7c4b088c-aa2c-4fd8-a4e0-8dae08f1957b",
+      "unit_id": "fc035c96-74f7-492d-b7bb-878ae0093a31",
+      "attempt": 1,
+      "phase": "architecture",
+      "recipient": "https://api.deepseek.com",
+      "model": "deepseek-flash",
+      "status": "success",
+      "created_at": "2026-10-12T01:58:57.978829+00:00",
+      "sent_at": "2026-10-12T01:58:57.993984+00:00",
+      "finished_at": "2026-10-12T01:59:51.112934+00:00",
+      "payload_hash": "a4aa5a29c102a16ae92b4f6cf324d1651b20149a397d70c6b9b5d1084494a48f",
+      "source_chars": 13949,
+      "usage": {
+        "prompt_tokens": 17111,
+        "completion_tokens": 10077,
+        "total_tokens": 27188,
+        "prompt_cache_hit_tokens": 2688,
+        "prompt_cache_miss_tokens": 14423
+      },
+      "cost": null,
+      "currency": null,
+      "price_snapshot": null,
+      "http_status": 200,
+      "error_code": null
+    },
+    {
+      "id": "b8fa5f35-ad58-4130-81e0-10d37334e1fb",
+      "project_id": "c8bd25bf-b698-420c-b4bb-d6cbe9a18975",
+      "version_id": "c8763342-c9b8-4668-88ec-58339fa516f0",
+      "job_id": "7c4b088c-aa2c-4fd8-a4e0-8dae08f1957b",
+      "unit_id": "9329a1c5-f63d-4204-8a82-8b051e13ef5a",
+      "attempt": 1,
+      "phase": "overview",
+      "recipient": "https://api.deepseek.com",
+      "model": "deepseek-flash",
+      "status": "success",
+      "created_at": "2026-10-12T01:59:51.144421+00:00",
+      "sent_at": "2026-10-12T01:59:51.168183+00:00",
+      "finished_at": "2026-10-12T02:00:09.576644+00:00",
+      "payload_hash": "bc878d3edb6d8ef27fcba37ad7b53b0321bc20a61335e951321aca302a9f0015",
+      "source_chars": 0,
+      "usage": {
+        "prompt_tokens": 1724,
+        "completion_tokens": 2867,
+        "total_tokens": 4591,
+        "prompt_cache_hit_tokens": 512,
+        "prompt_cache_miss_tokens": 1212
+      },
+      "cost": null,
+      "currency": null,
+      "price_snapshot": null,
+      "http_status": 200,
+      "error_code": null
+    }
+  ],
+  "请求状态": {
+    "success": 3
+  },
+  "已知total_tokens": 64332,
+  "未知用量请求": 0,
+  "费用": null,
+  "脱敏校验记录": [],
+  "边界": "真实官方模型，固定响应与质量复核分开；尚未代表用户验收；价格未知不记零费用。",
+  "静态索引制品": {
+    "path": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\.runtime\\public-model-validation\\390af9e8-a09b-40a0-9113-b0f849badeae\\validation-artifacts\\caa44b3114075adf7d6355cdfc6f5bf5ce9d9570cfcea92eda10ecc625694b37.json",
+    "sha256": "caa44b3114075adf7d6355cdfc6f5bf5ce9d9570cfcea92eda10ecc625694b37",
+    "bytes": 148205
+  }
+}

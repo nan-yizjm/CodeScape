@@ -1,0 +1,31 @@
+{
+  "日期": "2026-10-12",
+  "性质": "固定公开源码与现有真实静态索引只读材料验证，非模型生成效果",
+  "模型请求": 0,
+  "执行目标代码": false,
+  "样本Commit": "0b216ef674e297ebe41d8bf902262e56f8755822",
+  "原静态索引sha256": "19a298b889f624394871254737f1c6148072f7b7b86de2f9675b40eb7facd730",
+  "当前生成流水线": "architecture/5-repairs/4-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
+  "可见函数数": 3,
+  "函数身份与作用域及调用未改写": true,
+  "顶层匿名实现提示数": 14,
+  "遗漏提示数": 0,
+  "标题包含的工厂与变量": [
+    "_decode",
+    "_decodeAsync",
+    "_encode",
+    "_encodeAsync",
+    "_parse",
+    "_parseAsync",
+    "_safeDecode",
+    "_safeDecodeAsync",
+    "_safeEncode",
+    "_safeEncodeAsync",
+    "_safeParse",
+    "_safeParseAsync",
+    "validate",
+    "validateAsync"
+  ],
+  "已提供完整实现": true,
+  "边界": "只证明模型材料包含这些真实实现，不能证明模型已正确归纳职责或补齐讲解；不把匿名实现创建为普通函数。"
+}

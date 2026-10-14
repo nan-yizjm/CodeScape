@@ -1,0 +1,405 @@
+{
+  "日期": "2026-10-13",
+  "代码提交": "1455df1",
+  "构建号": "20261013T073908Z",
+  "版本": "0.1.0",
+  "状态": "P0验收中，非全部通过",
+  "制品": {
+    "CodeScape-0.1.0-Windows-x64-Portable.zip": {
+      "sha256": "5bba7213622a8c277e0acf5d5023c405426cb640a9038a187b16a04fb6fcd20f",
+      "bytes": 158247238
+    },
+    "CodeScape-0.1.0-Windows-x64-Setup.exe": {
+      "sha256": "b0e6f38fcef2bc34fef61b78d15b25a3c2054470e2e0b78a0635bac82bbcd466",
+      "bytes": 115282736
+    }
+  },
+  "自动检查": {
+    "后端": 466,
+    "前端": 35,
+    "Ruff": "通过",
+    "TypeScript": "通过",
+    "生产构建": "通过，SourceReader大块提示保留",
+    "本轮边界": "466后端与Ruff实跑；073908Z独立程序、47真实检查点恢复及062514Z→073908Z安装升级卸载实跑；前端未改，35项与类型/构建沿用前证据。"
+  },
+  "AC状态": {
+    "已验证": 33,
+    "部分验证": 2,
+    "待真实工程或用户验证": 1
+  },
+  "本轮安装模型请求": 0,
+  "当前工作区": "http://127.0.0.1:8125/",
+  "剩余": "AC-29整体用途/职责/有证据核心协作，AC-30跨目录与同文件职责质量，AC-31完整/缩小范围全局概览对照及用户验收；已有讲解问题的真实产品修订验证未完成。",
+  "主工作区重启": "安全退出后8125重开，项目与学习逐列摘要一致，主账本13不增，四项目及原6节点2协作线恢复。",
+  "请求口径": "真实模型账本为历史累计去重，包含前轮失败/修复及重新评测；本轮静态、独立包及升级验证不发模型请求。",
+  "本轮增补验证": [
+    "Windows声明与函数范围独立包验证.json",
+    "Windows跨构建升级验证.json",
+    "异常包装宏完整范围源码复核.json",
+    "spdlog完整范围异常宏修订验证.json",
+    "spdlog修订后产品静态索引验证.json",
+    "保护条件与否定开关真实重测复核.json",
+    "异常传播真实重测复核.json",
+    "Flask完整结果与默认条件局部验证.json",
+    "默认分支修订后工作区验证.json",
+    "Flask完整范围核心协作源码复核.json",
+    "归属修复后工作区验证.json",
+    "干净环境验证工具可用性核对.json",
+    "spdlog完整范围回退原因验证.json",
+    "spdlog诊断定位修订前完整解析记录.json",
+    "静态诊断修订后工作区验证.json",
+    "本轮真实评测与局部复核.json",
+    "公开工程最新范围对照材料.json",
+    "长函数有限修复真实验证.json",
+    "有限修复更新后工作区验证.json",
+    "中转站配置与真实验证.json",
+    "中转站范围局部复核.json",
+    "中转站评测身份核对.json",
+    "流式与精简提示真实模型局部复核.json",
+    "流式与精简提示更新后工作区验证.json",
+    "补读证据修复后工作区验证.json",
+    "Windows原生PowerShell验收脚本验证.json",
+    "spdlog跨文件补读真实修复验证.json",
+    "spdlog完整检查点异常边界局部复核.json",
+    "服务错误提示修订后工作区验证.json",
+    "zod-typescript-stream-error-diagnostic真实模型验证.json",
+    "zod-typescript-json-transport-diagnostic真实模型验证.json",
+    "zod-typescript-exact-json-diagnostic真实模型验证.json",
+    "P0两层导航与同级恢复实测.json",
+    "回退模块ID修订后工作区验证.json",
+    "公开工程分批归属规划核对.json",
+    "gpt-6.1-sol-Zod解析核心质量复核.json",
+    "gpt-6.1-sol-Flask辅助组件质量复核.json",
+    "全局职责整理真实模型复核.json",
+    "源码生成阶段兼容性核对.json",
+    "评测截止暂停固定响应验证.json",
+    "全局职责整理后工作区验证.json",
+    "gpt-6.1-sol-Hiredis读取器质量复核.json",
+    "gpt-6.1-sol-spdlog日志核心质量复核.json",
+    "全窄范围源码与结果对照.json",
+    "Flask全窄范围共同函数局部复核.json",
+    "spdlog委托讲解与源码差异复核.json",
+    "spdlog短委托讲解真实修订复核.json",
+    "P0继续评测与讲解差异核对.json",
+    "引用定位修订旧检查点严格核对.json",
+    "引用定位修订后工作区验证.json",
+    "引用定位修订与上游故障核对.json",
+    "精简批次与无函数恢复及最终包验收.json",
+    "独立包真实检查点恢复验证.json",
+    "精简批次真实检查点恢复核对.json",
+    "精简批次新讲解局部源码复核.json",
+    "AC06中文概览既有真实结果复核.json"
+  ],
+  "跨构建升级边界": "20261013T062514Z→20261013T073908Z；均0.1.0，当前Win11开发机，不声明干净Win10/11或跨正式版本。",
+  "真实模型累计账本": {
+    "去重请求数": 898,
+    "已知total_tokens": 19795192,
+    "缺少用量请求数": 127,
+    "在途请求数": 0,
+    "费用": null,
+    "说明": "包含历史失败、截断、修复及重新评测，按请求ID去重；在途属于尚未返回用量，未知不记零，缺少价格不估算费用。"
+  },
+  "模型账本口径": "公开工程历史去重，包括旧DeepSeek、新中转站、失败/修复/重测；核对时间快照。在途和缺少用量保留，未知不记零。主工作区13条连接等请求另计。",
+  "本轮制品说明": "466后端与Ruff实跑；073908Z独立程序、47真实检查点恢复及062514Z→073908Z安装升级卸载实跑；前端未改，35项与类型/构建沿用前证据。",
+  "当前阻塞": "普通JSON及流式响应均出现上游错误或连续传输超时；成功批次保留，未发布新全局结果。",
+  "核对时间UTC": "2026-10-13T07:58:48.340077+00:00",
+  "当前模型": {
+    "接收端": "https://www.cctq.ai/v1",
+    "模型": "gpt-6.1-sol",
+    "流式接收": true,
+    "首次上传授权": "仅四个固定公开样本，不含AIHOT",
+    "无源码连接测试": "一次真实连接通过，72已知total_tokens，目录GET包含该模型不等同生成质量通过。"
+  },
+  "最新完整评测": {
+    "hiredis-c": {
+      "状态": "分析暂停",
+      "进度": {
+        "phase": "paused",
+        "completed": 9,
+        "total": 187,
+        "detail": "分析已中断，请主动重新启动"
+      },
+      "来源版本": [
+        "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1",
+        "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1-compact-batches/1"
+      ],
+      "全程实施代码一致": true,
+      "全局结果已发布": false
+    },
+    "spdlog-cpp": {
+      "状态": "分析暂停",
+      "进度": {
+        "phase": "paused",
+        "completed": 13,
+        "total": 210,
+        "detail": "分析已中断，请主动重新启动"
+      },
+      "来源版本": [
+        "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
+        "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1-compact-batches/1"
+      ],
+      "全程实施代码一致": true,
+      "全局结果已发布": false
+    },
+    "flask-python": {
+      "状态": "分析暂停",
+      "进度": {
+        "phase": "paused",
+        "completed": 22,
+        "total": 76,
+        "detail": "网络请求超时或失败；远端用量可能不确定。"
+      },
+      "来源版本": [
+        "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1",
+        "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1",
+        "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1-compact-batches/1"
+      ],
+      "全程实施代码一致": true,
+      "全局结果已发布": false
+    },
+    "zod-typescript": {
+      "状态": "分析暂停",
+      "进度": {
+        "phase": "paused",
+        "completed": 3,
+        "total": 352,
+        "detail": "网络请求超时或失败；远端用量可能不确定。"
+      },
+      "来源版本": [
+        "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1-compact-batches/1"
+      ],
+      "全程实施代码一致": true,
+      "全局结果已发布": false
+    }
+  },
+  "验收脚本提交": "f10bfa4",
+  "Windows原生脚本": "系统PowerShell5.1的独立脚本实测属于072053Z历史构建，本次091604Z独立程序与安装升级卸载另有实跑；不重标旧脚本结果。",
+  "人工验收说明": "docs/P0_独立环境验收.md",
+  "最新实现流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1-compact-batches/1-organization/1",
+  "本轮制品校验": {
+    "独立运行": "通过",
+    "安装升级卸载": "通过",
+    "实际升级": "062514Z→073908Z",
+    "模型请求": 0,
+    "边界": "当前Win11开发机，同版本0.1.0两构建；干净矩阵按CHG-13免除本轮门槛，不冒称跨正式版本。"
+  },
+  "核对注意": "该账本/评测字段为汇总时间快照。后续进行中的评测只见各样本及公开工程真实评测进度.json，不以旧快照的在途0推导当前无任务。",
+  "验收范围调整": {
+    "编号": "CHG-13",
+    "用户决定": "没有，不需要干净Windows10/11测试环境",
+    "当前环境门槛": "目标开发机已实测独立运行、安装升级卸载及原生PowerShell检查",
+    "未测环境不冒称通过": true
+  },
+  "评测选项提交": "6c667fd",
+  "当前工作区截图": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\output\\playwright\\P0精简批次修复后工作区.png",
+  "本轮公开真实账本增量": {
+    "请求数": 47,
+    "已知total_tokens": 203457,
+    "缺少总用量请求": 23,
+    "费用": null
+  },
+  "验收方法复核": "AC24/36沿用P0验收方法复核.json的实际条件；原报告32项为当时计数，当前AC06追加源码核对后33/2/1。",
+  "账本汇总": {
+    "去重请求数": 898,
+    "已知total_tokens": 19795192,
+    "缺少用量请求数": 127,
+    "在途请求数": 0,
+    "费用": null,
+    "说明": "包含历史失败、截断、修复及重新评测，按请求ID去重；在途属于尚未返回用量，未知不记零，缺少价格不估算费用。"
+  },
+  "本次继续核对": {
+    "后端最终": 394,
+    "前端实际": 35,
+    "新增固定反例": 17,
+    "新小范围": "Hiredis18/18、spdlog58/58已完成，关键条件/异常源码复核；原Zod3/3及Flask19/19质量记录保留原版本。",
+    "全局职责整理": "复用已校验数据，不重跑源码；Hiredis根2→1、spdlog根12→3，4次成功、16594已知tokens；独立整理结果未发布到用户项目。",
+    "源码阶段兼容": "Hiredis和Flask已有首批真实请求与当前实际生成输入摘要一致；版本/快照/接收端/模型继续严格核对，旧最终组织不重用。",
+    "到时暂停": "补json={}并允许索引阶段暂停正常收尾；自有固定响应实际保留1批检查点，正常写报告，0模型请求。",
+    "新模型完整范围": "仍2/49、1/53、7/33、0/76暂停，在途0；保持原真实流水线，不重标为新组织版本完整验收。",
+    "工作区": "全局职责整理后工作区验证.json",
+    "安装": "161950Z独立、094609Z→161950Z安装升级卸载通过，模型请求0",
+    "历史边界": "此对象为6d7839b/161950Z历史阶段记录；当前结果见最新继续核对及当前构建字段，不继承为本轮实跑。"
+  },
+  "前端检查口径": "本轮没有前端改动，35项、TypeScript与生产构建沿用161950Z既有实跑；新包使用同一前端资源。",
+  "gpt-6-luna历史完整评测": {
+    "hiredis-c": {
+      "接收端": "https://www.cctq.ai/v1",
+      "模型": "gpt-6-luna",
+      "流水线": "architecture/4-repairs/3-explanations/3-reads/2-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
+      "状态": "分析暂停",
+      "错误": "流式响应不符合接收契约，未发布部分结果。",
+      "进度": {
+        "phase": "paused",
+        "completed": 10,
+        "total": 49,
+        "detail": "流式响应不符合接收契约，未发布部分结果。"
+      },
+      "请求状态": {
+        "success": 10,
+        "outcome_unknown": 1,
+        "failed": 3
+      }
+    },
+    "spdlog-cpp": {
+      "接收端": "https://www.cctq.ai/v1",
+      "模型": "gpt-6-luna",
+      "流水线": "architecture/4-repairs/3-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
+      "状态": "分析暂停",
+      "错误": "流式响应不符合接收契约，未发布部分结果。",
+      "进度": {
+        "phase": "paused",
+        "completed": 14,
+        "total": 53,
+        "detail": "流式响应不符合接收契约，未发布部分结果。"
+      },
+      "请求状态": {
+        "success": 14,
+        "failed": 6
+      }
+    },
+    "flask-python": {
+      "接收端": "https://www.cctq.ai/v1",
+      "模型": "gpt-6-luna",
+      "流水线": "architecture/4-repairs/2-explanations/3-reads/2-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
+      "状态": "分析暂停",
+      "错误": "流式响应不符合接收契约，未发布部分结果。",
+      "进度": {
+        "phase": "paused",
+        "completed": 4,
+        "total": 33,
+        "detail": "流式响应不符合接收契约，未发布部分结果。"
+      },
+      "请求状态": {
+        "success": 4,
+        "failed": 1
+      }
+    },
+    "zod-typescript": {
+      "接收端": "https://www.cctq.ai/v1",
+      "模型": "gpt-6-luna",
+      "流水线": "architecture/4-repairs/3-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
+      "状态": "分析暂停",
+      "错误": "网络请求超时或失败；远端用量可能不确定。",
+      "进度": {
+        "phase": "paused",
+        "completed": 5,
+        "total": 76,
+        "detail": "网络请求超时或失败；远端用量可能不确定。"
+      },
+      "请求状态": {
+        "success": 5,
+        "failed": 5,
+        "outcome_unknown": 4
+      }
+    }
+  },
+  "gpt-6-luna历史阶段账本": {
+    "请求数": 65,
+    "已知total_tokens": 937797,
+    "用量未知请求数": 20,
+    "在途请求数": 0,
+    "费用": null,
+    "边界": "只计本轮中转站四样本真实评测，不含主工作区连接测试；未知用量不记零，缺价格不估算费用。"
+  },
+  "源码生成阶段": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1-compact-batches/1",
+  "最新继续核对": "精简批次与无函数恢复及最终包验收.json",
+  "本轮完整范围终态": {
+    "hiredis-c": {
+      "状态": "分析暂停",
+      "进度": {
+        "phase": "paused",
+        "completed": 9,
+        "total": 187,
+        "detail": "分析已中断，请主动重新启动"
+      },
+      "来源版本": [
+        "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1",
+        "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1-compact-batches/1"
+      ],
+      "全程实施代码一致": true,
+      "全局结果已发布": false
+    },
+    "spdlog-cpp": {
+      "状态": "分析暂停",
+      "进度": {
+        "phase": "paused",
+        "completed": 13,
+        "total": 210,
+        "detail": "分析已中断，请主动重新启动"
+      },
+      "来源版本": [
+        "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
+        "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1-compact-batches/1"
+      ],
+      "全程实施代码一致": true,
+      "全局结果已发布": false
+    },
+    "flask-python": {
+      "状态": "分析暂停",
+      "进度": {
+        "phase": "paused",
+        "completed": 22,
+        "total": 76,
+        "detail": "网络请求超时或失败；远端用量可能不确定。"
+      },
+      "来源版本": [
+        "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1",
+        "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1",
+        "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1-compact-batches/1"
+      ],
+      "全程实施代码一致": true,
+      "全局结果已发布": false
+    },
+    "zod-typescript": {
+      "状态": "分析暂停",
+      "进度": {
+        "phase": "paused",
+        "completed": 3,
+        "total": 352,
+        "detail": "网络请求超时或失败；远端用量可能不确定。"
+      },
+      "来源版本": [
+        "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1-compact-batches/1"
+      ],
+      "全程实施代码一致": true,
+      "全局结果已发布": false
+    }
+  },
+  "本次继续独立复核": "源码与独立程序47真实检查点恢复、16讲解局部复核及AC06既有发布概览核对；此前独立修订候选未发布，Flask最新窄范围0/9因三次超时暂停。",
+  "流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1-compact-batches/1-organization/1",
+  "评测工具提交": "a1b64ef",
+  "AC06功能核对": "AC06中文概览既有真实结果复核.json；按PRD简单项目步骤核对已有二文件真实发布概览，不重标为新提示生成。",
+  "实验边界说明": "同流水线及单一来源一致性是额外实验条件；PRD原步骤、代表性语言/职责/范围与真实作用域要求仍保留，不能用实验条件扩增AC06，也不能隐藏实际质量缺口。",
+  "最新Flask窄范围": {
+    "状态": "分析暂停",
+    "错误": "网络请求超时或失败；远端用量可能不确定。",
+    "进度": {
+      "phase": "paused",
+      "completed": 0,
+      "total": 9,
+      "detail": "网络请求超时或失败；远端用量可能不确定。"
+    },
+    "请求状态": {
+      "outcome_unknown": 5,
+      "failed": 1
+    },
+    "评测期间实施代码一致": true
+  },
+  "gpt-6.1-sol先前阶段真实评测": {
+    "请求数": 37,
+    "已知total_tokens": 434571,
+    "缺少用量请求数": 13,
+    "在途请求数": 0,
+    "费用": null,
+    "范围": "仅四个固定公开样本及一次无源码连接测试；此前722/18296658/57累计为基准。",
+    "小范围质量": "此前Zod3/3、Flask19/19局部核对记录；本次又发现Flask两处措辞风险，不能将该旧结论外推为全部讲解无缺陷。",
+    "中断终态": "spdlog两份中断报告已依据只读数据库补齐并归档原文，核对时源码字节及实施代码起始摘要一致；不冒充进程结束时完整代码验证。",
+    "历史边界": "这是此前一次阶段实测，保留原口径；最新状态以最新完整评测和P0继续评测与讲解差异核对.json为准。"
+  },
+  "gpt-6.1-sol本次真实评测": {
+    "请求数": 47,
+    "已知total_tokens": 203457,
+    "缺少总用量请求": 23,
+    "费用": null
+  }
+}

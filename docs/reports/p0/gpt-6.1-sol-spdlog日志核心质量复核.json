@@ -1,0 +1,39 @@
+{
+  "核对时间UTC": "2026-10-12T16:15:34.658650+00:00",
+  "性质": "真实模型关键源码复核，不执行目标代码，不替代完整质量或用户验收",
+  "报告": "spdlog-cpp-narrow真实模型验证.json",
+  "报告sha256": "e9c12794978bcf5d66daecce7fb22b385735ceeb2a3e12f09aa1d66e7e9c36db",
+  "模型": "gpt-6.1-sol",
+  "接收端": "https://www.cctq.ai/v1",
+  "流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
+  "实际文件": [
+    "include/spdlog/common.h",
+    "include/spdlog/logger-inl.h",
+    "include/spdlog/logger.h",
+    "include/spdlog/namespace.h"
+  ],
+  "可见函数": 58,
+  "有讲解": 58,
+  "缺失讲解": [],
+  "评测期间实施代码一致": true,
+  "关键复核": [
+    {
+      "函数": "sink_it_ / flush_",
+      "结果": "通过",
+      "依据": "区分should_log位于try之外和按目标条件输出、独立刷新条件；std::exception处理与未知异常报告后重抛、处理器可能再抛，以及SPDLOG_NO_EXCEPTIONS下包装为空，均准确保留。"
+    },
+    {
+      "函数": "should_flush_",
+      "结果": "通过",
+      "依据": "等级达到flush_level且等级不是off两个条件联合成立才刷新，off不会仅因达到阈值触发；本函数不执行刷新。"
+    },
+    {
+      "函数": "窄字符与宽字符log_",
+      "结果": "通过",
+      "依据": "日志与回溯两个开关均关闭才跳过格式化；窄字符std/fmt分支不同，宽字符仅相应宏下存在且转换UTF-8；std::exception与其他异常的处理和重抛不同，不保证处理器不再抛。"
+    }
+  ],
+  "全局职责组织": "另见全局职责整理真实模型复核.json：已复用此窄范围结果做模型职责整理，逻辑分组不代表C++访问权限或虚调用绑定。",
+  "边界": "只复核上述关键方法及本次职责整理，58为讲解结构覆盖；完整范围仍暂停，不将缺少依赖时的语法位置冒充已确认调用。",
+  "复核新增模型请求": 0
+}

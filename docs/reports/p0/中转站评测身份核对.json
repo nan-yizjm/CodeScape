@@ -1,0 +1,234 @@
+{
+  "核对时间UTC": "2026-10-12T03:43:30.458644+00:00",
+  "执行目标代码": false,
+  "核对时模型请求": 0,
+  "主工作区新增源码上传": false,
+  "样本": [
+    {
+      "报告": "flask-python-full真实模型验证.json",
+      "报告sha256": "bda1c72d5f3ae268e495c8a138e01ae0b4662cf65fde33cc4b1bc037814c054a",
+      "数据目录": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\.runtime\\public-model-validation\\c774a53f-e7dc-4a7b-bf2f-e5687d21dc3e",
+      "账本身份核对": [
+        {
+          "recipient": "https://www.cctq.ai/v1",
+          "model": "gpt-6-luna"
+        }
+      ],
+      "检查点公开身份": {
+        "base_url": "https://www.cctq.ai/v1",
+        "model": "gpt-6-luna"
+      },
+      "请求状态": [
+        {
+          "status": "success",
+          "count": 3
+        },
+        {
+          "status": "outcome_unknown",
+          "count": 3
+        }
+      ],
+      "实际文件数": 27,
+      "终态": "分析暂停",
+      "原快照字节未变": true
+    },
+    {
+      "报告": "flask-python-narrow真实模型验证.json",
+      "报告sha256": "a9e6f30bd04c7a1173ab2a240f0061faa4d136601954fe0d36164372df3c9442",
+      "数据目录": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\.runtime\\public-model-validation\\e83fe5d3-7775-461b-992c-9fe2394d4cba",
+      "账本身份核对": [
+        {
+          "recipient": "https://www.cctq.ai/v1",
+          "model": "gpt-6-luna"
+        }
+      ],
+      "检查点公开身份": null,
+      "请求状态": [
+        {
+          "status": "outcome_unknown",
+          "count": 1
+        },
+        {
+          "status": "success",
+          "count": 3
+        },
+        {
+          "status": "failed",
+          "count": 1
+        }
+      ],
+      "实际文件数": 1,
+      "终态": "结构检查通过，待源码质量复核",
+      "原快照字节未变": true
+    },
+    {
+      "报告": "hiredis-c-full真实模型验证.json",
+      "报告sha256": "bc211758bd9a387739e160047aa729d8fca07e26e0e1259a58618b3cffdb8590",
+      "数据目录": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\.runtime\\public-model-validation\\3da35847-9bce-49ed-aeed-c679107023d6",
+      "账本身份核对": [
+        {
+          "recipient": "https://www.cctq.ai/v1",
+          "model": "gpt-6-luna"
+        }
+      ],
+      "检查点公开身份": {
+        "base_url": "https://www.cctq.ai/v1",
+        "model": "gpt-6-luna"
+      },
+      "请求状态": [
+        {
+          "status": "outcome_unknown",
+          "count": 4
+        },
+        {
+          "status": "success",
+          "count": 3
+        },
+        {
+          "status": "failed",
+          "count": 2
+        }
+      ],
+      "实际文件数": 35,
+      "终态": "分析暂停",
+      "原快照字节未变": true
+    },
+    {
+      "报告": "hiredis-c-narrow真实模型验证.json",
+      "报告sha256": "4bb461a6fabc0f9ab61c478ec866d8c4dc702b7a3a120958d66799b77226d19d",
+      "数据目录": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\.runtime\\public-model-validation\\19cc8722-c921-494d-81cc-1761e5f7acc3",
+      "账本身份核对": [
+        {
+          "recipient": "https://www.cctq.ai/v1",
+          "model": "gpt-6-luna"
+        }
+      ],
+      "检查点公开身份": null,
+      "请求状态": [
+        {
+          "status": "success",
+          "count": 3
+        }
+      ],
+      "实际文件数": 2,
+      "终态": "结构检查通过，待源码质量复核",
+      "原快照字节未变": true
+    },
+    {
+      "报告": "spdlog-cpp-full真实模型验证.json",
+      "报告sha256": "79612f314de0d955c659bf27aab27068e71f48dda885f01190330eef25efcd25",
+      "数据目录": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\.runtime\\public-model-validation\\f012f6eb-747f-4602-b691-541081baf8df",
+      "账本身份核对": [
+        {
+          "recipient": "https://www.cctq.ai/v1",
+          "model": "gpt-6-luna"
+        }
+      ],
+      "检查点公开身份": {
+        "base_url": "https://www.cctq.ai/v1",
+        "model": "gpt-6-luna"
+      },
+      "请求状态": [
+        {
+          "status": "success",
+          "count": 5
+        },
+        {
+          "status": "failed",
+          "count": 2
+        },
+        {
+          "status": "outcome_unknown",
+          "count": 4
+        }
+      ],
+      "实际文件数": 102,
+      "终态": "分析暂停",
+      "原快照字节未变": true
+    },
+    {
+      "报告": "spdlog-cpp-narrow真实模型验证.json",
+      "报告sha256": "b23020d100529d6df2b7b56691cb278ce320084a2febe644b06f294eda8cd51b",
+      "数据目录": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\.runtime\\public-model-validation\\b6c270ee-7028-43de-b489-c5e4b2513af8",
+      "账本身份核对": [
+        {
+          "recipient": "https://www.cctq.ai/v1",
+          "model": "gpt-6-luna"
+        }
+      ],
+      "检查点公开身份": null,
+      "请求状态": [
+        {
+          "status": "outcome_unknown",
+          "count": 1
+        },
+        {
+          "status": "failed",
+          "count": 3
+        },
+        {
+          "status": "success",
+          "count": 7
+        }
+      ],
+      "实际文件数": 4,
+      "终态": "结构检查通过，待源码质量复核",
+      "原快照字节未变": true
+    },
+    {
+      "报告": "zod-typescript-full真实模型验证.json",
+      "报告sha256": "d223fae492f341da14b4fdca929cfb2f01faa70a42eeba3c5e758d702138d930",
+      "数据目录": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\.runtime\\public-model-validation\\0332e90b-ca54-49f4-9a57-da4c49039435",
+      "账本身份核对": [
+        {
+          "recipient": "https://www.cctq.ai/v1",
+          "model": "gpt-6-luna"
+        }
+      ],
+      "检查点公开身份": {
+        "base_url": "https://www.cctq.ai/v1",
+        "model": "gpt-6-luna"
+      },
+      "请求状态": [
+        {
+          "status": "success",
+          "count": 12
+        },
+        {
+          "status": "outcome_unknown",
+          "count": 4
+        },
+        {
+          "status": "failed",
+          "count": 1
+        }
+      ],
+      "实际文件数": 111,
+      "终态": "分析暂停",
+      "原快照字节未变": true
+    },
+    {
+      "报告": "zod-typescript-narrow真实模型验证.json",
+      "报告sha256": "43d9ede3bf629e304d6446adff77e3096842dfe5a4bd1aba133380dbbed9bb76",
+      "数据目录": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\.runtime\\public-model-validation\\9ad36039-f24a-4b90-8cff-ae0610cd1146",
+      "账本身份核对": [
+        {
+          "recipient": "https://www.cctq.ai/v1",
+          "model": "gpt-6-luna"
+        }
+      ],
+      "检查点公开身份": null,
+      "请求状态": [
+        {
+          "status": "outcome_unknown",
+          "count": 3
+        }
+      ],
+      "实际文件数": 1,
+      "终态": "分析暂停",
+      "原快照字节未变": true
+    }
+  ],
+  "边界": "该核对证明新账本及检查点的接收端/模型身份，8个评测均已结束；结构发布不替代源码质量验收。",
+  "在途请求数": 0
+}

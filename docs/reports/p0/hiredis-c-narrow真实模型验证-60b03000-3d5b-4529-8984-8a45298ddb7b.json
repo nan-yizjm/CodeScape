@@ -1,0 +1,503 @@
+{
+  "日期": "2026-10-12",
+  "检查开始时间UTC": "2026-10-12T03:24:39.391951+00:00",
+  "样本": "hiredis-c",
+  "Commit": "058ebcdf36c5b05b759c613564fb958ec363c90f",
+  "范围": "缩小范围",
+  "授权": "用户允许四个固定公开样本向当前配置接收端上传并评测",
+  "接收端": "https://www.cctq.ai/v1",
+  "模型": "gpt-6-luna",
+  "流水线": "architecture/3-repairs/2-explanations/3-reads/1-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/2-index/3-ts-bindings/2-python-declarations/1",
+  "数据目录": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\.runtime\\public-model-validation\\19cc8722-c921-494d-81cc-1761e5f7acc3",
+  "原始快照hash": "7240fe218f0552729c0343bf54f244013ed1ba2dd982d34f49e4bb421cbb39a2",
+  "实际文件": [
+    "read.c",
+    "read.h"
+  ],
+  "状态": "结构检查通过，待源码质量复核",
+  "执行目标代码": false,
+  "进度": {
+    "phase": "completed",
+    "completed": 1,
+    "total": 1,
+    "detail": "分批分析完成"
+  },
+  "耗时秒": 106.81,
+  "project_id": "17164360-44e3-4214-acc8-a2457701e10c",
+  "version_id": "6c91502a-0e14-4091-8f3f-57c8293f5fc6",
+  "实际快照hash": "8fd5570b3b8949d0839981e7e5e07a8e4563809c4c6d5820abe4aa081a70a78c",
+  "scope_hash": "64d8fef1eca2d21c0868fb5cb2988d0e4d169bafe184ba5bc3727938f0682e93",
+  "错误": null,
+  "architecture": {
+    "modules": [
+      {
+        "id": "m1",
+        "parent_id": null,
+        "name": "RESP 输入与错误处理基础",
+        "summary": "提供读取器错误状态设置、错误字节转义、缓冲区读取及行尾定位等基础操作。",
+        "entity_ids": [
+          "26222e6f-87a7-5553-872e-76bc0851b303",
+          "979b465d-a510-59d3-a9a8-87f3c27816f6",
+          "a8697f3d-3151-525e-9587-e203470fe552",
+          "3d1a91e0-df73-5a89-ae69-276d87ec5d70",
+          "947fa789-0731-5682-b320-9bbc3621255c",
+          "78e00a61-0102-5094-8643-9aca0cccbec5",
+          "9c03e270-479b-5178-a423-899101ebe7a1"
+        ],
+        "code_paths": [
+          "read.c"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "m2",
+        "parent_id": null,
+        "name": "数值文本校验",
+        "summary": "将严格格式的十进制文本转换为 long long；拒绝空串、非数字尾部、非法前导零和溢出。",
+        "entity_ids": [
+          "8446397c-0506-5aed-b1cf-f982efd3a9d1"
+        ],
+        "code_paths": [
+          "read.c"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "m3",
+        "parent_id": null,
+        "name": "RESP 值解析与任务推进",
+        "summary": "按当前任务类型解析行式及 bulk 值，验证协议内容并创建回复对象；成功后登记根回复并推进嵌套任务，数据不足时返回错误状态。",
+        "entity_ids": [
+          "4b888c34-5c83-5ce9-8f05-a9ced619ec10",
+          "e8460b47-15cb-59ee-8ac5-1fc2df45edbd",
+          "6c91c775-336b-5e07-a59b-ea8c5a5653cb"
+        ],
+        "code_paths": [
+          "read.c"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "m4",
+        "parent_id": null,
+        "name": "读取任务栈扩容",
+        "summary": "按固定增量扩展任务指针数组并逐项分配任务；分配失败时设置读取器 OOM 错误并返回错误码。",
+        "entity_ids": [
+          "9cfad410-e210-567a-9d21-721106267feb"
+        ],
+        "code_paths": [
+          "read.c"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "m5",
+        "parent_id": null,
+        "name": "协议项解析与聚合构造",
+        "summary": "按当前任务解析聚合项，处理元素数、嵌套限制及对象创建；按类型字节分派行、批量或聚合项。",
+        "entity_ids": [
+          "110fcfa6-5990-56a7-8dca-dc9af20167e9",
+          "0bce7051-54f2-5362-9bb5-23ed00763f46"
+        ],
+        "code_paths": [
+          "read.c"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "m6",
+        "parent_id": null,
+        "name": "Reader 生命周期与缓冲区接口",
+        "summary": "创建并释放解析器状态，接收输入缓冲，并驱动解析、回收已消费数据及交付完整回复；错误状态会影响后续操作。",
+        "entity_ids": [
+          "8b833674-82cd-56a0-8817-d0ed23565c15",
+          "0f3ac473-dca5-5723-bf85-f5d20fafeac9",
+          "29eddabd-bd73-54da-81a6-3c3b4c0cc196",
+          "d415374c-3947-5120-921b-319ccc4061b9"
+        ],
+        "code_paths": [
+          "read.c",
+          "read.h"
+        ],
+        "incomplete": false
+      }
+    ],
+    "overview": {
+      "introduction": "这是一个面向程序开发者的 RESP 数据读取与解析组件，用于把输入缓冲中的协议内容校验、还原为可交付的回复对象，并管理解析过程中的状态与资源。",
+      "capabilities": [
+        "接收缓冲数据并解析完整 RESP 回复",
+        "校验整数文本格式并拒绝溢出值",
+        "处理行式、批量及嵌套聚合值",
+        "管理解析任务并回收已消费数据",
+        "在提供对象回调时构造回复对象"
+      ],
+      "principle": "输入缓冲按协议类型分派给相应解析任务，经过格式、长度、元素数量和嵌套限制校验后创建回复对象，并推进任务、登记完整结果。数据不足、解析失败或任务分配失败时，通过读取器错误状态和返回结果反映；对象创建还取决于外部回调。",
+      "limitations": [
+        "完整的外部读取循环、调用方如何处理错误及最终接口行为未完全明确。",
+        "回复对象依赖可选的外部创建回调，其具体实现和失败细节不在确认范围内。",
+        "浮点值解析受编译配置影响，具体行为不能一概而论。"
+      ],
+      "synthesized": true,
+      "analysis_notes": [
+        "代码片段仅覆盖读取器部分底层逻辑，不足以说明完整读取循环及外部接口行为",
+        "对象创建依赖可选回调；回调实现及其失败细节在此片段中不可见",
+        "浮点解析受 HIREDIS_FLOAT_STRTOD 编译配置影响",
+        "源码片段未展示行项和批量项解析实现，无法完整说明其具体格式处理。",
+        "回调具体实现及调用方如何处置返回错误不在本片段中。",
+        "源码范围由 2 批受控上下文完成归纳，跨批次模块边界可能需要人工复核。"
+      ]
+    },
+    "explanations": [
+      {
+        "entity_id": "26222e6f-87a7-5553-872e-76bc0851b303",
+        "summary": "清除读取器的待处理状态并记录指定错误。",
+        "details": "若已有回复对象且释放回调可用，则先释放并清空回复；随后释放输入缓冲区、重置位置与任务栈索引，并写入错误类型及截断到错误缓冲区容量内的错误文本。",
+        "evidence": [
+          {
+            "path": "read.c",
+            "start_line": 74,
+            "end_line": 96
+          }
+        ]
+      },
+      {
+        "entity_id": "979b465d-a510-59d3-a9a8-87f3c27816f6",
+        "summary": "将单个字符格式化为带引号的可读转义文本。",
+        "details": "反斜杠、引号及换行等控制字符使用对应转义表示；其他可打印字符直接引用，不可打印字符按无符号字节输出十六进制转义。返回格式化调用得到的长度。",
+        "evidence": [
+          {
+            "path": "read.c",
+            "start_line": 98,
+            "end_line": 120
+          }
+        ]
+      },
+      {
+        "entity_id": "a8697f3d-3151-525e-9587-e203470fe552",
+        "summary": "将非法回复类型字节转换为可读描述并设置协议错误。",
+        "details": "先格式化输入字节，再将其嵌入协议错误文本，最后以 REDIS_ERR_PROTOCOL 设置读取器错误状态；错误状态的清理行为由错误设置函数完成。",
+        "evidence": [
+          {
+            "path": "read.c",
+            "start_line": 122,
+            "end_line": 129
+          }
+        ]
+      },
+      {
+        "entity_id": "3d1a91e0-df73-5a89-ae69-276d87ec5d70",
+        "summary": "为读取器设置内存不足错误。",
+        "details": "以 REDIS_ERR_OOM 和固定文本调用通用错误设置逻辑；该函数自身不返回状态值。",
+        "evidence": [
+          {
+            "path": "read.c",
+            "start_line": 131,
+            "end_line": 133
+          }
+        ]
+      },
+      {
+        "entity_id": "947fa789-0731-5682-b320-9bbc3621255c",
+        "summary": "在缓冲区剩余数据足够时取出指定字节并前移位置。",
+        "details": "比较剩余长度与请求字节数；足够时返回当前位置指针并增加读取位置，不足时返回 NULL 且不改变位置。",
+        "evidence": [
+          {
+            "path": "read.c",
+            "start_line": 135,
+            "end_line": 143
+          }
+        ]
+      },
+      {
+        "entity_id": "78e00a61-0102-5094-8643-9aca0cccbec5",
+        "summary": "在给定字节范围内查找 CRLF 的起始位置。",
+        "details": "长度小于 2 时立即返回 NULL；否则在最多 len-1 字节内搜索回车，并仅在其后紧接换行时返回指针。未匹配的回车会从后续搜索范围排除；找不到时返回 NULL。",
+        "evidence": [
+          {
+            "path": "read.c",
+            "start_line": 146,
+            "end_line": 169
+          }
+        ]
+      },
+      {
+        "entity_id": "8446397c-0506-5aed-b1cf-f982efd3a9d1",
+        "summary": "严格将十进制文本转换为 long long，并拒绝格式错误或溢出。",
+        "details": "接受单字符 0 或可选负号后以 1–9 开头的十进制数字；拒绝空串、单独负号、额外字符及前导零形式。逐位检查 unsigned long long 累积溢出，再分别校验正数和负数边界。成功时仅在 value 非 NULL 时写入结果并返回 REDIS_OK，否则返回 REDIS_ERR。",
+        "evidence": [
+          {
+            "path": "read.c",
+            "start_line": 183,
+            "end_line": 213
+          },
+          {
+            "path": "read.c",
+            "start_line": 215,
+            "end_line": 244
+          }
+        ]
+      },
+      {
+        "entity_id": "9c03e270-479b-5178-a423-899101ebe7a1",
+        "summary": "从读取器缓冲区读取一行并跳过 CRLF。",
+        "details": "从当前读取位置查找行尾；找到时计算内容长度、将位置越过内容及 CRLF，并在长度输出指针非 NULL 时写入长度，返回行内容指针。未找到行尾则返回 NULL，不推进位置。",
+        "evidence": [
+          {
+            "path": "read.c",
+            "start_line": 246,
+            "end_line": 259
+          }
+        ]
+      },
+      {
+        "entity_id": "4b888c34-5c83-5ce9-8f05-a9ced619ec10",
+        "summary": "根据任务栈中父子元素状态推进到下一个解析任务。",
+        "details": "从栈顶向父任务回退；栈索引为 0 时减至 -1 后返回。否则断言父任务为容器类型：当前子项是父容器末项时继续回退；尚有后续子项时断言索引范围有效，重置子项类型和元素数、递增索引后返回。",
+        "evidence": [
+          {
+            "path": "read.c",
+            "start_line": 261,
+            "end_line": 288
+          }
+        ]
+      },
+      {
+        "entity_id": "e8460b47-15cb-59ee-8ac5-1fc2df45edbd",
+        "summary": "解析当前行式 RESP 值并生成回复对象。",
+        "details": "行数据尚未完整时返回 REDIS_ERR。完整时按任务类型校验整数、双精度数、空值、布尔值、大整数或简单字符串；数值解析失败、格式非法或对象回调返回 NULL 时设置错误并返回 REDIS_ERR。创建成功后，根任务写入 reply，推进任务并返回 REDIS_OK。双精度解析由编译配置选择 ffc 或 strtod 路径。",
+        "evidence": [
+          {
+            "path": "read.c",
+            "start_line": 290,
+            "end_line": 319
+          },
+          {
+            "path": "read.c",
+            "start_line": 320,
+            "end_line": 388
+          },
+          {
+            "path": "read.c",
+            "start_line": 389,
+            "end_line": 453
+          }
+        ]
+      },
+      {
+        "entity_id": "6c91c775-336b-5e07-a59b-ea8c5a5653cb",
+        "summary": "校验 bulk 长度及内容完整性并创建回复对象。",
+        "details": "先等待长度行，再严格解析长度并拒绝越界值；长度为 -1 时创建空值，否则仅在缓冲区包含完整内容及 CRLF 时继续。verbatim 类型还校验最小长度和内容标记。成功创建后检查对象非空、推进缓冲区位置，并在根任务登记回复及推进任务；数据不完整时返回 REDIS_ERR。",
+        "evidence": [
+          {
+            "path": "read.c",
+            "start_line": 455,
+            "end_line": 483
+          },
+          {
+            "path": "read.c",
+            "start_line": 484,
+            "end_line": 525
+          }
+        ]
+      },
+      {
+        "entity_id": "9cfad410-e210-567a-9d21-721106267feb",
+        "summary": "以固定增量扩展读取任务栈并分配新增任务。",
+        "details": "将任务容量增加 REDIS_READER_STACK_SIZE，先重分配任务指针数组，再逐个零初始化新增任务。任一分配失败都会设置 OOM 错误并返回 REDIS_ERR；全部完成则返回 REDIS_OK。",
+        "evidence": [
+          {
+            "path": "read.c",
+            "start_line": 527,
+            "end_line": 550
+          }
+        ]
+      },
+      {
+        "entity_id": "110fcfa6-5990-56a7-8dca-dc9af20167e9",
+        "summary": "解析聚合项，校验长度并构造对象或推进子任务。",
+        "details": "依据当前任务读取聚合长度；超过正值 maxdepth、非法长度、超出可表示范围或正值 maxelements 时设置协议错误并返回 REDIS_ERR。-1 使用可用的 createNil 回调，否则采用内建 NIL 标记；其他长度在 MAP/ATTR 情况下先检查上限再翻倍。对象创建失败返回错误；非空聚合建立子任务，空聚合推进任务，根对象写入 reply。输入不足时返回 REDIS_ERR。",
+        "evidence": [
+          {
+            "path": "read.c",
+            "start_line": 553,
+            "end_line": 583
+          },
+          {
+            "path": "read.c",
+            "start_line": 584,
+            "end_line": 649
+          }
+        ]
+      },
+      {
+        "entity_id": "0bce7051-54f2-5362-9bb5-23ed00763f46",
+        "summary": "识别当前项类型，并分派至相应解析函数。",
+        "details": "当任务类型小于零时读取一个类型字节；字节不足返回 REDIS_ERR，未知字节设置协议错误。识别后，错误、状态、整数等类型交给行项处理，字符串和 verb 交给批量项处理，数组、map、attr、set、push 交给聚合项处理；其他类型触发断言并返回错误。",
+        "evidence": [
+          {
+            "path": "read.c",
+            "start_line": 651,
+            "end_line": 720
+          },
+          {
+            "path": "read.c",
+            "start_line": 721,
+            "end_line": 734
+          }
+        ]
+      },
+      {
+        "entity_id": "8b833674-82cd-56a0-8817-d0ed23565c15",
+        "summary": "分配并初始化读取器及其缓冲和任务栈。",
+        "details": "分配读取器、空缓冲区、任务指针数组及各任务项；任一步分配失败均进入清理路径，释放部分已建状态并返回 NULL。成功时保存对象回调，设置默认缓冲区、元素数和嵌套深度限制，并将当前任务索引设为 -1。",
+        "evidence": [
+          {
+            "path": "read.c",
+            "start_line": 736,
+            "end_line": 767
+          }
+        ]
+      },
+      {
+        "entity_id": "0f3ac473-dca5-5723-bf85-f5d20fafeac9",
+        "summary": "释放读取器持有的回复、任务、缓冲及自身内存。",
+        "details": "空指针时直接返回。存在待释放回复且配置了 freeObject 回调时释放该对象；若任务数组存在，则释放已分配的任务项和数组，随后释放输入缓冲及读取器本身。",
+        "evidence": [
+          {
+            "path": "read.c",
+            "start_line": 769,
+            "end_line": 787
+          }
+        ]
+      },
+      {
+        "entity_id": "29eddabd-bd73-54da-81a6-3c3b4c0cc196",
+        "summary": "将非空输入追加到读取器缓冲区。",
+        "details": "读取器已有错误时直接返回 REDIS_ERR。仅在 buf 非空且 len 至少为 1 时追加数据；若尚无未读数据、maxbuf 非零且可用空间超过上限，则重建缓冲并重置位置。缓冲重建或追加失败设置 OOM 错误并返回 REDIS_ERR；其他情况返回 REDIS_OK。",
+        "evidence": [
+          {
+            "path": "read.c",
+            "start_line": 789,
+            "end_line": 818
+          }
+        ]
+      },
+      {
+        "entity_id": "d415374c-3947-5120-921b-319ccc4061b9",
+        "summary": "驱动解析并交付完成的回复。",
+        "details": "reply 非空时先置为 NULL；已有错误返回 REDIS_ERR，空缓冲返回 REDIS_OK。任务栈为空时初始化根任务，然后循环处理项目直至无法继续或栈清空；解析错误立即返回。已消费位置至少 1024 时压缩缓冲，压缩失败返回错误。回复完成后写入输出指针；若输出指针为空且存在释放回调，则释放回复，随后清空暂存 reply。",
+        "evidence": [
+          {
+            "path": "read.c",
+            "start_line": 820,
+            "end_line": 846
+          },
+          {
+            "path": "read.c",
+            "start_line": 847,
+            "end_line": 871
+          }
+        ]
+      }
+    ],
+    "call_judgments": [],
+    "primary_dependencies": []
+  },
+  "原快照字节未变": true,
+  "请求账本": [
+    {
+      "id": "cb1e54d5-6b56-4e6f-a8cc-a3fcb0d07f93",
+      "project_id": "17164360-44e3-4214-acc8-a2457701e10c",
+      "version_id": "6c91502a-0e14-4091-8f3f-57c8293f5fc6",
+      "job_id": "2f232ba4-abc8-41f2-a4eb-2b6d2c64e373",
+      "unit_id": "2e007cf7-60b2-4c26-85ac-4a12f7af1b09",
+      "attempt": 1,
+      "phase": "architecture",
+      "recipient": "https://www.cctq.ai/v1",
+      "model": "gpt-6-luna",
+      "status": "success",
+      "created_at": "2026-10-12T03:24:42.189529+00:00",
+      "sent_at": "2026-10-12T03:24:42.228404+00:00",
+      "finished_at": "2026-10-12T03:25:16.339744+00:00",
+      "payload_hash": "c612537fdbaf70dc831a98094df1d66264e0794b5d8e40e475e8cbabb0cb5c64",
+      "source_chars": 18221,
+      "usage": {
+        "prompt_tokens": 26920,
+        "completion_tokens": 2403,
+        "total_tokens": 29323
+      },
+      "cost": null,
+      "currency": null,
+      "price_snapshot": null,
+      "http_status": 200,
+      "error_code": null
+    },
+    {
+      "id": "af84c033-2fef-409b-9a94-98c1d8d7e57d",
+      "project_id": "17164360-44e3-4214-acc8-a2457701e10c",
+      "version_id": "6c91502a-0e14-4091-8f3f-57c8293f5fc6",
+      "job_id": "2f232ba4-abc8-41f2-a4eb-2b6d2c64e373",
+      "unit_id": "b0082669-762e-48a2-8eb9-649be80fa4c7",
+      "attempt": 1,
+      "phase": "architecture",
+      "recipient": "https://www.cctq.ai/v1",
+      "model": "gpt-6-luna",
+      "status": "success",
+      "created_at": "2026-10-12T03:25:16.366846+00:00",
+      "sent_at": "2026-10-12T03:25:16.382735+00:00",
+      "finished_at": "2026-10-12T03:25:34.704838+00:00",
+      "payload_hash": "70463f73e050be2aec596a17cb2f4cff686c7f60a8798bb4191f9959230ad4df",
+      "source_chars": 13949,
+      "usage": {
+        "prompt_tokens": 19796,
+        "completion_tokens": 1843,
+        "total_tokens": 21639
+      },
+      "cost": null,
+      "currency": null,
+      "price_snapshot": null,
+      "http_status": 200,
+      "error_code": null
+    },
+    {
+      "id": "655a1e5b-d295-4a0e-8731-2d2c0f08a0c8",
+      "project_id": "17164360-44e3-4214-acc8-a2457701e10c",
+      "version_id": "6c91502a-0e14-4091-8f3f-57c8293f5fc6",
+      "job_id": "2f232ba4-abc8-41f2-a4eb-2b6d2c64e373",
+      "unit_id": "a6a7a948-16bc-4a21-b27d-ffbdd15d1b39",
+      "attempt": 1,
+      "phase": "overview",
+      "recipient": "https://www.cctq.ai/v1",
+      "model": "gpt-6-luna",
+      "status": "success",
+      "created_at": "2026-10-12T03:25:34.725089+00:00",
+      "sent_at": "2026-10-12T03:25:34.755599+00:00",
+      "finished_at": "2026-10-12T03:26:24.159707+00:00",
+      "payload_hash": "c9dfae46bcfb6acae98313281a5b25f951c9d84be3e8fbcac642e12f63f4b51b",
+      "source_chars": 0,
+      "usage": {
+        "prompt_tokens": 2021,
+        "completion_tokens": 785,
+        "total_tokens": 2806
+      },
+      "cost": null,
+      "currency": null,
+      "price_snapshot": null,
+      "http_status": 200,
+      "error_code": null
+    }
+  ],
+  "请求状态": {
+    "success": 3
+  },
+  "已知total_tokens": 53768,
+  "未知用量请求": 0,
+  "费用": null,
+  "脱敏校验记录": [],
+  "边界": "真实配置接口，固定响应与质量复核分开；尚未代表用户验收；价格未知不记零费用。",
+  "静态索引制品": {
+    "path": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\.runtime\\public-model-validation\\19cc8722-c921-494d-81cc-1761e5f7acc3\\validation-artifacts\\7c6d44d9183e8bc16570b8dea8dbe88312877010362bce3923187621a170490f.json",
+    "sha256": "7c6d44d9183e8bc16570b8dea8dbe88312877010362bce3923187621a170490f",
+    "bytes": 136912
+  }
+}

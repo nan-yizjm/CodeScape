@@ -1,0 +1,57 @@
+{
+  "核对时间UTC": "2026-10-13T18:33:35.781492+00:00",
+  "构建号": "20261013T182645Z",
+  "程序sha256": "68e04a1ba959cad9f2fa94545fd40cfa77aa252241150e2d5fc21f5175e05399",
+  "模型请求": 0,
+  "样本": {
+    "hiredis-c": {
+      "检查点sha256": "d70e6334c19c99ba1d30422118c369e51b44b5d788d8c01131d13f2ff3426212",
+      "检查点来源": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\.runtime\\public-model-validation\\d4882ddb-d474-4946-a8ef-c68a98b9fe0a\\projects\\755d6660-9cfd-46e7-9d09-ab8c6a8e708d\\architecture-checkpoint.json",
+      "原项目状态": "paused",
+      "使用发布前历史源码检查点": false,
+      "恢复批数": 10,
+      "规划批数": 187,
+      "模型请求": 0,
+      "真实原检查点未改写": true,
+      "隔离根无凭据": true,
+      "新请求前受控停止": true
+    },
+    "spdlog-cpp": {
+      "检查点sha256": "8d0c4e63216ab497ad1ba6468f6350593f2f5d0e841bb61c6a883e888b8fe881",
+      "检查点来源": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\.runtime\\public-model-validation\\ff3a7e52-f5c1-40f1-99aa-4854a160469f\\projects\\2d6be66c-e7cf-41cd-8ff9-696bec7f8836\\architecture-checkpoint.json",
+      "原项目状态": "paused",
+      "使用发布前历史源码检查点": false,
+      "恢复批数": 33,
+      "规划批数": 210,
+      "模型请求": 0,
+      "真实原检查点未改写": true,
+      "隔离根无凭据": true,
+      "新请求前受控停止": true
+    },
+    "flask-python": {
+      "检查点sha256": "72608d8301c401bfc465dc1f3ccae7449e22331db381a0f469dd818d754d828c",
+      "检查点来源": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\.runtime\\public-model-validation\\88d84435-4304-4ce9-91f0-7e80581db311\\checkpoint-history\\0ad4f896-a3f2-4227-b9d8-364fecf81344.json",
+      "原项目状态": "ready",
+      "使用发布前历史源码检查点": true,
+      "恢复批数": 76,
+      "规划批数": 76,
+      "模型请求": 0,
+      "真实原检查点未改写": true,
+      "隔离根无凭据": true,
+      "新请求前受控停止": true
+    },
+    "zod-typescript": {
+      "检查点sha256": "e37815d43aaacf735ce141fd259073cf31495a64b2f71911991a2c56b9823d90",
+      "检查点来源": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\.runtime\\public-model-validation\\bee05107-09a3-44d5-9f24-8c53246356ac\\projects\\e42490ef-d6ca-4eb4-90b2-1bfc1a23e3f8\\architecture-checkpoint.json",
+      "原项目状态": "paused",
+      "使用发布前历史源码检查点": false,
+      "恢复批数": 5,
+      "规划批数": 352,
+      "模型请求": 0,
+      "真实原检查点未改写": true,
+      "隔离根无凭据": true,
+      "新请求前受控停止": true
+    }
+  },
+  "边界": "独立程序只复核已保存批次，到新请求前因没有凭据受控停止；不计真实新模型输出或语义验收。"
+}

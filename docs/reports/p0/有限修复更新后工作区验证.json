@@ -1,0 +1,14 @@
+{
+  "日期": "2026-10-12",
+  "代码提交": "4bc1369",
+  "运行流水线": "architecture/3-repairs/2-explanations/3-reads/1-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/2-index/3-ts-bindings/2-python-declarations/1",
+  "重启方式": "正常保存退出后8125独立启动",
+  "项目数": 4,
+  "学习记录": 2,
+  "项目与学习全部列哈希逐项不变": true,
+  "主工作区模型账本数": 7,
+  "主工作区新增模型请求": 0,
+  "新上传AIHOT": false,
+  "浏览器复核": "侧边AIHOT恢复5顶层节点和2条主要协作线；旧结果与已保存学习状态保留。",
+  "截图": "output/playwright/P0有限修复更新后工作区.png"
+}

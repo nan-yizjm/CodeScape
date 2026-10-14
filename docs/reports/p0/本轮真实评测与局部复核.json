@@ -1,0 +1,129 @@
+{
+  "日期": "2026-10-12",
+  "核对时间UTC": "2026-10-12T02:32:39.793686+00:00",
+  "性质": "真实模型结构与部分固定源码复核，非固定响应，非用户验收",
+  "执行目标代码": false,
+  "本轮上传范围": "仅已授权四个固定Commit筛选快照，未上传AIHOT或扩大范围",
+  "完整范围": {
+    "hiredis-c": {
+      "报告": "hiredis-c-full真实模型验证.json",
+      "报告sha256": "d8b0ad4f4f978682c4e23536200a4a89cd69454a3f334e2e0ea4ade8c82a7371",
+      "流水线": "architecture/3-explanations/3-reads/1-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/2-index/3-ts-bindings/2-python-declarations/1",
+      "实际进度": {
+        "phase": "paused",
+        "completed": 14,
+        "total": 49,
+        "detail": "服务余额不足。"
+      },
+      "检查点批次数": 14,
+      "未完成模块": 0,
+      "待复核函数": 0,
+      "旧快照字节未变": true
+    },
+    "spdlog-cpp": {
+      "报告": "spdlog-cpp-full真实模型验证.json",
+      "报告sha256": "999061e2f2dfda7682aa5209e97652f9c4ac18dc0ad28e04fb13f2dbe6d4ff39",
+      "流水线": "architecture/3-explanations/3-reads/1-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/2-index/3-ts-bindings/2-python-declarations/1",
+      "实际进度": {
+        "phase": "paused",
+        "completed": 12,
+        "total": 53,
+        "detail": "服务余额不足。"
+      },
+      "检查点批次数": 12,
+      "未完成模块": 0,
+      "待复核函数": 0,
+      "旧快照字节未变": true
+    },
+    "flask-python": {
+      "报告": "flask-python-full真实模型验证.json",
+      "报告sha256": "0c9939845c3fc3b87fa72c56b6f4cfdc7ce776ffb5b4d6642689443f516fd871",
+      "流水线": "architecture/3-explanations/3-reads/1-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/2-index/3-ts-bindings/2-python-declarations/1",
+      "实际进度": {
+        "phase": "paused",
+        "completed": 20,
+        "total": 33,
+        "detail": "服务余额不足。"
+      },
+      "检查点批次数": 20,
+      "未完成模块": 1,
+      "待复核函数": 1,
+      "旧快照字节未变": true
+    },
+    "zod-typescript": {
+      "报告": "zod-typescript-full真实模型验证.json",
+      "报告sha256": "4508ccad9667204207d206cf267c8c7975dbe50a67b820d3487129ba142e6e67",
+      "流水线": "architecture/3-repairs/2-explanations/3-reads/1-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/2-index/3-ts-bindings/2-python-declarations/1",
+      "实际进度": {
+        "phase": "paused",
+        "completed": 3,
+        "total": 76,
+        "detail": "服务余额不足。"
+      },
+      "检查点批次数": 3,
+      "未完成模块": 0,
+      "待复核函数": 0,
+      "旧快照字节未变": true
+    }
+  },
+  "缩小范围": {
+    "hiredis-c": {
+      "报告": "hiredis-c-narrow真实模型验证.json",
+      "报告sha256": "4e01b9e60086fb74275f99afa3a050a84f9a38b26e749ce75e2f19c4684ab695",
+      "流水线": "architecture/3-explanations/3-reads/1-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/2-index/3-ts-bindings/2-python-declarations/1",
+      "可见函数": 18,
+      "讲解": 18,
+      "未完成模块": 0,
+      "旧快照字节未变": true
+    },
+    "spdlog-cpp": {
+      "报告": "spdlog-cpp-narrow真实模型验证.json",
+      "报告sha256": "58427d527cf3f1ec7d958858e486fea9693f87007e0d4e39cb52c7e706cfd350",
+      "流水线": "architecture/3-repairs/1-explanations/3-reads/1-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/2-index/3-ts-bindings/2-python-declarations/1",
+      "可见函数": 58,
+      "讲解": 58,
+      "未完成模块": 0,
+      "旧快照字节未变": true
+    },
+    "flask-python": {
+      "报告": "flask-python-narrow真实模型验证.json",
+      "报告sha256": "baee611143941392b124b9e738301b2ec286252baaa0e79ff8b2eb94a871f510",
+      "流水线": "architecture/3-explanations/3-reads/1-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/2-index/3-ts-bindings/2-python-declarations/1",
+      "可见函数": 19,
+      "讲解": 19,
+      "未完成模块": 0,
+      "旧快照字节未变": true
+    },
+    "zod-typescript": {
+      "报告": "zod-typescript-narrow真实模型验证.json",
+      "报告sha256": "ff9e7d130d52ec2bf0813b87d98e1162d32a1745f2cda2dbcc05b0f5c6be3739",
+      "流水线": "architecture/3-explanations/3-reads/1-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/2-index/3-ts-bindings/2-python-declarations/1",
+      "可见函数": 3,
+      "讲解": 3,
+      "未完成模块": 0,
+      "旧快照字节未变": true
+    }
+  },
+  "实际局部抽查": {
+    "hiredis-c": "Feed的空输入、错误状态、空缓冲与maxbuf非零限定及GetReply输出指针保护在实际详情中保留；没有人工穷尽18项解释。",
+    "flask-python": "get_load_dotenv的调用方default和默认True方向保留；_prepare_send_file_kwargs明确显式None被应用回调替换并覆盖上下文参数；没有人工穷尽19项解释。",
+    "spdlog-cpp": "sink_it_完整范围135-146及刷新分支保留，should_flush_保留等级阈值与off排除；实际部分详情仍按本片段称宏定义未知，整体快照包含common.h，跨批异常边界讲解尚需改善。",
+    "zod-typescript": "变量持有工厂功能在模块摘要中体现；3个可见实现均有说明。原先convertBaseSchema超长/引用卡点已在repairs/2的真实完整范围第2批通过，不计完整Zod质量。"
+  },
+  "历史累计账本": {
+    "去重请求数": 560,
+    "已知total_tokens": 15629483,
+    "缺少用量请求数": 16,
+    "在途请求数": 0,
+    "费用": null,
+    "说明": "包含历史失败、截断、修复及重新评测，按请求ID去重；在途属于尚未返回用量，未知不记零，缺少价格不估算费用。"
+  },
+  "本轮账本增量": {
+    "去重请求": 98,
+    "已知total_tokens": 2784380,
+    "新增缺少用量请求": 5,
+    "费用": null,
+    "口径": "以前轮已提交累计462次与12845103已知tokens为基准；失败、修复、重新评测均计入，未知用量不记零。"
+  },
+  "结论": "四个最新完整范围均HTTP402暂停，完整质量与范围对照未完成；四个缩小范围结构已发布，局部抽查不能替代完整质量或用户验收。"
+}

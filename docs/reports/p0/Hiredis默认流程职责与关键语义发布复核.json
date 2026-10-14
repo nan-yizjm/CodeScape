@@ -1,0 +1,325 @@
+{
+  "核对时间UTC": "2026-10-13T18:21:42.749520+00:00",
+  "性质": "真实默认分析发布结果的开发代理静态源码复核",
+  "报告": "hiredis-c-narrow真实模型验证.json",
+  "报告sha256": "456576b4dff18b600562daeeec16e4eee300f6b45466bfd3e82627b31c81db73",
+  "Commit": "058ebcdf36c5b05b759c613564fb958ec363c90f",
+  "接收端": "https://www.cctq.ai/v1",
+  "模型": "gpt-6.1-sol",
+  "流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1-compact-batches/1-reasoning-config/1-organization/1-overview-guidance/1",
+  "源码生成来源": [
+    "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1-compact-batches/1-reasoning-config/1"
+  ],
+  "实际文件": [
+    "read.c",
+    "read.h"
+  ],
+  "正式发布": true,
+  "可见函数": 18,
+  "唯一归属与讲解": 18,
+  "模块数": 17,
+  "根模块": [
+    {
+      "id": "resp_reader",
+      "parent_id": null,
+      "name": "RESP协议读取",
+      "summary": "组织增量输入、协议解析、读取任务管理、错误处理和读取器资源管理；各类回复的校验与构造由独立模块承担。",
+      "entity_ids": [],
+      "code_paths": [
+        "read.c",
+        "read.h"
+      ],
+      "incomplete": true
+    }
+  ],
+  "已知tokens": 116559,
+  "真实请求数": 14,
+  "未知用量请求": 0,
+  "耗时秒": 11.81,
+  "费用": null,
+  "复核": [
+    {
+      "项目": "用途和职责",
+      "结果": "范围内通过",
+      "依据": "组件把分段RESP字节解析成回复，区分输入缓存、任务推进、类型处理、错误收尾与对象交付；明确不包含网络收发、命令执行和完整客户端。"
+    },
+    {
+      "项目": "重复职责归并",
+      "结果": "通过",
+      "依据": "真实默认整理将两个重复读取器父模块归于RESP协议读取；错误、行定界、整数、嵌套任务、各类回复、扩容、生命周期及输入交付保留不同功能。"
+    },
+    {
+      "项目": "条件、返回和异常",
+      "结果": "所列实现通过",
+      "依据": "阅读18个实现正文，对照当前讲解；联合回调保护、maxbuf零开关、条件编译浮点、nil/聚合倍增、输入不足与r->err区别、REDIS_OK不保证产生回复等关键语义保留。"
+    },
+    {
+      "项目": "协议宽松边界",
+      "结果": "未隐藏",
+      "依据": "布尔strchr可匹配零字节、大整数空串或单独负号未排除、bulk尾两字节未校验值；讲解不补造协议保护。"
+    },
+    {
+      "项目": "调用关系",
+      "结果": "部分支持，未确认",
+      "依据": "当前二文件范围缺失依赖；静态与AI没有确定调用边，主要协作为空。不给C组件虚构已确认核心关系，不计该二文件结果独立满足AC-29核心证据。"
+    }
+  ],
+  "概览": {
+    "introduction": "这是一个面向开发者的 RESP 协议读取组件，用于将分批到达的协议字节解析为可供程序处理的回复。它解决数据不完整、回复类型多样及容器嵌套带来的解析问题，而非提供完整的客户端功能。",
+    "capabilities": [
+      "缓存分批输入，在数据齐备后解析回复",
+      "解析行式值、长度前缀字符串及嵌套容器",
+      "校验数值、长度和格式，记录解析错误",
+      "允许调用方定制回复对象的构造与释放"
+    ],
+    "principle": "输入字节先进入缓冲区，读取器识别完整协议行或足量内容，按回复类型校验并推进嵌套解析任务。回复对象可通过配置的构造回调生成；完成的回复被交付，或按回调释放，错误时清理状态并记录错误。",
+    "limitations": [
+      "流式解析主体与公共接口仍有未完成部分，无法确认完整运行时行为及所有配置分支。",
+      "不涵盖网络收发、命令执行或完整客户端功能。",
+      "回复对象的具体结构与构造、释放依赖调用方配置；部分输入状态的有效性也由调用方保证，异常边界未穷举。"
+    ],
+    "synthesized": true,
+    "analysis_notes": [
+      "本批 entities 为空，无法将可见函数归属到函数节点。",
+      "仅依据已提供的 read.c 代码，相关头文件和外部对象创建回调实现未展开。",
+      "条件编译下的浮点解析实现取决于 HIREDIS_FLOAT_STRTOD 配置。",
+      "本批仅提供一个错误处理函数，不能据此概括完整协议解析流程。",
+      "读取器指针和错误文本指针未做空值检查，错误文本须可供 strlen 读取。",
+      "释放回复使用动态回调，本批未提供其目标实现；没有异常或非正常返回的恢复保护。",
+      "仅覆盖read.c第98至145行的实现。",
+      "错误设置函数__redisReaderSetError的内部行为未在本批可见函数中提供。",
+      "snprintf和isprint等库调用的具体实现及异常边界未展开。",
+      "本批仅覆盖四个辅助函数，不展示完整回复类型解析、输入补充和对象构建流程。",
+      "缓冲区、长度和任务栈的有效性依赖调用方，本层没有全面的空指针或状态校验。",
+      "任务一致性部分依赖 assert，不能视为始终生效的运行时错误处理。",
+      "范围仅覆盖本批行式回复函数，不代表完整客户端或协议读取器。",
+      "未展示读取行、整数转换和任务推进等辅助实现，不推断其内部行为。",
+      "实际浮点解析配置未确定，分别描述两个条件分支。",
+      "调用关系均未静态确认，本批不补充目标绑定判断。",
+      "范围仅覆盖本批两个函数，不代表完整协议读取器或项目全部能力。",
+      "数据不足与显式错误均返回REDIS_ERR，但数据不足分支本身不设置协议错误。",
+      "本段未显式校验载荷末尾两个字节是否为CRLF。",
+      "已提供的邻近标题提及数组、映射和集合处理，但未展示对应实现，不能据此推断其行为。",
+      "仅依据本批两个函数，不能概括完整客户端、网络层或对象生命周期。",
+      "行值、定长字符串、任务推进和错误处理的目标实现未在本批展示，不推断其内部行为。",
+      "REDIS_ERR 既用于本层输入不足，也用于错误路径，需结合读取器状态区分。",
+      "构造回调的具体对象结构和行为由外部配置决定。",
+      "本批仅包含 read.c 的四个公共入口，不能据此概括整个项目的网络或命令功能。",
+      "条目处理器、内存错误处理器及动态字符串实现未在当前代码片段展示，其内部协议分支和错误清理细节不作推断。",
+      "回复对象释放依赖操作表及其 freeObject 回调同时存在；接口未统一验证读取器指针。",
+      "本批仅提供头文件，没有可见函数实体或实现代码",
+      "无法确认协议解析分支、错误处理和内存分配细节",
+      "条件编译与 C++ extern 兼容边界仅能依据声明判断",
+      "源码范围由 9 批受控上下文完成归纳，跨批次模块边界可能需要人工复核。",
+      "流式解析主体和公共接口仍有未完成部分，完整运行时行为无法确认。",
+      "回复对象的具体结构、构造和释放依赖调用方提供的回调。",
+      "材料未覆盖网络收发、命令执行或完整客户端功能。",
+      "缓冲区、读取器状态及部分回调参数的有效性依赖调用方；异常边界未被穷举。",
+      "浮点等特定解析行为受条件配置影响，当前材料未确认实际启用分支。",
+      "缓冲区、读取器状态及部分回调参数的有效性依赖调用方，异常边界未穷举。",
+      "部分特定解析行为受配置条件影响，当前材料未确认实际启用的分支。"
+    ]
+  },
+  "解析诊断": {
+    "condition_unknown": 7,
+    "parse_failed": 1,
+    "missing_dependency": 1,
+    "unresolved_call": 106
+  },
+  "保留缺口": "流式解析片段和公共头文件仍有两个未完成叶模块及父级标记；缺失依赖和配置未知。新版概览不再把输入不足一概说成记录错误，构造与释放回调和回复交付已分开；GetReply通过输出参数交付，未引入不存在的交付回调。",
+  "概览修订": "两次真实刷新；第一次仍出现交付回调误述，通用overview-guidance/1区分返回值、输出参数、回调与事件后，正式刷新已消除。模块及函数讲解未变，源码阶段未重发。",
+  "核心源码与实际讲解": [
+    {
+      "函数": "__redisReaderSetError",
+      "位置": {
+        "path": "read.c",
+        "start_line": 74,
+        "end_line": 96,
+        "start_byte": 3091,
+        "end_byte": 3658
+      },
+      "源码": "static void __redisReaderSetError(redisReader *r, int type, const char *str) {\n    size_t len;\n\n    if (r->reply != NULL && r->fn && r->fn->freeObject) {\n        r->fn->freeObject(r->reply);\n        r->reply = NULL;\n    }\n\n    /* Clear input buffer on errors. */\n    sdsfree(r->buf);\n    r->buf = NULL;\n    r->pos = r->len = 0;\n\n    /* Reset task stack. */\n    r->ridx = -1;\n\n    /* Set error. */\n    r->err = type;\n    len = strlen(str);\n    len = len < (sizeof(r->errstr)-1) ? len : (sizeof(r->errstr)-1);\n    memcpy(r->errstr,str,len);\n    r->errstr[len] = '\\0';\n}",
+      "实际讲解": {
+        "entity_id": "9225bb1c-28c9-5d5a-9408-c6dbda16532b",
+        "summary": "清理读取器解析状态并保存错误",
+        "details": "输入为读取器指针 r、错误类型 type 和错误文本 str，无返回值。只有 r->reply 非空、r->fn 存在且 freeObject 回调存在时，才调用回调释放回复并将 reply 置空；条件不成立时保留原 reply。随后调用 sdsfree 处理输入缓冲，将 buf 置空、pos 和 len 归零，并把任务栈索引 ridx 设为 -1。最后写入 err，将文本截断到 errstr 容量减一后复制并补零。函数不校验 r 或 str，也不保护释放调用的非正常退出；回调目标内部行为未在本批展示。",
+        "evidence": [
+          {
+            "path": "read.c",
+            "start_line": 74,
+            "end_line": 88
+          },
+          {
+            "path": "read.c",
+            "start_line": 90,
+            "end_line": 96
+          }
+        ]
+      }
+    },
+    {
+      "函数": "processLineItem",
+      "位置": {
+        "path": "read.c",
+        "start_line": 290,
+        "end_line": 453,
+        "start_byte": 8910,
+        "end_byte": 15281
+      },
+      "源码": "static int processLineItem(redisReader *r) {\n    redisReadTask *cur = r->task[r->ridx];\n    void *obj;\n    char *p;\n    int len;\n\n    if ((p = readLine(r,&len)) != NULL) {\n        if (cur->type == REDIS_REPLY_INTEGER) {\n            long long v;\n\n            if (string2ll(p, len, &v) == REDIS_ERR) {\n                __redisReaderSetError(r,REDIS_ERR_PROTOCOL,\n                        \"Bad integer value\");\n                return REDIS_ERR;\n            }\n\n            if (r->fn && r->fn->createInteger) {\n                obj = r->fn->createInteger(cur,v);\n            } else {\n                obj = (void*)REDIS_REPLY_INTEGER;\n            }\n        } else if (cur->type == REDIS_REPLY_DOUBLE) {\n            char buf[326];\n            double d;\n\n            if ((size_t)len >= sizeof(buf)) {\n                __redisReaderSetError(r,REDIS_ERR_PROTOCOL,\n                        \"Double value is too large\");\n                return REDIS_ERR;\n            }\n\n            /* Copy + NUL-terminate (as the strtod path does) so the string\n             * handed to createDouble keeps its terminator; some custom\n             * createDouble callbacks rely on it. ffc itself parses a\n             * [start,end) range and needs no terminator. */\n            memcpy(buf,p,len);\n            buf[len] = '\\0';\n\n#ifndef HIREDIS_FLOAT_STRTOD\n            if (len == 3 && strcasecmp(buf,\"inf\") == 0) {\n                d = INFINITY; /* Positive infinite. */\n            } else if (len == 4 && strcasecmp(buf,\"-inf\") == 0) {\n                d = -INFINITY; /* Negative infinite. */\n            } else if ((len == 3 && strcasecmp(buf,\"nan\") == 0) ||\n                       (len == 4 && strcasecmp(buf, \"-nan\") == 0)) {\n                d = NAN; /* nan. */\n            } else {\n                /* RESP3 allows only finite values besides the inf/nan tokens\n                 * handled above, so run ffc with NO_INFNAN; the full-consume +\n                 * isfinite checks then mirror the strtod path's eptr/isfinite. */\n                ffc_parse_options o = ffc_parse_options_default();\n                o.format |= FFC_FORMAT_FLAG_NO_INFNAN;\n                ffc_result res = ffc_from_chars_double_options(buf, buf + len, &d, o);\n                if (res.outcome != FFC_OUTCOME_OK || res.ptr != buf + len ||\n                    !isfinite(d)) {\n                    __redisReaderSetError(r,REDIS_ERR_PROTOCOL,\n                            \"Bad double value\");\n                    return REDIS_ERR;\n                }\n            }\n\n            if (r->fn && r->fn->createDouble) {\n                obj = r->fn->createDouble(cur,d,buf,len);\n            } else {\n                obj = (void*)REDIS_REPLY_DOUBLE;\n            }\n#else\n            char *eptr;\n\n            if (len == 3 && strcasecmp(buf,\"inf\") == 0) {\n                d = INFINITY; /* Positive infinite. */\n            } else if (len == 4 && strcasecmp(buf,\"-inf\") == 0) {\n                d = -INFINITY; /* Negative infinite. */\n            } else if ((len == 3 && strcasecmp(buf,\"nan\") == 0) ||\n                       (len == 4 && strcasecmp(buf, \"-nan\") == 0)) {\n                d = NAN; /* nan. */\n            } else {\n                d = strtod((char*)buf,&eptr);\n                /* RESP3 only allows \"inf\", \"-inf\", and finite values, while\n                 * strtod() allows other variations on infinity,\n                 * etc. We explicity handle our two allowed infinite cases and NaN\n                 * above, so strtod() should only result in finite values. */\n                if (buf[0] == '\\0' || eptr != &buf[len] || !isfinite(d)) {\n                    __redisReaderSetError(r,REDIS_ERR_PROTOCOL,\n                            \"Bad double value\");\n                    return REDIS_ERR;\n                }\n            }\n\n            if (r->fn && r->fn->createDouble) {\n                obj = r->fn->createDouble(cur,d,buf,len);\n            } else {\n                obj = (void*)REDIS_REPLY_DOUBLE;\n            }\n#endif\n        } else if (cur->type == REDIS_REPLY_NIL) {\n            if (len != 0) {\n                __redisReaderSetError(r,REDIS_ERR_PROTOCOL,\n                        \"Bad nil value\");\n                return REDIS_ERR;\n            }\n\n            if (r->fn && r->fn->createNil)\n                obj = r->fn->createNil(cur);\n            else\n                obj = (void*)REDIS_REPLY_NIL;\n        } else if (cur->type == REDIS_REPLY_BOOL) {\n            int bval;\n\n            if (len != 1 || !strchr(\"tTfF\", p[0])) {\n                __redisReaderSetError(r,REDIS_ERR_PROTOCOL,\n                        \"Bad bool value\");\n                return REDIS_ERR;\n            }\n\n            bval = p[0] == 't' || p[0] == 'T';\n            if (r->fn && r->fn->createBool)\n                obj = r->fn->createBool(cur,bval);\n            else\n                obj = (void*)REDIS_REPLY_BOOL;\n        } else if (cur->type == REDIS_REPLY_BIGNUM) {\n            /* Ensure all characters are decimal digits (with possible leading\n             * minus sign). */\n            for (int i = 0; i < len; i++) {\n                /* XXX Consider: Allow leading '+'? Error on leading '0's? */\n                if (i == 0 && p[0] == '-') continue;\n                if (p[i] < '0' || p[i] > '9') {\n                    __redisReaderSetError(r,REDIS_ERR_PROTOCOL,\n                            \"Bad bignum value\");\n                    return REDIS_ERR;\n                }\n            }\n            if (r->fn && r->fn->createString)\n                obj = r->fn->createString(cur,p,len);\n            else\n                obj = (void*)REDIS_REPLY_BIGNUM;\n        } else {\n            /* Type will be error or status. */\n            for (int i = 0; i < len; i++) {\n                if (p[i] == '\\r' || p[i] == '\\n') {\n                    __redisReaderSetError(r,REDIS_ERR_PROTOCOL,\n                            \"Bad simple string value\");\n                    return REDIS_ERR;\n                }\n            }\n            if (r->fn && r->fn->createString)\n                obj = r->fn->createString(cur,p,len);\n            else\n                obj = (void*)(uintptr_t)(cur->type);\n        }\n\n        if (obj == NULL) {\n            __redisReaderSetErrorOOM(r);\n            return REDIS_ERR;\n        }\n\n        /* Set reply if this is the root object. */\n        if (r->ridx == 0) r->reply = obj;\n        moveToNextTask(r);\n        return REDIS_OK;\n    }\n\n    return REDIS_ERR;\n}",
+      "实际讲解": {
+        "entity_id": "0d9c6126-b170-5d12-959c-eaefce1463a2",
+        "summary": "校验并构造当前行式回复，成功后推进任务",
+        "details": "输入为读取器r，直接取task[ridx]，本层不检查r或任务索引有效性。readLine返回NULL时直接返回REDIS_ERR，不在该分支设置错误；取得行后按类型处理。整数转换返回REDIS_ERR即报告协议错误。浮点行长度须小于326，复制并补零；两种编译分支均大小写不敏感地接受inf、-inf、nan、-nan。默认FFC分支禁用普通解析中的Inf/NaN，要求转换成功、完整消费且结果有限；STRTOD分支要求首字节非零、完整消费且结果有限。空值要求长度零。布尔值要求长度一且字符通过strchr(\"tTfF\", p[0])检查，再以t/T判真；该检查也可能匹配字符串终止零字节。大整数仅逐字符检查数字及首位负号，因此未拒绝空行或单独负号。其他类型按简单字符串处理，拒绝内嵌回车、换行。仅当函数表及对应构造回调均非空时调用回调，否则返回该类型的指针标记。对象为NULL时调用OOM错误处理并返回REDIS_ERR；成功时仅根任务写入reply，再调用moveToNextTask并返回REDIS_OK。辅助函数的内部状态变化不在本段推断。",
+        "evidence": [
+          {
+            "path": "read.c",
+            "start_line": 290,
+            "end_line": 310
+          },
+          {
+            "path": "read.c",
+            "start_line": 312,
+            "end_line": 355
+          },
+          {
+            "path": "read.c",
+            "start_line": 356,
+            "end_line": 384
+          },
+          {
+            "path": "read.c",
+            "start_line": 385,
+            "end_line": 410
+          },
+          {
+            "path": "read.c",
+            "start_line": 411,
+            "end_line": 439
+          },
+          {
+            "path": "read.c",
+            "start_line": 441,
+            "end_line": 453
+          }
+        ]
+      }
+    },
+    {
+      "函数": "processBulkItem",
+      "位置": {
+        "path": "read.c",
+        "start_line": 455,
+        "end_line": 525,
+        "start_byte": 15283,
+        "end_byte": 17605
+      },
+      "源码": "static int processBulkItem(redisReader *r) {\n    redisReadTask *cur = r->task[r->ridx];\n    void *obj = NULL;\n    char *p, *s;\n    long long len;\n    unsigned long bytelen;\n    int success = 0;\n\n    p = r->buf+r->pos;\n    s = seekNewline(p,r->len-r->pos);\n    if (s != NULL) {\n        p = r->buf+r->pos;\n        bytelen = s-(r->buf+r->pos)+2; /* include \\r\\n */\n\n        if (string2ll(p, bytelen - 2, &len) == REDIS_ERR) {\n            __redisReaderSetError(r,REDIS_ERR_PROTOCOL,\n                    \"Bad bulk string length\");\n            return REDIS_ERR;\n        }\n\n        if (len < -1 || (LLONG_MAX > SIZE_MAX && len > (long long)SIZE_MAX)) {\n            __redisReaderSetError(r,REDIS_ERR_PROTOCOL,\n                    \"Bulk string length out of range\");\n            return REDIS_ERR;\n        }\n\n        if (len == -1) {\n            /* The nil object can always be created. */\n            if (r->fn && r->fn->createNil)\n                obj = r->fn->createNil(cur);\n            else\n                obj = (void*)REDIS_REPLY_NIL;\n            success = 1;\n        } else {\n            /* Only continue when the buffer contains the entire bulk item. */\n            bytelen += len+2; /* include \\r\\n */\n            if (r->pos+bytelen <= r->len) {\n                if ((cur->type == REDIS_REPLY_VERB && len < 4) ||\n                    (cur->type == REDIS_REPLY_VERB && s[5] != ':'))\n                {\n                    __redisReaderSetError(r,REDIS_ERR_PROTOCOL,\n                            \"Verbatim string 4 bytes of content type are \"\n                            \"missing or incorrectly encoded.\");\n                    return REDIS_ERR;\n                }\n                if (r->fn && r->fn->createString)\n                    obj = r->fn->createString(cur,s+2,len);\n                else\n                    obj = (void*)(uintptr_t)cur->type;\n                success = 1;\n            }\n        }\n\n        /* Proceed when obj was created. */\n        if (success) {\n            if (obj == NULL) {\n                __redisReaderSetErrorOOM(r);\n                return REDIS_ERR;\n            }\n\n            r->pos += bytelen;\n\n            /* Set reply if this is the root object. */\n            if (r->ridx == 0) r->reply = obj;\n            moveToNextTask(r);\n            return REDIS_OK;\n        }\n    }\n\n    return REDIS_ERR;\n}",
+      "实际讲解": {
+        "entity_id": "23fb5f9e-c1b5-52d2-9087-17ea609deb62",
+        "summary": "解析完整字符串回复并提交读取进度",
+        "details": "输入为读取器及其当前任务。查找长度行结束符，转换失败或长度小于-1、在LLONG_MAX大于SIZE_MAX时超出SIZE_MAX，均设置协议错误并返回REDIS_ERR。长度-1生成空值；否则等待长度行、载荷及末尾两字节全部到齐。逐字字符串还要求长度至少4且内容第四字节为冒号，短路条件避免短内容访问。仅当回调表及对应回调均存在时调用，否则使用类型标记。创建结果为空时进入OOM错误路径；成功才推进位置，根任务保存回复并调用任务推进函数，返回REDIS_OK。数据不足直接返回REDIS_ERR，不提交位置；本函数不检查载荷末尾两字节的具体值。",
+        "evidence": [
+          {
+            "path": "read.c",
+            "start_line": 455,
+            "end_line": 489
+          },
+          {
+            "path": "read.c",
+            "start_line": 490,
+            "end_line": 525
+          }
+        ]
+      }
+    },
+    {
+      "函数": "processAggregateItem",
+      "位置": {
+        "path": "read.c",
+        "start_line": 553,
+        "end_line": 649,
+        "start_byte": 18221,
+        "end_byte": 21235
+      },
+      "源码": "static int processAggregateItem(redisReader *r) {\n    redisReadTask *cur = r->task[r->ridx];\n    void *obj;\n    char *p;\n    long long elements;\n    int root = 0, len;\n\n    if (r->maxdepth > 0 && r->ridx >= r->maxdepth) {\n        __redisReaderSetError(r,REDIS_ERR_PROTOCOL,\n                \"Max nesting depth exceeded\");\n        return REDIS_ERR;\n    }\n\n    if (r->ridx == r->tasks - 1) {\n        if (redisReaderGrow(r) == REDIS_ERR)\n            return REDIS_ERR;\n    }\n\n    if ((p = readLine(r,&len)) != NULL) {\n        if (string2ll(p, len, &elements) == REDIS_ERR) {\n            __redisReaderSetError(r,REDIS_ERR_PROTOCOL,\n                    \"Bad multi-bulk length\");\n            return REDIS_ERR;\n        }\n\n        root = (r->ridx == 0);\n\n        if (elements < -1 || (LLONG_MAX > SIZE_MAX && elements > SIZE_MAX) ||\n            (r->maxelements > 0 && elements > r->maxelements))\n        {\n            __redisReaderSetError(r,REDIS_ERR_PROTOCOL,\n                    \"Multi-bulk length out of range\");\n            return REDIS_ERR;\n        }\n\n        if (elements == -1) {\n            if (r->fn && r->fn->createNil)\n                obj = r->fn->createNil(cur);\n            else\n                obj = (void*)REDIS_REPLY_NIL;\n\n            if (obj == NULL) {\n                __redisReaderSetErrorOOM(r);\n                return REDIS_ERR;\n            }\n\n            moveToNextTask(r);\n        } else {\n            if (cur->type == REDIS_REPLY_MAP || cur->type == REDIS_REPLY_ATTR) {\n                long long maxelements = LLONG_MAX / 2;\n                if (LLONG_MAX > SIZE_MAX &&\n                    maxelements > (long long)(SIZE_MAX / 2)) {\n                    maxelements = (long long)(SIZE_MAX / 2);\n                }\n\n                if (elements > maxelements) {\n                    __redisReaderSetError(r,REDIS_ERR_PROTOCOL,\n                            \"Multi-bulk length out of range\");\n                    return REDIS_ERR;\n                }\n\n                elements *= 2;\n            }\n\n            if (r->fn && r->fn->createArray)\n                obj = r->fn->createArray(cur,elements);\n            else\n                obj = (void*)(uintptr_t)cur->type;\n\n            if (obj == NULL) {\n                __redisReaderSetErrorOOM(r);\n                return REDIS_ERR;\n            }\n\n            /* Modify task stack when there are more than 0 elements. */\n            if (elements > 0) {\n                cur->elements = elements;\n                cur->obj = obj;\n                r->ridx++;\n                r->task[r->ridx]->type = -1;\n                r->task[r->ridx]->elements = -1;\n                r->task[r->ridx]->idx = 0;\n                r->task[r->ridx]->obj = NULL;\n                r->task[r->ridx]->parent = cur;\n                r->task[r->ridx]->privdata = r->privdata;\n            } else {\n                moveToNextTask(r);\n            }\n        }\n\n        /* Set reply if this is the root object. */\n        if (root) r->reply = obj;\n        return REDIS_OK;\n    }\n\n    return REDIS_ERR;\n}",
+      "实际讲解": {
+        "entity_id": "87dcd644-d472-5312-ac05-08411d324297",
+        "summary": "解析聚合长度并组织嵌套读取任务",
+        "details": "输入为读取器及其当前任务，返回 REDIS_OK 或 REDIS_ERR。仅当 maxdepth 大于零且当前索引达到限制时拒绝；任务栈最后一槽需要扩容，失败即返回。长度行不足也返回 REDIS_ERR；转换失败、长度小于 -1、超过适用的 SIZE_MAX 或启用的 maxelements 上限会设置协议错误。-1 使用可选 createNil，否则使用 nil 类型标记；其他长度使用可选 createArray，否则使用当前类型标记。映射和属性在额外检查倍增溢出后将长度乘二，maxelements 的前置检查针对倍增前长度。构造结果为空指针时设置内存错误。非空聚合保存对象和子项数，进入下一层并初始化子任务的类型、索引、父任务和私有数据；零长度或 nil 调用任务推进入口。根任务对象写入 reply。回调须同时满足函数表及对应成员非空；本层不检查读取器空指针，也不捕获回调异常。",
+        "evidence": [
+          {
+            "path": "read.c",
+            "start_line": 553,
+            "end_line": 586
+          },
+          {
+            "path": "read.c",
+            "start_line": 588,
+            "end_line": 625
+          },
+          {
+            "path": "read.c",
+            "start_line": 627,
+            "end_line": 649
+          }
+        ]
+      }
+    },
+    {
+      "函数": "redisReaderFeed",
+      "位置": {
+        "path": "read.c",
+        "start_line": 789,
+        "end_line": 818,
+        "start_byte": 24832,
+        "end_byte": 25615
+      },
+      "源码": "int redisReaderFeed(redisReader *r, const char *buf, size_t len) {\n    sds newbuf;\n\n    /* Return early when this reader is in an erroneous state. */\n    if (r->err)\n        return REDIS_ERR;\n\n    /* Copy the provided buffer. */\n    if (buf != NULL && len >= 1) {\n        /* Destroy internal buffer when it is empty and is quite large. */\n        if (r->len == 0 && r->maxbuf != 0 && sdsavail(r->buf) > r->maxbuf) {\n            sdsfree(r->buf);\n            r->buf = sdsempty();\n            if (r->buf == 0) goto oom;\n\n            r->pos = 0;\n        }\n\n        newbuf = sdscatlen(r->buf,buf,len);\n        if (newbuf == NULL) goto oom;\n\n        r->buf = newbuf;\n        r->len = sdslen(r->buf);\n    }\n\n    return REDIS_OK;\noom:\n    __redisReaderSetErrorOOM(r);\n    return REDIS_ERR;\n}",
+      "实际讲解": {
+        "entity_id": "a1b83243-7738-5c20-a648-4e94faee8aa3",
+        "summary": "追加输入字节并按条件回收空缓冲区",
+        "details": "输入为读取器、字节指针和长度；读取器已有错误时返回 REDIS_ERR。仅在 buf 非 NULL 且 len 至少为1时追加数据，否则无操作并返回 REDIS_OK。回收旧缓冲区还要求内部长度为0、maxbuf 非0且可用容量超过阈值；maxbuf 为0会关闭这一回收分支。重建成功后重置 pos，追加成功后更新缓冲指针和长度。重建或追加分配失败时调用内存错误处理器并返回 REDIS_ERR。本层不执行回复解析，也不检查 r 是否为 NULL。",
+        "evidence": [
+          {
+            "path": "read.c",
+            "start_line": 789,
+            "end_line": 818
+          }
+        ]
+      }
+    },
+    {
+      "函数": "redisReaderGetReply",
+      "位置": {
+        "path": "read.c",
+        "start_line": 820,
+        "end_line": 871,
+        "start_byte": 25617,
+        "end_byte": 27093
+      },
+      "源码": "int redisReaderGetReply(redisReader *r, void **reply) {\n    /* Default target pointer to NULL. */\n    if (reply != NULL)\n        *reply = NULL;\n\n    /* Return early when this reader is in an erroneous state. */\n    if (r->err)\n        return REDIS_ERR;\n\n    /* When the buffer is empty, there will never be a reply. */\n    if (r->len == 0)\n        return REDIS_OK;\n\n    /* Set first item to process when the stack is empty. */\n    if (r->ridx == -1) {\n        r->task[0]->type = -1;\n        r->task[0]->elements = -1;\n        r->task[0]->idx = -1;\n        r->task[0]->obj = NULL;\n        r->task[0]->parent = NULL;\n        r->task[0]->privdata = r->privdata;\n        r->ridx = 0;\n    }\n\n    /* Process items in reply. */\n    while (r->ridx >= 0)\n        if (processItem(r) != REDIS_OK)\n            break;\n\n    /* Return ASAP when an error occurred. */\n    if (r->err)\n        return REDIS_ERR;\n\n    /* Discard part of the buffer when we've consumed at least 1k, to avoid\n     * doing unnecessary calls to memmove() in sds.c. */\n    if (r->pos >= 1024) {\n        if (sdsrange(r->buf,r->pos,-1) < 0) return REDIS_ERR;\n        r->pos = 0;\n        r->len = sdslen(r->buf);\n    }\n\n    /* Emit a reply when there is one. */\n    if (r->ridx == -1) {\n        if (reply != NULL) {\n            *reply = r->reply;\n        } else if (r->reply != NULL && r->fn && r->fn->freeObject) {\n            r->fn->freeObject(r->reply);\n        }\n        r->reply = NULL;\n    }\n    return REDIS_OK;\n}",
+      "实际讲解": {
+        "entity_id": "48fd0364-2b4c-5bfb-936a-6cddf40326ae",
+        "summary": "推进回复处理并交付或释放完成对象",
+        "details": "输入为读取器及可选输出地址；先将有效输出地址置为 NULL。已有错误返回 REDIS_ERR，缓冲长度为0返回 REDIS_OK。任务栈空时初始化根任务并传入 privdata，随后循环调用 processItem，遇到非成功结果停止；只有 r->err 被置位才在该检查处返回错误，因此 REDIS_OK 不保证已有完整回复。消费位置至少1024时裁剪缓冲区，裁剪失败直接返回 REDIS_ERR。ridx 为 -1 时交付回复；未提供输出地址则仅在回复、操作表和释放回调均存在时释放对象，随后清空内部 reply 指针。未完成时保留处理进度。",
+        "evidence": [
+          {
+            "path": "read.c",
+            "start_line": 820,
+            "end_line": 850
+          },
+          {
+            "path": "read.c",
+            "start_line": 852,
+            "end_line": 871
+          }
+        ]
+      }
+    }
+  ],
+  "结论": "默认流程的重复职责和关键条件修订正式发布，二文件范围的用途与职责可理解；这是部分支持结果，不代表完整Hiredis客户端、其完整评测或最终用户验收通过。",
+  "复核新增模型请求": 0,
+  "执行目标代码": false,
+  "修改原始源码": false
+}

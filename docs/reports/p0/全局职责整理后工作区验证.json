@@ -1,0 +1,35 @@
+{
+  "核对时间UTC": "2026-10-12T16:27:26.121792+00:00",
+  "流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-organization/1",
+  "正常保存并重开": true,
+  "修订前": {
+    "prototype_projects": {
+      "count": 4,
+      "sha256": "347a3aa00aae891300acc2dd6b26f248be91200ef3d850451dd8eba4d1d336fe"
+    },
+    "prototype_learning": {
+      "count": 2,
+      "sha256": "adb7ae26041f6e71ddbfe74c9098123726704bcfb32ec02f4b1128b6985bb29e"
+    },
+    "requests": 13
+  },
+  "修订后": {
+    "prototype_projects": {
+      "count": 4,
+      "sha256": "347a3aa00aae891300acc2dd6b26f248be91200ef3d850451dd8eba4d1d336fe"
+    },
+    "prototype_learning": {
+      "count": 2,
+      "sha256": "adb7ae26041f6e71ddbfe74c9098123726704bcfb32ec02f4b1128b6985bb29e"
+    },
+    "requests": 13
+  },
+  "项目与学习记录全部列摘要一致": true,
+  "配置": {
+    "base_url": "https://www.cctq.ai/v1",
+    "model": "gpt-6.1-sol",
+    "stream_response": true,
+    "has_key": true
+  },
+  "新增主工作区模型请求": 0
+}

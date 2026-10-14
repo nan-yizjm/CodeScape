@@ -1,0 +1,1373 @@
+{
+  "日期": "2026-10-12",
+  "检查开始时间UTC": "2026-10-12T03:24:39.417052+00:00",
+  "样本": "spdlog-cpp",
+  "Commit": "d6c93f38a08b4ea0f8ffcfd7f7857307d5d5c3fa",
+  "范围": "缩小范围",
+  "授权": "用户允许四个固定公开样本向当前配置接收端上传并评测",
+  "接收端": "https://www.cctq.ai/v1",
+  "模型": "gpt-6-luna",
+  "流水线": "architecture/3-repairs/2-explanations/3-reads/1-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/2-index/3-ts-bindings/2-python-declarations/1",
+  "数据目录": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\.runtime\\public-model-validation\\b6c270ee-7028-43de-b489-c5e4b2513af8",
+  "原始快照hash": "d4586f715383197a4fccb3ccc33326112d0d5f8441eb5d02fbb79ab7ea70245d",
+  "实际文件": [
+    "include/spdlog/common.h",
+    "include/spdlog/logger-inl.h",
+    "include/spdlog/logger.h",
+    "include/spdlog/namespace.h"
+  ],
+  "状态": "结构检查通过，待源码质量复核",
+  "执行目标代码": false,
+  "进度": {
+    "phase": "completed",
+    "completed": 1,
+    "total": 1,
+    "detail": "分批分析完成"
+  },
+  "耗时秒": 634.7,
+  "project_id": "d47aa2c0-b71a-4937-b92f-9ebcf15c711c",
+  "version_id": "85ffdf22-ae07-4bdb-b5fc-4e7819c1af05",
+  "实际快照hash": "b9819dac7628d7dc61c66503f9562275c0007159d96c0f59e51efd6f5414310c",
+  "scope_hash": "64d8fef1eca2d21c0868fb5cb2988d0e4d169bafe184ba5bc3727938f0682e93",
+  "错误": null,
+  "architecture": {
+    "modules": [
+      {
+        "id": "m1",
+        "parent_id": null,
+        "name": "兼容与类型转换工具",
+        "summary": "提供旧标准下的对象唯一所有权构造，以及按类型是否相同选择转换或原值返回的编译期辅助。",
+        "entity_ids": [
+          "dfa66a2c-52c9-557e-b9dd-0d6cd6283816",
+          "dbc259e5-9570-5e01-ab68-a99bbab408bc",
+          "5dc3c5e5-139f-5d66-a76a-de8577b6e5e9"
+        ],
+        "code_paths": [
+          "include/spdlog/common.h"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "m2",
+        "parent_id": null,
+        "name": "Logger 状态与交换",
+        "summary": "提供日志级别读写及对象交换；交换函数转交给成员实现。",
+        "entity_ids": [
+          "41d8477f-4360-5688-9464-beed3eda2a8d",
+          "3e0df8f2-227d-56b2-9c3f-1d891f6ecf3b",
+          "8b3f2e8b-4c41-5fe1-aa1b-73a80d846de2"
+        ],
+        "code_paths": [
+          "include/spdlog/logger-inl.h"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "m3",
+        "parent_id": null,
+        "name": "格式器配置",
+        "summary": "设置 sink 格式器；模式配置会创建模式格式器后交由统一设置逻辑处理。",
+        "entity_ids": [
+          "aec49714-a1bb-537f-b9c4-0669320070a5",
+          "ac29f904-a44e-53c6-8e62-5a151a582940"
+        ],
+        "code_paths": [
+          "include/spdlog/logger-inl.h"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "m4",
+        "parent_id": null,
+        "name": "回溯缓冲控制",
+        "summary": "控制回溯缓冲的启用、停用及内容转储。",
+        "entity_ids": [
+          "b99208c3-de4a-52a6-916a-d86f1429fc7e",
+          "895ecb51-8978-552f-872c-92e9fc663042",
+          "e8b0b4ba-3101-569f-a5ba-1e3f88e5a690"
+        ],
+        "code_paths": [
+          "include/spdlog/logger-inl.h"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "m5",
+        "parent_id": null,
+        "name": "刷新控制与 sink 访问",
+        "summary": "提供刷新操作和刷新级别配置，并暴露 sink 集合的只读引用。",
+        "entity_ids": [
+          "b963760b-9039-503f-8eba-7967d0304bfd",
+          "38910276-8ab0-534c-a1ce-178162818481",
+          "510be772-9496-5c55-bbd8-5c8d8e002782",
+          "89fa7dd1-0e4e-5d18-b26c-277fd569cd75"
+        ],
+        "code_paths": [
+          "include/spdlog/logger-inl.h"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "m6",
+        "parent_id": null,
+        "name": "logger 状态与复制配置",
+        "summary": "提供 sink 容器访问、错误处理器设置和同配置 logger 克隆；克隆时使用传入名称覆盖副本名称。",
+        "entity_ids": [
+          "503116f5-a540-5852-ac7c-c75998fad23f",
+          "90a050c7-25ce-51dc-a05d-366e93306b78",
+          "28d637e0-cc6f-53c8-bc07-83358016d4b1"
+        ],
+        "code_paths": [
+          "include/spdlog/logger-inl.h"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "m7",
+        "parent_id": null,
+        "name": "日志分发与刷新",
+        "summary": "按日志开关向 sinks 分发消息并可另行保存回溯记录；sink 分发按各 sink 的级别过滤，之后依据刷新级别决定是否刷新。",
+        "entity_ids": [
+          "5a4513d8-da9f-5282-9751-1a9451728621",
+          "7600bbe8-5f7a-55b8-82f6-8f40de4aa7cd",
+          "4c8c92cf-3aa1-5ae6-b1b4-42e60ea18662",
+          "cc7148b2-3b42-5038-b02d-0243f93ea3b2"
+        ],
+        "code_paths": [
+          "include/spdlog/logger-inl.h"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "m8",
+        "parent_id": null,
+        "name": "回溯输出与错误报告",
+        "summary": "在回溯启用且记录非空时输出边界标记并逐条分发记录；错误处理优先调用自定义处理器，否则限频输出带时间与 logger 名称的报告。",
+        "entity_ids": [
+          "d4aa6c46-53aa-54ac-8868-910ea58e8d09",
+          "8a897d51-2ea1-5817-a5d3-dffc98368faa"
+        ],
+        "code_paths": [
+          "include/spdlog/logger-inl.h"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "m9",
+        "parent_id": null,
+        "name": "日志提交与级别便捷接口",
+        "summary": "提供多种输入形式的日志提交，并按级别转发格式化消息；提交路径会检查级别与回溯状态。",
+        "entity_ids": [
+          "7392c7be-0bff-5923-9b11-7b89dd969c0f",
+          "e21d5ff6-d3dd-5200-bfc3-1edf91f93427",
+          "977e9ca2-7558-5a0f-a689-9a7e1de6d6a4",
+          "c5e23440-4a31-5e83-bb73-8c53074e6acb",
+          "46c4f84c-9853-58a2-893e-8ccb5e9483d9",
+          "4209bce3-9ca0-5596-9ddc-7d54c42eae49",
+          "80f766e5-00b8-5085-84e6-196535b25503",
+          "8da2be52-7516-5103-a6ea-1de9e0db5a24",
+          "3949b5d2-32d2-57f8-9d4e-32fa96b075b8",
+          "40e753f6-565b-58d8-bd86-056d4dc4cde9",
+          "5facc0a6-9d68-5b1a-986a-3b78260f163f",
+          "84dc5087-3f4c-5944-be4f-c4b70455ba22"
+        ],
+        "code_paths": [
+          "include/spdlog/logger.h"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "m10",
+        "parent_id": null,
+        "name": "宽字符日志转换与提交",
+        "summary": "接收宽字符消息及格式参数，转换或转发为日志处理；部分重载会先检查日志级别和回溯器状态。",
+        "entity_ids": [
+          "4e1c5854-402e-5cd1-a880-9d8743a76ad5",
+          "5de90dce-70bf-5105-8b56-b24f360062a0",
+          "63deea68-bca3-56ce-898a-4a46e192085c",
+          "6935ae00-b487-5f14-b1b0-433da7092576",
+          "13c5b2ff-b38f-56e2-8f73-2ae3db8310ea"
+        ],
+        "code_paths": [
+          "include/spdlog/logger.h"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "m11",
+        "parent_id": null,
+        "name": "宽字符级别便捷日志接口",
+        "summary": "将各级别便捷接口的格式参数转交日志重载；critical另属窄字符重载，见下模块。",
+        "entity_ids": [
+          "44b0976f-657c-5f67-8edb-44cf171e753e",
+          "d54157af-70a5-50b4-b73a-746881088e4c",
+          "5c979014-9659-555a-b15a-d3b155c9facc",
+          "b63c1a50-d6f7-50db-894e-0f2e047f1f3c",
+          "f419ed5c-61e4-5336-9cf4-5f3307e0b205",
+          "af6ef468-e4a5-591a-945a-355b008c905a"
+        ],
+        "code_paths": [
+          "include/spdlog/logger.h"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "m12",
+        "parent_id": null,
+        "name": "窄字符严重级别接口",
+        "summary": "critical以严重级别转交格式参数；该重载不受宽字符支持条件包围。",
+        "entity_ids": [
+          "ed5d2120-48bb-5e29-8393-e813313ba785"
+        ],
+        "code_paths": [
+          "include/spdlog/logger.h"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "m13",
+        "parent_id": null,
+        "name": "按级别记录消息",
+        "summary": "提供六个按日志级别分类的消息入口，均将消息转交通用日志接口；具体格式处理与输出由后续日志流程完成。",
+        "entity_ids": [
+          "afd7d9f4-f44b-5d09-ad23-501ab335135a",
+          "f5732f01-2179-5812-9206-fb86e7400048",
+          "58af1ecd-712e-575c-8a91-0dc9b4f398bd",
+          "e1790913-211e-599b-8a0d-98036e97b648",
+          "b5c5b336-6071-5e47-b18b-0543c367dafb",
+          "b8b85d79-2f3c-5fcc-8609-08f9fd5dfbf2"
+        ],
+        "code_paths": [
+          "include/spdlog/logger.h"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "m14",
+        "parent_id": null,
+        "name": "日志级别与回溯状态判定",
+        "summary": "依据当前级别阈值判断消息是否可记录，并查询回溯记录是否启用。",
+        "entity_ids": [
+          "e82a8ad1-f001-56ab-8100-66423e122e6a",
+          "c569328e-c9b1-5df3-a4ca-81a7e0deacfa"
+        ],
+        "code_paths": [
+          "include/spdlog/logger.h"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "m15",
+        "parent_id": null,
+        "name": "格式化并提交日志",
+        "summary": "两个重载先检查日志级别与回溯状态，再格式化消息并交给后续提交逻辑；宽字符重载受编译宏控制，并额外转换为 UTF-8。",
+        "entity_ids": [
+          "7d435e5b-9ce0-58be-8651-39cc0d612334",
+          "ab016e5b-55a0-5b14-b0f9-72d4664429ca"
+        ],
+        "code_paths": [
+          "include/spdlog/logger.h"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "m16",
+        "parent_id": null,
+        "name": "可配置命名空间宏",
+        "summary": "定义外层命名空间名称及其开始、结束宏；未预先定义时提供默认的 spdlog 命名空间展开形式。",
+        "entity_ids": [],
+        "code_paths": [
+          "include/spdlog/namespace.h"
+        ],
+        "incomplete": false
+      }
+    ],
+    "overview": {
+      "introduction": "这是一个面向 C++ 开发者的日志库，帮助应用按级别记录消息，并配置日志格式、输出端和相关行为。它也提供回溯记录功能，便于在需要时查看近期日志。",
+      "capabilities": [
+        "按不同日志级别提交消息，并检查当前级别是否允许记录",
+        "配置日志格式、输出端及刷新级别",
+        "启用回溯缓冲，并在满足条件时转储其中记录",
+        "设置错误处理方式，克隆具有相同配置的 logger"
+      ],
+      "principle": "日志消息经过级别与回溯状态检查后进行格式化，再交由后续提交流程分发；各输出端可按自身级别过滤消息，刷新则依据刷新级别决定。回溯记录可单独保存，并在启用且有记录时输出；宽字符处理受编译配置影响。",
+      "limitations": [
+        "输出端的具体行为取决于未完整展示的后端实现，不能据此确认最终输出效果。",
+        "宽字符支持、格式化路径及部分错误报告行为可能随构建配置变化。",
+        "材料不足以确定异常在所有路径中的捕获与传播边界。"
+      ],
+      "synthesized": true,
+      "analysis_notes": [
+        "make_unique 实现仅在非 C++14 条件下生效，且明确不支持数组类型",
+        "头文件片段不能证明各构建配置下的完整运行行为",
+        "快照只展示此文件片段，未提供被调用组件的完整实现。",
+        "未据此推断格式器设置或刷新操作的运行时失败行为。",
+        "异常宏的定义未包含在本批源码中，不能据此确定异常捕获与传播行为。",
+        "错误报告的 R 环境条件编译分支取决于构建配置。",
+        "本批只显示 logger 内联实现，不能据此概括完整运行时行为。",
+        "部分内部调用的具体目标未由本批静态关系确认。",
+        "编译宏可能影响格式化路径；此快照不代表实际构建配置。",
+        "后端 sink 执行细节不在本批代码范围内。",
+        "未提供运行时配置与日志后端实现，不能据此判断最终输出行为。",
+        "宽字符接口依赖 SPDLOG_WCHAR_TO_UTF8_SUPPORT 编译条件。",
+        "格式化分支还受标准格式库版本条件影响。",
+        "本片段未展示日志消息最终写入各输出端的实现。",
+        "异常包装宏的定义未提供，无法据此确定异常处理边界。",
+        "实际构建配置可能影响宽字符支持、格式库分支和命名空间展开。",
+        "源码范围由 6 批受控上下文完成归纳，跨批次模块边界可能需要人工复核。"
+      ]
+    },
+    "explanations": [
+      {
+        "entity_id": "dfa66a2c-52c9-557e-b9dd-0d6cd6283816",
+        "summary": "为 C++14 之前创建非数组对象并返回其 unique_ptr。",
+        "details": "仅处于 C++14 之前的条件分支时定义此模板；先以 static_assert 拒绝数组类型，再将转发的构造参数传给 new T，并用所得指针构造 std::unique_ptr<T> 返回。数组类型会触发编译期断言；对象构造及分配的异常行为未在此函数内捕获。",
+        "evidence": [
+          {
+            "path": "include/spdlog/common.h",
+            "start_line": 353,
+            "end_line": 357
+          }
+        ]
+      },
+      {
+        "entity_id": "dbc259e5-9570-5e01-ab68-a99bbab408bc",
+        "summary": "目标类型与输入类型不同时执行 static_cast。",
+        "details": "模板启用条件要求 T 与 U 不同；函数接收 U value，将其 static_cast 为 T 并返回。转换是否合法及其具体效果取决于类型规则；此实现没有额外失败回退。",
+        "evidence": [
+          {
+            "path": "include/spdlog/common.h",
+            "start_line": 361,
+            "end_line": 364
+          }
+        ]
+      },
+      {
+        "entity_id": "5dc3c5e5-139f-5d66-a76a-de8577b6e5e9",
+        "summary": "目标类型与输入类型相同时直接返回输入值。",
+        "details": "模板启用条件要求 T 与 U 相同；函数不做显式转换，直接返回 value。",
+        "evidence": [
+          {
+            "path": "include/spdlog/common.h",
+            "start_line": 366,
+            "end_line": 369
+          }
+        ]
+      },
+      {
+        "entity_id": "41d8477f-4360-5688-9464-beed3eda2a8d",
+        "summary": "将两个 logger 的交换操作转交给成员函数。",
+        "details": "接收两个 logger 引用并调用 a.swap(b)；函数声明为 noexcept。具体交换的状态内容由成员实现决定。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger-inl.h",
+            "start_line": 60,
+            "end_line": 60
+          }
+        ]
+      },
+      {
+        "entity_id": "3e0df8f2-227d-56b2-9c3f-1d891f6ecf3b",
+        "summary": "将给定日志级别存入 logger 的级别状态。",
+        "details": "接收 level_enum 并通过 level_.store(log_level) 更新原子级别状态；函数不返回值。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger-inl.h",
+            "start_line": 62,
+            "end_line": 62
+          }
+        ]
+      },
+      {
+        "entity_id": "8b3f2e8b-4c41-5fe1-aa1b-73a80d846de2",
+        "summary": "读取 logger 当前级别并转换为枚举类型。",
+        "details": "从 level_ 以 memory_order_relaxed 加载值，再转换为 level::level_enum 返回；此实现未展示额外校验。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger-inl.h",
+            "start_line": 64,
+            "end_line": 66
+          }
+        ]
+      },
+      {
+        "entity_id": "aec49714-a1bb-537f-b9c4-0669320070a5",
+        "summary": "为各 sink 设置格式器，并为非末尾 sink 克隆实例。",
+        "details": "遍历 sinks_；非末尾元素使用 f->clone() 设置独立格式器，末尾元素接收移动后的 f 并结束循环。空集合时循环体不执行。函数未显式处理空指针或克隆失败。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger-inl.h",
+            "start_line": 72,
+            "end_line": 82
+          }
+        ]
+      },
+      {
+        "entity_id": "ac29f904-a44e-53c6-8e62-5a151a582940",
+        "summary": "根据模式和时间类型创建格式器并应用到 sink。",
+        "details": "将传入的 pattern 移入 pattern_formatter 构造过程，同时传入 time_type；再把新格式器移动给 set_formatter。返回值为空，构造或后续设置的失败处理未在此函数中展示。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger-inl.h",
+            "start_line": 84,
+            "end_line": 87
+          }
+        ]
+      },
+      {
+        "entity_id": "b99208c3-de4a-52a6-916a-d86f1429fc7e",
+        "summary": "按指定消息容量启用回溯记录。",
+        "details": "接收 n_messages 并原样传给 tracer_.enable；函数本身不返回值，容量的具体解释由 tracer 实现决定。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger-inl.h",
+            "start_line": 90,
+            "end_line": 90
+          }
+        ]
+      },
+      {
+        "entity_id": "895ecb51-8978-552f-872c-92e9fc663042",
+        "summary": "委托回溯组件停用回溯记录。",
+        "details": "无参数调用 tracer_.disable()，不返回值；恢复 sink 或级别等具体副作用未在此函数体内展开。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger-inl.h",
+            "start_line": 93,
+            "end_line": 93
+          }
+        ]
+      },
+      {
+        "entity_id": "e8b0b4ba-3101-569f-a5ba-1e3f88e5a690",
+        "summary": "委托内部辅助函数转储回溯内容。",
+        "details": "无参数调用 dump_backtrace_()，函数自身不返回值；转储过程和失败处理未在此实现中展示。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger-inl.h",
+            "start_line": 95,
+            "end_line": 95
+          }
+        ]
+      },
+      {
+        "entity_id": "b963760b-9039-503f-8eba-7967d0304bfd",
+        "summary": "委托内部刷新函数执行刷新。",
+        "details": "无参数调用 flush_()，不返回值；实际刷新对象及失败处理由被调用实现决定。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger-inl.h",
+            "start_line": 98,
+            "end_line": 98
+          }
+        ]
+      },
+      {
+        "entity_id": "38910276-8ab0-534c-a1ce-178162818481",
+        "summary": "设置触发刷新的日志级别。",
+        "details": "接收 level_enum 并存入 flush_level_；函数不返回值，触发条件的比较逻辑未在此处展示。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger-inl.h",
+            "start_line": 100,
+            "end_line": 100
+          }
+        ]
+      },
+      {
+        "entity_id": "510be772-9496-5c55-bbd8-5c8d8e002782",
+        "summary": "读取刷新级别并转换为枚举类型。",
+        "details": "以 memory_order_relaxed 从 flush_level_ 加载值，转换为 level::level_enum 后返回；未展示额外校验。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger-inl.h",
+            "start_line": 102,
+            "end_line": 104
+          }
+        ]
+      },
+      {
+        "entity_id": "89fa7dd1-0e4e-5d18-b26c-277fd569cd75",
+        "summary": "返回 logger 所持 sink 集合的只读引用。",
+        "details": "直接返回 sinks_ 的 const 引用，不复制集合；引用生命周期与 logger 对象相关。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger-inl.h",
+            "start_line": 107,
+            "end_line": 107
+          }
+        ]
+      },
+      {
+        "entity_id": "503116f5-a540-5852-ac7c-c75998fad23f",
+        "summary": "返回 logger 持有的 sink 指针容器引用。",
+        "details": "无输入；直接返回成员 sinks_ 的可变引用，因此调用方可访问并修改该容器。实现没有复制容器或额外校验。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger-inl.h",
+            "start_line": 109,
+            "end_line": 109
+          }
+        ]
+      },
+      {
+        "entity_id": "90a050c7-25ce-51dc-a05d-366e93306b78",
+        "summary": "将传入错误处理器移入 logger 的自定义处理器成员。",
+        "details": "接收 err_handler 参数，并通过 std::move 赋给 custom_err_handler_；函数无返回值。源码未显示对空处理器的拒绝或其他验证。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger-inl.h",
+            "start_line": 112,
+            "end_line": 114
+          }
+        ]
+      },
+      {
+        "entity_id": "28d637e0-cc6f-53c8-bc07-83358016d4b1",
+        "summary": "复制当前 logger，再用参数覆盖副本名称并返回共享指针。",
+        "details": "接收 logger_name，先以当前对象构造新的 logger，再将副本的 name_ 移为该参数，最后返回新对象的 shared_ptr。源码未显示复制失败时的处理。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger-inl.h",
+            "start_line": 117,
+            "end_line": 121
+          }
+        ]
+      },
+      {
+        "entity_id": "5a4513d8-da9f-5282-9751-1a9451728621",
+        "summary": "根据两个独立开关分发日志并保存回溯记录。",
+        "details": "接收日志消息及 log_enabled、traceback_enabled。log_enabled 为真时调用 sink_it_；traceback_enabled 为真时将消息压入 tracer_。两项判断互相独立，函数无返回值。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger-inl.h",
+            "start_line": 124,
+            "end_line": 133
+          }
+        ]
+      },
+      {
+        "entity_id": "7600bbe8-5f7a-55b8-82f6-8f40de4aa7cd",
+        "summary": "逐个向符合级别条件的 sink 写入消息，并按刷新条件刷新。",
+        "details": "遍历 sinks_，每个 sink 只有在 should_log(msg.level) 为真时才执行 log；写入外围的异常宏具体处理行为无法由本段源码确定。循环后若 should_flush_(msg) 为真则调用 flush_，函数无返回值。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger-inl.h",
+            "start_line": 135,
+            "end_line": 146
+          }
+        ]
+      },
+      {
+        "entity_id": "4c8c92cf-3aa1-5ae6-b1b4-42e60ea18662",
+        "summary": "遍历所有 sinks 并请求刷新。",
+        "details": "无输入；逐个调用 sink 的 flush，调用外围有异常宏，但其捕获类型、是否继续循环及异常传播边界不能从本段确定。函数无返回值。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger-inl.h",
+            "start_line": 148,
+            "end_line": 153
+          }
+        ]
+      },
+      {
+        "entity_id": "d4aa6c46-53aa-54ac-8868-910ea58e8d09",
+        "summary": "在回溯启用且非空时输出边界标记并分发缓存消息。",
+        "details": "无输入。仅当 tracer_ 已启用且不为空时，先分发回溯开始标记，再弹出并分发缓存消息，最后分发结束标记；条件不满足时不执行这些操作。异常边界未由本段说明。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger-inl.h",
+            "start_line": 155,
+            "end_line": 164
+          }
+        ]
+      },
+      {
+        "entity_id": "cc7148b2-3b42-5038-b02d-0243f93ea3b2",
+        "summary": "判断消息是否达到刷新级别，同时排除 off 级别。",
+        "details": "接收日志消息；仅当 msg.level 不低于 flush_level() 且不等于 level::off 时返回 true，否则返回 false。刷新级别由函数调用读取。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger-inl.h",
+            "start_line": 166,
+            "end_line": 168
+          }
+        ]
+      },
+      {
+        "entity_id": "8a897d51-2ea1-5817-a5d3-dffc98368faa",
+        "summary": "优先调用自定义错误处理器，否则限频输出默认错误报告。",
+        "details": "接收错误文本。custom_err_handler_ 存在时调用它并不进入默认报告分支；否则在互斥锁保护下递增静态计数，距上次报告不足一秒则提前返回。达到间隔后更新时间、格式化本地时间，并按 R 环境编译条件输出到相应错误输出接口。异常行为未在本函数中捕获。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger-inl.h",
+            "start_line": 170,
+            "end_line": 176
+          },
+          {
+            "path": "include/spdlog/logger-inl.h",
+            "start_line": 177,
+            "end_line": 187
+          },
+          {
+            "path": "include/spdlog/logger-inl.h",
+            "start_line": 188,
+            "end_line": 196
+          }
+        ]
+      },
+      {
+        "entity_id": "7392c7be-0bff-5923-9b11-7b89dd969c0f",
+        "summary": "带来源位置的格式化日志入口，将格式化内容交给内部提交路径。",
+        "details": "接收来源位置、级别、格式字符串及参数包；在指定标准格式配置下透传格式对象，否则取其底层格式串，再转发参数。内部调用的具体目标绑定未在本批确认。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger.h",
+            "start_line": 78,
+            "end_line": 85
+          }
+        ]
+      },
+      {
+        "entity_id": "e21d5ff6-d3dd-5200-bfc3-1edf91f93427",
+        "summary": "省略来源位置的格式化日志入口，使用默认来源位置转发。",
+        "details": "接收级别、格式对象和参数包，构造空的 source_loc 并转交带来源位置的 log 重载；具体格式处理由被转发入口决定。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger.h",
+            "start_line": 87,
+            "end_line": 90
+          }
+        ]
+      },
+      {
+        "entity_id": "977e9ca2-7558-5a0f-a689-9a7e1de6d6a4",
+        "summary": "将普通消息按默认来源位置转交日志入口。",
+        "details": "接收级别和常量消息引用，以空 source_loc 调用带来源位置的 log 重载；本函数不自行格式化或检查级别。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger.h",
+            "start_line": 92,
+            "end_line": 95
+          }
+        ]
+      },
+      {
+        "entity_id": "c5e23440-4a31-5e83-bb73-8c53074e6acb",
+        "summary": "把不可转换为格式字符串的消息包装成占位格式后转发。",
+        "details": "接收来源位置、级别和消息引用；模板约束排除可转换为任意格式字符串的类型，函数以“{}”格式和原消息转交日志入口。该约束不满足时此重载不参与匹配。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger.h",
+            "start_line": 98,
+            "end_line": 103
+          }
+        ]
+      },
+      {
+        "entity_id": "46c4f84c-9853-58a2-893e-8ccb5e9483d9",
+        "summary": "按指定时间提交字符串视图消息，并保留回溯所需消息。",
+        "details": "接收显式时间、来源位置、级别和消息视图；分别检查 should_log 与 tracer_.enabled，二者均为假时直接返回。否则构造带时间的 log_msg，并将日志启用与回溯启用状态传入提交路径。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger.h",
+            "start_line": 105,
+            "end_line": 117
+          }
+        ]
+      },
+      {
+        "entity_id": "4209bce3-9ca0-5596-9ddc-7d54c42eae49",
+        "summary": "提交当前时间语义下的字符串视图日志消息。",
+        "details": "接收来源位置、级别和消息视图；若日志级别未启用且回溯器也未启用则返回，否则构造 log_msg 并将两种启用状态传给提交路径。此重载未显式接收日志时间。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger.h",
+            "start_line": 119,
+            "end_line": 128
+          }
+        ]
+      },
+      {
+        "entity_id": "80f766e5-00b8-5085-84e6-196535b25503",
+        "summary": "省略来源位置的字符串视图日志入口。",
+        "details": "接收级别和消息视图，以空 source_loc 转发给带来源位置的字符串视图重载；是否提交由该重载的级别与回溯检查决定。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger.h",
+            "start_line": 130,
+            "end_line": 130
+          }
+        ]
+      },
+      {
+        "entity_id": "8da2be52-7516-5103-a6ea-1de9e0db5a24",
+        "summary": "以 trace 级别转发格式化日志参数。",
+        "details": "接收格式对象和参数包，将固定的 trace 级别、格式对象及转发后的参数交给通用 log 入口；过滤和提交行为由该入口处理。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger.h",
+            "start_line": 132,
+            "end_line": 135
+          }
+        ]
+      },
+      {
+        "entity_id": "3949b5d2-32d2-57f8-9d4e-32fa96b075b8",
+        "summary": "以 debug 级别转发格式化日志参数。",
+        "details": "接收格式对象和参数包，以 debug 级别调用通用 log 入口并转发参数；本函数不单独执行级别筛选。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger.h",
+            "start_line": 137,
+            "end_line": 140
+          }
+        ]
+      },
+      {
+        "entity_id": "40e753f6-565b-58d8-bd86-056d4dc4cde9",
+        "summary": "以 info 级别转发格式化日志参数。",
+        "details": "接收格式对象和参数包，以 info 级别调用通用 log 入口并转发参数；后续日志处理由通用入口负责。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger.h",
+            "start_line": 142,
+            "end_line": 145
+          }
+        ]
+      },
+      {
+        "entity_id": "5facc0a6-9d68-5b1a-986a-3b78260f163f",
+        "summary": "以 warn 级别转发格式化日志参数。",
+        "details": "接收格式对象和参数包，以 warn 级别调用通用 log 入口并转发参数；级别筛选与消息提交不在此包装函数内实现。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger.h",
+            "start_line": 147,
+            "end_line": 150
+          }
+        ]
+      },
+      {
+        "entity_id": "84dc5087-3f4c-5944-be4f-c4b70455ba22",
+        "summary": "以 err 级别转发格式化日志参数。",
+        "details": "接收格式对象和参数包，以 err 级别调用通用 log 入口并转发参数；具体提交和可能的错误处理由后续路径决定。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger.h",
+            "start_line": 152,
+            "end_line": 155
+          }
+        ]
+      },
+      {
+        "entity_id": "ed5d2120-48bb-5e29-8393-e813313ba785",
+        "summary": "以 critical 级别转交格式化日志参数。",
+        "details": "接收窄字符格式串及可变参数，将级别设为 critical 并转交 log；本实现未显示额外过滤或异常处理。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger.h",
+            "start_line": 157,
+            "end_line": 160
+          }
+        ]
+      },
+      {
+        "entity_id": "4e1c5854-402e-5cd1-a880-9d8743a76ad5",
+        "summary": "处理带来源位置的宽字符格式日志。",
+        "details": "接收来源、级别、格式串和参数；当使用标准格式且库版本低于 202207L 时转交 fmt，否则传递 fmt.get()。仅在宽字符支持编译条件下存在。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger.h",
+            "start_line": 163,
+            "end_line": 170
+          }
+        ]
+      },
+      {
+        "entity_id": "5de90dce-70bf-5105-8b56-b24f360062a0",
+        "summary": "为宽字符格式日志补默认来源位置。",
+        "details": "接收级别、宽字符格式串及参数，以空的 source_loc 调用带来源位置的重载；接口受宽字符支持编译条件控制。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger.h",
+            "start_line": 172,
+            "end_line": 175
+          }
+        ]
+      },
+      {
+        "entity_id": "63deea68-bca3-56ce-898a-4a46e192085c",
+        "summary": "按指定时间处理宽字符日志消息。",
+        "details": "先计算日志级别是否启用及回溯器是否启用；两者都未启用时提前返回。否则将消息转换为 UTF-8，构造带指定时间的日志消息并提交；转换及提交异常行为在此实现中未处理。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger.h",
+            "start_line": 177,
+            "end_line": 188
+          },
+          {
+            "path": "include/spdlog/logger.h",
+            "start_line": 189,
+            "end_line": 191
+          }
+        ]
+      },
+      {
+        "entity_id": "6935ae00-b487-5f14-b1b0-433da7092576",
+        "summary": "处理带来源位置的宽字符文本消息。",
+        "details": "日志级别未启用且回溯器也未启用时返回；否则转换宽字符文本为 UTF-8，构造并提交日志消息。接口受宽字符支持编译条件控制。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger.h",
+            "start_line": 193,
+            "end_line": 204
+          }
+        ]
+      },
+      {
+        "entity_id": "13c5b2ff-b38f-56e2-8f73-2ae3db8310ea",
+        "summary": "为宽字符文本日志补默认来源位置。",
+        "details": "以空的 source_loc 转交级别和宽字符消息给带来源位置的重载；实现仅一行，且受宽字符支持编译条件控制。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger.h",
+            "start_line": 206,
+            "end_line": 206
+          }
+        ]
+      },
+      {
+        "entity_id": "44b0976f-657c-5f67-8edb-44cf171e753e",
+        "summary": "以 trace 级别转交宽字符格式日志。",
+        "details": "接收宽字符格式串和可变参数，以 trace 级别转交 log；接口受宽字符支持编译条件控制。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger.h",
+            "start_line": 208,
+            "end_line": 211
+          }
+        ]
+      },
+      {
+        "entity_id": "d54157af-70a5-50b4-b73a-746881088e4c",
+        "summary": "以 debug 级别转交宽字符格式日志。",
+        "details": "接收宽字符格式串和可变参数，以 debug 级别转交 log；接口受宽字符支持编译条件控制。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger.h",
+            "start_line": 213,
+            "end_line": 216
+          }
+        ]
+      },
+      {
+        "entity_id": "5c979014-9659-555a-b15a-d3b155c9facc",
+        "summary": "以 info 级别转交宽字符格式日志。",
+        "details": "接收宽字符格式串和可变参数，以 info 级别转交 log；接口受宽字符支持编译条件控制。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger.h",
+            "start_line": 218,
+            "end_line": 221
+          }
+        ]
+      },
+      {
+        "entity_id": "b63c1a50-d6f7-50db-894e-0f2e047f1f3c",
+        "summary": "以 warn 级别转交宽字符格式日志。",
+        "details": "接收宽字符格式串和可变参数，以 warn 级别转交 log；接口受宽字符支持编译条件控制。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger.h",
+            "start_line": 223,
+            "end_line": 226
+          }
+        ]
+      },
+      {
+        "entity_id": "f419ed5c-61e4-5336-9cf4-5f3307e0b205",
+        "summary": "以 err 级别转交宽字符格式日志。",
+        "details": "接收宽字符格式串和可变参数，以 err 级别转交 log；接口受宽字符支持编译条件控制。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger.h",
+            "start_line": 228,
+            "end_line": 231
+          }
+        ]
+      },
+      {
+        "entity_id": "af6ef468-e4a5-591a-945a-355b008c905a",
+        "summary": "以 critical 级别转交宽字符格式日志。",
+        "details": "接收宽字符格式串和可变参数，以 critical 级别转交 log；接口受宽字符支持编译条件控制。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger.h",
+            "start_line": 233,
+            "end_line": 236
+          }
+        ]
+      },
+      {
+        "entity_id": "afd7d9f4-f44b-5d09-ad23-501ab335135a",
+        "summary": "将消息交由通用日志接口按 trace 级别记录。",
+        "details": "接收常量引用消息，不在此函数中执行格式化或输出；以 trace 级别调用通用 log 接口。后续处理不在本函数实现内。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger.h",
+            "start_line": 239,
+            "end_line": 242
+          }
+        ]
+      },
+      {
+        "entity_id": "f5732f01-2179-5812-9206-fb86e7400048",
+        "summary": "将消息交由通用日志接口按 debug 级别记录。",
+        "details": "接收常量引用消息，并以 debug 级别转交通用 log 接口；格式化与后续记录行为由被调用接口处理，本函数不直接执行。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger.h",
+            "start_line": 244,
+            "end_line": 247
+          }
+        ]
+      },
+      {
+        "entity_id": "58af1ecd-712e-575c-8a91-0dc9b4f398bd",
+        "summary": "将消息交由通用日志接口按 info 级别记录。",
+        "details": "接收常量引用消息，并以 info 级别转交通用 log 接口；本函数没有额外分支，消息格式化和记录细节不在此实现中。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger.h",
+            "start_line": 249,
+            "end_line": 252
+          }
+        ]
+      },
+      {
+        "entity_id": "e1790913-211e-599b-8a0d-98036e97b648",
+        "summary": "将消息交由通用日志接口按 warn 级别记录。",
+        "details": "接收常量引用消息，以 warn 级别调用通用 log 接口；本函数未展示格式化或输出过程，也未定义额外条件分支。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger.h",
+            "start_line": 254,
+            "end_line": 257
+          }
+        ]
+      },
+      {
+        "entity_id": "b5c5b336-6071-5e47-b18b-0543c367dafb",
+        "summary": "将消息交由通用日志接口按 err 级别记录。",
+        "details": "接收常量引用消息，并以 level::err 而非名为 error 的等级枚举值调用通用 log 接口；后续行为不在本函数实现中。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger.h",
+            "start_line": 259,
+            "end_line": 262
+          }
+        ]
+      },
+      {
+        "entity_id": "b8b85d79-2f3c-5fcc-8609-08f9fd5dfbf2",
+        "summary": "将消息交由通用日志接口按 critical 级别记录。",
+        "details": "接收常量引用消息，以 critical 级别调用通用 log 接口；本函数不包含其他条件、格式化或输出逻辑。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger.h",
+            "start_line": 264,
+            "end_line": 267
+          }
+        ]
+      },
+      {
+        "entity_id": "e82a8ad1-f001-56ab-8100-66423e122e6a",
+        "summary": "比较消息级别与当前阈值，返回是否满足记录条件。",
+        "details": "读取参数 msg_level，并以松弛内存序读取 level_；当消息级别大于或等于阈值时返回 true，否则返回 false。该函数只给出资格判断。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger.h",
+            "start_line": 270,
+            "end_line": 272
+          }
+        ]
+      },
+      {
+        "entity_id": "c569328e-c9b1-5df3-a4ca-81a7e0deacfa",
+        "summary": "返回回溯器当前是否启用。",
+        "details": "无参数调用 tracer_ 的 enabled 查询，并直接返回其结果；本函数不改变回溯器状态。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger.h",
+            "start_line": 275,
+            "end_line": 275
+          }
+        ]
+      },
+      {
+        "entity_id": "7d435e5b-9ce0-58be-8651-39cc0d612334",
+        "summary": "按条件格式化窄字符日志并提交。",
+        "details": "先计算级别允许记录及回溯启用状态；二者均为 false 时直接返回。否则在异常包装宏范围内格式化参数，将缓冲区构造成日志消息并调用提交逻辑；包装宏具体异常行为未由本片段说明。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger.h",
+            "start_line": 324,
+            "end_line": 329
+          },
+          {
+            "path": "include/spdlog/logger.h",
+            "start_line": 330,
+            "end_line": 343
+          }
+        ]
+      },
+      {
+        "entity_id": "ab016e5b-55a0-5b14-b0f9-72d4664429ca",
+        "summary": "按条件格式化宽字符日志、转换为 UTF-8 后提交。",
+        "details": "仅在 SPDLOG_WCHAR_TO_UTF8_SUPPORT 定义时提供。先检查级别与回溯状态，两者均未启用则返回；否则格式化宽字符缓冲区，转换为 UTF-8，再构造日志消息并提交。异常包装宏的具体行为未知。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger.h",
+            "start_line": 346,
+            "end_line": 351
+          },
+          {
+            "path": "include/spdlog/logger.h",
+            "start_line": 352,
+            "end_line": 365
+          }
+        ]
+      }
+    ],
+    "call_judgments": [],
+    "primary_dependencies": []
+  },
+  "原快照字节未变": true,
+  "请求账本": [
+    {
+      "id": "b64936ed-b771-4625-bfbb-271e152aa582",
+      "project_id": "d47aa2c0-b71a-4937-b92f-9ebcf15c711c",
+      "version_id": "85ffdf22-ae07-4bdb-b5fc-4e7819c1af05",
+      "job_id": "39942743-0363-4e3c-8ccf-534c6d9e0351",
+      "unit_id": "a3aeb5e2-cacf-41e3-a483-12a4f35cb448",
+      "attempt": 1,
+      "phase": "architecture",
+      "recipient": "https://www.cctq.ai/v1",
+      "model": "gpt-6-luna",
+      "status": "outcome_unknown",
+      "created_at": "2026-10-12T03:24:44.296495+00:00",
+      "sent_at": "2026-10-12T03:24:44.336161+00:00",
+      "finished_at": "2026-10-12T03:30:38.133152+00:00",
+      "payload_hash": "405d43aad5c6186c6c188aee5e3e2d53e907e9fcbce3d618b65b83e81502d607",
+      "source_chars": 11681,
+      "usage": null,
+      "cost": null,
+      "currency": null,
+      "price_snapshot": null,
+      "http_status": null,
+      "error_code": "TRANSPORT_UNKNOWN"
+    },
+    {
+      "id": "14f4ea9b-3a94-42b5-85c2-ebdf8a9e15b2",
+      "project_id": "d47aa2c0-b71a-4937-b92f-9ebcf15c711c",
+      "version_id": "85ffdf22-ae07-4bdb-b5fc-4e7819c1af05",
+      "job_id": "39942743-0363-4e3c-8ccf-534c6d9e0351",
+      "unit_id": "a3aeb5e2-cacf-41e3-a483-12a4f35cb448",
+      "attempt": 2,
+      "phase": "architecture",
+      "recipient": "https://www.cctq.ai/v1",
+      "model": "gpt-6-luna",
+      "status": "failed",
+      "created_at": "2026-10-12T03:30:40.158425+00:00",
+      "sent_at": "2026-10-12T03:30:40.185026+00:00",
+      "finished_at": "2026-10-12T03:31:29.179435+00:00",
+      "payload_hash": "405d43aad5c6186c6c188aee5e3e2d53e907e9fcbce3d618b65b83e81502d607",
+      "source_chars": 11681,
+      "usage": {
+        "prompt_tokens": 12871,
+        "completion_tokens": 832,
+        "total_tokens": 13703
+      },
+      "cost": null,
+      "currency": null,
+      "price_snapshot": null,
+      "http_status": 200,
+      "error_code": "SCHEMA_INVALID"
+    },
+    {
+      "id": "1e5ea159-56f3-4fa0-9ac7-1a95c4ac5bb6",
+      "project_id": "d47aa2c0-b71a-4937-b92f-9ebcf15c711c",
+      "version_id": "85ffdf22-ae07-4bdb-b5fc-4e7819c1af05",
+      "job_id": "39942743-0363-4e3c-8ccf-534c6d9e0351",
+      "unit_id": "a3aeb5e2-cacf-41e3-a483-12a4f35cb448",
+      "attempt": 3,
+      "phase": "repair",
+      "recipient": "https://www.cctq.ai/v1",
+      "model": "gpt-6-luna",
+      "status": "success",
+      "created_at": "2026-10-12T03:31:29.186990+00:00",
+      "sent_at": "2026-10-12T03:31:29.202734+00:00",
+      "finished_at": "2026-10-12T03:31:37.965403+00:00",
+      "payload_hash": "ad1f5f6c9570b007e30be47caec1ebcab2fa5b704a8a5ce0ed3da5821c17cc4d",
+      "source_chars": 11681,
+      "usage": {
+        "prompt_tokens": 13047,
+        "completion_tokens": 683,
+        "total_tokens": 13730
+      },
+      "cost": null,
+      "currency": null,
+      "price_snapshot": null,
+      "http_status": 200,
+      "error_code": null
+    },
+    {
+      "id": "9a7829d3-d241-47cb-a9bd-be9902c7eaae",
+      "project_id": "d47aa2c0-b71a-4937-b92f-9ebcf15c711c",
+      "version_id": "85ffdf22-ae07-4bdb-b5fc-4e7819c1af05",
+      "job_id": "39942743-0363-4e3c-8ccf-534c6d9e0351",
+      "unit_id": "cedf6523-e857-4190-a8e0-42a3cf87fcab",
+      "attempt": 1,
+      "phase": "architecture",
+      "recipient": "https://www.cctq.ai/v1",
+      "model": "gpt-6-luna",
+      "status": "failed",
+      "created_at": "2026-10-12T03:31:37.991116+00:00",
+      "sent_at": "2026-10-12T03:31:38.008425+00:00",
+      "finished_at": "2026-10-12T03:32:02.534907+00:00",
+      "payload_hash": "38c01e3953f5915b5aff51cc7dd357bfcdc01772483ffb6eda634e33940b3538",
+      "source_chars": 3664,
+      "usage": {
+        "prompt_tokens": 20134,
+        "completion_tokens": 2765,
+        "total_tokens": 22899
+      },
+      "cost": null,
+      "currency": null,
+      "price_snapshot": null,
+      "http_status": 200,
+      "error_code": "SCHEMA_INVALID"
+    },
+    {
+      "id": "a870e15b-6403-4087-8dd3-9c037af85aca",
+      "project_id": "d47aa2c0-b71a-4937-b92f-9ebcf15c711c",
+      "version_id": "85ffdf22-ae07-4bdb-b5fc-4e7819c1af05",
+      "job_id": "39942743-0363-4e3c-8ccf-534c6d9e0351",
+      "unit_id": "cedf6523-e857-4190-a8e0-42a3cf87fcab",
+      "attempt": 2,
+      "phase": "repair",
+      "recipient": "https://www.cctq.ai/v1",
+      "model": "gpt-6-luna",
+      "status": "success",
+      "created_at": "2026-10-12T03:32:02.541707+00:00",
+      "sent_at": "2026-10-12T03:32:02.559972+00:00",
+      "finished_at": "2026-10-12T03:32:52.315471+00:00",
+      "payload_hash": "aa6e03d69e6ecb1c737ff643bbb27d65bbd11f475bade0f661b1ea87491ba34e",
+      "source_chars": 3664,
+      "usage": {
+        "prompt_tokens": 20994,
+        "completion_tokens": 2502,
+        "total_tokens": 23496
+      },
+      "cost": null,
+      "currency": null,
+      "price_snapshot": null,
+      "http_status": 200,
+      "error_code": null
+    },
+    {
+      "id": "849095d6-871a-40cc-8f5b-04125870076e",
+      "project_id": "d47aa2c0-b71a-4937-b92f-9ebcf15c711c",
+      "version_id": "85ffdf22-ae07-4bdb-b5fc-4e7819c1af05",
+      "job_id": "39942743-0363-4e3c-8ccf-534c6d9e0351",
+      "unit_id": "4da2a124-8e09-4b9b-aefd-82cb462eb0ef",
+      "attempt": 1,
+      "phase": "architecture",
+      "recipient": "https://www.cctq.ai/v1",
+      "model": "gpt-6-luna",
+      "status": "success",
+      "created_at": "2026-10-12T03:32:52.334046+00:00",
+      "sent_at": "2026-10-12T03:32:52.345460+00:00",
+      "finished_at": "2026-10-12T03:33:13.404268+00:00",
+      "payload_hash": "6b736bfe71a52f90ada8b856274de8006ae35852f6bf04020b002ae317525078",
+      "source_chars": 2997,
+      "usage": {
+        "prompt_tokens": 17619,
+        "completion_tokens": 2269,
+        "total_tokens": 19888
+      },
+      "cost": null,
+      "currency": null,
+      "price_snapshot": null,
+      "http_status": 200,
+      "error_code": null
+    },
+    {
+      "id": "f03f620a-950b-497f-82b7-6dafb04cf6dd",
+      "project_id": "d47aa2c0-b71a-4937-b92f-9ebcf15c711c",
+      "version_id": "85ffdf22-ae07-4bdb-b5fc-4e7819c1af05",
+      "job_id": "39942743-0363-4e3c-8ccf-534c6d9e0351",
+      "unit_id": "f14e4a1d-49f9-4180-bccd-7889fc0ab17b",
+      "attempt": 1,
+      "phase": "architecture",
+      "recipient": "https://www.cctq.ai/v1",
+      "model": "gpt-6-luna",
+      "status": "success",
+      "created_at": "2026-10-12T03:33:13.420143+00:00",
+      "sent_at": "2026-10-12T03:33:13.450481+00:00",
+      "finished_at": "2026-10-12T03:34:01.583375+00:00",
+      "payload_hash": "f384298cf760671912af3cdf2afe5ae40a11960d6e5160e57ddb2bed3bec8f10",
+      "source_chars": 5719,
+      "usage": {
+        "prompt_tokens": 20385,
+        "completion_tokens": 2483,
+        "total_tokens": 22868
+      },
+      "cost": null,
+      "currency": null,
+      "price_snapshot": null,
+      "http_status": 200,
+      "error_code": null
+    },
+    {
+      "id": "358c2ec2-8680-4096-9f4b-a500558984e9",
+      "project_id": "d47aa2c0-b71a-4937-b92f-9ebcf15c711c",
+      "version_id": "85ffdf22-ae07-4bdb-b5fc-4e7819c1af05",
+      "job_id": "39942743-0363-4e3c-8ccf-534c6d9e0351",
+      "unit_id": "2bd4f96a-e3fd-4595-95af-82c3992e5418",
+      "attempt": 1,
+      "phase": "architecture",
+      "recipient": "https://www.cctq.ai/v1",
+      "model": "gpt-6-luna",
+      "status": "failed",
+      "created_at": "2026-10-12T03:34:01.602716+00:00",
+      "sent_at": "2026-10-12T03:34:01.618805+00:00",
+      "finished_at": "2026-10-12T03:34:24.060918+00:00",
+      "payload_hash": "d874d0abf9fa3d218e55ea6793a536c8fb303605b9d8c4a397901076f587a0b0",
+      "source_chars": 2927,
+      "usage": {
+        "prompt_tokens": 21281,
+        "completion_tokens": 2626,
+        "total_tokens": 23907
+      },
+      "cost": null,
+      "currency": null,
+      "price_snapshot": null,
+      "http_status": 200,
+      "error_code": "SCHEMA_INVALID"
+    },
+    {
+      "id": "a8d2c500-f9e9-4789-ad0b-3a1c5705252f",
+      "project_id": "d47aa2c0-b71a-4937-b92f-9ebcf15c711c",
+      "version_id": "85ffdf22-ae07-4bdb-b5fc-4e7819c1af05",
+      "job_id": "39942743-0363-4e3c-8ccf-534c6d9e0351",
+      "unit_id": "2bd4f96a-e3fd-4595-95af-82c3992e5418",
+      "attempt": 2,
+      "phase": "repair",
+      "recipient": "https://www.cctq.ai/v1",
+      "model": "gpt-6-luna",
+      "status": "success",
+      "created_at": "2026-10-12T03:34:24.066014+00:00",
+      "sent_at": "2026-10-12T03:34:24.080919+00:00",
+      "finished_at": "2026-10-12T03:34:45.240087+00:00",
+      "payload_hash": "46104f05f2bcef66e13d8b94d4f28b5353002f7593bff6fc92f553b822a242f1",
+      "source_chars": 2927,
+      "usage": {
+        "prompt_tokens": 22139,
+        "completion_tokens": 2511,
+        "total_tokens": 24650
+      },
+      "cost": null,
+      "currency": null,
+      "price_snapshot": null,
+      "http_status": 200,
+      "error_code": null
+    },
+    {
+      "id": "ee9940cc-04d0-46ad-a11c-1cf0a8e200b4",
+      "project_id": "d47aa2c0-b71a-4937-b92f-9ebcf15c711c",
+      "version_id": "85ffdf22-ae07-4bdb-b5fc-4e7819c1af05",
+      "job_id": "39942743-0363-4e3c-8ccf-534c6d9e0351",
+      "unit_id": "17325351-1f55-404a-bb87-8f93e000ca8f",
+      "attempt": 1,
+      "phase": "architecture",
+      "recipient": "https://www.cctq.ai/v1",
+      "model": "gpt-6-luna",
+      "status": "success",
+      "created_at": "2026-10-12T03:34:45.272081+00:00",
+      "sent_at": "2026-10-12T03:34:45.291762+00:00",
+      "finished_at": "2026-10-12T03:35:06.264051+00:00",
+      "payload_hash": "721be8d0fe3af068bfa34da0b071ae43e7f23a893c0672f82b941762fc89862f",
+      "source_chars": 6123,
+      "usage": {
+        "prompt_tokens": 19579,
+        "completion_tokens": 2574,
+        "total_tokens": 22153
+      },
+      "cost": null,
+      "currency": null,
+      "price_snapshot": null,
+      "http_status": 200,
+      "error_code": null
+    },
+    {
+      "id": "fc5f5c85-e1dd-4ece-8e21-a980dd06a392",
+      "project_id": "d47aa2c0-b71a-4937-b92f-9ebcf15c711c",
+      "version_id": "85ffdf22-ae07-4bdb-b5fc-4e7819c1af05",
+      "job_id": "39942743-0363-4e3c-8ccf-534c6d9e0351",
+      "unit_id": "9fd90500-dd46-4998-b468-cc92befe20ce",
+      "attempt": 1,
+      "phase": "overview",
+      "recipient": "https://www.cctq.ai/v1",
+      "model": "gpt-6-luna",
+      "status": "success",
+      "created_at": "2026-10-12T03:35:06.294934+00:00",
+      "sent_at": "2026-10-12T03:35:06.307285+00:00",
+      "finished_at": "2026-10-12T03:35:13.114842+00:00",
+      "payload_hash": "91737a9ab28b1c07cda4676d490135fe4d77f713930680b6b9cf561a42f4f721",
+      "source_chars": 0,
+      "usage": {
+        "prompt_tokens": 2834,
+        "completion_tokens": 410,
+        "total_tokens": 3244
+      },
+      "cost": null,
+      "currency": null,
+      "price_snapshot": null,
+      "http_status": 200,
+      "error_code": null
+    }
+  ],
+  "请求状态": {
+    "outcome_unknown": 1,
+    "failed": 3,
+    "success": 7
+  },
+  "已知total_tokens": 190538,
+  "未知用量请求": 1,
+  "费用": null,
+  "脱敏校验记录": [
+    {
+      "time": "2026-10-12T03:31:29.177819+00:00",
+      "request_id": "14f4ea9b-3a94-42b5-85c2-ebdf8a9e15b2",
+      "feedback": "函数讲解缺少实现自身的依据。已知索引依据：{\"entity_or_call_id\": \"dfa66a2c-52c9-557e-b9dd-0d6cd6283816\", \"implementation_lines\": [353, 357], \"supplied_lines\": [[1, 376]]}"
+    },
+    {
+      "time": "2026-10-12T03:32:02.534380+00:00",
+      "request_id": "9a7829d3-d241-47cb-a9bd-be9902c7eaae",
+      "feedback": "函数归属不唯一或与真实实体不一致。。已知索引依据：{\"supplied_lines\": [], \"allowed_entity_ids\": [\"38910276-8ab0-534c-a1ce-178162818481\", \"3e0df8f2-227d-56b2-9c3f-1d891f6ecf3b\", \"41d8477f-4360-5688-9464-beed3eda2a8d\", \"510be772-9496-5c55-bbd8-5c8d8e002782\", \"895ecb51-8978-552f-872c-92e9fc663042\", \"89fa7dd1-0e4e-5d18-b26c-277fd569cd75\", \"8b3f2e8b-4c41-5fe1-aa1b-73a80d846de2\", \"ac29f904-a44e-53c6-8e62-5a151a582940\", \"aec49714-a1bb-537f-b9c4-0669320070a5\", \"b963760b-9039-503f-8eba-7967d0304bfd\", \"b99208c3-de4a-52a6-916a-d86f1429fc7e\", \"e8b0b4ba-3101-569f-a5ba-1e3f88e5a690\"], \"repair_action\": \"把 allowed_entity_ids 中每个本批函数恰好分配到一个有职责依据的叶模块；父模块 entity_ids 为空。只使用本批 entities 的原始ID，不要把候选目标、相关函数或补读实体加入本批归属集合。保留有依据的职责与讲解；不能用虚构实体填补缺口。\"}"
+    },
+    {
+      "time": "2026-10-12T03:34:24.059917+00:00",
+      "request_id": "358c2ec2-8680-4096-9f4b-a500558984e9",
+      "feedback": "函数归属不唯一或与真实实体不一致。。已知索引依据：{\"supplied_lines\": [], \"allowed_entity_ids\": [\"13c5b2ff-b38f-56e2-8f73-2ae3db8310ea\", \"44b0976f-657c-5f67-8edb-44cf171e753e\", \"4e1c5854-402e-5cd1-a880-9d8743a76ad5\", \"5c979014-9659-555a-b15a-d3b155c9facc\", \"5de90dce-70bf-5105-8b56-b24f360062a0\", \"63deea68-bca3-56ce-898a-4a46e192085c\", \"6935ae00-b487-5f14-b1b0-433da7092576\", \"af6ef468-e4a5-591a-945a-355b008c905a\", \"b63c1a50-d6f7-50db-894e-0f2e047f1f3c\", \"d54157af-70a5-50b4-b73a-746881088e4c\", \"ed5d2120-48bb-5e29-8393-e813313ba785\", \"f419ed5c-61e4-5336-9cf4-5f3307e0b205\"], \"repair_action\": \"把 allowed_entity_ids 中每个本批函数恰好分配到一个有职责依据的叶模块；父模块 entity_ids 为空。只使用本批 entities 的原始ID，不要把候选目标、相关函数或补读实体加入本批归属集合。保留有依据的职责与讲解；不能用虚构实体填补缺口。\"}"
+    }
+  ],
+  "边界": "真实配置接口，固定响应与质量复核分开；尚未代表用户验收；价格未知不记零费用。",
+  "静态索引制品": {
+    "path": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\.runtime\\public-model-validation\\b6c270ee-7028-43de-b489-c5e4b2513af8\\validation-artifacts\\f8eeb9e17a6b4dd39501c4b0ee63f9fa6ea69a01b114a82b91db34416d92eaa6.json",
+    "sha256": "f8eeb9e17a6b4dd39501c4b0ee63f9fa6ea69a01b114a82b91db34416d92eaa6",
+    "bytes": 337086
+  }
+}

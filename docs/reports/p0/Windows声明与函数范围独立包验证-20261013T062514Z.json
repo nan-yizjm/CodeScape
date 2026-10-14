@@ -1,0 +1,43 @@
+{
+  "date": "2026-10-13",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "architecture": "AMD64",
+  "executable": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\.runtime\\packaging\\dist\\CodeScape\\CodeScape.exe",
+  "executable_sha256": "fa2b690b127cba2da0ac25375108173359a14848a8cd7666bbc9bfc906313aff",
+  "data_root": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\output\\windows-bundle-validation\\ee2193ce-0675-4368-8f9c-fd2d51478208",
+  "developer_path_removed": true,
+  "duplicate_launch_reused": true,
+  "static_sample_functions": 8,
+  "confirmed_call_languages": [
+    "c",
+    "cpp",
+    "python",
+    "typescript"
+  ],
+  "macro_qualified_return_name": "owned::Reader::cppTarget；确认调用仍定位该唯一实现",
+  "original_modification_does_not_change_snapshot": true,
+  "ai_worker_protocol": "受控错误响应",
+  "runtime_versions": {
+    "node": "v24.16.0",
+    "git": "git version 2.56.0.windows.2"
+  },
+  "model_requests": 0,
+  "declaration_and_macro_boundary": {
+    "python_visible": 4,
+    "python_hidden_declarations": 4,
+    "cpp_visible_methods": 2,
+    "cpp_constructor_hidden": true,
+    "whole_body_and_tail_scope": true,
+    "macro_argument_scope_retained": true,
+    "source_bytes_unchanged": true,
+    "no_ai_architecture": true,
+    "model_requests": 0,
+    "tools": {
+      "python": "ast/3.12; conservative-bindings/1; type-declarations/1",
+      "cpp": "tree-sitter/0.25.2 + libclang/18.1.1 + snapshot-config/8 + native-diagnostics/1"
+    }
+  },
+  "public_git_import": "本次未验证",
+  "update_saves_and_exits_normally": true,
+  "boundary": "开发机 Windows 独立运行验证；不代替干净 Windows 10/11 虚拟机验收；不代表真实 AI 分析质量。"
+}

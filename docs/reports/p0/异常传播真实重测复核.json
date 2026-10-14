@@ -1,0 +1,48 @@
+{
+  "日期": "2026-10-11",
+  "性质": "真实官方模型重测结果的源码抽查，非固定响应",
+  "Commit": "d6c93f38a08b4ea0f8ffcfd7f7857307d5d5c3fa",
+  "流水线": "architecture/2-explanations/2-reads/1-judgments/1-dependencies/1-cpp-config/8-interfaces/1-facts/1-index/2-ts-bindings/2-python-declarations/1",
+  "报告": "spdlog-cpp-narrow真实模型验证.json",
+  "报告sha256": "6125bf22e2b68ed8090fd1ceff3ba2e726dd560199bbc8735a393bc67aa65a88",
+  "范围": [
+    "include/spdlog/common.h",
+    "include/spdlog/logger-inl.h",
+    "include/spdlog/logger.h",
+    "include/spdlog/namespace.h"
+  ],
+  "函数抽查": [
+    {
+      "函数": "logger::sink_it_",
+      "实际解释": {
+        "entity_id": "76fe672f-d12f-5fa2-8ecd-ede2492acbb0",
+        "summary": "把消息分发给满足等级的 sink，并按刷写策略刷写。",
+        "details": "遍历 sinks_，对每个 sink 先调用 sink->should_log(msg.level)，为真时在 SPDLOG_TRY 块内执行 sink->log(msg)，异常由 SPDLOG_LOGGER_CATCH(msg.source) 处理，宏行为需看其定义。循环结束后若 should_flush_(msg) 为真则调用 flush_()。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger-inl.h",
+            "start_line": 135,
+            "end_line": 146
+          }
+        ]
+      }
+    },
+    {
+      "函数": "logger::flush_",
+      "实际解释": {
+        "entity_id": "52fc5474-518d-5940-a006-c78c77d47f71",
+        "summary": "依次刷新所有 sink，并对每个 sink 的刷新异常做包装处理。",
+        "details": "遍历 sinks_，对每个 sink 在 SPDLOG_TRY 中调用 sink->flush()；异常交由 SPDLOG_LOGGER_CATCH(source_loc()) 处理，宏定义不在本片段，是否吞掉异常未知。函数无返回值。",
+        "evidence": [
+          {
+            "path": "include/spdlog/logger-inl.h",
+            "start_line": 148,
+            "end_line": 153
+          }
+        ]
+      }
+    }
+  ],
+  "结论": "两处解释保留完整函数范围，对未提供的异常宏定义保留未知，未再无条件声称所有异常都不会中断。",
+  "边界": "这两项抽查改善，不证明所有异常语义或全工程函数解释准确；完整范围与缩小范围对照仍在进行。"
+}

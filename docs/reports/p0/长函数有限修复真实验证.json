@@ -1,0 +1,108 @@
+{
+  "核对时间UTC": "2026-10-12T02:26:29.947597+00:00",
+  "性质": "真实模型检查点与已授权固定源码只读核对",
+  "报告": "zod-typescript-full真实模型验证.json",
+  "报告sha256": "4508ccad9667204207d206cf267c8c7975dbe50a67b820d3487129ba142e6e67",
+  "检查点sha256": "d87dce9ad7367521df04e6255098f6c28366fd316cdde04020e8a329981edb3f",
+  "流水线": "architecture/3-repairs/2-explanations/3-reads/1-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/2-index/3-ts-bindings/2-python-declarations/1",
+  "此前失败记录": [
+    {
+      "报告": "zod-typescript-full真实模型验证-7e7666f3-53f3-43cf-bd68-336abfd0d7dc.json",
+      "sha256": "1fba4d597c2c8e2b2ea71933b1ad75d4d6a2bbe20706e77e1f91eb0eb8738645",
+      "流水线": "architecture/3-explanations/3-reads/1-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/2-index/3-ts-bindings/2-python-declarations/1",
+      "校验记录": [
+        {
+          "time": "2026-10-12T02:01:59.745537+00:00",
+          "request_id": "3aea881a-c3f9-4eaa-85e0-ed036be6361b",
+          "feedback": "字段校验失败：explanations.10.details: string_too_long"
+        },
+        {
+          "time": "2026-10-12T02:03:02.038428+00:00",
+          "request_id": "25870593-9009-47d1-a846-201e93442030",
+          "feedback": "讲解引用未提供的源码位置。已知索引依据：{\"entity_or_call_id\": \"6de4abd495dcb0e39558d08d73b9fb52\", \"implementation_lines\": [390, 806], \"supplied_lines\": [[1, 916]]}"
+        },
+        {
+          "time": "2026-10-12T02:04:18.902783+00:00",
+          "request_id": "dd5d7f15-9ccd-4405-8700-b6a9357e88ef",
+          "feedback": "字段校验失败：explanations.10.details: string_too_long"
+        }
+      ]
+    },
+    {
+      "报告": "zod-typescript-full真实模型验证-c3e53b86-f536-45ed-9838-de69d0b72ea8.json",
+      "sha256": "dd9034d95328afa6d38998b14b787e8dfd80838dea7ae6483af509ddf1e0caae",
+      "流水线": "architecture/3-repairs/1-explanations/3-reads/1-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/2-index/3-ts-bindings/2-python-declarations/1",
+      "校验记录": [
+        {
+          "time": "2026-10-12T02:10:00.299571+00:00",
+          "request_id": "3adfcbe8-b264-451c-ac4f-23a23f909678",
+          "feedback": "单条讲解源码引用最多200行，请拆为多个已提供范围内的引用。已知索引依据：{\"entity_or_call_id\": \"35694e415cda2a30c4d1909b99167e3f\", \"implementation_lines\": [390, 806], \"supplied_lines\": [[1, 916]]}"
+        },
+        {
+          "time": "2026-10-12T02:11:10.159205+00:00",
+          "request_id": "8e991834-7011-4615-8eb8-5baf5c1debb8",
+          "feedback": "字段校验失败：explanations.10.details: string_too_long，最多1200个字符（英文代码与标点也计入），请压缩到上限以内并保留关键条件"
+        },
+        {
+          "time": "2026-10-12T02:11:57.295040+00:00",
+          "request_id": "b3db544c-6e86-4fc5-b61a-972230e8f9b5",
+          "feedback": "单条讲解源码引用最多200行，请拆为多个已提供范围内的引用。已知索引依据：{\"entity_or_call_id\": \"35694e415cda2a30c4d1909b99167e3f\", \"implementation_lines\": [390, 806], \"supplied_lines\": [[1, 916]]}"
+        }
+      ]
+    }
+  ],
+  "已完成批次": 3,
+  "仍暂停原因": "服务余额不足。",
+  "第2批可见函数讲解": 12,
+  "第2批最大讲解字符": 902,
+  "第2批最大单引用行数": 166,
+  "原先卡点": {
+    "函数": "convertBaseSchema",
+    "位置": {
+      "path": "packages/zod/src/v4/classic/from-json-schema.ts",
+      "start_line": 390,
+      "end_line": 806,
+      "start_byte": 12501,
+      "end_byte": 29824
+    },
+    "源文件sha256": "1b27140e0709c0cc65786808c2f929289c980bc6c3142264860bdffac8b0cdf6",
+    "实际讲解": {
+      "entity_id": "3644b770541211b73ecc6f87b8caa00b",
+      "summary": "按 JSON Schema 关键字构造基础 Zod 类型，并拒绝不支持的特性。",
+      "details": "入口先拦截不支持关键字：not 为非空对象、unevaluatedItems、unevaluatedProperties、if/then/else、dependentSchemas/dependentRequired 都抛 Error，唯独 { not: {} } 返回 z.never。$ref 先查 ctx.refs，命中直接返回；若在 ctx.processing 中则返回 z.lazy 延迟解析；否则 resolveRef 后 convertSchema 并写回 ctx.refs、清除 processing。enum 处理 OpenAPI 3.0 单 null 返回 z.null，空数组 z.never，单值 z.literal，全字符串 z.enum，混合为 union；const 直接 literal。type 为数组时逐项递归，0 项 z.never，1 项直接返回，多项 union；无 type 返回 z.any()。按 type 分支：string 将 format 映射为 email/url/uuid/iso 等检查并附加 minLength/maxLength/pattern；number/integer 处理 minimum/maximum、draft-04 布尔型 exclusiveMinimum/Maximum 与 multipleOf；boolean/null 直接构造；object 组装 properties/required、additionalProperties（false 转 strict，schema 转 catchall，否则 passthrough）、patternProperties 的 looseRecord 交叉，以及 propertyNames/min/maxProperties 前置守卫；array 区分 prefixItems/items 元组与普通数组，并叠加 min/maxItems、uniqueItems/contains 守卫；未知 type 抛 Unsupported type。最后返回 zodSchema。",
+      "evidence": [
+        {
+          "path": "packages/zod/src/v4/classic/from-json-schema.ts",
+          "start_line": 390,
+          "end_line": 395
+        },
+        {
+          "path": "packages/zod/src/v4/classic/from-json-schema.ts",
+          "start_line": 405,
+          "end_line": 441
+        },
+        {
+          "path": "packages/zod/src/v4/classic/from-json-schema.ts",
+          "start_line": 444,
+          "end_line": 478
+        },
+        {
+          "path": "packages/zod/src/v4/classic/from-json-schema.ts",
+          "start_line": 504,
+          "end_line": 565
+        },
+        {
+          "path": "packages/zod/src/v4/classic/from-json-schema.ts",
+          "start_line": 586,
+          "end_line": 611
+        },
+        {
+          "path": "packages/zod/src/v4/classic/from-json-schema.ts",
+          "start_line": 630,
+          "end_line": 795
+        }
+      ]
+    }
+  },
+  "边界": "原先超长与引用卡点已实际通过，后续HTTP402暂停；不代表完整Zod质量或范围对照通过。未执行目标代码，核对本身无模型请求。"
+}

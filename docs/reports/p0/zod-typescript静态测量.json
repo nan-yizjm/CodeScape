@@ -1,0 +1,50 @@
+{
+  "date": "2026-10-11",
+  "id": "zod-typescript",
+  "root": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\output\\representative-index\\042b535c-f1fd-4437-b306-066a9b26787d",
+  "origin": {
+    "kind": "git",
+    "url": "https://github.com/colinhacks/zod.git",
+    "commit": "0b216ef674e297ebe41d8bf902262e56f8755822",
+    "default_branch_at_selection": "main",
+    "excluded": [
+      {
+        "path": ".codex/skills",
+        "reason": "未读取符号链接或 Git 子模块"
+      },
+      {
+        "path": ".cursorrules",
+        "reason": "未读取符号链接或 Git 子模块"
+      },
+      {
+        "path": "CLAUDE.md",
+        "reason": "未读取符号链接或 Git 子模块"
+      },
+      {
+        "path": "README.md",
+        "reason": "未读取符号链接或 Git 子模块"
+      }
+    ]
+  },
+  "files": 111,
+  "snapshot_hash": "c179e795ed4cac054e4cc4ff09bfd53aeca57c44706f8eba1969db3400a39955",
+  "scope_hash": "3f7e4bd4ec7659095730267636a28fe1e50190e6d9363359bba672dfd112a026",
+  "visible_functions": 848,
+  "hidden_functions": 1097,
+  "call_resolution": {
+    "unresolved": 1232,
+    "external": 1302,
+    "confirmed": 1863,
+    "excluded_indirect": 272
+  },
+  "diagnostics": {},
+  "elapsed_seconds": 2.939,
+  "tools": {
+    "python": "ast/3.12; conservative-bindings/1",
+    "typescript": "compiler-api/5.9.3"
+  },
+  "model_requests": 0,
+  "target_code_executed": false,
+  "snapshot_and_source_unchanged": true,
+  "boundary": "仅静态测量，第三方依赖未安装；未生成 AI 架构，不是逐条人工正确性核对。"
+}

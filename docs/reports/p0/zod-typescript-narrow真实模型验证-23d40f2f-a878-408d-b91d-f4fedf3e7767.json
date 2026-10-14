@@ -1,0 +1,161 @@
+{
+  "日期": "2026-10-12",
+  "检查开始时间UTC": "2026-10-12T05:17:52.383378+00:00",
+  "样本": "zod-typescript",
+  "Commit": "0b216ef674e297ebe41d8bf902262e56f8755822",
+  "范围": "缩小范围",
+  "授权": "用户允许四个固定公开样本向当前配置接收端上传并评测",
+  "接收端": "https://www.cctq.ai/v1",
+  "模型": "gpt-6-luna",
+  "流式接收": true,
+  "流水线": "architecture/4-repairs/2-explanations/3-reads/2-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/2-index/3-ts-bindings/2-python-declarations/1",
+  "数据目录": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\.runtime\\public-model-validation\\e61f2e17-184d-4c25-9f82-af76a862e435",
+  "原始快照hash": "c179e795ed4cac054e4cc4ff09bfd53aeca57c44706f8eba1969db3400a39955",
+  "实际文件": [
+    "packages/zod/src/v4/core/parse.ts"
+  ],
+  "状态": "结构检查通过，待源码质量复核",
+  "执行目标代码": false,
+  "进度": {
+    "phase": "completed",
+    "completed": 1,
+    "total": 1,
+    "detail": "分批分析完成"
+  },
+  "耗时秒": 14.3,
+  "project_id": "0b5bf901-41db-46de-a4b9-78852fdfa127",
+  "version_id": "ed7b8129-ffc6-4003-bdef-7597b0f4adbc",
+  "实际快照hash": "eeeb84dfaee5bbbfc76dc5b618580c16108bc4804202bed4aedd1f8b6bc242c3",
+  "scope_hash": "64d8fef1eca2d21c0868fb5cb2988d0e4d169bafe184ba5bc3727938f0682e93",
+  "错误": null,
+  "architecture": {
+    "modules": [
+      {
+        "id": "parse-params",
+        "parent_id": null,
+        "name": "解析参数归一化",
+        "summary": "统一解析器的错误类与调用者信息，供编解码调用链复用。",
+        "entity_ids": [
+          "a43613ace3f7d7d5686b6256677b8a87"
+        ],
+        "code_paths": [
+          "packages/zod/src/v4/core/parse.ts"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "parse-failure",
+        "parent_id": null,
+        "name": "安全解析失败结果",
+        "summary": "按需构造并缓存安全解析结果中的错误对象，同时释放原始问题引用。",
+        "entity_ids": [
+          "9785612fccf844dbf4fd8b055123d816"
+        ],
+        "code_paths": [
+          "packages/zod/src/v4/core/parse.ts"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "compiled-validation-fallback",
+        "parent_id": null,
+        "name": "编译校验回退验证",
+        "summary": "在编译校验器不可用或不能确定结论时，通过运行时解析判断输入有效性。",
+        "entity_ids": [
+          "085318036d1222ed52cc060e63fec1d6"
+        ],
+        "code_paths": [
+          "packages/zod/src/v4/core/parse.ts"
+        ],
+        "incomplete": false
+      }
+    ],
+    "overview": {
+      "introduction": "这是 Zod v4 核心解析模块的一部分，提供解析参数准备、安全解析失败结果和编译校验失败时的运行时回退。",
+      "capabilities": [
+        "规范解析器的调用者和错误类参数",
+        "延迟创建安全解析结果中的错误对象",
+        "用运行时解析补足编译校验结果"
+      ],
+      "principle": "参数归一化时始终返回包含 callee 与 Err 两个键的对象；安全解析失败对象则通过 error 访问器延迟构造错误，并在构造或替换后清除对 issues 与 ctx 的引用。校验回退建立同步、提前终止的上下文，优先调用专用 fallbackRun，否则调用 schema 的运行时解析；遇到 Promise 会抛出异步解析错误，最终以 issues 是否为空判定有效性。",
+      "limitations": [
+        "仅覆盖本批可见的三个函数，不能据此概括整个 Zod 项目。",
+        "编译校验器及 schema 运行时的内部实现不在本批源码中。",
+        "validateFallback 不处理异步解析结果，而是抛出异步解析错误。"
+      ],
+      "synthesized": true,
+      "analysis_notes": []
+    },
+    "explanations": [
+      {
+        "entity_id": "a43613ace3f7d7d5686b6256677b8a87",
+        "summary": "归一化解析参数，始终返回包含调用者与错误类键的对象。",
+        "details": "输入是默认调用者 callee 和可选的 params。函数返回新对象：callee 取 params.callee（仅在其为 null 或 undefined 时回退到传入的 callee），Err 直接取 params?.Err；即使 params 缺省，返回对象也保留这两个键，供下游以一致对象形状读取。它不校验调用者或错误类，也不捕获异常。",
+        "evidence": [
+          {
+            "path": "packages/zod/src/v4/core/parse.ts",
+            "start_line": 10,
+            "end_line": 12
+          }
+        ]
+      },
+      {
+        "entity_id": "9785612fccf844dbf4fd8b055123d816",
+        "summary": "创建失败型安全解析结果，首次读取 error 时才构造并缓存错误。",
+        "details": "输入为错误类、原始问题数组和解析上下文；返回 success 为 false 且带 error 访问器的对象。首次读取 error 时，将每项 issue 经 finalizeIssue 处理后交给 Err 构造错误并缓存，同时清空 issues 与 ctx 引用，避免结果对象长期持有原始输入；后续读取复用缓存。设置 error 会覆盖缓存并同样释放捕获的引用。错误构造或问题处理若抛异常，本函数没有捕获。",
+        "evidence": [
+          {
+            "path": "packages/zod/src/v4/core/parse.ts",
+            "start_line": 83,
+            "end_line": 103
+          }
+        ]
+      }
+    ],
+    "call_judgments": [],
+    "primary_dependencies": []
+  },
+  "原快照字节未变": true,
+  "请求账本": [
+    {
+      "id": "7f5067c5-c629-4e6e-b27c-dd9f679176e9",
+      "project_id": "0b5bf901-41db-46de-a4b9-78852fdfa127",
+      "version_id": "ed7b8129-ffc6-4003-bdef-7597b0f4adbc",
+      "job_id": "9fa39f2b-b148-427c-a2e3-e4e66bc0a70b",
+      "unit_id": "37113c3a-1478-4746-842c-38b42bf5f8b7",
+      "attempt": 1,
+      "phase": "architecture",
+      "recipient": "https://www.cctq.ai/v1",
+      "model": "gpt-6-luna",
+      "status": "success",
+      "created_at": "2026-10-12T05:17:55.205646+00:00",
+      "sent_at": "2026-10-12T05:17:55.241281+00:00",
+      "finished_at": "2026-10-12T05:18:05.866698+00:00",
+      "payload_hash": "5b3dc448fdd6e0e73761b2d364aacada102c637569e8f481de0fdbf78bb18669",
+      "source_chars": 12572,
+      "usage": {
+        "prompt_tokens": 15838,
+        "completion_tokens": 869,
+        "total_tokens": 16707
+      },
+      "cost": null,
+      "currency": null,
+      "price_snapshot": null,
+      "http_status": 200,
+      "error_code": null
+    }
+  ],
+  "请求状态": {
+    "success": 1
+  },
+  "已知total_tokens": 16707,
+  "未知用量请求": 0,
+  "费用": null,
+  "脱敏校验记录": [],
+  "边界": "真实配置接口，固定响应与质量复核分开；尚未代表用户验收；价格未知不记零费用。",
+  "静态索引制品": {
+    "path": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\.runtime\\public-model-validation\\e61f2e17-184d-4c25-9f82-af76a862e435\\validation-artifacts\\32b97b64bc969d7f60b740ba7745abeebc454c68d92728dfb693166ecc48503b.json",
+    "sha256": "32b97b64bc969d7f60b740ba7745abeebc454c68d92728dfb693166ecc48503b",
+    "bytes": 83864
+  }
+}

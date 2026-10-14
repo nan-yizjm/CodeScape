@@ -1,0 +1,199 @@
+{
+  "日期": "2026-10-11",
+  "基线性质": "开发代理逐条阅读固定源码后写入预期，不从解析结果生成预期",
+  "HiredisCommit": "058ebcdf36c5b05b759c613564fb958ec363c90f",
+  "spdlogCommit": "d6c93f38a08b4ea0f8ffcfd7f7857307d5d5c3fa",
+  "C调用": [
+    {
+      "文件": "hiredis.c",
+      "行": 708,
+      "真实作用域": "redisReaderCreate",
+      "表达式": "redisReaderCreateWithFunctions",
+      "预期目标": "redisReaderCreateWithFunctions",
+      "结果": "confirmed",
+      "证据字节": "redisReaderCreateWithFunctions(&defaultFunctions)",
+      "目标位置": {
+        "path": "read.c",
+        "start_line": 736,
+        "end_line": 767,
+        "start_byte": 23631,
+        "end_byte": 24418
+      }
+    },
+    {
+      "文件": "hiredis.c",
+      "行": 713,
+      "真实作用域": "redisPushAutoFree",
+      "表达式": "freeReplyObject",
+      "预期目标": "freeReplyObject",
+      "结果": "confirmed",
+      "证据字节": "freeReplyObject(reply)",
+      "目标位置": {
+        "path": "hiredis.c",
+        "start_line": 91,
+        "end_line": 124,
+        "start_byte": 3537,
+        "end_byte": 4347
+      }
+    },
+    {
+      "文件": "hiredis.c",
+      "行": 953,
+      "真实作用域": "redisSetTimeout",
+      "表达式": "redisContextSetTimeout",
+      "预期目标": "redisContextSetTimeout",
+      "结果": "confirmed",
+      "证据字节": "redisContextSetTimeout(c,tv)",
+      "目标位置": {
+        "path": "net.c",
+        "start_line": 441,
+        "end_line": 458,
+        "start_byte": 12597,
+        "end_byte": 13266
+      }
+    },
+    {
+      "文件": "hiredis.c",
+      "行": 958,
+      "真实作用域": "redisEnableKeepAliveWithInterval",
+      "表达式": "redisKeepAlive",
+      "预期目标": "redisKeepAlive",
+      "结果": "confirmed",
+      "证据字节": "redisKeepAlive(c, interval)",
+      "目标位置": {
+        "path": "net.c",
+        "start_line": 201,
+        "end_line": 253,
+        "start_byte": 6243,
+        "end_byte": 7750
+      }
+    },
+    {
+      "文件": "hiredis.c",
+      "行": 963,
+      "真实作用域": "redisEnableKeepAlive",
+      "表达式": "redisKeepAlive",
+      "预期目标": "redisKeepAlive",
+      "结果": "confirmed",
+      "证据字节": "redisKeepAlive(c, REDIS_KEEPALIVE_INTERVAL)",
+      "目标位置": {
+        "path": "net.c",
+        "start_line": 201,
+        "end_line": 253,
+        "start_byte": 6243,
+        "end_byte": 7750
+      }
+    },
+    {
+      "文件": "hiredis.c",
+      "行": 968,
+      "真实作用域": "redisSetTcpUserTimeout",
+      "表达式": "redisContextSetTcpUserTimeout",
+      "预期目标": "redisContextSetTcpUserTimeout",
+      "结果": "confirmed",
+      "证据字节": "redisContextSetTcpUserTimeout(c, timeout)",
+      "目标位置": {
+        "path": "net.c",
+        "start_line": 265,
+        "end_line": 280,
+        "start_byte": 8049,
+        "end_byte": 8497
+      }
+    },
+    {
+      "文件": "hiredis.c",
+      "行": 742,
+      "真实作用域": "redisFree",
+      "表达式": "c->funcs->close",
+      "预期目标": null,
+      "结果": "excluded_indirect",
+      "证据字节": "c->funcs->close(c)",
+      "目标位置": null
+    },
+    {
+      "文件": "alloc.c",
+      "行": 67,
+      "真实作用域": "hi_malloc",
+      "表达式": "hiredisAllocFns.mallocFn",
+      "预期目标": null,
+      "结果": "excluded_indirect",
+      "证据字节": "hiredisAllocFns.mallocFn(size)",
+      "目标位置": null
+    }
+  ],
+  "C++定义": [
+    {
+      "文件": "include/spdlog/logger-inl.h",
+      "行": 98,
+      "限定名": "spdlog::logger::flush",
+      "签名": "logger::flush()",
+      "ID": "b0802ca4-fe71-5e6a-b93d-3b7d3cf293d2"
+    },
+    {
+      "文件": "include/spdlog/logger-inl.h",
+      "行": 102,
+      "限定名": "spdlog::logger::flush_level",
+      "签名": "level::level_enum logger::flush_level() const",
+      "ID": "c4f3b973-1e6f-5ecf-8bea-d66e40cfaa77"
+    },
+    {
+      "文件": "include/spdlog/logger-inl.h",
+      "行": 107,
+      "限定名": "spdlog::logger::sinks",
+      "签名": "std::vector<sink_ptr> &logger::sinks() const",
+      "ID": "58d0d2fd-5f47-5dff-af3b-1efc0983e238"
+    },
+    {
+      "文件": "include/spdlog/logger-inl.h",
+      "行": 109,
+      "限定名": "spdlog::logger::sinks",
+      "签名": "std::vector<sink_ptr> &logger::sinks()",
+      "ID": "24de9e05-9971-528c-a652-fbdfd548264c"
+    },
+    {
+      "文件": "include/spdlog/logger-inl.h",
+      "行": 166,
+      "限定名": "spdlog::logger::should_flush_",
+      "签名": "logger::should_flush_(const details::log_msg &msg) const",
+      "ID": "da3f8d05-8d20-5160-a497-a7747991eabb"
+    }
+  ],
+  "C++调用": [
+    {
+      "文件": "include/spdlog/logger-inl.h",
+      "行": 167,
+      "真实作用域": "spdlog::logger::should_flush_",
+      "表达式": "flush_level",
+      "预期目标": "spdlog::logger::flush_level",
+      "结果": "confirmed",
+      "证据字节": "flush_level()",
+      "目标位置": {
+        "path": "include/spdlog/logger-inl.h",
+        "start_line": 102,
+        "end_line": 104,
+        "start_byte": 3416,
+        "end_byte": 3568
+      }
+    },
+    {
+      "文件": "include/spdlog/logger-inl.h",
+      "行": 98,
+      "真实作用域": "spdlog::logger::flush",
+      "表达式": "flush_",
+      "预期目标": null,
+      "结果": "excluded_indirect",
+      "证据字节": "flush_()",
+      "目标位置": null
+    }
+  ],
+  "C++重载保留": true,
+  "源码字节未变": true,
+  "本轮完整C++耗时秒": 262.646,
+  "工具": {
+    "python": "ast/3.12; conservative-bindings/1",
+    "cpp": "tree-sitter/0.25.2 + libclang/18.1.1 + snapshot-config/6"
+  },
+  "模型请求": 0,
+  "目标代码执行": false,
+  "边界": "仅抽样 8 项 C 调用、5 项 C++ 定义和 2 项 C++ 调用；不外推工程整体准确率、全部配置覆盖或 AI 架构质量。"
+}

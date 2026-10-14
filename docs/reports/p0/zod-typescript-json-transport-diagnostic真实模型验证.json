@@ -1,0 +1,61 @@
+{
+  "样本": "zod-typescript",
+  "Commit": "0b216ef674e297ebe41d8bf902262e56f8755822",
+  "接收端": "https://www.cctq.ai/v1",
+  "模型": "gpt-6-luna",
+  "流水线": "architecture/4-repairs/3-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
+  "原始快照hash": "c179e795ed4cac054e4cc4ff09bfd53aeca57c44706f8eba1969db3400a39955",
+  "实际快照hash": "c179e795ed4cac054e4cc4ff09bfd53aeca57c44706f8eba1969db3400a39955",
+  "project_id": "191d3b35-d8f4-4bc2-a0a9-1b0c375ce990",
+  "version_id": "5466969a-0e2c-4440-8564-f87c77b3420c",
+  "日期": "2026-10-12",
+  "核对时间UTC": "2026-10-12T07:20:22.685548+00:00",
+  "数据目录": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\.runtime\\public-model-validation\\b9da87a3-5707-4f5f-8baf-28649ab81d3b",
+  "范围": "当前暂停的第5批，单次非流式兼容传输诊断",
+  "流式接收": false,
+  "实际文件": [
+    "packages/zod/src/v4/classic/schemas.ts"
+  ],
+  "最多发送": 1,
+  "本次新建job_id": "42178596-b83e-4a0b-80e5-3a433acf8076",
+  "执行目标代码": false,
+  "服务错误事件白名单": [],
+  "边界": "只诊断传输与服务错误，不发布架构，不把JSON对象接收成功计为完整契约或质量通过。",
+  "状态": "JSON对象接收成功，仅传输诊断",
+  "请求账本": [
+    {
+      "id": "35f36e8b-b1ed-48e3-8742-4f56cc968037",
+      "project_id": "191d3b35-d8f4-4bc2-a0a9-1b0c375ce990",
+      "version_id": "5466969a-0e2c-4440-8564-f87c77b3420c",
+      "job_id": "42178596-b83e-4a0b-80e5-3a433acf8076",
+      "unit_id": "df0b1c09-4984-4c94-8cd2-9c5ed50ed499",
+      "attempt": 1,
+      "phase": "architecture",
+      "recipient": "https://www.cctq.ai/v1",
+      "model": "gpt-6-luna",
+      "status": "success",
+      "created_at": "2026-10-12T07:20:22.761056+00:00",
+      "sent_at": "2026-10-12T07:20:22.904989+00:00",
+      "finished_at": "2026-10-12T07:20:48.901997+00:00",
+      "payload_hash": "4ef558e584ecd05ae2db57d704050232a27218b90fa62e0446ff0924a57d2930",
+      "source_chars": 703,
+      "usage": {
+        "prompt_tokens": 11051,
+        "completion_tokens": 2633,
+        "total_tokens": 13684
+      },
+      "cost": null,
+      "currency": null,
+      "price_snapshot": null,
+      "http_status": 200,
+      "error_code": null
+    }
+  ],
+  "请求状态": {
+    "success": 1
+  },
+  "已知total_tokens": 13684,
+  "未知用量请求": 0,
+  "诊断账本范围": "只计本次新建job_id；复制库历史请求ID按原ID去重，不重复计。",
+  "原源码字节未变": true
+}

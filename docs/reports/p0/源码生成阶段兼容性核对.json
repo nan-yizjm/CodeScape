@@ -1,0 +1,24 @@
+{
+  "核对时间UTC": "2026-10-12T16:04:06.768205+00:00",
+  "旧源码生成阶段": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
+  "新最终流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-organization/1",
+  "性质": "只读核对已有真实请求摘要与当前实际源码输入，包含自动源码事实；在structured入口拦截，不发模型请求、不执行目标代码",
+  "样本": {
+    "hiredis-c": {
+      "已有首批请求ID": "523ef3b8-d627-44d4-b8ac-8752f40db912",
+      "源码批次原请求体与当前请求体摘要一致": true,
+      "批次数": 49,
+      "接收端": "https://www.cctq.ai/v1",
+      "模型": "gpt-6.1-sol"
+    },
+    "flask-python": {
+      "已有首批请求ID": "c0908871-812e-4bfb-be6e-34d53ae9ad20",
+      "源码批次原请求体与当前请求体摘要一致": true,
+      "批次数": 33,
+      "接收端": "https://www.cctq.ai/v1",
+      "模型": "gpt-6.1-sol"
+    }
+  },
+  "模型请求": 0,
+  "边界": "首批真实请求的上下文和提示均一致；兼容策略仍须同时匹配快照、版本、接收端和模型，不复用旧最终组织或发布制品。"
+}

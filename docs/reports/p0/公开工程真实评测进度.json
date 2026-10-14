@@ -1,0 +1,652 @@
+{
+  "日期": "2026-10-14",
+  "性质": "真实配置服务模型与本地源码复核，非固定响应，非用户验收",
+  "执行目标代码": false,
+  "完整范围": {
+    "hiredis-c": {
+      "Commit": "058ebcdf36c5b05b759c613564fb958ec363c90f",
+      "实际文件": [
+        "alloc.c",
+        "alloc.h",
+        "async.c",
+        "async.h",
+        "async_private.h",
+        "dict.c",
+        "dict.h",
+        "ffc.h",
+        "fmacros.h",
+        "hiredis.c",
+        "hiredis.h",
+        "hiredis_ssl.h",
+        "net.c",
+        "net.h",
+        "read.c",
+        "read.h",
+        "sds.c",
+        "sds.h",
+        "sdsalloc.h",
+        "sockcompat.c",
+        "sockcompat.h",
+        "ssl.c",
+        "win32.h",
+        "adapters/ae.h",
+        "adapters/glib.h",
+        "adapters/ivykis.h",
+        "adapters/libev.h",
+        "adapters/libevent.h",
+        "adapters/libhv.h",
+        "adapters/libsdevent.h",
+        "adapters/libuv.h",
+        "adapters/macosx.h",
+        "adapters/poll.h",
+        "adapters/qt.h",
+        "adapters/redismoduleapi.h"
+      ],
+      "接收端": "https://www.cctq.ai/v1",
+      "模型": "gpt-6.1-sol",
+      "模型流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1-compact-batches/1-reasoning-config/1-organization/1",
+      "状态": "分析暂停",
+      "错误": "网络请求超时或失败；远端用量可能不确定。",
+      "进度": {
+        "phase": "paused",
+        "completed": 10,
+        "total": 187,
+        "detail": "网络请求超时或失败；远端用量可能不确定。"
+      },
+      "请求状态": {
+        "success": 12,
+        "failed": 9,
+        "outcome_unknown": 19
+      },
+      "已知total_tokens": 253236,
+      "未知用量请求": 23,
+      "原快照字节未变": true,
+      "修订后本地批次检查": {
+        "批次数": 49,
+        "最大上下文字符": 79533,
+        "超过180000字符": 0,
+        "仅静态规划": true,
+        "规划流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1-compact-batches/1-reasoning-config/1-organization/1-overview-guidance/1",
+        "索引所属模型流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1-compact-batches/1-reasoning-config/1-organization/1",
+        "索引sha256": "3038a16bd172ad44dc17a54fcbd374eae81fc521454b347f32673abb49178075"
+      }
+    },
+    "spdlog-cpp": {
+      "Commit": "d6c93f38a08b4ea0f8ffcfd7f7857307d5d5c3fa",
+      "实际文件": [
+        "CMakeLists.txt",
+        "README.md",
+        "include/spdlog/async.h",
+        "include/spdlog/async_logger-inl.h",
+        "include/spdlog/async_logger.h",
+        "include/spdlog/common-inl.h",
+        "include/spdlog/common.h",
+        "include/spdlog/formatter.h",
+        "include/spdlog/fwd.h",
+        "include/spdlog/logger-inl.h",
+        "include/spdlog/logger.h",
+        "include/spdlog/mdc.h",
+        "include/spdlog/namespace.h",
+        "include/spdlog/pattern_formatter-inl.h",
+        "include/spdlog/pattern_formatter.h",
+        "include/spdlog/spdlog-inl.h",
+        "include/spdlog/spdlog.h",
+        "include/spdlog/stopwatch.h",
+        "include/spdlog/tweakme.h",
+        "include/spdlog/version.h",
+        "include/spdlog/cfg/argv.h",
+        "include/spdlog/cfg/env.h",
+        "include/spdlog/cfg/helpers-inl.h",
+        "include/spdlog/cfg/helpers.h",
+        "include/spdlog/details/backtracer-inl.h",
+        "include/spdlog/details/backtracer.h",
+        "include/spdlog/details/circular_q.h",
+        "include/spdlog/details/console_globals.h",
+        "include/spdlog/details/file_helper-inl.h",
+        "include/spdlog/details/file_helper.h",
+        "include/spdlog/details/fmt_helper.h",
+        "include/spdlog/details/log_msg-inl.h",
+        "include/spdlog/details/log_msg.h",
+        "include/spdlog/details/log_msg_buffer-inl.h",
+        "include/spdlog/details/log_msg_buffer.h",
+        "include/spdlog/details/mpmc_blocking_q.h",
+        "include/spdlog/details/null_mutex.h",
+        "include/spdlog/details/os-inl.h",
+        "include/spdlog/details/os.h",
+        "include/spdlog/details/periodic_worker-inl.h",
+        "include/spdlog/details/periodic_worker.h",
+        "include/spdlog/details/registry-inl.h",
+        "include/spdlog/details/registry.h",
+        "include/spdlog/details/synchronous_factory.h",
+        "include/spdlog/details/tcp_client-windows.h",
+        "include/spdlog/details/tcp_client.h",
+        "include/spdlog/details/thread_pool-inl.h",
+        "include/spdlog/details/thread_pool.h",
+        "include/spdlog/details/udp_client-windows.h",
+        "include/spdlog/details/udp_client.h",
+        "include/spdlog/details/windows_include.h",
+        "include/spdlog/fmt/bin_to_hex.h",
+        "include/spdlog/fmt/chrono.h",
+        "include/spdlog/fmt/compile.h",
+        "include/spdlog/fmt/fmt.h",
+        "include/spdlog/fmt/ostr.h",
+        "include/spdlog/fmt/ranges.h",
+        "include/spdlog/fmt/std.h",
+        "include/spdlog/fmt/xchar.h",
+        "include/spdlog/sinks/android_sink.h",
+        "include/spdlog/sinks/ansicolor_sink-inl.h",
+        "include/spdlog/sinks/ansicolor_sink.h",
+        "include/spdlog/sinks/base_sink-inl.h",
+        "include/spdlog/sinks/base_sink.h",
+        "include/spdlog/sinks/basic_file_sink-inl.h",
+        "include/spdlog/sinks/basic_file_sink.h",
+        "include/spdlog/sinks/callback_sink.h",
+        "include/spdlog/sinks/daily_file_sink.h",
+        "include/spdlog/sinks/dist_sink.h",
+        "include/spdlog/sinks/dup_filter_sink.h",
+        "include/spdlog/sinks/hourly_file_sink.h",
+        "include/spdlog/sinks/kafka_sink.h",
+        "include/spdlog/sinks/loki_sink.h",
+        "include/spdlog/sinks/mongo_sink.h",
+        "include/spdlog/sinks/msvc_sink.h",
+        "include/spdlog/sinks/null_sink.h",
+        "include/spdlog/sinks/ostream_sink.h",
+        "include/spdlog/sinks/qt_sinks.h",
+        "include/spdlog/sinks/ringbuffer_sink.h",
+        "include/spdlog/sinks/rotating_file_sink-inl.h",
+        "include/spdlog/sinks/rotating_file_sink.h",
+        "include/spdlog/sinks/sink-inl.h",
+        "include/spdlog/sinks/sink.h",
+        "include/spdlog/sinks/stdout_color_sinks-inl.h",
+        "include/spdlog/sinks/stdout_color_sinks.h",
+        "include/spdlog/sinks/stdout_sinks-inl.h",
+        "include/spdlog/sinks/stdout_sinks.h",
+        "include/spdlog/sinks/syslog_sink.h",
+        "include/spdlog/sinks/systemd_namespace_sink.h",
+        "include/spdlog/sinks/systemd_sink.h",
+        "include/spdlog/sinks/tcp_sink.h",
+        "include/spdlog/sinks/udp_sink.h",
+        "include/spdlog/sinks/win_eventlog_sink.h",
+        "include/spdlog/sinks/wincolor_sink-inl.h",
+        "include/spdlog/sinks/wincolor_sink.h",
+        "src/async.cpp",
+        "src/bundled_fmtlib_format.cpp",
+        "src/cfg.cpp",
+        "src/color_sinks.cpp",
+        "src/file_sinks.cpp",
+        "src/spdlog.cpp",
+        "src/stdout_sinks.cpp"
+      ],
+      "接收端": "https://www.cctq.ai/v1",
+      "模型": "gpt-6.1-sol",
+      "模型流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1-compact-batches/1-reasoning-config/1-organization/1",
+      "状态": "分析暂停",
+      "错误": "任务已暂停，请主动恢复。",
+      "进度": {
+        "phase": "paused",
+        "completed": 33,
+        "total": 210,
+        "detail": "分析已中断，请主动重新启动"
+      },
+      "请求状态": {
+        "failed": 6,
+        "success": 33,
+        "outcome_unknown": 20
+      },
+      "已知total_tokens": 621530,
+      "未知用量请求": 21,
+      "原快照字节未变": true,
+      "修订后本地批次检查": {
+        "批次数": 53,
+        "最大上下文字符": 145998,
+        "超过180000字符": 0,
+        "仅静态规划": true,
+        "规划流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1-compact-batches/1-reasoning-config/1-organization/1-overview-guidance/1",
+        "索引所属模型流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1-compact-batches/1-reasoning-config/1-organization/1",
+        "索引sha256": "25bd3c34a5566920973027b9157cea9a61c578981dfeb552849afaaada2c5325"
+      }
+    },
+    "flask-python": {
+      "Commit": "d086db856be187255b8ec61ef409357393020f32",
+      "实际文件": [
+        "README.md",
+        "pyproject.toml",
+        "src/flask/__init__.py",
+        "src/flask/__main__.py",
+        "src/flask/app.py",
+        "src/flask/blueprints.py",
+        "src/flask/cli.py",
+        "src/flask/config.py",
+        "src/flask/ctx.py",
+        "src/flask/debughelpers.py",
+        "src/flask/globals.py",
+        "src/flask/helpers.py",
+        "src/flask/logging.py",
+        "src/flask/sessions.py",
+        "src/flask/signals.py",
+        "src/flask/templating.py",
+        "src/flask/testing.py",
+        "src/flask/typing.py",
+        "src/flask/views.py",
+        "src/flask/wrappers.py",
+        "src/flask/json/__init__.py",
+        "src/flask/json/provider.py",
+        "src/flask/json/tag.py",
+        "src/flask/sansio/README.md",
+        "src/flask/sansio/app.py",
+        "src/flask/sansio/blueprints.py",
+        "src/flask/sansio/scaffold.py"
+      ],
+      "接收端": "https://www.cctq.ai/v1",
+      "模型": "gpt-6.1-sol",
+      "模型流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1-compact-batches/1-reasoning-config/1-organization/1",
+      "状态": "结构检查通过，待源码质量复核",
+      "错误": null,
+      "进度": {
+        "phase": "completed",
+        "completed": 1,
+        "total": 1,
+        "detail": "分批分析完成"
+      },
+      "请求状态": {
+        "success": 82,
+        "failed": 12,
+        "outcome_unknown": 30
+      },
+      "已知total_tokens": 927287,
+      "未知用量请求": 37,
+      "原快照字节未变": true,
+      "修订后本地批次检查": {
+        "批次数": 33,
+        "最大上下文字符": 55728,
+        "超过180000字符": 0,
+        "仅静态规划": true,
+        "规划流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1-compact-batches/1-reasoning-config/1-organization/1-overview-guidance/1",
+        "索引所属模型流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1-compact-batches/1-reasoning-config/1-organization/1",
+        "索引sha256": "27ee54ebcd288f11490afbed9a991af18c6530d7397e28ad37bb89366c2730b7"
+      }
+    },
+    "zod-typescript": {
+      "Commit": "0b216ef674e297ebe41d8bf902262e56f8755822",
+      "实际文件": [
+        "package.json",
+        "tsconfig.json",
+        "packages/zod/package.json",
+        "packages/zod/tsconfig.json",
+        "packages/zod/src/v4/index.ts",
+        "packages/zod/src/v4/classic/checks.ts",
+        "packages/zod/src/v4/classic/coerce.ts",
+        "packages/zod/src/v4/classic/compat.ts",
+        "packages/zod/src/v4/classic/deep-partial.ts",
+        "packages/zod/src/v4/classic/errors.ts",
+        "packages/zod/src/v4/classic/external.ts",
+        "packages/zod/src/v4/classic/from-json-schema.ts",
+        "packages/zod/src/v4/classic/in-out.ts",
+        "packages/zod/src/v4/classic/index.ts",
+        "packages/zod/src/v4/classic/iso.ts",
+        "packages/zod/src/v4/classic/parse.ts",
+        "packages/zod/src/v4/classic/schemas.ts",
+        "packages/zod/src/v4/core/api.ts",
+        "packages/zod/src/v4/core/checks.ts",
+        "packages/zod/src/v4/core/compile.ts",
+        "packages/zod/src/v4/core/core.ts",
+        "packages/zod/src/v4/core/doc.ts",
+        "packages/zod/src/v4/core/errors.ts",
+        "packages/zod/src/v4/core/index.ts",
+        "packages/zod/src/v4/core/json-schema-generator.ts",
+        "packages/zod/src/v4/core/json-schema-processors.ts",
+        "packages/zod/src/v4/core/json-schema.ts",
+        "packages/zod/src/v4/core/memoizer.ts",
+        "packages/zod/src/v4/core/parse.ts",
+        "packages/zod/src/v4/core/regexes.ts",
+        "packages/zod/src/v4/core/registries.ts",
+        "packages/zod/src/v4/core/schemas.ts",
+        "packages/zod/src/v4/core/standard-schema.ts",
+        "packages/zod/src/v4/core/to-json-schema.ts",
+        "packages/zod/src/v4/core/util.ts",
+        "packages/zod/src/v4/core/versions.ts",
+        "packages/zod/src/v4/core/visit.ts",
+        "packages/zod/src/v4/core/zsf.ts",
+        "packages/zod/src/v4/locales/ar.ts",
+        "packages/zod/src/v4/locales/az.ts",
+        "packages/zod/src/v4/locales/be.ts",
+        "packages/zod/src/v4/locales/bg.ts",
+        "packages/zod/src/v4/locales/bn.ts",
+        "packages/zod/src/v4/locales/ca.ts",
+        "packages/zod/src/v4/locales/ckb.ts",
+        "packages/zod/src/v4/locales/cs.ts",
+        "packages/zod/src/v4/locales/da.ts",
+        "packages/zod/src/v4/locales/de.ts",
+        "packages/zod/src/v4/locales/el.ts",
+        "packages/zod/src/v4/locales/en.ts",
+        "packages/zod/src/v4/locales/eo.ts",
+        "packages/zod/src/v4/locales/es.ts",
+        "packages/zod/src/v4/locales/fa.ts",
+        "packages/zod/src/v4/locales/fi.ts",
+        "packages/zod/src/v4/locales/fr-CA.ts",
+        "packages/zod/src/v4/locales/fr.ts",
+        "packages/zod/src/v4/locales/gu.ts",
+        "packages/zod/src/v4/locales/he.ts",
+        "packages/zod/src/v4/locales/hi.ts",
+        "packages/zod/src/v4/locales/hr.ts",
+        "packages/zod/src/v4/locales/hu.ts",
+        "packages/zod/src/v4/locales/hy.ts",
+        "packages/zod/src/v4/locales/id.ts",
+        "packages/zod/src/v4/locales/index.ts",
+        "packages/zod/src/v4/locales/is.ts",
+        "packages/zod/src/v4/locales/it.ts",
+        "packages/zod/src/v4/locales/ja.ts",
+        "packages/zod/src/v4/locales/ka.ts",
+        "packages/zod/src/v4/locales/kh.ts",
+        "packages/zod/src/v4/locales/km.ts",
+        "packages/zod/src/v4/locales/kn.ts",
+        "packages/zod/src/v4/locales/ko.ts",
+        "packages/zod/src/v4/locales/lt.ts",
+        "packages/zod/src/v4/locales/mk.ts",
+        "packages/zod/src/v4/locales/ms.ts",
+        "packages/zod/src/v4/locales/ne.ts",
+        "packages/zod/src/v4/locales/nl.ts",
+        "packages/zod/src/v4/locales/nn.ts",
+        "packages/zod/src/v4/locales/no.ts",
+        "packages/zod/src/v4/locales/ota.ts",
+        "packages/zod/src/v4/locales/pl.ts",
+        "packages/zod/src/v4/locales/ps.ts",
+        "packages/zod/src/v4/locales/pt-BR.ts",
+        "packages/zod/src/v4/locales/pt.ts",
+        "packages/zod/src/v4/locales/ro.ts",
+        "packages/zod/src/v4/locales/ru.ts",
+        "packages/zod/src/v4/locales/sk.ts",
+        "packages/zod/src/v4/locales/sl.ts",
+        "packages/zod/src/v4/locales/sv.ts",
+        "packages/zod/src/v4/locales/ta.ts",
+        "packages/zod/src/v4/locales/tg.ts",
+        "packages/zod/src/v4/locales/th.ts",
+        "packages/zod/src/v4/locales/tk.ts",
+        "packages/zod/src/v4/locales/tr.ts",
+        "packages/zod/src/v4/locales/ua.ts",
+        "packages/zod/src/v4/locales/uk.ts",
+        "packages/zod/src/v4/locales/ur.ts",
+        "packages/zod/src/v4/locales/uz.ts",
+        "packages/zod/src/v4/locales/vi.ts",
+        "packages/zod/src/v4/locales/yo.ts",
+        "packages/zod/src/v4/locales/zh-CN.ts",
+        "packages/zod/src/v4/locales/zh-TW.ts",
+        "packages/zod/src/v4/mini/checks.ts",
+        "packages/zod/src/v4/mini/coerce.ts",
+        "packages/zod/src/v4/mini/deep-partial.ts",
+        "packages/zod/src/v4/mini/external.ts",
+        "packages/zod/src/v4/mini/in-out.ts",
+        "packages/zod/src/v4/mini/index.ts",
+        "packages/zod/src/v4/mini/iso.ts",
+        "packages/zod/src/v4/mini/parse.ts",
+        "packages/zod/src/v4/mini/schemas.ts"
+      ],
+      "接收端": "https://www.cctq.ai/v1",
+      "模型": "gpt-6.1-sol",
+      "模型流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1-compact-batches/1-reasoning-config/1-organization/1",
+      "状态": "分析暂停",
+      "错误": "网络请求超时或失败；远端用量可能不确定。",
+      "进度": {
+        "phase": "paused",
+        "completed": 5,
+        "total": 352,
+        "detail": "网络请求超时或失败；远端用量可能不确定。"
+      },
+      "请求状态": {
+        "outcome_unknown": 20,
+        "failed": 2,
+        "success": 5
+      },
+      "已知total_tokens": 63371,
+      "未知用量请求": 21,
+      "原快照字节未变": true,
+      "修订后本地批次检查": {
+        "批次数": 76,
+        "最大上下文字符": 168299,
+        "超过180000字符": 0,
+        "仅静态规划": true,
+        "规划流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1-compact-batches/1-reasoning-config/1-organization/1-overview-guidance/1",
+        "索引所属模型流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1-compact-batches/1-reasoning-config/1-organization/1",
+        "索引sha256": "9b20c143b120c8297df7f14e19aa3e53b2e4d1fe98f49d28dcd129bd302c55ea"
+      }
+    }
+  },
+  "缩小范围": {
+    "zod-typescript": {
+      "状态": "修订后本轮抽样通过；完整范围对照未完成",
+      "实际文件": [
+        "packages/zod/src/v4/core/parse.ts"
+      ],
+      "已知total_tokens": 30626,
+      "正确抽样": [
+        "finalizeParams 返回固定 callee/Err 两个键，callee 使用空值回退",
+        "failure 惰性构造错误并在构造后释放 issues/ctx 引用",
+        "validateFallback 的两个运行分支、Promise 异常、issues.length 布尔返回"
+      ],
+      "错误抽样": {
+        "模块": "编解码包装与参数归一化",
+        "原模型说明": "encode/decode 及异步、安全变体把方向设为 backward 并转调解析入口，参数由 finalizeParams 统一形态。",
+        "源码结论": "_encode 在 198–205 行明确设置 backward；_decode 在 216–222 行透传 _ctx，没有统一设置 backward；同样差异存在于异步和安全变体。",
+        "判定": "不能将 encode 与 decode 都概括为设置 backward；保留原结果，需真实模型修订后重测。"
+      },
+      "全范围对照": "未完成，不计为通过",
+      "最新重测": {
+        "Commit": "0b216ef674e297ebe41d8bf902262e56f8755822",
+        "实际文件": [
+          "packages/zod/src/v4/core/parse.ts"
+        ],
+        "接收端": "https://www.cctq.ai/v1",
+        "模型": "gpt-6.1-sol",
+        "模型流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
+        "状态": "结构检查通过，待源码质量复核",
+        "错误": null,
+        "进度": {
+          "phase": "completed",
+          "completed": 1,
+          "total": 1,
+          "detail": "分批分析完成"
+        },
+        "请求状态": {
+          "success": 2
+        },
+        "已知total_tokens": 23298,
+        "未知用量请求": 0,
+        "原快照字节未变": true
+      },
+      "重测源码复核": {
+        "结果": "部分通过，尚有质量问题，不计为范围对照通过",
+        "已知total_tokens": 25073,
+        "正确抽样": [
+          "finalizeParams 两键返回与空值回退",
+          "failure 惰性错误构造、getter/setter 释放引用",
+          "validateFallback 同步与 abortEarly 覆盖、两分支、Promise 异常、布尔返回"
+        ],
+        "问题": [
+          {
+            "类型": "重要职责缺失",
+            "模型结果": "只有解析参数/失败结果与验证回退两个模块；概览限定为三个辅助函数",
+            "源码结论": "本次实际提供完整 parse.ts；其中解析、异步、安全解析以及编解码包装也应解释，不能因隐藏作用域不显示为函数节点而忽略"
+          },
+          {
+            "类型": "关系说明名称错误",
+            "call_id": "66555f3b228b581d6a7b57e7893358f1",
+            "模型说明": "在 _decode 包装内调用 finalizeParams(fn, _params)",
+            "源码结论": "parse.ts:202 位于 _encode 的 fn 内层箭头；_decode 对应调用在219行。目标和位置真实，不代表自然语言说明全部准确。"
+          }
+        ],
+        "处理": "原报告和架构已保留；通用归纳与作用域提示已进一步修订，需新请求重测，不修改原AI文字伪装通过。"
+      },
+      "最新源码复核": {
+        "状态": "本轮抽样通过，完整范围对照未完成",
+        "依据": "模块仅编码方向设为backward，解码透传；202与219调用说明分别正确；最终概览不再承诺安全解析永不抛异常，三个辅助函数说明与已读源码一致",
+        "报告": "zod-typescript-narrow真实模型验证.json",
+        "边界": "开发代理定性抽查，未执行目标代码，不代表所有自然语言无误或用户验收"
+      },
+      "历史首轮说明": "原状态、正确/错误抽样与首轮30,626 tokens属于历史报告，最新状态/账本和源码复核见最新重测/最新源码复核。"
+    },
+    "hiredis-c": {
+      "最新重测": {
+        "Commit": "058ebcdf36c5b05b759c613564fb958ec363c90f",
+        "实际文件": [
+          "read.c",
+          "read.h"
+        ],
+        "接收端": "https://www.cctq.ai/v1",
+        "模型": "gpt-6.1-sol",
+        "模型流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1-compact-batches/1-reasoning-config/1-organization/1-overview-guidance/1",
+        "状态": "结构检查通过，待源码质量复核",
+        "错误": null,
+        "进度": {
+          "phase": "completed",
+          "completed": 1,
+          "total": 1,
+          "detail": "分批分析完成"
+        },
+        "请求状态": {
+          "success": 14
+        },
+        "已知total_tokens": 116559,
+        "未知用量请求": 0,
+        "原快照字节未变": true
+      },
+      "源码复核": {
+        "状态": "历史结构发布有两项实质说明缺口；修订后重测因余额不足暂停，不计质量通过",
+        "历史成功报告": "hiredis-c-narrow真实模型验证-4cfae54b-4f08-4e6c-b293-2a8caf4b5b26.json",
+        "正确抽样": [
+          "readLine查找行结束与读取器分配基本符合源码"
+        ],
+        "问题": [
+          "GetReply遗漏输出指针非空才写入的保护条件",
+          "Feed遗漏maxbuf非零才启用缓冲上限的联合条件"
+        ],
+        "源码位置": [
+          "read.c:822",
+          "read.c:799"
+        ],
+        "处理": "通用保护条件归纳提示已修订；最新重测0/2批暂停，原AI文字未改写。"
+      }
+    },
+    "flask-python": {
+      "最新重测": {
+        "Commit": "d086db856be187255b8ec61ef409357393020f32",
+        "实际文件": [
+          "src/flask/helpers.py"
+        ],
+        "接收端": "https://www.cctq.ai/v1",
+        "模型": "gpt-6.1-sol",
+        "模型流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1-compact-batches/1-reasoning-config/1-organization/1",
+        "状态": "结构检查通过，待源码质量复核",
+        "错误": null,
+        "进度": {
+          "phase": "completed",
+          "completed": 1,
+          "total": 1,
+          "detail": "分批分析完成"
+        },
+        "请求状态": {
+          "outcome_unknown": 14,
+          "failed": 1,
+          "success": 12
+        },
+        "已知total_tokens": 79833,
+        "未知用量请求": 15,
+        "原快照字节未变": true
+      },
+      "源码复核": {
+        "状态": "主要抽样改善，仍需措辞复核及完整范围对照",
+        "依据": "两个文件发送入口均经_prepare_send_file_kwargs加工后转发，19个真实可见函数全部有讲解，声明不进入学习分母",
+        "措辞风险": "send_from_directory详情写_prepare_send_file_kwargs(kwargs)，源码实际使用**kwargs；结果未手动改写。",
+        "历史错误": "前一轮模块将目录发送参数说成原样透传，原报告保留",
+        "边界": "仅开发代理抽样，源码路径与调用身份校验不等于自然语言全正确"
+      },
+      "进一步源码复核": {
+        "状态": "发现布尔返回含义实质反向，不仅是表达式措辞风险",
+        "函数": "get_load_dotenv",
+        "位置": "src/flask/helpers.py:36-48",
+        "模型问题": "将True说成跳过加载",
+        "源码结论": "未设置FLASK_SKIP_DOTENV返回default（默认True），值为0/false/no也返回True，含义是允许加载dotenv；非这些值为False，即跳过加载",
+        "处理": "保留原模型说明并记质量缺陷；真实重测待服务恢复"
+      }
+    },
+    "spdlog-cpp": {
+      "最新重测": {
+        "Commit": "d6c93f38a08b4ea0f8ffcfd7f7857307d5d5c3fa",
+        "实际文件": [
+          "include/spdlog/common.h",
+          "include/spdlog/logger-inl.h",
+          "include/spdlog/logger.h",
+          "include/spdlog/namespace.h"
+        ],
+        "接收端": "https://www.cctq.ai/v1",
+        "模型": "gpt-6.1-sol",
+        "模型流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1-compact-batches/1-reasoning-config/1-organization/1",
+        "状态": "结构检查通过，待源码质量复核",
+        "错误": null,
+        "进度": {
+          "phase": "completed",
+          "completed": 1,
+          "total": 1,
+          "detail": "分批分析完成"
+        },
+        "请求状态": {
+          "success": 25,
+          "outcome_unknown": 7
+        },
+        "已知total_tokens": 241704,
+        "未知用量请求": 7,
+        "原快照字节未变": true
+      },
+      "源码复核": {
+        "状态": "三项函数抽样符合源码，完整范围对照未完成",
+        "依据": [
+          "flush委托flush_，不把虚分派确认成直接调用",
+          "flush_level使用relaxed原子加载",
+          "should_flush_比较阈值并排除level::off"
+        ],
+        "边界": "58个可见函数均有讲解；未逐条人工审完全部讲解；缺少外部依赖与宏配置的未解析关系明确保留"
+      },
+      "进一步源码复核": {
+        "状态": "新增完整函数范围缺陷已本地修订，旧真实结果不能代表修订后质量",
+        "问题": "旧索引sink_it_提前结束在141行，漏掉143-145行刷新分支；两个log_也漏末尾catch与函数闭括号",
+        "范围修订": [
+          "sink_it_:135-141→135-146",
+          "log_:324-341→324-343",
+          "log_:346-363→346-365"
+        ],
+        "证据": "异常包装宏完整范围源码复核.json",
+        "边界": "58个可见实体ID均保留；原字节及文件语义指纹不变；尾部调用归属已恢复但仍未确认；新流水线cpp-config/8需真实质量重测"
+      }
+    }
+  },
+  "账本汇总": {
+    "去重请求数": 1097,
+    "已知total_tokens": 21002158,
+    "缺少用量请求数": 192,
+    "在途请求数": 0,
+    "费用": null,
+    "说明": "包含历史失败、截断、修复及重新评测，按请求ID去重；在途属于尚未返回用量，未知不记零，缺少价格不估算费用。"
+  },
+  "外部阻塞": "已按授权切换新接收端，实际终态和错误见各样本；历史DeepSeek官方余额查询不用于判定中转站可用性。",
+  "验收结论": "P0实现与本轮开发自检已收敛，35项已验证、AC29开发复核通过待用户理解验收。三工程扩展完整范围仍暂停，不宣称四全量质量或全部用户发布验收已通过。",
+  "汇总时间UTC": "2026-10-13T18:29:40.106666+00:00",
+  "本轮本地修订说明": {
+    "新流水线": "cpp-config/8",
+    "新模型请求": 0,
+    "spdlog语法规划": {
+      "文件数": 102,
+      "可见函数": 534,
+      "批次": 53,
+      "最大字符": 145797
+    },
+    "边界": "当前完整进度19/51与缩小范围58讲解为原实际模型/旧索引状态，未修改其检查点或原AI文字；新语法规划非实际原生重索引/全局架构发布，后续须重建索引并核对检查点可复用性。",
+    "修订后实际产品索引": "spdlog修订后产品静态索引验证.json：102文件、534可见函数、完整尾部作用域通过；完整静态工作进程未完成后采用明确标识的语法回退，确认调用0，没有上传或AI架构；仍不能当作模型质量通过。"
+  },
+  "历史复核边界": "缩小范围原有源码复核字段属于当时报告；最新重测单独记录，不自动继承历史质量结论。",
+  "历史完整范围摘要复核": "Flask get_load_dotenv详情正确保留默认分支，但所属模块压缩摘要漏未设置/空值默认加载，记录于完整范围默认分支摘要复核.json；未计整体质量通过。",
+  "本轮开发复核": {
+    "Flask": "完整发布职责与全窄范围复核通过，用户理解待确认",
+    "Hiredis": "新窄范围正式职责与关键语义、overview-guidance/1消除交付回调误述，保留部分支持",
+    "spdlog": "新窄范围58函数正式发布，委托机制修订与关键分支复核通过，保留部分支持",
+    "Zod": "原解析入口范围实际复核通过，不外推整个库"
+  }
+}

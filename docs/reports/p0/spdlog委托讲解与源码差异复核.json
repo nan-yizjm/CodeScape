@@ -1,0 +1,37 @@
+{
+  "核对时间UTC": "2026-10-13T01:13:01.908133+00:00",
+  "性质": "真实结果的源码差异核对，非固定响应；不将未确认调用升级",
+  "样本": "spdlog-cpp",
+  "Commit": "d6c93f38a08b4ea0f8ffcfd7f7857307d5d5c3fa",
+  "原窄范围报告sha256": "e9c12794978bcf5d66daecce7fb22b385735ceeb2a3e12f09aa1d66e7e9c36db",
+  "发现": [],
+  "源码依据": [
+    {
+      "path": "include/spdlog/logger-inl.h",
+      "start_line": 90,
+      "end_line": 98,
+      "file_sha256": "3074d3e8e57d68d04fc5cddb518cab546d8fd8b5cb0072e63e8837f3b9c12d04",
+      "源码": "SPDLOG_INLINE void logger::enable_backtrace(size_t n_messages) { tracer_.enable(n_messages); }\n\n// restore orig sinks and level and delete the backtrace sink\nSPDLOG_INLINE void logger::disable_backtrace() { tracer_.disable(); }\n\nSPDLOG_INLINE void logger::dump_backtrace() { dump_backtrace_(); }\n\n// flush functions\nSPDLOG_INLINE void logger::flush() { flush_(); }"
+    },
+    {
+      "path": "include/spdlog/logger-inl.h",
+      "start_line": 155,
+      "end_line": 164,
+      "file_sha256": "3074d3e8e57d68d04fc5cddb518cab546d8fd8b5cb0072e63e8837f3b9c12d04",
+      "源码": "SPDLOG_INLINE void logger::dump_backtrace_() {\n    using details::log_msg;\n    if (tracer_.enabled() && !tracer_.empty()) {\n        sink_it_(\n            log_msg{name(), level::info, \"****************** Backtrace Start ******************\"});\n        tracer_.foreach_pop([this](const log_msg &msg) { this->sink_it_(msg); });\n        sink_it_(\n            log_msg{name(), level::info, \"****************** Backtrace End ********************\"});\n    }\n}"
+    },
+    {
+      "path": "include/spdlog/details/backtracer-inl.h",
+      "start_line": 30,
+      "end_line": 39,
+      "file_sha256": "c9dfe39de09d64325c3b4011522cf0b7f2f5d516e2b650e131e1f75b1f973d1c",
+      "源码": "SPDLOG_INLINE void backtracer::enable(size_t size) {\n    std::lock_guard<std::mutex> lock{mutex_};\n    enabled_.store(true, std::memory_order_relaxed);\n    messages_ = circular_q<log_msg_buffer>{size};\n}\n\nSPDLOG_INLINE void backtracer::disable() {\n    std::lock_guard<std::mutex> lock{mutex_};\n    enabled_.store(false, std::memory_order_relaxed);\n}"
+    }
+  ],
+  "结论": "发现回溯enable/disable讲解中无依据的输出目标迁移/恢复及级别恢复机制；dump_backtrace包装的局部上下文不足不能作为全快照缺失。此前五个关键异常方法抽样通过仍只限其原抽样，不代表58个函数全部质量通过。",
+  "修复状态": "两个enable/disable包装已在独立工具通过真实修订和源码核对，原发布结果未改写，默认产品流程未接入；其余讲解不自动继承通过。",
+  "模型请求": 0,
+  "执行目标代码": false,
+  "修改原源码": false,
+  "验收通过": false
+}

@@ -1,0 +1,45 @@
+{
+  "日期": "2026-10-12",
+  "性质": "当前生成规划对已保存索引和固定快照的只读核对，非真实模型质量",
+  "执行目标代码": false,
+  "模型请求": 0,
+  "流水线": "architecture/5-repairs/4-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
+  "样本": {
+    "hiredis-c": {
+      "Commit": "058ebcdf36c5b05b759c613564fb958ec363c90f",
+      "索引sha256": "3f4ec6781a6ce65830850a50f92701c48a92f4b0640baa7f31e78a08fcf457e6",
+      "规划批次数": 49,
+      "可见函数数": 506,
+      "未覆盖函数数": 0,
+      "重复进入归属集合函数数": 0,
+      "重复材料": []
+    },
+    "spdlog-cpp": {
+      "Commit": "d6c93f38a08b4ea0f8ffcfd7f7857307d5d5c3fa",
+      "索引sha256": "d144421089d6503e3581e2610f68698c44ea5f6df78f556b2978f84e401a7b6b",
+      "规划批次数": 53,
+      "可见函数数": 534,
+      "未覆盖函数数": 0,
+      "重复进入归属集合函数数": 0,
+      "重复材料": []
+    },
+    "flask-python": {
+      "Commit": "d086db856be187255b8ec61ef409357393020f32",
+      "索引sha256": "ef501b9afd73e5f1b8760e5dfceb0a8db4a46cecbb2162f46cf50c6e16509eab",
+      "规划批次数": 33,
+      "可见函数数": 341,
+      "未覆盖函数数": 0,
+      "重复进入归属集合函数数": 0,
+      "重复材料": []
+    },
+    "zod-typescript": {
+      "Commit": "0b216ef674e297ebe41d8bf902262e56f8755822",
+      "索引sha256": "29723470cb271fc827a09ad438a394b38712ffbf5bce4253fc12aec86a90f5d4",
+      "规划批次数": 76,
+      "可见函数数": 848,
+      "未覆盖函数数": 0,
+      "重复进入归属集合函数数": 0,
+      "重复材料": []
+    }
+  }
+}

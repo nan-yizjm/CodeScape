@@ -1,0 +1,139 @@
+{
+  "核对时间UTC": "2026-10-13T06:47:56.504641+00:00",
+  "产品提交": "53d5d20",
+  "构建号": "20261013T062514Z",
+  "流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1-organization/1",
+  "实际自动检查": {
+    "后端": 461,
+    "Ruff": "通过"
+  },
+  "正式提示修订": "补充实际异常分支、迭代器状态边界、委托实现边界及局部引用与全局缺失的区别；不自动替换旧讲解。",
+  "版本来源实现": "检查点累积实际已接受的生成版本集合，准备产物及摘要描述符绑定该集合；全窄对照不将混合来源记为统一新提示效果。",
+  "最新完整范围": {
+    "hiredis-c": {
+      "进度": {
+        "phase": "paused",
+        "completed": 5,
+        "total": 49,
+        "detail": "AI 服务报告上游请求失败，未发布部分结果；检查点已保留，请检查服务后主动恢复。"
+      },
+      "状态": "分析暂停",
+      "错误": "AI 服务报告上游请求失败，未发布部分结果；检查点已保留，请检查服务后主动恢复。",
+      "全程代码一致": true,
+      "记录生成版本集合": null,
+      "完整结果发布": false
+    },
+    "spdlog-cpp": {
+      "进度": {
+        "phase": "paused",
+        "completed": 6,
+        "total": 53,
+        "detail": "网络请求超时或失败；远端用量可能不确定。"
+      },
+      "状态": "分析暂停",
+      "错误": "网络请求超时或失败；远端用量可能不确定。",
+      "全程代码一致": true,
+      "记录生成版本集合": [
+        "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1"
+      ],
+      "完整结果发布": false
+    },
+    "flask-python": {
+      "进度": {
+        "phase": "paused",
+        "completed": 17,
+        "total": 33,
+        "detail": "AI 服务报告上游请求失败，未发布部分结果；检查点已保留，请检查服务后主动恢复。"
+      },
+      "状态": "分析暂停",
+      "错误": "AI 服务报告上游请求失败，未发布部分结果；检查点已保留，请检查服务后主动恢复。",
+      "全程代码一致": true,
+      "记录生成版本集合": [
+        "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1",
+        "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1"
+      ],
+      "完整结果发布": false
+    },
+    "zod-typescript": {
+      "进度": {
+        "phase": "paused",
+        "completed": 0,
+        "total": 76,
+        "detail": "分析已中断，请主动重新启动"
+      },
+      "状态": "分析暂停",
+      "错误": "任务已暂停，请主动恢复。",
+      "全程代码一致": true,
+      "记录生成版本集合": null,
+      "完整结果发布": false
+    }
+  },
+  "Flask窄范围": {
+    "进度": {
+      "phase": "paused",
+      "completed": 0,
+      "total": 2,
+      "detail": "AI 服务报告上游请求失败，未发布部分结果；检查点已保留，请检查服务后主动恢复。"
+    },
+    "状态": "0/2批暂停，原成功报告另行归档，未发布新结果"
+  },
+  "来源版本实际核对": "Flask完整17批检查点与终态记录同时保留evidence-localization/1和追加semantics-guidance/1的来源集合；本轮16→17批，不能将旧16批计为新提示生成。",
+  "真实提示效果": "新Flask窄范围尚未取得合格结果；完整17批仅包含一个本轮新增批次，未完成目标两处讲解的正式生成效果验证。",
+  "包检查": {
+    "独立运行": "Windows声明与函数范围独立包验证.json",
+    "安装升级卸载": "Windows跨构建升级验证.json",
+    "实际升级": "020625Z→062514Z",
+    "模型请求": 0,
+    "边界": "当前Win11开发机，同0.1.0两个实际构建；干净矩阵按CHG-13免除，不冒称跨正式版本。"
+  },
+  "制品": {
+    "CodeScape-0.1.0-Windows-x64-Portable.zip": {
+      "sha256": "7128d353f8c3930e813a2f4235113048589d958d4cff59878213d1311f16c565",
+      "bytes": 158237264
+    },
+    "CodeScape-0.1.0-Windows-x64-Setup.exe": {
+      "sha256": "57986176ccae00efdf028ac8733d0ee27550d7775f31edca6ca98621fc3dfc44",
+      "bytes": 115278664
+    }
+  },
+  "本轮真实账本增量": {
+    "请求数": 9,
+    "已知total_tokens": 14101,
+    "缺少总用量请求": 6,
+    "费用": null
+  },
+  "公开累计账本": {
+    "去重请求数": 851,
+    "已知total_tokens": 19591735,
+    "缺少用量请求数": 104,
+    "在途请求数": 0,
+    "费用": null,
+    "说明": "包含历史失败、截断、修复及重新评测，按请求ID去重；在途属于尚未返回用量，未知不记零，缺少价格不估算费用。"
+  },
+  "工作区": {
+    "URL": "http://127.0.0.1:8125/",
+    "数据逐列摘要未变": true,
+    "核对摘要": {
+      "prototype_projects": {
+        "count": 4,
+        "sha256": "15bbe92d40491eba630d1239fc7779d60caa0f07271720cdb13160a9a72a10ba"
+      },
+      "prototype_learning": {
+        "count": 2,
+        "sha256": "b7a1862f475a357ee85bc27b685d6ca587a7ccb4ec64c294c5542e4713484de2"
+      },
+      "requests": 13
+    },
+    "浏览器恢复": "四项目及learning_project (2)/配置读取与校验，6节点2协作线，源码与授权设置未触发模型请求",
+    "截图": "output/playwright/P0语义约束更新后工作区.png"
+  },
+  "剩余": "完整工程质量、最终全窄范围职责及核心协作对照、已发现讲解缺陷的正式生成与发布验证、用户验收。",
+  "AC状态": {
+    "已验证": 32,
+    "部分": 2,
+    "待真实或用户": 2
+  },
+  "P0全部通过": false,
+  "执行目标代码": false,
+  "修改用户原始源码": false
+}

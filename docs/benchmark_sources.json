@@ -1,57 +1,171 @@
 {
   "schema_version": "codescape-benchmark-sources/1",
   "selected_on": "2026-10-09",
-  "reference_verification": "Remote default HEAD verified with git ls-remote --symref; no CodeScape analysis executed.",
-  "scope_status": "Initial path rules; exact manifests and human-reviewed baselines must be generated at M0 before acceptance runs.",
-  "common_excludes": [".git/**", "node_modules/**", "**/node_modules/**", "build/**", "dist/**", "**/__pycache__/**", "**/.env", "**/*.pem", "**/*.key"],
+  "reference_verification": "固定默认 HEAD 已核实；2026-10-11 已完成只读静态测量，没有执行目标代码。",
+  "scope_status": "四个固定筛选快照已获用户真实 DeepSeek 评测授权；C/C++ 与 Python/TypeScript 独立源码抽样基线已准备；真实架构和范围对照正在进行，尚未通过质量验收。",
+  "common_excludes": [
+    ".git/**",
+    "node_modules/**",
+    "**/node_modules/**",
+    "build/**",
+    "dist/**",
+    "**/__pycache__/**",
+    "**/.env",
+    "**/*.pem",
+    "**/*.key"
+  ],
   "repositories": [
     {
       "id": "hiredis-c",
       "url": "https://github.com/redis/hiredis.git",
       "default_branch_at_selection": "master",
       "commit": "058ebcdf36c5b05b759c613564fb958ec363c90f",
-      "languages": ["c"],
-      "initial_includes": ["*.c", "*.h", "adapters/**/*.h", "README.md", "CMakeLists.txt"],
-      "initial_excludes": ["test.c", "examples/**", "deps/**"],
-      "focus": ["cross-file direct calls", "declaration-definition mapping", "callback exclusions", "protocol and I/O responsibilities"],
-      "analysis_status": "not_run"
+      "languages": [
+        "c"
+      ],
+      "initial_includes": [
+        "*.c",
+        "*.h",
+        "adapters/**/*.h",
+        "README.md",
+        "CMakeLists.txt"
+      ],
+      "initial_excludes": [
+        "test.c",
+        "examples/**",
+        "deps/**"
+      ],
+      "focus": [
+        "cross-file direct calls",
+        "declaration-definition mapping",
+        "callback exclusions",
+        "protocol and I/O responsibilities"
+      ],
+      "analysis_status": "用户已授权固定筛选快照，真实模型评测进行中；不将结构校验当作质量验收",
+      "static_report": "reports/p0/C工程语义解析验证.json",
+      "real_model_report": "reports/p0/hiredis-c-full真实模型验证.json"
     },
     {
       "id": "spdlog-cpp",
       "url": "https://github.com/gabime/spdlog.git",
       "default_branch_at_selection": "v1.x",
       "commit": "d6c93f38a08b4ea0f8ffcfd7f7857307d5d5c3fa",
-      "languages": ["cpp"],
-      "initial_includes": ["include/spdlog/**", "src/**", "README.md", "CMakeLists.txt"],
-      "initial_excludes": ["include/spdlog/fmt/bundled/**", "tests/**", "bench/**", "example/**"],
-      "focus": ["header implementations", "templates", "member methods", "conditional implementations", "excluded dependency diagnostics"],
-      "analysis_status": "not_run"
+      "languages": [
+        "cpp"
+      ],
+      "initial_includes": [
+        "include/spdlog/**",
+        "src/**",
+        "README.md",
+        "CMakeLists.txt"
+      ],
+      "initial_excludes": [
+        "include/spdlog/fmt/bundled/**",
+        "tests/**",
+        "bench/**",
+        "example/**"
+      ],
+      "focus": [
+        "header implementations",
+        "templates",
+        "member methods",
+        "conditional implementations",
+        "excluded dependency diagnostics"
+      ],
+      "analysis_status": "用户已授权固定筛选快照，真实模型评测进行中；不将结构校验当作质量验收",
+      "static_report": "reports/p0/spdlog-cpp静态测量.json",
+      "real_model_report": "reports/p0/spdlog-cpp-full真实模型验证.json"
     },
     {
       "id": "flask-python",
       "url": "https://github.com/pallets/flask.git",
       "default_branch_at_selection": "main",
       "commit": "d086db856be187255b8ec61ef409357393020f32",
-      "languages": ["python"],
-      "initial_includes": ["src/flask/**", "README.md", "pyproject.toml"],
-      "initial_excludes": ["tests/**", "examples/**", "docs/**"],
-      "focus": ["semantic responsibilities", "decorators", "dynamic dispatch limits", "framework overview"],
-      "analysis_status": "not_run"
+      "languages": [
+        "python"
+      ],
+      "initial_includes": [
+        "src/flask/**",
+        "README.md",
+        "pyproject.toml"
+      ],
+      "initial_excludes": [
+        "tests/**",
+        "examples/**",
+        "docs/**"
+      ],
+      "focus": [
+        "semantic responsibilities",
+        "decorators",
+        "dynamic dispatch limits",
+        "framework overview"
+      ],
+      "analysis_status": "用户已授权固定筛选快照，真实模型评测进行中；不将结构校验当作质量验收",
+      "static_report": "reports/p0/flask-python静态测量.json",
+      "real_model_report": "reports/p0/flask-python-full真实模型验证.json"
     },
     {
       "id": "zod-typescript",
       "url": "https://github.com/colinhacks/zod.git",
       "default_branch_at_selection": "main",
       "commit": "0b216ef674e297ebe41d8bf902262e56f8755822",
-      "languages": ["typescript"],
-      "initial_includes": ["packages/zod/src/v4/**", "packages/zod/package.json", "packages/zod/tsconfig.json", "tsconfig.json", "package.json", "README.md"],
-      "initial_excludes": ["**/tests/**", "**/*.test.ts", "**/bench/**", "**/benchmarks/**"],
-      "focus": ["type versus runtime implementation", "cross-file symbols", "anonymous scope ownership", "multi-directory responsibilities"],
-      "analysis_status": "not_run"
+      "languages": [
+        "typescript"
+      ],
+      "initial_includes": [
+        "packages/zod/src/v4/**",
+        "packages/zod/package.json",
+        "packages/zod/tsconfig.json",
+        "tsconfig.json",
+        "package.json",
+        "README.md"
+      ],
+      "initial_excludes": [
+        "**/tests/**",
+        "**/*.test.ts",
+        "**/bench/**",
+        "**/benchmarks/**"
+      ],
+      "focus": [
+        "type versus runtime implementation",
+        "cross-file symbols",
+        "anonymous scope ownership",
+        "multi-directory responsibilities"
+      ],
+      "analysis_status": "用户已授权固定筛选快照，真实模型评测进行中；不将结构校验当作质量验收",
+      "static_report": "reports/p0/zod-typescript静态测量.json",
+      "real_model_report": "reports/p0/zod-typescript-full真实模型验证.json"
     }
   ],
-  "required_fixture_groups": ["FX-01", "FX-02", "FX-03", "FX-04", "FX-05", "FX-06", "FX-07", "FX-08", "FX-09", "FX-10", "FX-11", "FX-12", "FX-13", "FX-14", "FX-15", "FX-16", "FX-17", "FX-18"],
-  "fixture_status": "Specified in CodeScape_Test_Plan.md; fixture source files are implementation deliverables, not yet generated.",
-  "manifest_requirements": ["commit", "scope_rules_version", "sorted_relative_paths", "file_sha256", "scope_hash", "excluded_paths_and_reasons", "human_reviewed_core_relations"],
+  "required_fixture_groups": [
+    "FX-01",
+    "FX-02",
+    "FX-03",
+    "FX-04",
+    "FX-05",
+    "FX-06",
+    "FX-07",
+    "FX-08",
+    "FX-09",
+    "FX-10",
+    "FX-11",
+    "FX-12",
+    "FX-13",
+    "FX-14",
+    "FX-15",
+    "FX-16",
+    "FX-17",
+    "FX-18"
+  ],
+  "fixture_status": "规则反例已纳入 tests/test_analysis.py、test_cpp_environment.py、test_bridges.py 等；人工产物、真实模型和安装验证分开记录，见 P0验收追踪.md。",
+  "manifest_requirements": [
+    "commit",
+    "scope_rules_version",
+    "sorted_relative_paths",
+    "file_sha256",
+    "scope_hash",
+    "excluded_paths_and_reasons",
+    "human_reviewed_core_relations"
+  ],
   "execution_policy": "Read source statically. Do not execute repository code, install scripts, builds, or tests. Product remote import remains default-branch-only; pinned commits are development fixtures."
 }

@@ -1,0 +1,148 @@
+{
+  "verified_at": "2026-10-09T02:52:39.909477+00:00",
+  "model": "deepseek-flash",
+  "recipient": "https://api.deepseek.com",
+  "authorized_source_paths": [
+    "tests/fixtures/learning_project/input.py",
+    "tests/fixtures/learning_project/engine.py",
+    "tests/fixtures/learning_project/presentation.py"
+  ],
+  "usage": {
+    "prompt_tokens": 5525,
+    "completion_tokens": 1832,
+    "total_tokens": 7357,
+    "prompt_tokens_details": {
+      "cached_tokens": 0
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 676
+    },
+    "prompt_cache_hit_tokens": 0,
+    "prompt_cache_miss_tokens": 5525
+  },
+  "schema_validation": "通过",
+  "architecture": {
+    "modules": [
+      {
+        "id": "m1",
+        "parent_id": null,
+        "name": "配置输入与校验",
+        "summary": "提供配置读取与校验函数：read_config 从 source 中取 language（默认 python）并设定 depth=3，随后调用 validate_config；validate_config 检查 language 字段存在且 depth 大于 0。",
+        "entity_ids": [
+          "b673b697-5b84-589e-b240-db4d5664aa08",
+          "67bc825a-b2a2-54eb-b4d9-1a1f471bb9aa"
+        ],
+        "code_paths": [
+          "input.py"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "m2",
+        "parent_id": null,
+        "name": "分析引擎",
+        "summary": "围绕源码分析流程的模块，包含流程编排、语法解析与遍历、结果汇总三部分，由 analyze_project 串联 read_config、parse_source 和 summarize。",
+        "entity_ids": [],
+        "code_paths": [
+          "engine.py"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "m3",
+        "parent_id": "m2",
+        "name": "分析流程编排",
+        "summary": "analyze_project 作为引擎入口，先通过 read_config 获取配置，再调用 parse_source 解析源码，最后交由 summarize 汇总为结果。",
+        "entity_ids": [
+          "18fdd787-e40d-50bb-9ea5-7b8fcba691c6"
+        ],
+        "code_paths": [
+          "engine.py"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "m4",
+        "parent_id": "m2",
+        "name": "语法解析与遍历",
+        "summary": "parse_source 对同一 source 调用 walk_syntax 两次并返回两者相加的结果；walk_syntax 依据 node 的 children 递归遍历，无子节点时返回 1，否则累加各子节点递归结果。",
+        "entity_ids": [
+          "c4a647c7-e7e2-5c00-8935-0a7893ef5beb",
+          "7eeb1fd0-e5dc-57bf-ab33-709192cf7fa0"
+        ],
+        "code_paths": [
+          "engine.py"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "m5",
+        "parent_id": "m2",
+        "name": "结果汇总",
+        "summary": "summarize 将语法统计结果与配置结果组合成包含 nodes 和 configured 两个字段的字典。",
+        "entity_ids": [
+          "57a9ea74-820d-5abc-b638-3cbf58eea391"
+        ],
+        "code_paths": [
+          "engine.py"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "m6",
+        "parent_id": null,
+        "name": "结果呈现",
+        "summary": "由 build_graph 和 export_graph 组成的呈现层：build_graph 调用 analyze_project 取得结果并包装为图形数据，export_graph 在此基础上将其转为字符串导出。",
+        "entity_ids": [],
+        "code_paths": [
+          "presentation.py"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "m7",
+        "parent_id": "m6",
+        "name": "图形构建",
+        "summary": "build_graph 调用 analyze_project 获取分析结果，返回包含标题与结果字段的图形数据字典。",
+        "entity_ids": [
+          "3cee346e-d0e1-51ea-9344-923b9eaeea18"
+        ],
+        "code_paths": [
+          "presentation.py"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "m8",
+        "parent_id": "m6",
+        "name": "图形导出",
+        "summary": "export_graph 调用 build_graph 生成图形数据，并通过 str 将其转换为字符串返回。",
+        "entity_ids": [
+          "88ba1d31-0412-5871-947b-d4c8947d73ff"
+        ],
+        "code_paths": [
+          "presentation.py"
+        ],
+        "incomplete": false
+      }
+    ],
+    "overview": {
+      "introduction": "该代码库是用于静态分析和界面验证的预置样例，按输入配置、分析引擎、结果呈现三个方向组织：input.py 负责配置读取与校验，engine.py 负责语法提取与结果汇总，presentation.py 负责图形数据构建与导出。文件注释表明这些代码用于静态分析场景，不实际运行此项目。",
+      "capabilities": [
+        "从 source 读取语言配置并生成固定 depth 的配置字典，并校验其有效性",
+        "对输入对象执行递归子节点遍历并累计节点数",
+        "将配置结果与语法统计结果组合为统一的结果字典",
+        "在分析结果之上构建带标题的图形数据",
+        "将图形数据转换为字符串形式导出"
+      ],
+      "principle": "调用链由外到内分为三层：presentation.py 的 build_graph 调用 engine.py 的 analyze_project 获取结果并包装为图形数据，export_graph 再将其字符串化；engine.py 内部 analyze_project 先调用 input.py 的 read_config（read_config 转调 validate_config）取得配置，再调用 parse_source 解析源码，最后调用 summarize 汇总；parse_source 对同一输入调用两次 walk_syntax 并相加，walk_syntax 通过 node.get(\"children\", []) 递归累加子节点统计。",
+      "limitations": [
+        "源码为静态分析样例，未体现真实运行时的完整行为，例如未展示 source 的实际结构、语言类型分发或异常处理",
+        "read_config 中的 depth 固定为 3，未基于外部输入动态计算",
+        "validate_config 仅检查 language 字段存在且 depth 大于 0，未覆盖其他配置合法性",
+        "walk_syntax 依赖 node 提供 get 方法，对不符合该接口的输入未做防御",
+        "presentation.py 的导出仅为 str 转换，未涉及具体序列化格式或输出目标"
+      ]
+    }
+  }
+}

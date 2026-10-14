@@ -1,0 +1,156 @@
+{
+  "日期": "2026-10-11",
+  "Commit": "d086db856be187255b8ec61ef409357393020f32",
+  "性质": "只读声明识别复核，未请求模型，非整体质量通过",
+  "原可见函数": 359,
+  "新可见函数": 341,
+  "全部实体ID保留": true,
+  "声明不进入学习分母": [
+    {
+      "name": "locate_app",
+      "path": "src/flask/cli.py",
+      "line": 230,
+      "old_visible": true,
+      "new_visible": false,
+      "reason": "类型重载声明"
+    },
+    {
+      "name": "locate_app",
+      "path": "src/flask/cli.py",
+      "line": 236,
+      "old_visible": true,
+      "new_visible": false,
+      "reason": "类型重载声明"
+    },
+    {
+      "name": "ConfigAttribute.__get__",
+      "path": "src/flask/config.py",
+      "line": 30,
+      "old_visible": true,
+      "new_visible": false,
+      "reason": "类型重载声明"
+    },
+    {
+      "name": "ConfigAttribute.__get__",
+      "path": "src/flask/config.py",
+      "line": 33,
+      "old_visible": true,
+      "new_visible": false,
+      "reason": "类型重载声明"
+    },
+    {
+      "name": "stream_with_context",
+      "path": "src/flask/helpers.py",
+      "line": 52,
+      "old_visible": true,
+      "new_visible": false,
+      "reason": "类型重载声明"
+    },
+    {
+      "name": "stream_with_context",
+      "path": "src/flask/helpers.py",
+      "line": 58,
+      "old_visible": true,
+      "new_visible": false,
+      "reason": "类型重载声明"
+    },
+    {
+      "name": "App.template_filter",
+      "path": "src/flask/sansio/app.py",
+      "line": 665,
+      "old_visible": true,
+      "new_visible": false,
+      "reason": "类型重载声明"
+    },
+    {
+      "name": "App.template_filter",
+      "path": "src/flask/sansio/app.py",
+      "line": 667,
+      "old_visible": true,
+      "new_visible": false,
+      "reason": "类型重载声明"
+    },
+    {
+      "name": "App.template_test",
+      "path": "src/flask/sansio/app.py",
+      "line": 715,
+      "old_visible": true,
+      "new_visible": false,
+      "reason": "类型重载声明"
+    },
+    {
+      "name": "App.template_test",
+      "path": "src/flask/sansio/app.py",
+      "line": 717,
+      "old_visible": true,
+      "new_visible": false,
+      "reason": "类型重载声明"
+    },
+    {
+      "name": "App.template_global",
+      "path": "src/flask/sansio/app.py",
+      "line": 774,
+      "old_visible": true,
+      "new_visible": false,
+      "reason": "类型重载声明"
+    },
+    {
+      "name": "App.template_global",
+      "path": "src/flask/sansio/app.py",
+      "line": 776,
+      "old_visible": true,
+      "new_visible": false,
+      "reason": "类型重载声明"
+    },
+    {
+      "name": "Blueprint.app_template_filter",
+      "path": "src/flask/sansio/blueprints.py",
+      "line": 444,
+      "old_visible": true,
+      "new_visible": false,
+      "reason": "类型重载声明"
+    },
+    {
+      "name": "Blueprint.app_template_filter",
+      "path": "src/flask/sansio/blueprints.py",
+      "line": 446,
+      "old_visible": true,
+      "new_visible": false,
+      "reason": "类型重载声明"
+    },
+    {
+      "name": "Blueprint.app_template_test",
+      "path": "src/flask/sansio/blueprints.py",
+      "line": 498,
+      "old_visible": true,
+      "new_visible": false,
+      "reason": "类型重载声明"
+    },
+    {
+      "name": "Blueprint.app_template_test",
+      "path": "src/flask/sansio/blueprints.py",
+      "line": 500,
+      "old_visible": true,
+      "new_visible": false,
+      "reason": "类型重载声明"
+    },
+    {
+      "name": "Blueprint.app_template_global",
+      "path": "src/flask/sansio/blueprints.py",
+      "line": 556,
+      "old_visible": true,
+      "new_visible": false,
+      "reason": "类型重载声明"
+    },
+    {
+      "name": "Blueprint.app_template_global",
+      "path": "src/flask/sansio/blueprints.py",
+      "line": 558,
+      "old_visible": true,
+      "new_visible": false,
+      "reason": "类型重载声明"
+    }
+  ],
+  "原源码字节未变": true,
+  "旧评测边界": "旧完整/缩小范围模型报告原文保留，包含类型声明误入函数及文件响应参数说明错误；修订后需要新评测"
+}

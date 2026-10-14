@@ -1,0 +1,71 @@
+{
+  "核对时间UTC": "2026-10-13T09:18:25.032957+00:00",
+  "模型请求": 0,
+  "性质": "只读核对已保存源码批次的恢复；不计全局发布或语义质量通过",
+  "样本": {
+    "hiredis-c": {
+      "Commit": "058ebcdf36c5b05b759c613564fb958ec363c90f",
+      "快照hash": "82b41a5fac7fc0468d890af4da5f8c71822c07c7fa90d9ff9a7a5fab487c31c2",
+      "检查点sha256": "d70e6334c19c99ba1d30422118c369e51b44b5d788d8c01131d13f2ff3426212",
+      "已保存批数": 10,
+      "恢复规划批数": 187,
+      "严格实体引用关系校验": "通过",
+      "全部前缀复用": true,
+      "检查点读取期间稳定": true,
+      "源码生成版本集合": [
+        "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1",
+        "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1-compact-batches/1",
+        "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1-compact-batches/1-reasoning-config/1"
+      ],
+      "讲解数": 69
+    },
+    "spdlog-cpp": {
+      "Commit": "d6c93f38a08b4ea0f8ffcfd7f7857307d5d5c3fa",
+      "快照hash": "d4586f715383197a4fccb3ccc33326112d0d5f8441eb5d02fbb79ab7ea70245d",
+      "检查点sha256": "813bd6caf3868170e4b4b65dbfb1c1fcd4adfc97825a77f2fc4c24882fc41de3",
+      "已保存批数": 29,
+      "恢复规划批数": 210,
+      "严格实体引用关系校验": "通过",
+      "全部前缀复用": true,
+      "检查点读取期间稳定": false,
+      "源码生成版本集合": [
+        "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
+        "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1-compact-batches/1",
+        "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1-compact-batches/1-reasoning-config/1"
+      ],
+      "讲解数": 129
+    },
+    "flask-python": {
+      "Commit": "d086db856be187255b8ec61ef409357393020f32",
+      "快照hash": "05de006763cb3d83f9ef72708e199156697402cb13031070f51225a50852b8c7",
+      "检查点sha256": "8b9923583b0a38910f54b8b515a037295c1a891ecf364cfc0e4ebc8e76d9d56c",
+      "已保存批数": 27,
+      "恢复规划批数": 76,
+      "严格实体引用关系校验": "通过",
+      "全部前缀复用": true,
+      "检查点读取期间稳定": true,
+      "源码生成版本集合": [
+        "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1",
+        "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1",
+        "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1-compact-batches/1",
+        "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1-compact-batches/1-reasoning-config/1"
+      ],
+      "讲解数": 207
+    },
+    "zod-typescript": {
+      "Commit": "0b216ef674e297ebe41d8bf902262e56f8755822",
+      "快照hash": "c179e795ed4cac054e4cc4ff09bfd53aeca57c44706f8eba1969db3400a39955",
+      "检查点sha256": "899183864425141cf62137721326f6af6385b52fa50a9adbc4cdafe788178f20",
+      "已保存批数": 4,
+      "恢复规划批数": 352,
+      "严格实体引用关系校验": "通过",
+      "全部前缀复用": true,
+      "检查点读取期间稳定": true,
+      "源码生成版本集合": [
+        "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1-compact-batches/1",
+        "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1-compact-batches/1-reasoning-config/1"
+      ],
+      "讲解数": 5
+    }
+  }
+}

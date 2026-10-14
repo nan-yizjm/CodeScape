@@ -1,0 +1,66 @@
+{
+  "日期": "2026-10-11",
+  "性质": "实际固定源码只读语法复核，非模型请求，非整体质量验收",
+  "执行目标代码": false,
+  "Commit": "d6c93f38a08b4ea0f8ffcfd7f7857307d5d5c3fa",
+  "实际文件": [
+    "include/spdlog/common.h",
+    "include/spdlog/logger-inl.h",
+    "include/spdlog/logger.h",
+    "include/spdlog/namespace.h"
+  ],
+  "原字节未变": true,
+  "文件语义指纹未变": true,
+  "工具": {
+    "cpp": "tree-sitter/0.25.2 + libclang/18.1.1 + snapshot-config/8 + syntax-fallback/1"
+  },
+  "原可见函数": 58,
+  "新可见函数": 58,
+  "新增实体": 0,
+  "移除实体": 0,
+  "范围修订": [
+    {
+      "名称": "<宏命名空间待确认>::logger::sink_it_",
+      "文件": "include/spdlog/logger-inl.h",
+      "原范围": [
+        135,
+        141
+      ],
+      "新范围": [
+        135,
+        146
+      ]
+    },
+    {
+      "名称": "<宏命名空间待确认>::logger::log_",
+      "文件": "include/spdlog/logger.h",
+      "原范围": [
+        324,
+        341
+      ],
+      "新范围": [
+        324,
+        343
+      ]
+    },
+    {
+      "名称": "<宏命名空间待确认>::logger::log_",
+      "文件": "include/spdlog/logger.h",
+      "原范围": [
+        346,
+        363
+      ],
+      "新范围": [
+        346,
+        365
+      ]
+    }
+  ],
+  "尾部调用真实归属": {
+    "sink_it_": "135-146",
+    "should_flush_": 143,
+    "flush_": 144,
+    "调用来源": "语法未确认，不推断唯一绑定"
+  },
+  "历史模型说明缺陷": "旧58项讲解中sink_it_声称刷新逻辑不在实体范围，根因是旧索引范围135-141；保留原报告，修订后需重新建立索引和真实模型复核，不能复用旧范围冒充完成。"
+}

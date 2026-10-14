@@ -1,0 +1,58 @@
+{
+  "核对时间UTC": "2026-10-12T10:04:56.380446+00:00",
+  "性质": "真实gpt-6.1-sol生成结果的开发代理源码复核，非固定响应、非用户验收",
+  "报告": "flask-python-narrow真实模型验证.json",
+  "报告sha256": "0987f3fa797d61ce226cf3915d31b9bb829b0a8aeaf073449a5cfb55034db844",
+  "模型": "gpt-6.1-sol",
+  "接收端": "https://www.cctq.ai/v1",
+  "Commit": "d086db856be187255b8ec61ef409357393020f32",
+  "流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
+  "评测期间实施代码一致": true,
+  "实际文件": [
+    "src/flask/helpers.py"
+  ],
+  "可见函数": 19,
+  "有讲解": 19,
+  "缺失讲解": [],
+  "未完成模块": 0,
+  "复核": [
+    {
+      "函数": "get_debug_flag / get_load_dotenv",
+      "结果": "通过",
+      "依据": "调试与跳过dotenv开关意义相反；准确保留dotenv未设置或空值返回default且默认True，以及非假值0/false/no才加载的分支。"
+    },
+    {
+      "函数": "_prepare_send_file_kwargs / send_file / send_from_directory",
+      "结果": "通过",
+      "依据": "max_age只在None时用应用策略，非None零值不替换；Flask注入配置并委托Werkzeug，未声称本函数实现底层文件安全；目录由调用者信任，明确目录安全边界。"
+    },
+    {
+      "函数": "get_root_path",
+      "结果": "通过",
+      "依据": "模块__file__不是None的联合条件，find_spec仅ImportError/ValueError被捕获，loader为空回退cwd；无get_filename才导入，导入后路径为None抛RuntimeError，不把任意失败都概括为cwd回退。"
+    },
+    {
+      "函数": "stream_with_context / url_for / redirect / abort",
+      "结果": "通过",
+      "依据": "流式包装预推进并关闭动态生成器，未绑定close目标；URL参数透传；redirect按is not None选择应用或Werkzeug，abort前分支若返回仍进入无条件_wz_abort，不把调用改成不存在的else。"
+    },
+    {
+      "函数": "make_response / get_template_attribute / flash / get_flashed_messages / _split_blueprint_path",
+      "结果": "通过",
+      "依据": "响应按参数数量转交应用；模板属性读取；闪现消息回写session再发信号，读取按None缓存与类别过滤；蓝图按最后点号递归，装饰器动态绑定仍标明局限。"
+    },
+    {
+      "函数": "ErrorCollector四方法",
+      "结果": "通过",
+      "依据": "建立错误列表，enter返回None；exit仅非None异常记录并返回True抑制，raise_any仅列表非空才抛BaseExceptionGroup；不将抑制与重抛混淆。"
+    },
+    {
+      "项目": "职责分工与窄范围概览",
+      "结果": "通过",
+      "依据": "九个不同职责模块包含配置、上下文、路由、模板消息、文件发送与根路径等同文件职责；四部分概览面向辅助组件用途，明确只有helpers.py，未声称覆盖整个Flask业务。"
+    }
+  ],
+  "结论": "本次helpers.py小范围职责与代表分支源码复核通过；默认值、None判断及外部委托的历史风险已有准确说明。",
+  "边界": "仅helpers.py，未完成完整Flask与缩小范围对照或用户验收；覆盖数为结构核对，质量结论来自以上实际源码比对；无源码执行或原快照修改。",
+  "复核新增模型请求": 0
+}

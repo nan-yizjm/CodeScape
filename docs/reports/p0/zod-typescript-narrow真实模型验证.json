@@ -1,0 +1,256 @@
+{
+  "日期": "2026-10-12",
+  "检查开始时间UTC": "2026-10-12T09:51:41.177367+00:00",
+  "样本": "zod-typescript",
+  "Commit": "0b216ef674e297ebe41d8bf902262e56f8755822",
+  "范围": "缩小范围",
+  "授权": "用户允许四个固定公开样本向当前配置接收端上传并评测",
+  "接收端": "https://www.cctq.ai/v1",
+  "模型": "gpt-6.1-sol",
+  "流式接收": true,
+  "流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
+  "数据目录": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\.runtime\\public-model-validation\\7855217d-9f11-45a0-a7c9-ead6df1dbecd",
+  "原始快照hash": "c179e795ed4cac054e4cc4ff09bfd53aeca57c44706f8eba1969db3400a39955",
+  "实际文件": [
+    "packages/zod/src/v4/core/parse.ts"
+  ],
+  "状态": "结构检查通过，待源码质量复核",
+  "执行目标代码": false,
+  "实施代码起始sha256": "0ad350061a0c795ba17b0d2c707ae3d0c1232c12803e86966f91ac8f24c8990c",
+  "开发评测截止秒数": 300,
+  "进度": {
+    "phase": "completed",
+    "completed": 1,
+    "total": 1,
+    "detail": "分批分析完成"
+  },
+  "耗时秒": 102.67,
+  "project_id": "f34f3b4a-b8ed-4f9f-9428-292c9f530d36",
+  "version_id": "3527c940-173e-4c5e-8be9-08f05718382e",
+  "实际快照hash": "eeeb84dfaee5bbbfc76dc5b618580c16108bc4804202bed4aedd1f8b6bc242c3",
+  "scope_hash": "64d8fef1eca2d21c0868fb5cb2988d0e4d169bafe184ba5bc3727938f0682e93",
+  "错误": null,
+  "architecture": {
+    "modules": [
+      {
+        "id": "parse_core",
+        "parent_id": null,
+        "name": "解析与校验入口",
+        "summary": "组织基于模式的解析、安全结果、布尔校验和编解码入口；顶层类型声明约束输入输出，公开入口默认使用 $ZodRealError。",
+        "entity_ids": [],
+        "code_paths": [
+          "packages/zod/src/v4/core/parse.ts"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "runtime_parse",
+        "parent_id": "parse_core",
+        "name": "同步与异步运行时解析",
+        "summary": "未单独成节点的 _parse、_parseAsync 工厂生成解析函数，强制设置 async，运行模式并返回转换后的值；有问题时整理问题、构造错误并捕获调用栈。同步入口遇到 Promise 抛出异步错误，异步入口等待结果。parse 与 parseAsync 是默认错误类的实例化入口。",
+        "entity_ids": [],
+        "code_paths": [
+          "packages/zod/src/v4/core/parse.ts"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "safe_results",
+        "parent_id": "parse_core",
+        "name": "安全解析与延迟错误结果",
+        "summary": "未单独成节点的 _safeParse、_safeParseAsync 及其默认入口返回 success/data 或延迟 error 结果；failure 管理错误缓存和原始引用释放。安全解析不捕获任意运行时异常，同步入口仍拒绝 Promise。",
+        "entity_ids": [
+          "bf5b9bc8fb91a38e274d3fca28428211"
+        ],
+        "code_paths": [
+          "packages/zod/src/v4/core/parse.ts"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "boolean_validation",
+        "parent_id": "parse_core",
+        "name": "布尔校验与编译回退",
+        "summary": "validate 使用 bag.validator 快速判定：返回值不等于 COMPILE_INVALID 即通过；仅在 definite 严格为 true 且上下文未提供时直接判失败，其余进入 validateFallback。validateAsync 不走编译快路径，以 async 与 abortEarly 运行模式。顶层注册表符号和 CompiledBag 描述编译结果及回退入口。",
+        "entity_ids": [
+          "ae90fc72e239f6a862e08b94e70ad69c"
+        ],
+        "code_paths": [
+          "packages/zod/src/v4/core/parse.ts"
+        ],
+        "incomplete": false
+      },
+      {
+        "id": "codec_adapters",
+        "parent_id": "parse_core",
+        "name": "编解码适配与错误参数归一",
+        "summary": "“Codec functions”下的 _encode、_decode、异步变体及四个安全变体复用解析能力。编码覆盖 direction 为 backward，解码原样传递上下文；抛错型包装通过 finalizeParams 保留错误类覆盖和调用栈入口，安全型包装返回安全解析结果。各公开入口使用默认错误类。",
+        "entity_ids": [
+          "f5d11b8ee5d0b47d291b8520b27e7a19"
+        ],
+        "code_paths": [
+          "packages/zod/src/v4/core/parse.ts"
+        ],
+        "incomplete": false
+      }
+    ],
+    "overview": {
+      "introduction": "已确认范围是一个面向开发者的数据解析与校验模块，用于按预设规则检查、转换输入，并提供编解码入口。它让调用方按需获得转换后的数据、成功或失败结果，或是否通过校验的判断。",
+      "capabilities": [
+        "同步或异步校验输入，取得转换后的数据",
+        "以成功数据或失败错误的形式接收校验结果",
+        "仅判断数据是否符合规则",
+        "复用解析能力进行同步或异步编解码"
+      ],
+      "principle": "输入与规则交给解析入口，按固定的同步或异步方式处理，输出转换值或整理后的校验问题。编解码复用解析：编码强制使用反向处理，解码保留传入上下文；布尔校验只返回通过与否。",
+      "limitations": [
+        "材料仅覆盖解析入口，未提供规则执行器、编译验证器及工具的内部实现，也没有运行验证证据。",
+        "安全结果入口只将校验问题包装为失败结果，不捕获任意运行时异常；同步入口遇到 Promise 仍抛错，未见对其他可等待对象的额外检测。",
+        "同步布尔校验可用编译快路径：结果不是无效标记即通过；无效时仅在确定性标记严格为真且未传上下文时直接判失败，否则回退。",
+        "异步布尔校验不使用编译快路径，而是按异步方式处理，并设置尽早终止检查。"
+      ],
+      "synthesized": true,
+      "analysis_notes": [
+        "快照仅覆盖 parse.ts，无法据此描述整个项目的模式实现或编译器内部。",
+        "模式运行器、编译验证器和工具函数的具体实现未提供，不推断其动态调用目标。",
+        "安全入口仅把校验问题变为失败结果，不保证吞掉回调异常；同步入口遇到 Promise 仍抛错。",
+        "同步异步识别采用 instanceof Promise；本文件未提供对任意 thenable 的额外检测。"
+      ]
+    },
+    "explanations": [
+      {
+        "entity_id": "f5d11b8ee5d0b47d291b8520b27e7a19",
+        "summary": "统一编解码包装的调用者与错误类参数",
+        "details": "输入为当前包装函数 callee 和可选参数对象，返回一个始终同时具有 callee、Err 两个键的新对象，供编解码包装传入解析器。callee 使用空值合并：只有参数中的值为 null 或 undefined 时才回退到当前函数，并非一般真值判断；Err 原样读取，缺少参数时为 undefined，由解析入口选择默认错误类。函数不修改原参数，不进行错误类校验，也不捕获属性读取等操作可能产生的异常。",
+        "evidence": [
+          {
+            "path": "packages/zod/src/v4/core/parse.ts",
+            "start_line": 10,
+            "end_line": 12
+          }
+        ]
+      },
+      {
+        "entity_id": "bf5b9bc8fb91a38e274d3fca28428211",
+        "summary": "生成延迟构造且可替换错误的失败结果",
+        "details": "接收错误类、原始问题数组和内部上下文，立即返回 success:false 的对象，不立即创建错误。首次读取 error 时，若缓存为假值，则使用上下文与全局配置整理各问题，再构造 Err 实例；成功构造后缓存实例，并清除闭包中的 issues、ctx 引用，避免继续持有原始输入。后续读取返回缓存。写入 error 会替换缓存并立即清除这些引用。没有异常捕获，问题整理或构造错误失败会传播；类型契约要求写入有效错误实例，若运行时写入假值，仍会触发 getter 分支，但原始引用已清除。",
+        "evidence": [
+          {
+            "path": "packages/zod/src/v4/core/parse.ts",
+            "start_line": 83,
+            "end_line": 103
+          }
+        ]
+      },
+      {
+        "entity_id": "ae90fc72e239f6a862e08b94e70ad69c",
+        "summary": "以同步提前终止模式执行布尔校验回退",
+        "details": "接收模式、待校验值和可选上下文，浅拷贝已提供的真值上下文，并强制设置 async:false、abortEarly:true；未提供时仅建立这两个默认字段。读取 bag.fallbackRun，若其为真值则在新上下文上设置 COMPILE_FALLBACK 符号标记，再执行回退运行器，以跳过嵌套快路径；否则执行 schema._zod.run。两条路径都传入当前值与空问题数组。结果若为 Promise 则抛出 $ZodAsyncError，否则仅以 issues.length 是否为零返回布尔值，不返回转换后的值、不构造校验错误，也不捕获运行器异常。",
+        "evidence": [
+          {
+            "path": "packages/zod/src/v4/core/parse.ts",
+            "start_line": 151,
+            "end_line": 172
+          }
+        ]
+      }
+    ],
+    "call_judgments": [],
+    "primary_dependencies": [
+      {
+        "call_ids": [
+          "ed2a9a62be46bdb0e0d6f5dd4f4d47ea",
+          "e35027dc88be8a4a4a1c700a3f62be1e"
+        ],
+        "reason": "同步与异步安全解析的内部匿名入口在存在校验问题时共同使用 failure，统一失败结果结构、延迟错误构造和引用释放，而不是把这些调用归给其他可见函数。"
+      },
+      {
+        "call_ids": [
+          "6c8713d7b0bca344929f15755d6a1bb4"
+        ],
+        "reason": "validate 的匿名实现将无法由编译快路径直接确定的情况交给 validateFallback，使快路径保持简短，并集中处理上下文、提前终止、回退标记及同步异步边界。"
+      },
+      {
+        "call_ids": [
+          "04d41c9e462de7daf7e4e9f87f8ba559",
+          "a2e2bd860b298797c0e2e5eac7f2bc74",
+          "89451d3e481cf4b0adcedb3a376a8381",
+          "5ac955ef550a93eea08abf2e891c3559"
+        ],
+        "reason": "四个抛错型编解码包装的内部函数通过 finalizeParams 统一参数形状，向解析器传递正确的调用栈入口并保留自定义错误类覆盖。"
+      }
+    ]
+  },
+  "原快照字节未变": true,
+  "请求账本": [
+    {
+      "id": "a4a8f643-eca4-472e-887f-8e7ed25441a2",
+      "project_id": "f34f3b4a-b8ed-4f9f-9428-292c9f530d36",
+      "version_id": "3527c940-173e-4c5e-8be9-08f05718382e",
+      "job_id": "30946a51-e4d2-4d27-af79-944d5d06d6bd",
+      "unit_id": "516cc0ea-e2b0-41ac-9600-e746c526d08a",
+      "attempt": 1,
+      "phase": "architecture",
+      "recipient": "https://www.cctq.ai/v1",
+      "model": "gpt-6.1-sol",
+      "status": "success",
+      "created_at": "2026-10-12T09:51:44.222627+00:00",
+      "sent_at": "2026-10-12T09:51:44.268001+00:00",
+      "finished_at": "2026-10-12T09:52:54.632002+00:00",
+      "payload_hash": "ce53b70a4de689500b38d07a0555f06d65fc04d9d8abe7c4432f2e228f30662e",
+      "source_chars": 12572,
+      "usage": {
+        "prompt_tokens": 18470,
+        "completion_tokens": 2196,
+        "total_tokens": 20666
+      },
+      "cost": null,
+      "currency": null,
+      "price_snapshot": null,
+      "http_status": 200,
+      "error_code": null
+    },
+    {
+      "id": "9f906661-9e1a-4a5a-a601-5272acce4a4b",
+      "project_id": "f34f3b4a-b8ed-4f9f-9428-292c9f530d36",
+      "version_id": "3527c940-173e-4c5e-8be9-08f05718382e",
+      "job_id": "30946a51-e4d2-4d27-af79-944d5d06d6bd",
+      "unit_id": "9da130c2-26e5-4adb-b1b2-b1ddbd0644ed",
+      "attempt": 1,
+      "phase": "overview",
+      "recipient": "https://www.cctq.ai/v1",
+      "model": "gpt-6.1-sol",
+      "status": "success",
+      "created_at": "2026-10-12T09:52:54.646975+00:00",
+      "sent_at": "2026-10-12T09:52:54.672080+00:00",
+      "finished_at": "2026-10-12T09:53:21.849861+00:00",
+      "payload_hash": "2ad570687b1abb1d331cc0f8812fc3e608553c421cd1693a992ec765fdce41d8",
+      "source_chars": 0,
+      "usage": {
+        "prompt_tokens": 2093,
+        "completion_tokens": 539,
+        "total_tokens": 2632
+      },
+      "cost": null,
+      "currency": null,
+      "price_snapshot": null,
+      "http_status": 200,
+      "error_code": null
+    }
+  ],
+  "请求状态": {
+    "success": 2
+  },
+  "已知total_tokens": 23298,
+  "未知用量请求": 0,
+  "费用": null,
+  "脱敏校验记录": [],
+  "边界": "真实配置接口，固定响应与质量复核分开；尚未代表用户验收；价格未知不记零费用。",
+  "实施代码结束sha256": "0ad350061a0c795ba17b0d2c707ae3d0c1232c12803e86966f91ac8f24c8990c",
+  "评测期间实施代码一致": true,
+  "静态索引制品": {
+    "path": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\.runtime\\public-model-validation\\7855217d-9f11-45a0-a7c9-ead6df1dbecd\\validation-artifacts\\70c9be25b8f7963299c13125152d02f4da328502389fb874d10bf0feb6146eed.json",
+    "sha256": "70c9be25b8f7963299c13125152d02f4da328502389fb874d10bf0feb6146eed",
+    "bytes": 84895
+  }
+}

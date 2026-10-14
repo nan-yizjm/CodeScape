@@ -1,0 +1,76 @@
+{
+  "核对时间UTC": "2026-10-13T05:57:22.398788+00:00",
+  "样本": "flask-python",
+  "Commit": "d086db856be187255b8ec61ef409357393020f32",
+  "原报告": "flask-python-narrow真实模型验证.json",
+  "原报告sha256": "0987f3fa797d61ce226cf3915d31b9bb829b0a8aeaf073449a5cfb55034db844",
+  "真实候选报告": "flask-python-explanation-review-narrow真实模型验证-5913ddb8-0fc7-4dc6-9b0b-e39dd93e1875.json",
+  "真实候选报告sha256": "b89be55da3282dfc964a0a853081de2a8b88333259e511c7cf4568ffe15c689a",
+  "固定授权快照重建材料一致": true,
+  "真实请求payload_hash一致": true,
+  "原函数集合模块概览关系和其他讲解不变": true,
+  "原发布报告未变": true,
+  "请求ID": "4a1c552e-476c-4388-812a-9364cd2d03c5",
+  "模型": "gpt-6.1-sol",
+  "接收端": "https://www.cctq.ai/v1",
+  "已知total_tokens": 5613,
+  "未知用量请求": 0,
+  "本次只读核对模型请求": 0,
+  "执行目标代码": false,
+  "原始源码修改": false,
+  "源码复核": [
+    {
+      "函数": "stream_with_context",
+      "位置": {
+        "path": "src/flask/helpers.py",
+        "start_line": 63,
+        "end_line": 148,
+        "start_byte": 1675,
+        "end_byte": 4764
+      },
+      "实现sha256": "8cbdde2fe651acec8aebd955ba6207218992abb83adb63a793346379bd3724f7",
+      "源码": "def stream_with_context(\n    generator_or_function: t.Iterator[t.AnyStr] | t.Callable[..., t.Iterator[t.AnyStr]],\n) -> t.Iterator[t.AnyStr] | t.Callable[[t.Iterator[t.AnyStr]], t.Iterator[t.AnyStr]]:\n    \"\"\"Wrap a response generator function so that it runs inside the current\n    request context. This keeps :data:`.request`, :data:`.session`, and :data:`.g`\n    available, even though at the point the generator runs the request context\n    will typically have ended.\n\n    .. warning::\n\n        Due to the following caveat, it is often safer to pass the data you\n        need as arguments to the generator, rather than relying on the context\n        objects.\n\n    More headers cannot be sent after the body has begun. Therefore, you must\n    make sure all headers are set before starting the response. In particular,\n    if the generator will access ``session``, be sure to do so in the view as\n    well so that the ``Vary: cookie`` header will be set. Do not modify the\n    session in the generator, as the ``Set-Cookie`` header will already be sent.\n\n    Use it as a decorator on a generator function:\n\n    .. code-block:: python\n\n        from flask import stream_with_context, request, Response\n\n        @app.get(\"/stream\")\n        def streamed_response():\n            @stream_with_context\n            def generate():\n                yield \"Hello \"\n                yield request.args[\"name\"]\n                yield \"!\"\n\n            return Response(generate())\n\n    Or use it as a wrapper around a created generator:\n\n    .. code-block:: python\n\n        from flask import stream_with_context, request, Response\n\n        @app.get(\"/stream\")\n        def streamed_response():\n            def generate():\n                yield \"Hello \"\n                yield request.args[\"name\"]\n                yield \"!\"\n\n            return Response(stream_with_context(generate()))\n\n    .. versionadded:: 0.9\n    \"\"\"\n    try:\n        gen = iter(generator_or_function)  # type: ignore[arg-type]\n    except TypeError:\n\n        def decorator(*args: t.Any, **kwargs: t.Any) -> t.Any:\n            gen = generator_or_function(*args, **kwargs)  # type: ignore[operator]\n            return stream_with_context(gen)\n\n        return update_wrapper(decorator, generator_or_function)  # type: ignore[arg-type]\n\n    def generator() -> t.Iterator[t.AnyStr]:\n        if (ctx := _cv_app.get(None)) is None:\n            raise RuntimeError(\n                \"'stream_with_context' can only be used when a request\"\n                \" context is active, such as in a view function.\"\n            )\n\n        with ctx:\n            yield None  # type: ignore[misc]\n\n            try:\n                yield from gen\n            finally:\n                # Clean up in case the user wrapped a WSGI iterator.\n                if hasattr(gen, \"close\"):\n                    gen.close()\n\n    # Execute the generator to the sentinel value. This captures the current\n    # context and pushes it to preserve it. Further iteration will yield from\n    # the original iterator.\n    wrapped_g = generator()\n    next(wrapped_g)\n    return wrapped_g",
+      "真实修订": {
+        "entity_id": "de59b9c8-912e-55df-aeae-503ab87029c3",
+        "summary": "先尝试取得输入的迭代器，再返回上下文作用域中的迭代包装器或延迟调用包装函数。",
+        "details": "输入为 generator_or_function。首先执行 iter(generator_or_function)；仅当该调用抛出 TypeError 时，定义 decorator 并返回 update_wrapper(decorator, generator_or_function) 的结果，不另行检查输入是否可调用。decorator 被调用时将收到的位置和关键字参数传给原输入，再将调用结果递归交给 stream_with_context，返回其结果。若 iter 成功，则创建内部生成器，并立即用 next(wrapped_g) 推进：读取 _cv_app.get(None)，结果为 None 时抛出 RuntimeError（错误文本称需要请求上下文，但实际检查的是 _cv_app）。否则进入 with ctx 并产出 None 哨兵；该哨兵由本函数消费，随后返回 wrapped_g。后续推进通过 yield from gen 委托迭代；进入该 try 后，无论正常结束还是异常退出，finally 都检查 gen 是否有 close 属性，有则调用 gen.close()。当前讲解依据未展示 ctx 的上下文管理实现，不能据此细化其内部状态操作。函数未统一捕获其余操作的异常；原输入调用、递归包装、上下文进入退出、迭代及 close 等产生的异常均可能向外传播。",
+        "evidence": [
+          {
+            "path": "src/flask/helpers.py",
+            "start_line": 115,
+            "end_line": 148
+          }
+        ]
+      },
+      "结论": "已按完整实现人工核对分支、缓存及迭代器状态边界，仅此函数局部改善"
+    },
+    {
+      "函数": "get_flashed_messages",
+      "位置": {
+        "path": "src/flask/helpers.py",
+        "start_line": 360,
+        "end_line": 399,
+        "start_byte": 12384,
+        "end_byte": 14153
+      },
+      "实现sha256": "7ac6200855332d7fc82c1ec7ebdc62be7032d75a21b1f9d36cf7f132203d5849",
+      "源码": "def get_flashed_messages(\n    with_categories: bool = False, category_filter: t.Iterable[str] = ()\n) -> list[str] | list[tuple[str, str]]:\n    \"\"\"Pulls all flashed messages from the session and returns them.\n    Further calls in the same request to the function will return\n    the same messages.  By default just the messages are returned,\n    but when `with_categories` is set to ``True``, the return value will\n    be a list of tuples in the form ``(category, message)`` instead.\n\n    Filter the flashed messages to one or more categories by providing those\n    categories in `category_filter`.  This allows rendering categories in\n    separate html blocks.  The `with_categories` and `category_filter`\n    arguments are distinct:\n\n    * `with_categories` controls whether categories are returned with message\n      text (``True`` gives a tuple, where ``False`` gives just the message text).\n    * `category_filter` filters the messages down to only those matching the\n      provided categories.\n\n    See :doc:`/patterns/flashing` for examples.\n\n    .. versionchanged:: 0.3\n       `with_categories` parameter added.\n\n    .. versionchanged:: 0.9\n        `category_filter` parameter added.\n\n    :param with_categories: set to ``True`` to also receive categories.\n    :param category_filter: filter of categories to limit return values.  Only\n                            categories in the list will be returned.\n    \"\"\"\n    flashes = app_ctx._flashes\n    if flashes is None:\n        flashes = session.pop(\"_flashes\") if \"_flashes\" in session else []\n        app_ctx._flashes = flashes\n    if category_filter:\n        flashes = list(filter(lambda f: f[0] in category_filter, flashes))\n    if not with_categories:\n        return [x[1] for x in flashes]\n    return flashes",
+      "真实修订": {
+        "entity_id": "bd022233-7c3f-5097-ab15-743555bb3e96",
+        "summary": "读取上下文缓存中的闪现消息，必要时从 session 取出，并按分类条件和返回格式选项生成结果。",
+        "details": "参数 with_categories 默认为 False，category_filter 默认为空元组。先读取 app_ctx._flashes；仅当其为 None 时，检查 session 是否含有 \"_flashes\"，存在则调用 session.pop(\"_flashes\")，否则使用空列表，然后将结果写入 app_ctx._flashes。接着按 category_filter 的真值决定是否筛选：为真时，对每条消息执行 f[0] in category_filter，并将保留项收集为新的列表；该筛选结果不写回缓存。若 category_filter 是迭代器，membership 检查可能消耗其状态，影响后续检查或再次调用，不能保证输入迭代器状态不变。最后，with_categories 为假值时返回由 x[1] 构成的新列表，否则直接返回当前 flashes，即缓存值或筛选后的列表。实现未捕获异常；上下文或 session 访问、真值判断、membership 检查、迭代和索引等操作产生的异常会向外传播。",
+        "evidence": [
+          {
+            "path": "src/flask/helpers.py",
+            "start_line": 390,
+            "end_line": 399
+          }
+        ]
+      },
+      "结论": "已按完整实现人工核对分支、缓存及迭代器状态边界，仅此函数局部改善"
+    }
+  ],
+  "产品默认路径": "未集成独立讲解审校；候选修订未发布",
+  "P0全部通过": false,
+  "边界": "两处候选说明改善不代表完整工程质量或全窄范围对照通过。"
+}

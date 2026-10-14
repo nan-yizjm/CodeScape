@@ -1,0 +1,19 @@
+{
+  "日期": "2026-10-11",
+  "检查方式": "只读Get-Command及三个标准安装路径的文件存在性检查",
+  "命令查找": [
+    "Get-VM",
+    "VBoxManage",
+    "vmrun",
+    "qemu-system-x86_64"
+  ],
+  "本轮命令查找结果": "均未返回命令",
+  "标准路径查找": {
+    "C:/Program Files/Oracle/VirtualBox/VBoxManage.exe": false,
+    "C:/Program Files (x86)/VMware/VMware Workstation/vmrun.exe": false,
+    "C:/Program Files/qemu/qemu-system-x86_64.exe": false
+  },
+  "改变系统配置": false,
+  "安装软件": false,
+  "边界": "只说明已检查的命令和标准路径未发现这些工具，不证明其他路径、远程主机或所有虚拟化方案均不可用；本轮没有获得干净Windows10/11环境，也不将开发机验证算作干净系统验收。"
+}

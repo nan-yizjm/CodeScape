@@ -1,0 +1,29 @@
+{
+  "日期": "2026-10-11",
+  "性质": "真实模型错误对固定源码的复核，不能记作质量通过",
+  "Commit": "d6c93f38a08b4ea0f8ffcfd7f7857307d5d5c3fa",
+  "报告": "spdlog-cpp-narrow真实模型验证-344d118f-7a52-4aa2-a3e0-f3487e5ab208.json",
+  "报告sha256": "6654915b647d9cf1ed8247314fc26ab496a9ea0794c9c614733b35b6c4cd4547",
+  "实际错误解释": {
+    "entity_id": "4cc485d1-3964-5766-a2b1-15676cbcbe96",
+    "summary": "遍历 sink 过滤并输出日志，必要时刷新。",
+    "details": "对 sinks_ 中每个 sink，仅当 sink->should_log(msg.level) 为真时在 SPDLOG_TRY 中调用 sink->log(msg)，异常交由 SPDLOG_LOGGER_CATCH(msg.source) 处理；循环结束后若 should_flush_(msg) 为真则调用 flush_()。单个 sink 异常不会中断对其余 sink 的处理。",
+    "evidence": [
+      {
+        "path": "include/spdlog/logger-inl.h",
+        "start_line": 135,
+        "end_line": 146
+      }
+    ]
+  },
+  "源码依据": {
+    "path": "include/spdlog/logger.h",
+    "start_line": 30,
+    "end_line": 46,
+    "事实": "启用异常时std::exception分支报告错误，catch(...)分支调用错误处理器后throw；SPDLOG_NO_EXCEPTIONS分支宏为空。"
+  },
+  "缺陷": "原解释无条件声称单个sink异常不会中断，遗漏重新抛出和编译条件。",
+  "实现修订": "explanations/2要求先核对catch类型、重抛、处理器与条件编译，宏定义缺失时补读或保留未知。",
+  "状态": "新实际模型重测中，尚未判定修订有效",
+  "后续复核": "新实际重测已经完成结构发布，两函数抽查改善，见异常传播真实重测复核.json；原错误证据仍保留。"
+}

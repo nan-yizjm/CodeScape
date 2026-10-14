@@ -1,0 +1,72 @@
+{
+  "样本": "zod-typescript",
+  "Commit": "0b216ef674e297ebe41d8bf902262e56f8755822",
+  "接收端": "https://www.cctq.ai/v1",
+  "模型": "gpt-6-luna",
+  "流水线": "architecture/4-repairs/3-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1",
+  "原始快照hash": "c179e795ed4cac054e4cc4ff09bfd53aeca57c44706f8eba1969db3400a39955",
+  "实际快照hash": "c179e795ed4cac054e4cc4ff09bfd53aeca57c44706f8eba1969db3400a39955",
+  "project_id": "191d3b35-d8f4-4bc2-a0a9-1b0c375ce990",
+  "version_id": "5466969a-0e2c-4440-8564-f87c77b3420c",
+  "日期": "2026-10-12",
+  "核对时间UTC": "2026-10-12T07:27:47.984219+00:00",
+  "数据目录": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\.runtime\\public-model-validation\\8a68cd65-f78d-4af3-a237-31d92b0cfc2b",
+  "范围": "当前暂停的第5批，保留生产系统提示的单次非流式传输对照",
+  "流式接收": false,
+  "实际文件": [
+    "packages/zod/src/v4/classic/schemas.ts"
+  ],
+  "最多发送": 1,
+  "本次新建job_id": "494c4359-dde8-4937-b63f-e50f51c7dcbc",
+  "执行目标代码": false,
+  "服务错误事件白名单": [],
+  "边界": "只诊断传输与服务错误，不发布架构，不把JSON对象接收成功计为完整契约或质量通过。",
+  "状态": "JSON对象接收成功，仅传输诊断",
+  "请求账本": [
+    {
+      "id": "da842cdc-1796-457c-8561-9047bba41690",
+      "project_id": "191d3b35-d8f4-4bc2-a0a9-1b0c375ce990",
+      "version_id": "5466969a-0e2c-4440-8564-f87c77b3420c",
+      "job_id": "494c4359-dde8-4937-b63f-e50f51c7dcbc",
+      "unit_id": "2fa16dd8-1a03-474b-90fe-2c478be68280",
+      "attempt": 1,
+      "phase": "architecture",
+      "recipient": "https://www.cctq.ai/v1",
+      "model": "gpt-6-luna",
+      "status": "success",
+      "created_at": "2026-10-12T07:27:48.108102+00:00",
+      "sent_at": "2026-10-12T07:27:48.354382+00:00",
+      "finished_at": "2026-10-12T07:28:20.835252+00:00",
+      "payload_hash": "124601eebeb8b61e5d5a7c160b2479f1a7c16ad7b760a45651515341bf68f668",
+      "source_chars": 703,
+      "usage": {
+        "prompt_tokens": 11097,
+        "completion_tokens": 2937,
+        "total_tokens": 14034
+      },
+      "cost": null,
+      "currency": null,
+      "price_snapshot": null,
+      "http_status": 200,
+      "error_code": null
+    }
+  ],
+  "请求状态": {
+    "success": 1
+  },
+  "已知total_tokens": 14034,
+  "未知用量请求": 0,
+  "诊断账本范围": "只计本次新建job_id；复制库历史请求ID按原ID去重，不重复计。",
+  "原源码字节未变": true,
+  "生产提示对照": "保留本次第5/76批的生产提示，Schema与上下文相同；仅禁用stream与include_usage选项。之前两份探针未附加批次说明，不用于严格仅传输差异结论。",
+  "对照重建": {
+    "生产请求重建一致": true,
+    "生产payload_hash": "1fbc2938170efbd58e24d94948afa1d28d023cb827c9a17da0bf94b187a18155",
+    "重建payload_hash": "1fbc2938170efbd58e24d94948afa1d28d023cb827c9a17da0bf94b187a18155",
+    "生产批次文件": [
+      "packages/zod/src/v4/classic/schemas.ts"
+    ],
+    "生产批次数": 76,
+    "实际暂停批号": 5
+  }
+}

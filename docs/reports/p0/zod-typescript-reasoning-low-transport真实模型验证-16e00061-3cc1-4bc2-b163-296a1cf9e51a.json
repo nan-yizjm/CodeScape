@@ -1,0 +1,56 @@
+{
+  "样本": "zod-typescript",
+  "Commit": "0b216ef674e297ebe41d8bf902262e56f8755822",
+  "接收端": "https://www.cctq.ai/v1",
+  "模型": "gpt-6.1-sol",
+  "流水线": "architecture/5-repairs/5-explanations/3-reads/3-judgments/2-dependencies/1-cpp-config/8-native-diagnostics/1-interfaces/1-facts/3-index/3-ts-bindings/2-python-declarations/1-evidence-localization/1-semantics-guidance/1-compact-batches/1-organization/1",
+  "实际快照hash": "c179e795ed4cac054e4cc4ff09bfd53aeca57c44706f8eba1969db3400a39955",
+  "核对时间UTC": "2026-10-13T08:08:11.136511+00:00",
+  "数据目录": "C:\\Users\\zjm\\Desktop\\file\\项目\\CodeScape\\.runtime\\public-model-validation\\f4ef29da-6b44-4079-9246-6f981324244b",
+  "实际文件": [
+    "packages/zod/src/v4/classic/coerce.ts"
+  ],
+  "最多请求": 1,
+  "执行目标代码": false,
+  "状态": "JSON及schema接收通过，仅传输对照",
+  "reasoning_effort": "low",
+  "批次": 4,
+  "原检查点sha256": "d31bb59a8f0761587fcee8b94451c73043ef94e95a6f8240c82974f782ddad54",
+  "参数规范参考": "https://developers.openai.com/api/reference/resources/chat/subresources/completions/methods/create",
+  "边界": "中转站是否支持或采用该可选参数未知，以实际对照记录为准。仅传输与schema核对，不发布架构或计语义质量通过；没有改变主工作区。",
+  "HTTP状态": 200,
+  "候选内容sha256": "eca9050f918e08487c20ea2d71fefe2570be8c06f9e4945b26b5cefa688838f9",
+  "请求账本": [
+    {
+      "id": "0d70d710-12fa-45f1-86b0-75ac1c5fc19e",
+      "project_id": "e42490ef-d6ca-4eb4-90b2-1bfc1a23e3f8",
+      "version_id": "08b401d3-5ded-4ba5-82f8-6ffeefea2ffd",
+      "job_id": "522e899e-12f1-49ce-aa62-975ae22b60fd",
+      "unit_id": "0bea0fea-bfc0-4bcf-b993-48bff4505c29",
+      "attempt": 1,
+      "phase": "architecture",
+      "recipient": "https://www.cctq.ai/v1",
+      "model": "gpt-6.1-sol",
+      "status": "success",
+      "created_at": "2026-10-13T08:08:11.179193+00:00",
+      "sent_at": "2026-10-13T08:08:11.322855+00:00",
+      "finished_at": "2026-10-13T08:08:52.866250+00:00",
+      "payload_hash": "5ba9612342d974c59c7992b338f8fbda0a30a854e5f35c010f8abd4b72036dc5",
+      "source_chars": 748,
+      "usage": {
+        "prompt_tokens": 7082,
+        "completion_tokens": 1058,
+        "total_tokens": 8140
+      },
+      "cost": null,
+      "currency": null,
+      "price_snapshot": null,
+      "http_status": 200,
+      "error_code": null
+    }
+  ],
+  "已知total_tokens": 8140,
+  "未知用量请求": 0,
+  "耗时秒": 41.734,
+  "原检查点未改写": true
+}
