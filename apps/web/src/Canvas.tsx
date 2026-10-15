@@ -4,7 +4,7 @@ import { ReactFlow, ReactFlowProvider, Background, Controls, Handle, Position, B
 import ELK, { type ElkNode } from 'elkjs/lib/elk-api';
 import { Info, Check, Circle, ArrowUpRight, AlertTriangle, Boxes, Braces } from 'lucide-react';
 import type { Point, Projection, ProjectionNode, Relation } from './types';
-import { edgePath, nodePalette, relationLabelPoint } from './graph';
+import { edgePath, graphTheme, nodePalette, relationLabelPoint } from './graph';
 import { layoutCompound, layoutHierarchy, orthogonalOptions, readingViewport, verticalFallback } from './layout';
 
 type Data = { node: ProjectionNode; onInfo: (node: ProjectionNode) => void; onOpen: (node: ProjectionNode) => void; onInternal: (node: ProjectionNode) => void; onHover: (id: string | null) => void; dimmed: boolean } & Record<string, unknown>;
@@ -24,7 +24,7 @@ function MapNode({ data }: NodeProps<Node<Data>>) {
     <div className="node-top"><span className="node-symbol"><Icon size={16} /></span><span className="node-kind">{node.kind === 'module' ? node.sibling ? '同级模块' : node.external ? '关联模块' : node.id.startsWith('__abstract__:') ? '功能分组' : '逻辑模块' : '函数'}</span>
       <button className="node-info nodrag nopan" aria-label={`查看 ${node.label} 详情`} onPointerDown={event => event.stopPropagation()} onClick={event => { event.stopPropagation(); event.nativeEvent.stopImmediatePropagation?.(); data.onInfo(node); }}><Info size={16} /></button></div>
     <div className="node-title" title={node.label}>{node.label}</div>
-    {node.kind === 'module' && <p>{node.description}</p>}
+    {node.kind === 'module' && <p title={node.description}>{node.description}</p>}
     <div className="node-footer"><span className="node-count">{node.kind === 'module' ? node.count === 0 ? node.state === 'not_applicable' ? '暂无可统计内容' : '模块学习内容' : node.shownCount !== undefined && node.shownCount < node.count ? `显示 ${node.shownCount} / ${node.count} 个函数` : `${node.count} 个函数` : node.external ? <><ArrowUpRight size={12} /> 跨模块</> : '真实源码实现'}</span>{node.kind === 'module' && node.internalRelationCount ? <button className="node-dependency nodrag nopan" aria-label={`查看 ${node.label} 内部依赖`} onClick={event => { event.stopPropagation(); data.onInternal(node); }}>内部依赖 {node.internalRelationCount}</button> : null}
       <span className="node-state" title={stateLabel}>{node.incomplete && <AlertTriangle size={12} />}{node.state === 'mastered' ? <Check size={12} /> : node.state === 'in_progress' ? <span className="learning-dot" /> : <Circle size={10} />}<span>{stateLabel}</span></span></div>
     <span className="node-action" aria-hidden="true">{node.kind === 'module' ? node.canExpand ? (node.expanded ? '收起子模块' : '展开子模块') : node.count ? '进入模块' : '查看模块内容' : '阅读源码'}<ArrowUpRight size={13} /></span>
@@ -40,8 +40,8 @@ function RoutedEdge(props: EdgeProps) {
   const path = edgePath(from, to, points);
   const labelPoint = relationLabelPoint(points);
   const dimmed = !!props.data?.dimmed;
-  return <><path d={path} fill="none" opacity={dimmed ? .12 : 1} stroke="#f8f9fd" strokeWidth={6} strokeLinecap="round" strokeLinejoin="round" pointerEvents="none" />
-    <BaseEdge id={props.id} path={path} markerEnd={props.markerEnd} style={{ stroke: internal ? '#b9c0ca' : '#89919d', strokeWidth: internal ? 1.2 : 1.5, strokeLinecap: 'round', strokeLinejoin: 'round', strokeDasharray: internal ? '4 4' : undefined, opacity: dimmed ? .12 : internal ? .72 : .9 }} interactionWidth={12} />
+  return <><path d={path} fill="none" opacity={dimmed ? .12 : 1} stroke={graphTheme.background} strokeWidth={6} strokeLinecap="round" strokeLinejoin="round" pointerEvents="none" />
+    <BaseEdge id={props.id} path={path} markerEnd={props.markerEnd} style={{ stroke: internal ? graphTheme.internalEdge : graphTheme.edge, strokeWidth: internal ? 1.2 : 1.5, strokeLinecap: 'round', strokeLinejoin: 'round', strokeDasharray: internal ? '4 4' : undefined, opacity: dimmed ? .12 : internal ? .72 : .9 }} interactionWidth={12} />
     {labelPoint && from.kind === 'module' && to.kind === 'module' && <EdgeLabelRenderer><button
       className="edge-evidence-label nodrag nopan" aria-label={`查看 ${from.label} → ${to.label} 调用证据`}
       style={{opacity: dimmed ? .2 : 1, transform: `translate(-50%, -50%) translate(${labelPoint.x}px, ${labelPoint.y}px)`}}
@@ -199,7 +199,7 @@ export function Canvas({ projection, onNode, onInfo, onRelation, onLayout, onVie
     const byId = new Map(positioned.map(node => [node.id, node]));
     return (layout?.relations || []).filter(relation => relation.from !== relation.to || byId.get(relation.from)?.kind === 'function').map(relation => ({ id: relation.id, source: relation.from, target: relation.to,
       ariaLabel: `${byId.get(relation.from)?.label} → ${byId.get(relation.to)?.label}，查看调用证据`,
-      type: 'routed', markerEnd: { type: MarkerType.ArrowClosed, color: '#89919d' }, data: { from: byId.get(relation.from), to: byId.get(relation.to), points: relation.points, label: projection.relations.find(item=>item.id===relation.id)?.label || relation.label, dimmed: !!preview && relation.from !== preview.id && relation.to !== preview.id,
+      type: 'routed', markerEnd: { type: MarkerType.ArrowClosed, color: graphTheme.edge }, data: { from: byId.get(relation.from), to: byId.get(relation.to), points: relation.points, label: projection.relations.find(item=>item.id===relation.id)?.label || relation.label, dimmed: !!preview && relation.from !== preview.id && relation.to !== preview.id,
         open: () => onRelation(projection.relations.find(item => item.id === relation.id) || relation) } }));
   }, [positioned, layout, projection, onRelation, preview?.id]);
   if (!layout || layoutStructure !== structure) return <div className="canvas-loading"><span className="spinner" />正在组织架构布局…</div>;
@@ -209,7 +209,7 @@ export function Canvas({ projection, onNode, onInfo, onRelation, onLayout, onVie
     onlyRenderVisibleElements={nodes.length > 200}
     nodesDraggable={false} nodesConnectable={false} nodesFocusable={false} elementsSelectable={false} minZoom={.001} maxZoom={2}
     onMoveEnd={(_, value) => onViewport(value)} deleteKeyCode={null} colorMode="light" ariaLabelConfig={{ 'controls.ariaLabel': '画布控制', 'controls.zoomIn.ariaLabel': '放大', 'controls.zoomOut.ariaLabel': '缩小', 'controls.fitView.ariaLabel': '适应画布' }}>
-    <Background color="#dedede" gap={22} size={.8} /><Controls showInteractive={false} fitViewOptions={fitOptions} />
+    <Background color="#d7dee8" gap={22} size={.8} /><Controls showInteractive={false} fitViewOptions={fitOptions} />
     <ReadingScale nodes={positioned} initialReading={!viewport && nodes.length>200} />
     <Panel position="top-left"><div className="graph-view-options">{projection.nodes.some(node => node.kind === 'function') ? <span>{projection.relations.some(relation => relation.label === '接口协作' || relation.label === '协作关系') ? '函数与接口关系' : '函数调用图'} · 全部确认关系</span> : <>
       <label htmlFor="dependency-mode">依赖</label><select id="dependency-mode" value={dependencyMode} onChange={event => onDependencyMode(event.target.value as 'primary' | 'all')}><option value="primary">主要协作</option><option value="all">全部确认依赖</option></select>
