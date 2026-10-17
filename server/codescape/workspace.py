@@ -432,6 +432,8 @@ class WorkspaceService:
             rows.append({'kind': 'file', 'id': path, 'title': Path(path).name, 'text': path, 'path': path,
                          'location': {'path': path, 'start_line': 1, 'end_line': 1}})
         for note in self.notes(project['id']):
+            if not note['text'].strip() or note['status'] == 'merged':
+                continue
             if note['anchor_version'] == project['version_id'] or note['status'] == 'unlinked':
                 rows.append({'kind': 'note', 'id': note['id'], 'title': '学习笔记', 'text': note['text'], 'path': '',
                     'anchor_kind': note['anchor_kind'], 'anchor_id': note['anchor_id'], 'status': note['status']})
@@ -450,17 +452,50 @@ class WorkspaceService:
         if not architecture:
             return {'items': [], 'message': '架构尚未完成，先完成分析再生成阅读建议。'}
         states = project.get('learning', self.db.states(project['id']))
-        entities = {e['id']: e for e in project['result']['entities'] if e['visible']}
+        from .call_judgments import reconcile_judgments
+        from .models import Architecture
+        analysis = Analysis.model_validate(project['result'])
+        if architecture.get('call_judgments'):
+            analysis = reconcile_judgments(analysis, Architecture.model_validate(architecture))
+        entities = {e.id: e.model_dump() for e in analysis.entities if e.visible}
         scope_ids = {e['scope_id']: e['id'] for e in entities.values()}
         incoming, outgoing = Counter(), Counter()
-        for call in project['result']['calls']:
-            if call['resolution'] == 'confirmed' and call['target_id'] in entities and call['caller_scope_id'] in scope_ids:
+        confirmed = []
+        for record in analysis.calls:
+            call = record.model_dump()
+            if (call['resolution'] == 'confirmed' and call['kind'] == 'direct'
+                    and call['target_id'] in entities and call['caller_scope_id'] in scope_ids):
                 outgoing[scope_ids[call['caller_scope_id']]] += 1
                 incoming[call['target_id']] += 1
+                confirmed.append(call)
         candidates = sorted(entities.values(), key=lambda e: (
-            states.get(e['id'], {}).get('state') == 'mastered', incoming[e['id']] != 0, -outgoing[e['id']], e['qualified_name']))
-        return {'items': [{'kind': 'overview', 'id': 'overview', 'title': '先看项目概览', 'reason': '先理解项目用途与主要分工。'}, *[
+            states.get(e['id'], {}).get('state') == 'mastered', outgoing[e['id']] == 0,
+            incoming[e['id']] != 0, -outgoing[e['id']], e['qualified_name']))
+        modules = {m['id']: m for m in architecture['modules']}
+        owners = {eid: module['id'] for module in modules.values() for eid in module['entity_ids']}
+        children = defaultdict(list)
+        for module in modules.values():
+            children[module['parent_id']].append(module['id'])
+        def members(mid):
+            return modules[mid]['entity_ids'] + [eid for child in children[mid] for eid in members(child)]
+        roots = [m for m in modules.values() if not m['parent_id'] and m['code_paths'] and not m['incomplete']]
+        roots.sort(key=lambda m: (-sum(states.get(eid, {}).get('state') != 'mastered' for eid in members(m['id'])), m['name']))
+        items = [{'kind': 'overview', 'id': 'overview', 'title': '先看项目概览', 'reason': '先理解项目用途与主要分工。'}]
+        if roots:
+            module = roots[0]
+            path = module['code_paths'][0]
+            items.append({'kind': 'module', 'id': module['id'], 'title': '理解模块：' + module['name'],
+                'reason': module['summary'][:140] + ' 先明确这部分分工，再深入尚未掌握的内容。',
+                'location': {'path': path, 'start_line': 1, 'end_line': 1}})
+        selected = next((c for c in confirmed if owners.get(scope_ids[c['caller_scope_id']]) != owners.get(c['target_id'])), None)
+        if selected:
+            primary = next((d['reason'] for d in architecture.get('primary_dependencies', []) if selected['id'] in d['call_ids']), '')
+            items.append({'kind': 'relation', 'id': selected['id'], 'title': '理解一条确认协作', 'location': selected['location'],
+                'reason': primary[:160] or '沿这条有源码证据的调用，理解两个职责如何配合；它不是完整运行流程。'})
+        items.extend([
             {'kind': 'function', 'id': e['id'], 'title': e['qualified_name'], 'location': e['location'],
-             'reason': f"已确认向内调用 {outgoing[e['id']]} 次；" + (
+             'reason': ('已掌握，可回顾。' if states.get(e['id'], {}).get('state') == 'mastered' else '尚未掌握，可按需阅读。')
+             + f"已确认向内调用 {outgoing[e['id']]} 次；" + (
                  '当前快照未发现内部调用方，可作为候选阅读起点。' if not incoming[e['id']] else '可结合调用证据理解模块协作。')}
-            for e in candidates[:4]]], 'message': '本地阅读建议，不代表真实程序入口或完整运行顺序。'}
+            for e in candidates[:3]])
+        return {'items': items, 'message': '本地阅读建议，可自由跳过；不代表真实程序入口或完整运行顺序。'}

@@ -4,6 +4,16 @@ import { api, protectedMutation } from './api';
 afterEach(() => { vi.unstubAllGlobals(); });
 
 describe('持久化请求标识', () => {
+  it('带修订参数的历史删除使用同一回放标识，普通笔记写入仍由修订号保护',async()=> {
+    const fetcher=vi.fn().mockRejectedValueOnce(new TypeError('固定断线验证')).mockImplementation(()=>Promise.resolve(
+      new Response(JSON.stringify({data:{deleted:true}}),{status:200})));
+    vi.stubGlobal('fetch',fetcher);
+    await api('/projects/owned/versions/previous?expected_revision=2',undefined,'DELETE');
+    expect(fetcher).toHaveBeenCalledTimes(2);
+    expect(fetcher.mock.calls[0][1]).toBe(fetcher.mock.calls[1][1]);
+    expect((fetcher.mock.calls[0][1].headers as Record<string,string>)['Idempotency-Key']).toBeTruthy();
+    expect(protectedMutation('/projects/owned/notes','PUT')).toBe(false);
+  });
   it('传输失败重试保留同一标识，下一次用户操作使用新标识', async () => {
     const fetcher = vi.fn()
       .mockRejectedValueOnce(new TypeError('固定断线验证'))

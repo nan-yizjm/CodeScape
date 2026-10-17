@@ -166,7 +166,7 @@ def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=
             "delete_operation": database.delete_operation(project["id"]) if project.get("lifecycle", "active") != "active" else None,
         }
         if full:
-            candidate = database.candidate(project["id"])
+            candidate = None if project.get('readonly') else database.candidate(project["id"])
             published = database.version(project["id"], project["version_id"])
             consent_version = candidate["id"] if candidate else project["version_id"]
             consent_manifest = candidate["value"]["snapshot"] if candidate else project["snapshot"]

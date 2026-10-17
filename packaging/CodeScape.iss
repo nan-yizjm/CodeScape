@@ -10,9 +10,12 @@
 #ifndef OutputDir
   #define OutputDir "..\output\releases"
 #endif
+#ifndef AppIdentity
+  #define AppIdentity "{{DEEF7805-92F7-4EAC-8171-67D647C72D35}"
+#endif
 
 [Setup]
-AppId={{DEEF7805-92F7-4EAC-8171-67D647C72D35}
+AppId={#AppIdentity}
 AppName=CodeScape 源境
 AppVersion={#BuildVersion}
 AppPublisher=CodeScape

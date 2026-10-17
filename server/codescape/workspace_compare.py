@@ -1,14 +1,17 @@
 """差异只依据唯一源码身份与证据，不把相似名字当成相同实体。"""
 from collections import Counter, defaultdict
 
+from .call_judgments import reconcile_judgments
 from .migration import identity
-from .models import Analysis
+from .models import Analysis, Architecture
 
 
 def compare_versions(before, after):
     def collect(project):
         index = defaultdict(list)
         analysis = Analysis.model_validate(project.get('result') or {})
+        if project.get('architecture'):
+            analysis = reconcile_judgments(analysis, Architecture.model_validate(project['architecture']))
         for entity in analysis.entities:
             if entity.visible:
                 index[identity(entity)].append(entity)

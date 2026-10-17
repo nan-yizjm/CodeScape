@@ -81,7 +81,7 @@ export function LearningTools({project,projects,onLocate,onRefresh,embedded=fals
       {error && <p className="inline-error" role="alert">{error}</p>}
       {tool==='search' && <><input data-autofocus aria-label="项目内搜索" className="search-input" placeholder="搜索模块、函数、路径、讲解或笔记…" value={query} maxLength={200} onChange={e=>{setQuery(e.target.value);setOffset(0);}}/>
         <p className="tool-muted">在当前快照与已有内容中查找，不请求模型。</p>{loading ? <p role="status">正在搜索…</p> : <><p>{query ? `${results.total} 项匹配` : '输入关键词开始搜索'}</p>
-          <div className="search-results">{results.items.map(item=><button key={`${item.kind}:${item.id}`} onClick={()=>locate(item)}><span className="tool-eyebrow">{{module:'模块',function:'函数',file:'文件',note:'笔记',overview:'概览'}[item.kind]}</span><strong>{item.title}</strong><small>{item.location?.path}</small><p>{item.text}</p></button>)}</div>
+          <div className="search-results">{results.items.map(item=><button key={`${item.kind}:${item.id}`} onClick={()=>locate(item)}><span className="tool-eyebrow">{{module:'模块',function:'函数',file:'文件',note:'笔记',overview:'概览',relation:'协作'}[item.kind]}</span><strong>{item.title}</strong><small>{item.location?.path}</small><p>{item.text}</p></button>)}</div>
           <div className="tool-row"><button disabled={!offset} onClick={()=>setOffset(Math.max(0,offset-20))}>上一页</button><span>{offset+Math.min(1,results.total)}–{Math.min(offset+20,results.total)} / {results.total}</span><button disabled={offset+20>=results.total} onClick={()=>setOffset(offset+20)}>下一页</button></div></>}
       </>}
       {tool==='guide' && <><p className="tool-muted">{guide.message}</p>{loading ? <p>正在整理阅读建议…</p> : <ol className="guide-list">{guide.items.map((item,i)=><li key={item.id || i}><button onClick={()=>locate(item)}><strong>{item.title}</strong><p>{item.reason}</p><small>{item.location ? `${item.location.path}:${item.location.start_line}` : '项目全局视角'}</small></button></li>)}</ol>}</>}
@@ -97,7 +97,12 @@ function HistoryTools({project}: {project:ProjectDetail}) {
   const [versions,setVersions]=useState<HistoryVersion[]>([]),[error,setError]=useState('');
   const [before,setBefore]=useState(''),[after,setAfter]=useState(project.version_id);
   const [difference,setDifference]=useState<unknown>(null),[deleting,setDeleting]=useState<string|null>(null);
-  const refresh=()=>api<HistoryVersion[]>(`/projects/${project.id}/versions`).then(items=>{setVersions(items);setBefore(current=>current || items.find(v=>v.id!==project.version_id)?.id || '');}).catch(e=>setError(e.message));
+  const refresh=()=>api<HistoryVersion[]>(`/projects/${project.id}/versions`).then(items=>{
+    setVersions(items);
+    setBefore(current=>items.some(v=>v.id===current) ? current : items.find(v=>v.id!==project.version_id)?.id || '');
+    setAfter(current=>items.some(v=>v.id===current) ? current : project.version_id);
+    setDeleting(current=>items.some(v=>v.id===current) ? current : null);
+  }).catch(e=>setError(e.message));
   useEffect(()=>{void refresh();},[project.id,project.version_id]);
   const pin=async(version:HistoryVersion)=> {try{await api(`/projects/${project.id}/versions/${version.id}/pin`,{pinned:!version.pinned,expected_revision:version.revision},'PUT');await refresh();}catch(e){setError((e as Error).message);}};
   const remove=async(version:HistoryVersion)=> {try{await api(`/projects/${project.id}/versions/${version.id}?expected_revision=${version.revision}`,undefined,'DELETE');setDeleting(null);await refresh();}catch(e){setError((e as Error).message);await refresh();}};
