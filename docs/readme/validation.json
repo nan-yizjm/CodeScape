@@ -1,0 +1,52 @@
+{
+  "日期": "2026-10-17",
+  "依据版本": "0.2.0",
+  "基线提交": "ffd1c3ebd15d3ef574c2f5a63b8c93542933cabb",
+  "范围": "README与说明资源，不修改产品代码或发布制品",
+  "截图": {
+    "数量": 6,
+    "尺寸": "1600×1060",
+    "来源": "全新隔离目录内人工预置样例，历史人工构造",
+    "模型请求": 0
+  },
+  "图示": {
+    "数量": 3,
+    "格式": "原创SVG，保留标准库生成脚本",
+    "结构校验": "XML、title、desc、viewBox、无脚本或外部图片",
+    "渲染": "三图浏览器逐张复核，文字在画布内"
+  },
+  "正文检查": {
+    "本地引用": 34,
+    "显式目录锚点": 11,
+    "图片": 9,
+    "视口宽度": [
+      1440,
+      800,
+      390,
+      320
+    ],
+    "页面横向溢出": false,
+    "方法": "GitHub Markdown API渲染正文；本地近似GitHub样式检查，不冒充GitHub完整页面"
+  },
+  "发布核对": {
+    "版本": "v0.2.0",
+    "附件": [
+      "CodeScape-0.2.0-Windows-x64-Setup.exe",
+      "CodeScape-0.2.0-Windows-x64-Portable.zip",
+      "SHA256SUMS.txt",
+      "release-verification.json"
+    ]
+  },
+  "资源摘要": {
+    "analysis-pipeline.svg": "1c240f43b01e3286525f0d992205cc689a3a4e9122592041372297d93f2a1448",
+    "architecture-edit.png": "62dd8be97050e08cc7b30c8d12b71703dcaa2cdf3c2b4cbed0a51eb89335056b",
+    "compare.png": "a907fc399835a4ac5bb02bdbe54c53fc75c52408106dd06b609761484699ffeb",
+    "history-diff.png": "8950d01741b4842135e6e89c5d9a2dd4bc25cf7ca69e389974017df0e71e4961",
+    "search-notes.png": "68205feb0c813ae3eafa26f06c34ae4f585dbda4fa872eccc7587a982e4393e3",
+    "source-evidence.png": "8587e6d2bedc6ee3eb1c147423f661e72b6eb7efc5fe36dc757d4301dd216548",
+    "system-architecture.svg": "e5c75281ebb968dcaa470eececc62c63164d4e6c2402098caa5883e6c294d4fc",
+    "version-lifecycle.svg": "ee8dba6443d2bc2b94515934a6627c9bb804adc4a1e29d90c218cdc3bef704aa",
+    "workspace.png": "baec737930b8372332bed02d6af65051fc9c398d963366f27df59cc2faa06022"
+  },
+  "边界": "0.2.0既有497后端与38前端测试为历史验收结果；本次无新增模型质量结论，既有CI另对提交执行回归"
+}
