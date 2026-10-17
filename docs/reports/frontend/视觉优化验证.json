@@ -1,0 +1,261 @@
+{
+  "日期": "2026-10-16",
+  "分支": "codex/frontend-polish",
+  "范围": "前端展示与少量展示交互调整，业务状态及接口不变",
+  "自动检查": {
+    "前端": 36,
+    "后端": 476,
+    "TypeScript": "通过",
+    "生产构建": "通过"
+  },
+  "同样例同尺寸对比": {
+    "尺寸": [
+      1440,
+      1000
+    ],
+    "前顶部": 346.34375,
+    "后顶部": 198.578125,
+    "前画布": 548.65625,
+    "后画布": 704.421875,
+    "画布增加": 155.765625
+  },
+  "响应式检查": [
+    {
+      "page": "library",
+      "width": 320,
+      "overflow": false,
+      "columns": 1,
+      "cards": 3
+    },
+    {
+      "page": "library",
+      "width": 390,
+      "overflow": false,
+      "columns": 1,
+      "cards": 3
+    },
+    {
+      "page": "library",
+      "width": 800,
+      "overflow": false,
+      "columns": 2,
+      "cards": 3
+    },
+    {
+      "page": "library",
+      "width": 1200,
+      "overflow": false,
+      "columns": 3,
+      "cards": 3
+    },
+    {
+      "page": "library",
+      "width": 1440,
+      "overflow": false,
+      "columns": 3,
+      "cards": 3
+    },
+    {
+      "page": "library",
+      "width": 1920,
+      "overflow": false,
+      "columns": 3,
+      "cards": 3
+    },
+    {
+      "page": "workspace",
+      "width": 320,
+      "height": 1000,
+      "overflow": false,
+      "top": 494.171875,
+      "canvas": 389.828125,
+      "stats": "flex",
+      "badControls": []
+    },
+    {
+      "page": "workspace",
+      "width": 390,
+      "height": 1000,
+      "overflow": false,
+      "top": 418.171875,
+      "canvas": 465.828125,
+      "stats": "flex",
+      "badControls": []
+    },
+    {
+      "page": "workspace",
+      "width": 800,
+      "height": 1000,
+      "overflow": false,
+      "top": 198.578125,
+      "canvas": 704.421875,
+      "stats": "flex",
+      "badControls": []
+    },
+    {
+      "page": "workspace",
+      "width": 1200,
+      "height": 1000,
+      "overflow": false,
+      "top": 198.578125,
+      "canvas": 704.421875,
+      "stats": "flex",
+      "badControls": []
+    },
+    {
+      "page": "workspace",
+      "width": 1440,
+      "height": 1000,
+      "overflow": false,
+      "top": 198.578125,
+      "canvas": 704.421875,
+      "stats": "flex",
+      "badControls": []
+    },
+    {
+      "page": "workspace",
+      "width": 1920,
+      "height": 1000,
+      "overflow": false,
+      "top": 198.578125,
+      "canvas": 704.421875,
+      "stats": "flex",
+      "badControls": []
+    },
+    {
+      "page": "workspace",
+      "width": 1440,
+      "height": 600,
+      "overflow": false,
+      "top": 198.578125,
+      "canvas": 304.421875,
+      "stats": "flex",
+      "badControls": []
+    },
+    {
+      "page": "workspace",
+      "width": 390,
+      "height": 640,
+      "overflow": false,
+      "top": 336.390625,
+      "canvas": 187.609375,
+      "stats": "flex",
+      "badControls": []
+    },
+    {
+      "page": "settings",
+      "width": 320,
+      "scrollWidth": 290,
+      "clientWidth": 290,
+      "rect": {
+        "x": 14,
+        "y": 14,
+        "width": 292,
+        "height": 772,
+        "top": 14,
+        "right": 306,
+        "bottom": 786,
+        "left": 14
+      }
+    },
+    {
+      "page": "settings",
+      "width": 800,
+      "scrollWidth": 508,
+      "clientWidth": 508,
+      "rect": {
+        "x": 145,
+        "y": 24,
+        "width": 510,
+        "height": 752,
+        "top": 24,
+        "right": 655,
+        "bottom": 776,
+        "left": 145
+      }
+    },
+    {
+      "page": "settings",
+      "width": 1440,
+      "scrollWidth": 508,
+      "clientWidth": 508,
+      "rect": {
+        "x": 465,
+        "y": 24,
+        "width": 510,
+        "height": 752,
+        "top": 24,
+        "right": 975,
+        "bottom": 776,
+        "left": 465
+      }
+    }
+  ],
+  "交互检查": {
+    "checks": [
+      "模块进入、同级恢复、父模块收起、信息按钮独立",
+      "关系证据与SVG实际下载",
+      "全屏与Esc恢复",
+      "学习状态保存、刷新恢复及复原",
+      "只读源码、高亮、滚动恢复与详情返回",
+      "三层样例逐层导航、最多两层、返回上一级与外层同级",
+      "设置与任务弹窗、焦点循环、可见焦点与Esc",
+      "减少动画与透光渐进降级",
+      "125%缩放布局"
+    ],
+    "errors": []
+  },
+  "表单检查": [
+    "本地与Git来源切换、本地3文件范围预览、窄屏导入弹窗；未确认导入",
+    "删除确认与取消保留项目",
+    "长名称原文提示、320字符说明与短视口、授权弹窗；未授权或上传"
+  ],
+  "对比度与SVG": {
+    "正常状态文字对比度": {
+      "ink/surface": 17.853,
+      "ink/soft": 17.063,
+      "text/surface": 10.355,
+      "text/soft": 9.897,
+      "muted/surface": 5.434,
+      "muted/soft": 5.193,
+      "module-0-accent": 6.178,
+      "module-0-muted": 4.93,
+      "module-1-accent": 6.079,
+      "module-1-muted": 4.853,
+      "module-2-accent": 5.807,
+      "module-2-muted": 5.074,
+      "module-3-accent": 6.44,
+      "module-3-muted": 4.965,
+      "module-4-accent": 6.211,
+      "module-4-muted": 4.922,
+      "module-5-accent": 6.009,
+      "module-5-muted": 4.999
+    },
+    "最低对比度": 4.853,
+    "SVG节点": 3,
+    "SVG协作线": 2,
+    "颜色与界面共享": true
+  },
+  "隔离环境": {
+    "data": {
+      "projects": 3,
+      "model_requests": 0
+    },
+    "preview-data": {
+      "projects": 1,
+      "model_requests": 0
+    }
+  },
+  "真实模型测试": "未运行；两个隔离环境模型账本均为0，无源码上传",
+  "复核说明": [
+    "初轮窄屏发现侧边栏文字竖排与画布浮层重叠，已修正并复跑。",
+    "交互脚本初轮未等待弹窗初始聚焦及项目恢复完成，补齐等待后全流程通过，未放宽业务断言。",
+    "长说明测试仅替换浏览器内说明文本，未修改原始源码或持久化架构。",
+    "125%检查使用CSS zoom布局模拟，不冒充系统原生浏览器菜单缩放。"
+  ],
+  "保留边界": [
+    "源码阅读器分块仍有超过500kB的既有构建提示，构建通过。",
+    "后端仍有Starlette TestClient弃用提示；476项均通过。",
+    "P0固定标签及182645Z原安装与便携包哈希保持。"
+  ]
+}

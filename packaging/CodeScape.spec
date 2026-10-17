@@ -18,5 +18,6 @@ a = Analysis([str(repository / "packaging/launcher.py")], pathex=[str(repository
     excludes=["pytest", "ruff", "tkinter", "unittest"], noarchive=False)
 pyz = PYZ(a.pure)
 exe = EXE(pyz, a.scripts, [], exclude_binaries=True, name="CodeScape", console=True,
-          hide_console="hide-early", debug=False, strip=False, upx=False)
+          hide_console="hide-early", debug=False, strip=False, upx=False,
+          icon=str(repository / "packaging/codescape.ico"))
 coll = COLLECT(exe, a.binaries, a.datas, strip=False, upx=False, name="CodeScape")

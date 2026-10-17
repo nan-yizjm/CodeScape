@@ -12,6 +12,8 @@
 
 安装器按当前用户安装，使用中文向导，提供开始菜单、可选桌面快捷方式和卸载。升级与卸载先通过受保护的本地通信请求应用保存并正常退出；超时或数据库校验失败则停止操作。应用数据与安装目录分离，卸载保留学习数据、快照和 DPAPI 密钥，原始源码始终不被删除。
 
+0.1.1 起程序与安装器使用 `codescape.ico`，快捷方式继承程序图标；应用版本来自 `pyproject.toml`，构建信息记录源码 Commit。验证新版本时可使用 `check_windows_bundle.py --report <本轮报告.json>` 和 `check_windows_installer.py --previous-build <旧制品目录> --report <本轮报告.json>`，分别留档，不覆盖 P0 报告。
+
 当前构建未签名，不宣称获得 SmartScreen 信任。开发机上的独立运行和安装验证不能替代干净 Windows 10/11 虚拟机验证；未完成的项目必须写入验收记录。x86 与原生 ARM64 不列入已支持平台。
 
 参考：[PyInstaller 运行时](https://pyinstaller.org/en/stable/runtime-information.html)、[Inno Setup 官方下载](https://jrsoftware.org/isdl.php)、[Git for Windows 固定发布](https://github.com/git-for-windows/git/releases/tag/v2.56.0.windows.2)、[Node 固定发布校验](https://nodejs.org/dist/v24.16.0/SHASUMS256.txt)。

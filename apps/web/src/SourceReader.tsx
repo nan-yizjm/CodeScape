@@ -22,8 +22,8 @@ export function SourceReader({ file, location, position, onPosition }: { file: S
     const view = new EditorView({ parent: element.current, state: EditorState.create({ doc: file.text, extensions: [
       EditorState.readOnly.of(true), EditorView.editable.of(false), lineNumbers(), highlightActiveLineGutter(),
       syntaxHighlighting(defaultHighlightStyle), language, EditorView.decorations.of(decoration),
-      EditorView.theme({ '&': { height: '100%', fontSize: '13px' }, '.cm-scroller': { overflow: 'auto', fontFamily: 'Consolas, monospace' },
-        '.cm-content': { padding: '18px 0' }, '.cm-gutters': { background: '#fafafa', border: 'none', color: '#777777' },
+      EditorView.theme({ '&': { height: '100%', fontSize: '13px', color: 'var(--ink)', backgroundColor: 'var(--surface)' }, '.cm-scroller': { overflow: 'auto', fontFamily: 'var(--font-code)', lineHeight: '1.8' },
+        '.cm-content': { padding: '16px 0' }, '.cm-gutters': { background: 'var(--soft)', borderRight: '1px solid var(--line)', color: 'var(--muted)' },
         '.cm-line': { paddingLeft: '12px' }, '&.cm-focused': { outline: 'none' } }),
     ] }) });
     view.scrollDOM.tabIndex = 0;

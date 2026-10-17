@@ -45,7 +45,8 @@ def main():
     for path in [repository / "uv.lock", repository / "package-lock.json", repository / "packaging/runtime_sources.json"]:
         sources[path.relative_to(repository).as_posix()] = sha256(path)
     metadata = {"version": version, "build_id": build_id, "platform": "Windows x64", "signed": False,
-        "status": "P0 预发布验证，尚未通过全部验收", "source_locks_sha256": sources,
+        "status": "新版界面交付候选；构建及安装验证另行记录", "source_locks_sha256": sources,
+        "source_commit": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=repository, text=True).strip(),
         "data_schema": SCHEMA_VERSION, "python": sys.version.split()[0],
         "validation_boundary": "构建成功不等于干净 Windows 10/11 安装、升级与卸载验收通过。"}
     (stage / "resources/build-info.json").write_text(json.dumps(metadata, ensure_ascii=False, indent=2), encoding="utf-8")

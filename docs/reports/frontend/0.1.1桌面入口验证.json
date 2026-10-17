@@ -1,0 +1,14 @@
+{
+  "日期": "2026-10-17",
+  "版本": "0.1.1",
+  "构建号": "20261017T054202Z",
+  "桌面快捷方式": "C:\\Users\\zjm\\Desktop\\CodeScape 源境.lnk",
+  "开始菜单快捷方式": "C:\\Users\\zjm\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\CodeScape\\CodeScape 源境.lnk",
+  "目标": "C:\\Users\\zjm\\AppData\\Local\\Programs\\CodeScape\\CodeScape.exe",
+  "快捷方式不含临时凭证": true,
+  "安装后全部文件符合清单": true,
+  "快捷方式所指程序启动并返回原项目列表": true,
+  "实际提供的页面与资源均为新版生产构建": true,
+  "程序内嵌图标与七尺寸ICO逐字节一致": true,
+  "验证方式": "检查快捷方式配置，使用其目标程序以--no-browser启动；未冒充人工双击或系统浏览器交互。"
+}
