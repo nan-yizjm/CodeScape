@@ -1,4 +1,5 @@
 import copy
+import shutil
 import uuid
 
 import pytest
@@ -323,3 +324,34 @@ def test_malformed_edit_and_workspace_are_client_errors(workspace):
     client, _, project = workspace
     assert client.post(url(project) + '/architecture/preview', json={'action':'apply','modules':[{'id':None}]}).status_code == 422
     assert client.put(url(project) + '/workspaces/single', json={'version_id':project['version_id'], 'panel_width':-1}).status_code == 422
+
+
+def test_history_cleanup_failure_retains_request_and_retries_without_losing_notes(workspace, monkeypatch):
+    from codescape import app as app_module
+    client, service, project = workspace
+    old = history(service, project)[0]
+    row = service.db.version(project['id'], old)
+    original = service.snapshot_path(service.db.get(project['id']))
+    target = original.parent / str(uuid.uuid4())
+    shutil.copytree(original, target)
+    row['value']['snapshot']['id'] = target.name
+    with service.db.engine.begin() as connection:
+        connection.execute(service.db.versions.update().where(service.db.versions.c.id == old).values(value=row['value']))
+    saved = client.put(f"/api/v1/projects/{project['id']}/notes", json=note_payload(project)).json()['data']
+    remover = app_module.remove_staging
+
+    def occupied(path, boundary):
+        if path == target:
+            raise PermissionError('人工模拟历史快照占用')
+        return remover(path, boundary)
+
+    monkeypatch.setattr(app_module, 'remove_staging', occupied)
+    response = delete(client, url(project).replace(project['version_id'], old))
+    assert response.status_code == 409 and response.json()['error']['code'] == 'CLEANUP_PENDING'
+    assert target.is_dir() and service.db.version(project['id'], old)['status'] == 'retired'
+    assert service.doc(project['id'], old, 'retention')['delete_requested']
+    monkeypatch.setattr(app_module, 'remove_staging', remover)
+    client.app.state.cleanup_versions()
+    assert not target.exists() and original.is_dir()
+    assert service.db.version(project['id'], old)['status'] == 'purged'
+    assert service.notes(project['id'])[0]['text'] == saved['text']

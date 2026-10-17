@@ -1,0 +1,26 @@
+{
+  "version": "0.2.0",
+  "build_id": "20261017T071806Z",
+  "platform": "Windows x64",
+  "signed": false,
+  "status": "发布候选构建；功能及安装验证另行记录",
+  "source_locks_sha256": {
+    "uv.lock": "91f2514f566333f417cb35b7b39dd9bd2d35ce1afc66acbbc665c55c4855a2e3",
+    "package-lock.json": "8ff21fd8670d3788eee945d4d8e3f8aa372e4e8fb0a66ef8dc9ed6c525dcb8bb",
+    "packaging/runtime_sources.json": "9581ec44896984cd4866b3d46105a3e619c84c77e44564949e1b522da2972023"
+  },
+  "source_commit": "022761cab7302dbfbdbff84401a1f8ad65fcb5dd",
+  "data_schema": 4,
+  "python": "3.12.14",
+  "validation_boundary": "构建成功不等于干净 Windows 10/11 安装、升级与卸载验收通过。",
+  "artifacts": {
+    "CodeScape-0.2.0-Windows-x64-Portable.zip": {
+      "sha256": "f96b9e8b34c027897989e7dde6c15df1c2961c522a2b31961eac658dd4aafa9c",
+      "bytes": 158380280
+    },
+    "CodeScape-0.2.0-Windows-x64-Setup.exe": {
+      "sha256": "b792fea981f2d43d191814c09d705aeba5aedc7e31efd9fe590b6edf84f3de3a",
+      "bytes": 115535874
+    }
+  }
+}
