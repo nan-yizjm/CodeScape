@@ -200,7 +200,13 @@ def test_publish_latest_learning_old_source_and_reclaim(tmp_path, monkeypatch):
         client.post("/api/v1/clients/heartbeat", json={"client_id": identity,
             "version_leases": [{"project_id": new["id"], "version_id": new["version_id"]}]})
         app.state.cleanup_versions()
-        assert db.version(old["id"], old["version_id"])["status"] == "purged"
+        # 0.2.0保留最近五版；旧的临时读取接口仍过期，历史接口明确绑定快照。
+        assert db.version(old["id"], old["version_id"])["status"] == "retired"
+        history_url = f"{url}/versions/{old['version_id']}"
+        assert client.get(history_url).json()['data']['readonly']
+        removed = client.delete(history_url, headers={'content-type':'application/json',
+            'idempotency-key':str(uuid.uuid4())})
+        assert removed.status_code == 200
         db.engine.dispose()
     with TestClient(create_app(root, "again")):
         pass

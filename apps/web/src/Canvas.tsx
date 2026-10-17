@@ -107,8 +107,8 @@ function ReadingScale({ nodes, initialReading }: { nodes: ProjectionNode[]; init
   }}>阅读尺寸<ArrowUpRight size={13} /></button></Panel>;
 }
 
-export function Canvas({ projection, onNode, onInfo, onRelation, onLayout, onViewport, viewport, dependencyMode, onDependencyMode }: {
-  projection: Projection; onNode: (node: ProjectionNode) => void; onInfo: (node: ProjectionNode) => void;
+export function Canvas({ highlightId, projection, onNode, onInfo, onRelation, onLayout, onViewport, viewport, dependencyMode, onDependencyMode }: {
+  highlightId?: string; projection: Projection; onNode: (node: ProjectionNode) => void; onInfo: (node: ProjectionNode) => void;
   onRelation: (relation: Relation) => void; onLayout: (projection: Projection) => void;
   onViewport: (viewport: Viewport) => void; viewport?: Viewport;
   dependencyMode: 'primary' | 'all'; onDependencyMode: (mode: 'primary' | 'all') => void;
@@ -182,7 +182,7 @@ export function Canvas({ projection, onNode, onInfo, onRelation, onLayout, onVie
   const positionedById = new Map(positioned.map(node => [node.id, node]));
   const nodes: Node<Data>[] = positioned.map(node => {
     const parent = node.parentId ? positionedById.get(node.parentId) : undefined;
-    return { id: node.id, type: 'map', parentId: node.parentId, extent: node.parentId ? 'parent' : undefined,
+    return { id: node.id, type: 'map', selected: node.id === highlightId, parentId: node.parentId, extent: node.parentId ? 'parent' : undefined,
       position: { x: node.x - (parent?.x || 0), y: node.y - (parent?.y || 0) }, data: { node, onInfo, onOpen: onNode, onHover: setHovered, dimmed: !!preview && !neighbors.has(node.id), onInternal: node => {
         const relation = projection.relations.find(item => item.from === node.id && item.to === node.id); if (relation) onRelation(relation);
       } },

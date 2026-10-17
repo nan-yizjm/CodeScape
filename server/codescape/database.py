@@ -106,6 +106,10 @@ class Database:
             Column("payload_hash", String, nullable=False), Column("source_chars", Integer, nullable=False),
             Column("usage", JSON), Column("cost", String), Column("currency", String),
             Column("price_snapshot", JSON), Column("http_status", Integer), Column("error_code", String))
+        self.workspace = Table("workspace_documents", metadata,
+            Column("project_id", String, primary_key=True), Column("version_id", String, primary_key=True),
+            Column("kind", String, primary_key=True), Column("key", String, primary_key=True),
+            Column("revision", Integer, nullable=False), Column("value", JSON, nullable=False))
         try:
             migrate_database(root, metadata)
         except Exception:
@@ -172,7 +176,7 @@ class Database:
     def finish_delete(self, operation_id: str, project_id: str):
         with self.engine.begin() as connection:
             connection.exec_driver_sql("BEGIN IMMEDIATE")
-            for table in [self.learning, self.sessions, self.analysis_tasks, self.jobs, self.versions, self.requests]:
+            for table in [self.learning, self.sessions, self.analysis_tasks, self.jobs, self.versions, self.requests, self.workspace]:
                 connection.execute(table.delete().where(table.c.project_id == project_id))
             connection.execute(self.projects.delete().where(self.projects.c.id == project_id))
             redact_project_receipts(connection, self.app_metadata, project_id)
@@ -333,6 +337,8 @@ class Database:
                         entity_id=mapping[row["entity_id"]], state=row["state"], revision=1))
             report.update(from_version_id=old["version_id"], to_version_id=version_id)
             value.update(architecture=architecture, migration_report=report)
+            from .workspace import migrate_workspace
+            migrate_workspace(connection, self.workspace, old, dict(value, id=project_id, version_id=version_id))
             connection.execute(self.versions.update().where(self.versions.c.id == version_id)
                                .values(status="published", value=value))
             connection.execute(self.projects.update().where(self.projects.c.id == project_id).values(

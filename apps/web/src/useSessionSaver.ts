@@ -3,7 +3,7 @@ import { api, ApiError, keepalive } from './api';
 import type {SessionValue} from './exploration';
 
 export function useSessionSaver(project: {id: string; version_id: string} | null, value: Omit<SessionValue,'version_id'>,
-  onVersion: (id: string)=>void) {
+  onVersion: (id: string)=>void, slot = 'single') {
   const [status,setStatus] = useState<'saved'|'pending'|'saving'|'conflict'|'error'>('saved');
   const [epoch,setEpoch] = useState(0);
   const state = useRef<{key:string; id:string; version:string; revision:number; signature:string; first:boolean; blocked:boolean} | null>(null);
@@ -26,7 +26,7 @@ export function useSessionSaver(project: {id: string; version_id: string} | null
       if (!current || current.key !== item.key || current.blocked) return;
       inFlight.current = true; setStatus('saving');
       try {
-        const saved = await api<SessionValue>(`/projects/${item.id}/session`, {...item.value,expected_revision:current.revision}, 'PUT');
+        const saved = await api<SessionValue>(`/projects/${item.id}/versions/${item.value.version_id}/workspaces/${slot}`, {...item.value,expected_revision:current.revision}, 'PUT');
         if (state.current?.key === item.key) {
           current.revision = saved.revision || 0; current.signature = item.signature;
           setStatus(pending.current ? 'pending' : 'saved');
@@ -54,7 +54,7 @@ export function useSessionSaver(project: {id: string; version_id: string} | null
     const leave = () => {
       const item = pending.current, current = state.current;
       if (item && current && !inFlight.current && !current.blocked && item.key === current.key)
-        void keepalive(`/projects/${item.id}/session`,{...item.value,expected_revision:current.revision},'PUT').catch(()=>{});
+        void keepalive(`/projects/${item.id}/versions/${item.value.version_id}/workspaces/${slot}`,{...item.value,expected_revision:current.revision},'PUT').catch(()=>{});
     };
     window.addEventListener('pagehide',leave);
     return ()=>window.removeEventListener('pagehide',leave);
