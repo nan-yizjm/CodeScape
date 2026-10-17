@@ -1,5 +1,5 @@
 #ifndef BuildVersion
-  #define BuildVersion "0.1.0"
+  #define BuildVersion "0.1.1"
 #endif
 #ifndef PreflightExe
   #define PreflightExe "..\.runtime\packaging\preflight\CodeScapeDataCheck.exe"
@@ -27,6 +27,7 @@ OutputBaseFilename=CodeScape-{#BuildVersion}-Windows-x64-Setup
 Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
+SetupIconFile=codescape.ico
 DisableProgramGroupPage=yes
 CloseApplications=no
 RestartApplications=no

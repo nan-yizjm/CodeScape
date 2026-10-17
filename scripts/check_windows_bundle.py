@@ -80,6 +80,7 @@ def main():
         default=repository / ".runtime/packaging/dist/CodeScape/CodeScape.exe")
     parser.add_argument("--remote", action="store_true", help="额外验证公开 Hiredis 默认分支导入；不请求模型")
     parser.add_argument('--declarations', action='store_true', help='额外验证独立包声明过滤与宏包装完整函数范围；不请求模型')
+    parser.add_argument('--report', type=Path, help='指定本轮报告位置，避免覆盖历史验收记录')
     args = parser.parse_args()
     executable = args.executable.resolve(strict=True)
     root = repository / "output/windows-bundle-validation" / str(uuid.uuid4())
@@ -205,8 +206,9 @@ def main():
                 "diagnostic_count": remote["diagnostic_count"], "ai_analysis": False} if remote else "本次未验证"),
             "update_saves_and_exits_normally": True,
             "boundary": "开发机 Windows 独立运行验证；不代替干净 Windows 10/11 虚拟机验收；不代表真实 AI 分析质量。"}
-        report = repository / ('docs/reports/p0/Windows声明与函数范围独立包验证.json'
-                               if args.declarations else 'docs/reports/p0/Windows独立运行验证.json')
+        report = args.report or repository / ('docs/reports/p0/Windows声明与函数范围独立包验证.json'
+                                              if args.declarations else 'docs/reports/p0/Windows独立运行验证.json')
+        report.parent.mkdir(parents=True, exist_ok=True)
         report.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
         print(json.dumps(result, ensure_ascii=False, indent=2))
     finally:

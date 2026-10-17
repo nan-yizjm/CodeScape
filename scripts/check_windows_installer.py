@@ -39,6 +39,7 @@ def changed_application_files(before, after):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--previous-build', type=Path, help='从应用自有已校验预发布目录安装后升级；不是跨正式版本验收')
+    parser.add_argument('--report', type=Path, help='指定本轮报告位置，避免覆盖历史验收记录')
     args = parser.parse_args()
     if registered():
         raise RuntimeError("已有正式安装记录，本验证不会覆盖用户的安装。")
@@ -189,11 +190,14 @@ def main():
             "new_installer_data_preflight": "通过；字段损坏时安装返回失败，原程序与数据库哈希保持一致",
             "uninstall": "通过；程序和本次安装记录移除", "data_and_snapshot_retained": True,
             "developer_path_removed": True, "model_requests": 0, "signed": False,
-            "boundary": ('开发机Windows11两个实际预发布构建升级；版本号均为0.1.0，不代替干净Windows10/11或跨正式版本验收。'
+            "previous_version": (previous or build)['version'], "upgraded_version": build['version'],
+            "boundary": (f"开发机 Windows 11 从 {(previous or build)['version']} 升级至 {build['version']}；"
+                         '不代替干净 Windows 10/11 或其他历史版本组合验收。'
                          if previous else '开发机 Windows 11 x64 验证，同版本覆盖升级；不代替干净 Windows 10/11 与跨版本升级验收。')}
-        (repository / ('docs/reports/p0/Windows跨构建升级验证.json' if previous
-                       else 'docs/reports/p0/Windows安装升级卸载验证.json')).write_text(
-            json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
+        report_path = args.report or repository / ('docs/reports/p0/Windows跨构建升级验证.json' if previous
+                                                  else 'docs/reports/p0/Windows安装升级卸载验证.json')
+        report_path.parent.mkdir(parents=True, exist_ok=True)
+        report_path.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
         print(json.dumps(report, ensure_ascii=False, indent=2))
     finally:
         if client:
