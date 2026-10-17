@@ -39,11 +39,12 @@ export type SourceFile = { path: string; text: string; version_id: string; hash:
 export type WorkspaceDetail = { readonly?: boolean; raw_architecture?: {modules:Module[];overview:Overview} | null;
   manual_edit?: {revision:number; modified:boolean; can_undo:boolean; can_redo:boolean; conflicts:{from_version_id:string;message:string}[]} };
 export type LearningNote = {id:string;anchor_version:string;anchor_kind:'module'|'function';anchor_id:string;text:string;
-  revision:number;status:'linked'|'unlinked';implementation_changed?:boolean};
+  revision:number;status:'linked'|'unlinked'|'merged';implementation_changed?:boolean};
 export type SearchResult = {kind:'module'|'function'|'file'|'note'|'overview';id:string;title:string;text?:string;reason?:string;
   version_id?:string;location?:Location;anchor_kind?:'module'|'function';anchor_id?:string;status?:string};
 export type HistoryVersion = {id:string;created_at:string;current:boolean;pinned:boolean;revision:number;available:boolean;
-  bytes:number;file_count:number;manual:boolean;origin:{kind:string;commit?:string}};
+  protected_reason?:string|null;
+  bytes:number;source_bytes:number;record_bytes:number;file_count:number;manual:boolean;origin:{kind:string;commit?:string}};
 export type Point = { x: number; y: number };
 export type Relation = { id: string; from: string; to: string; label: string; calls: Call[]; points?: Point[]; primaryReasons?: string[] };
 export type ScrollPosition = {top: number; left: number; line?: number};

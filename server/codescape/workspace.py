@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import copy
+import json
 import uuid
 from collections import Counter, defaultdict
 from datetime import UTC, datetime
@@ -138,7 +139,8 @@ def migrate_workspace(connection, table, old, new):
                 module['code_paths'] = [p for p in module['code_paths'] if p in new['snapshot']['files']]
             edited = validate_modules(new, edited)
             put_document(connection, table, pid, new_id, 'architecture', 'main',
-                {'history': [new_raw, edited], 'position': 1, 'events': ['自动迁移人工调整'], 'conflicts': []}, 0)
+                {'history': [new_raw, edited], 'position': 1, 'events': ['自动迁移人工调整'],
+                 'conflicts': edit.get('conflicts', [])}, 0)
             module_map.update({m['id']: m['id'] for m in edited})
         except (WorkspaceError, ValueError, KeyError):
             # Keep uniquely matched textual edits even if structural edits need review.
@@ -161,7 +163,7 @@ def migrate_workspace(connection, table, old, new):
             histories = [new_raw, patched] if patched != new_raw else [new_raw]
             put_document(connection, table, pid, new_id, 'architecture', 'main',
                 {'history': histories, 'position': len(histories) - 1, 'events': ['可靠文字修改已迁移'],
-                 'conflicts': [{'from_version_id': old_id, 'message': '已保留可靠匹配的文字修改；其余人工架构未完整匹配，原版本仍保留，可预览后重新调整。'}]}, 0)
+                 'conflicts': edit.get('conflicts', []) + [{'from_version_id': old_id, 'message': '已保留可靠匹配的文字修改；其余人工架构未完整匹配，原版本仍保留，可预览后重新调整。'}]}, 0)
     rows = connection.execute(select(table).where(table.c.project_id == pid, table.c.kind == 'note')).mappings().all()
     old_entities = {e['id']: e for e in (old.get('result') or {}).get('entities', [])}
     new_entities = {e['id']: e for e in (new.get('result') or {}).get('entities', [])}
@@ -175,11 +177,20 @@ def migrate_workspace(connection, table, old, new):
             'version_id': old_id, 'id': anchor, 'status': note.get('status', 'linked'), 'text': note['text']})
         if target:
             note.update(anchor_version=new_id, anchor_id=target, status='linked')
-            note['implementation_changed'] = bool(note['anchor_kind'] == 'function' and
-                old_entities[anchor]['implementation_hash'] != new_entities[target]['implementation_hash'])
+            note['implementation_changed'] = bool(note.get('implementation_changed') or (note['anchor_kind'] == 'function' and
+                old_entities[anchor]['implementation_hash'] != new_entities[target]['implementation_hash']))
         else:
             note['status'] = 'unlinked'
         put_document(connection, table, pid, '', 'note', row['key'], note, row['revision'])
+    from .sessions import migrate_session
+    old_effective = dict(old, architecture=dict(old['architecture'], modules=old_modules)) if old.get('architecture') else old
+    new_edit = document(connection, table, pid, new_id, 'architecture', 'main')
+    new_effective = dict(new, architecture=dict(new['architecture'], modules=new_edit['history'][new_edit['position']])) if new_edit else new
+    sessions = connection.execute(select(table).where(table.c.project_id == pid,
+        table.c.version_id == old_id, table.c.kind == 'session')).mappings().all()
+    for row in sessions:
+        value = migrate_session(row['value'], old_effective, new_effective, module_map, mapping, new_id)
+        put_document(connection, table, pid, new_id, 'session', row['key'], value, 0)
 
 
 class WorkspaceService:
@@ -244,7 +255,7 @@ class WorkspaceService:
         if vid:
             historical = []
             for note in result:
-                if note['anchor_version'] == vid:
+                if note['anchor_version'] == vid and note['status'] != 'merged':
                     historical.append(note)
                 else:
                     previous = next((a for a in reversed(note.get('previous_anchors', [])) if a['version_id'] == vid), None)
@@ -262,12 +273,9 @@ class WorkspaceService:
         kind, anchor = payload['anchor_kind'], payload['anchor_id']
         pool = project['architecture']['modules'] if kind == 'module' and project.get('architecture') else (
             project.get('result') or {}).get('entities', []) if kind == 'function' else []
-        if not any(item['id'] == anchor for item in pool):
+        if not any(item['id'] == anchor and (kind != 'function' or item['visible']) for item in pool):
             raise WorkspaceError('笔记目标不属于当前架构。')
         key = payload.get('id') or str(uuid.uuid4())
-        old = self.doc(pid, '', 'note', key)
-        value = {**(old or {}), **payload, 'id': key, 'status': 'linked', 'updated_at': stamp()}
-        value.pop('expected_revision', None)
         # Serialize with publication and verify the anchor version again inside the transaction.
         with self.db.engine.begin() as connection:
             connection.exec_driver_sql('BEGIN IMMEDIATE')
@@ -277,10 +285,36 @@ class WorkspaceService:
             edit = document(connection, self.db.workspace, pid, vid, 'architecture', 'main')
             if kind == 'module' and edit and anchor not in {m['id'] for m in edit['history'][edit['position']]}:
                 raise WorkspaceError('模块已被另一页面调整，请重新选择。')
+            old = document(connection, self.db.workspace, pid, '', 'note', key)
+            value = {**(old or {}), **payload, 'id': key, 'status': 'linked', 'updated_at': stamp(), 'implementation_changed': False}
+            for field in ['expected_revision', 'merge_target_id', 'merge_target_revision']:
+                value.pop(field, None)
+            target = next((dict(row['value'], id=row['key'], revision=row['revision']) for row in connection.execute(
+                select(self.db.workspace).where(self.db.workspace.c.project_id == pid,
+                    self.db.workspace.c.kind == 'note')).mappings()
+                if row['value'].get('status') == 'linked' and row['value']['anchor_kind'] == kind
+                and row['value']['anchor_id'] == anchor and row['value']['anchor_version'] == vid and row['key'] != key), None)
+            if target:
+                if not old or payload.get('merge_target_id') != target['id'] or payload.get('merge_target_revision') != target['revision']:
+                    raise WorkspaceError('目标已有笔记。草稿保留；请明确合并最新内容后再保存。', 'NOTE_TARGET_EXISTS')
+                if old['revision'] != payload['expected_revision']:
+                    raise WorkspaceError('原笔记已变化，请重新载入后合并。', 'WORKSPACE_CONFLICT')
+                combined = target['text'] if value['text'] in target['text'] else '\n\n'.join(filter(None, [target['text'], value['text']]))
+                if len(combined) > 50000:
+                    raise WorkspaceError('合并后超过50000字，请先整理笔记；原内容未修改。')
+                merged = put_document(connection, self.db.workspace, pid, '', 'note', target['id'],
+                    dict(target, text=combined, updated_at=stamp()), target['revision'])
+                archived = dict(old, text='', status='merged', merged_into=target['id'])
+                archived.setdefault('previous_anchors', []).append({'version_id': old['anchor_version'],
+                    'id': old['anchor_id'], 'text': old['text'], 'status': 'linked'})
+                put_document(connection, self.db.workspace, pid, '', 'note', key, archived, old['revision'])
+                return merged
             return put_document(connection, self.db.workspace, pid, '', 'note', key, value, payload['expected_revision'])
 
     def edit(self, pid, vid, payload, preview=False):
         project = self.load(pid, vid)
+        if not project.get('architecture') or project.get('readonly'):
+            raise WorkspaceError('仅当前已完成的架构支持编辑。')
         old = self.doc(pid, vid, 'architecture')
         history = copy.deepcopy(old['history']) if old else [project['architecture']['modules']]
         position = old['position'] if old else 0
@@ -324,6 +358,7 @@ class WorkspaceService:
 
     def versions(self, pid):
         project = self.db.get(pid)
+        protected = self.protected_versions(pid)
         values = {}
         with self.db.engine.connect() as connection:
             for row in connection.execute(select(self.db.versions).where(
@@ -337,13 +372,27 @@ class WorkspaceService:
             pref = self.doc(pid, vid, 'retention') or {}
             manifest = value['snapshot']
             available = self.snapshot_path(dict(value, id=pid)).is_dir()
+            source_bytes = sum(item.get('size', 0) for item in manifest['files'].values())
+            record_bytes = len(json.dumps(value, ensure_ascii=False, default=str).encode('utf-8'))
+            artifact = self.root / 'projects' / pid / f'version-{vid}.json'
+            boundary = self.root / 'projects' / pid
+            if artifact.resolve().is_relative_to(boundary.resolve()) and artifact.is_file() and not artifact.is_symlink():
+                record_bytes += artifact.stat().st_size
             result.append({'id': vid, 'created_at': created, 'current': project['version_id'] == vid,
                 'pinned': pref.get('pinned', False), 'revision': pref.get('revision', 0),
                 'delete_requested': pref.get('delete_requested', False), 'available': available,
-                'bytes': sum(item.get('size', 0) for item in manifest['files'].values()),
+                'protected_reason': '包含待复核的人工修改' if vid in protected else None,
+                'bytes': source_bytes + record_bytes, 'source_bytes': source_bytes, 'record_bytes': record_bytes,
                 'file_count': len(manifest['files']), 'manual': bool(self.doc(pid, vid, 'architecture')),
                 'origin': manifest.get('origin', {'kind': 'local'})})
         return sorted(result, key=lambda item: (item['current'], item['created_at']), reverse=True)
+
+    def protected_versions(self, pid):
+        with self.db.engine.connect() as connection:
+            current = connection.execute(select(self.db.projects.c.version_id).where(self.db.projects.c.id == pid)).scalar()
+            raw = connection.execute(select(func.json_extract(self.db.workspace.c.value, '$.conflicts')).where(
+                *criteria(self.db.workspace, pid, current, 'architecture', 'main'))).scalar()
+        return {item['from_version_id'] for item in (json.loads(raw) if raw else [])}
 
     def retain(self, row):
         if row['status'] != 'retired':
@@ -361,7 +410,7 @@ class WorkspaceService:
             ids.insert(0, current)
         eligible = [vid for vid in ids if not prefs.get(vid, {}).get('delete_requested')][:5]
         pref = prefs.get(row['id'], {})
-        return not pref.get('delete_requested') and (pref.get('pinned') or row['id'] in eligible)
+        return not pref.get('delete_requested') and (pref.get('pinned') or row['id'] in eligible or row['id'] in self.protected_versions(pid))
 
     def search(self, project, query, offset=0, limit=20):
         query = query.strip().casefold()

@@ -1,5 +1,5 @@
 #ifndef BuildVersion
-  #define BuildVersion "0.1.1"
+  #define BuildVersion "0.2.0"
 #endif
 #ifndef PreflightExe
   #define PreflightExe "..\.runtime\packaging\preflight\CodeScapeDataCheck.exe"

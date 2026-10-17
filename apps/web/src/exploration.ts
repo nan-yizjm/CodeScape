@@ -4,7 +4,7 @@ import type {Viewport} from '@xyflow/react';
 
 export type SavedPanel = {kind: Panel['kind']; module_id?: string; entity_id?: string; relation_id?: string;
   from_id?: string; to_id?: string; call_ids?: string[]; location?: Location; scroll?: ScrollPosition};
-export type SessionValue = {version_id: string; focus_id: string | null; expanded_id?: string | null;
+export type SessionValue = {version_id: string; navigation_version?:number; focus_id: string | null; expanded_id?: string | null;
   show_other_modules?: boolean; dependency_mode?: 'primary' | 'all'; function_origin?: {focus: string | null; expanded: string | null; siblings: boolean} | null;
   viewport: Record<string,Viewport> | null; panels?: SavedPanel[]; expanded_evidence?: Record<string,boolean>; panel_width?: number; revision?: number};
 
@@ -22,7 +22,7 @@ export function serializePanels(panels: Panel[]): SavedPanel[] {
 }
 
 export function restorePanels(saved: SavedPanel[], project: ProjectDetail): Panel[] {
-  const modules = new Map(abstractModules(project.architecture?.modules || []).map(module=>[module.id,module]));
+  const modules = new Map(abstractModules(project.architecture?.modules || [],project.analysis).map(module=>[module.id,module]));
   const entities = new Map(project.analysis.entities.map(entity=>[entity.id,entity]));
   const calls = new Map(project.analysis.calls.filter(call=>call.resolution === 'confirmed').map(call=>[call.id,call]));
   return saved.slice(-20).flatMap((panel): Panel[] => {

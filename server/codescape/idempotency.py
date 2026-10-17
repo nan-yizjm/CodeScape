@@ -32,7 +32,7 @@ def redact_project_receipts(connection, table, project_id):
 
 def protected_request(method: str, path: str) -> bool:
     if method == "DELETE":
-        return bool(re.fullmatch(r"/api/v1/projects/[^/]+", path))
+        return bool(re.fullmatch(r"/api/v1/projects/[^/]+(?:/versions/[^/]+)?", path))
     if method == "PUT":
         return path == "/api/v1/tasks/order"
     if method != "POST":

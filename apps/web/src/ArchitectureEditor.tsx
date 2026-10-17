@@ -4,7 +4,7 @@ import {abstractModules} from './graph';
 import type {Module, ProjectDetail} from './types';
 
 export function ArchitectureEditor({project,onSaved}: {project:ProjectDetail;onSaved:()=>void}) {
-  const [draft,setDraft]=useState<Module[]>(()=>structuredClone(abstractModules(project.architecture?.modules || [])).map(m=>({...m,
+  const [draft,setDraft]=useState<Module[]>(()=>structuredClone(abstractModules(project.architecture?.modules || [],project.analysis)).map(m=>({...m,
     code_paths:m.code_paths.filter(p=>!!project.file_ids[p])})));
   const [selected,setSelected]=useState(draft[0]?.id || ''), [members,setMembers]=useState<string[]>([]);
   const [splitName,setSplitName]=useState(''),[remainingName,setRemainingName]=useState('');
@@ -29,6 +29,9 @@ export function ArchitectureEditor({project,onSaved}: {project:ProjectDetail;onS
     const right={...current,id:crypto.randomUUID(),parent_id:current.id,name:remainingName.trim(),entity_ids:current.entity_ids.filter(id=>!members.includes(id))};
     const filePaths=(ids:string[])=>[...new Set(project.analysis.entities.filter(e=>ids.includes(e.id)).map(e=>e.location.path))];
     left.code_paths=filePaths(left.entity_ids);right.code_paths=filePaths(right.entity_ids);
+    const describe=(ids:string[])=>project.analysis.entities.filter(e=>ids.includes(e.id)).slice(0,3)
+      .map(e=>e.explanation || `包含函数 ${e.qualified_name}`).join('；').slice(0,600);
+    left.summary=describe(left.entity_ids);right.summary=describe(right.entity_ids);
     change([...draft.map(m=>m.id === current.id ? {...m,entity_ids:[]} : m),left,right]);setMembers([]);
   };
   const merge=()=> {
@@ -37,13 +40,17 @@ export function ArchitectureEditor({project,onSaved}: {project:ProjectDetail;onS
     const combined:Module={id:crypto.randomUUID(),parent_id:selectedModules[0].parent_id,name:mergeName.trim(),
       summary:selectedModules.map(m=>m.summary).join('；').slice(0,600),entity_ids:selectedModules.flatMap(m=>m.entity_ids),
       code_paths:[...new Set(selectedModules.flatMap(m=>m.code_paths))],incomplete:selectedModules.some(m=>m.incomplete)};
-    change([...draft.filter(m=>!mergeIds.includes(m.id)),combined]);setSelected(combined.id);setMergeIds([]);
+    const parent=draft.find(m=>m.id===combined.parent_id);
+    const collapse=parent && !parent.entity_ids.length && draft.filter(m=>m.parent_id===parent.id).every(m=>mergeIds.includes(m.id));
+    if(collapse && parent){combined.parent_id=parent.parent_id;combined.code_paths=[...new Set([...combined.code_paths,...parent.code_paths])];combined.incomplete ||= parent.incomplete;}
+    change([...draft.filter(m=>!mergeIds.includes(m.id) && !(collapse && m.id===parent?.id)),combined]);setSelected(combined.id);setMergeIds([]);
   };
   return <div className="architecture-editor"><p className="tool-muted">调整只改变模块组织，原始 AI 架构和源码证据保留。先预览，再保存。</p>
-    {edit?.conflicts.map((c,i)=><p className="inline-error" key={i}>{c.message}</p>)}
+    {edit?.conflicts.map((c,i)=><div className="inline-error" key={i}><p>{c.message}</p><button onClick={()=>{const params=new URLSearchParams(location.search);params.set('project',project.id);params.set('version',c.from_version_id);location.assign('/?'+params);}}>查看原修改版本</button></div>)}
+    {!!edit?.conflicts.length && <p>保存时以当前草稿为准，确认处理上述待复核项；也可明确放弃人工修改。</p>}
     <div className="tool-row"><button disabled={busy || !edit?.can_undo} onClick={()=>void run('undo',true)}>撤销</button>
       <button disabled={busy || !edit?.can_redo} onClick={()=>void run('redo',true)}>重做</button>
-      <button disabled={busy || !edit?.modified} onClick={()=>void run('restore',true)}>恢复原始 AI 架构</button></div>
+      <button disabled={busy || (!edit?.modified && !edit?.conflicts.length)} onClick={()=>void run('restore',true)}>{edit?.conflicts.length ? '放弃待复核修改并恢复原始架构' : '恢复原始 AI 架构'}</button></div>
     <label>选择模块<select value={selected} onChange={e=>{setSelected(e.target.value);setMembers([]);}}>{draft.map(m=><option key={m.id} value={m.id}>{m.name}</option>)}</select></label>
     {current && <><label>模块名称<input maxLength={80} value={current.name} onChange={e=>update({name:e.target.value})}/></label>
       <label>职责说明<textarea maxLength={600} rows={3} value={current.summary} onChange={e=>update({summary:e.target.value})}/></label>

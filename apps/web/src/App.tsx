@@ -1,3 +1,4 @@
+import {version as appVersion} from '../package.json';
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, ArrowRight, BookOpen, Boxes, ChevronRight, Code2, Download, FolderOpen, GitBranch,
   Info, Layers3, Plus, Settings2, ShieldCheck, Sparkles, X, Check, AlertTriangle, Circle, FileCode2,
@@ -97,9 +98,9 @@ function Application() {
   const activeModule = modules.find(module => module.id === focus);
   const projection = useMemo(() => project ? dependencyProjection(projectGraph(project, focus, { expandedModuleId: expandedModule, showOtherModules }), dependencyMode) : { nodes: [], relations: [] }, [project, focus, expandedModule, showOtherModules, dependencyMode]);
   const isFunctions = !!activeModule && !modules.some(module => module.parent_id === focus);
-  const viewportKey = `${isFunctions ? 'grouped-functions' : 'vertical'}:${focus || 'root'}:${expandedModule || 'collapsed'}:${showOtherModules ? 'all' : 'focused'}:${isFunctions ? 'all' : dependencyMode}:v5`;
+  const viewportKey = `${isFunctions ? 'grouped-functions' : 'vertical'}:${focus || 'root'}:${expandedModule || 'collapsed'}:${showOtherModules ? 'all' : 'focused'}:${isFunctions ? 'all' : dependencyMode}:v6`;
   const confirmedCount = project?.analysis.calls.filter(call => call.resolution === 'confirmed').length || 0;
-  const session = useSessionSaver(project, {focus_id:focus, expanded_id:expandedModule, show_other_modules:showOtherModules, dependency_mode:dependencyMode,
+  const session = useSessionSaver(project, {navigation_version:2, focus_id:focus, expanded_id:expandedModule, show_other_modules:showOtherModules, dependency_mode:dependencyMode,
     function_origin:functionOrigin.current, viewport:viewports, panels:serializePanels(panels),
     expanded_evidence:expandedEvidence, panel_width:Math.round(width)}, id=> {
       void openProject(id); setNotice('新版本已发布，已恢复当前架构。');
@@ -257,7 +258,7 @@ function Application() {
         setProjects(next);
         if (project && !next.some(item => item.id === project.id)) {
           setProject(null); setPanels([]); setNotice('这个学习项目已被删除。');
-        } else if (project && !project.readonly && !requestedVersion && next.some(item => item.id === project.id && item.version_id !== project.version_id)) {
+        } else if (project && !project.readonly && !(requestedVersion && project.id===requestedProject) && next.some(item => item.id === project.id && item.version_id !== project.version_id)) {
           void openProject(project.id); setNotice('新版本已发布，已切换到对应图与源码。');
         }
       }).catch(() => {});
@@ -349,8 +350,9 @@ function Application() {
       const saved = await api<SessionValue | null>(`/projects/${id}/versions/${detail.version_id}/workspaces/${workspaceSlot}`);
       if (ticket !== opening.current) return;
       const savedFocus = saved?.focus_id && detail.architecture?.modules.some(module => module.id === saved.focus_id) ? saved.focus_id : null;
-      const navigation = abstractModules(detail.architecture?.modules || []);
-      const valid = (value: string | null | undefined) => value && navigation.some(module=>module.id === value) ? value : null;
+      const navigation = abstractModules(detail.architecture?.modules || [],detail.analysis);
+      const valid = (value: string | null | undefined) => value && navigation.some(module=>module.id === value)
+        && (saved?.navigation_version === 2 || !value.startsWith('__abstract__:') || detail.architecture?.modules.some(m=>m.id === value)) ? value : null;
       const origin = saved?.function_origin;
       functionOrigin.current = origin ? {focus:valid(origin.focus), expanded:valid(origin.expanded), siblings:origin.siblings} : null;
       session.initialize(id, detail.version_id, saved?.revision || 0);
@@ -371,7 +373,7 @@ function Application() {
   }
 
   function changeFocus(next: string | null) {
-    if (next && !modules.some(module => module.id === next) && abstractModules(modules).some(module => module.id === next)) {
+    if (next && !modules.some(module => module.id === next) && abstractModules(modules,project?.analysis).some(module => module.id === next)) {
       functionOrigin.current = null;
       setPanels([]); setFocus(null); setExpandedModule(next); setShowOtherModules(false);
       layout.current = null;
@@ -379,8 +381,8 @@ function Application() {
     }
     if (next !== focus) {
       const isLeaf = !!next && !modules.some(module => module.parent_id === next);
-      const parentId = isLeaf ? abstractModules(modules).find(module => module.id === next)?.parent_id || null : null;
-      const previousOrigin = isFunctions && abstractModules(modules).find(module => module.id === focus)?.parent_id === parentId ? functionOrigin.current : null;
+      const parentId = isLeaf ? abstractModules(modules,project?.analysis).find(module => module.id === next)?.parent_id || null : null;
+      const previousOrigin = isFunctions && abstractModules(modules,project?.analysis).find(module => module.id === focus)?.parent_id === parentId ? functionOrigin.current : null;
       functionOrigin.current = isLeaf ? previousOrigin || { focus: projection.nodes.some(node => node.id === next) ? focus : null,
         expanded: projection.nodes.some(node => node.id === next) ? expandedModule || parentId : parentId,
         siblings: projection.nodes.some(node => node.id === next) && showOtherModules } : null;
@@ -406,7 +408,7 @@ function Application() {
       if (node.canExpand) {
         if (node.expanded && focus && isFunctions) {
           const origin = functionOrigin.current;
-          const navigationModules = abstractModules(modules);
+          const navigationModules = abstractModules(modules,project?.analysis);
           const parentId = navigationModules.find(module => module.id === node.id)?.parent_id || null;
           setFocus(origin?.focus || null);
           setExpandedModule(origin ? origin.expanded : parentId);
@@ -593,7 +595,7 @@ function Application() {
         <button aria-label="项目学习库" title="项目学习库" className={`sidebar-nav ${!project ? 'active' : ''}`} onClick={() => void leaveProject()}><BookOpen size={18} />项目学习库<span className="nav-count">{projects.length}</span></button>
         <div className="project-list-label">最近的项目<button className="tiny-icon" aria-label="导入项目" onClick={() => beginImport()}><Plus size={15} /></button></div>
         <div className="sidebar-projects">{projects.map(item => <button key={item.id} aria-label={`打开项目 ${item.name}`} title={item.name} className={`sidebar-project ${project?.id === item.id ? 'selected' : ''}`} onClick={() => void openProject(item.id)}><span className="small-project-icon"><Code2 size={15} /></span><span><strong>{item.name}</strong><small>{item.status === 'analyzing' && item.analysis_progress?.total ? `AI 分析 ${item.analysis_progress.completed}/${item.analysis_progress.total} 批` : item.demo ? '预置验证样例' : item.languages.join(' / ') || statuses[item.status]}</small></span>{item.status === 'analyzing' || item.status === 'indexing' ? <span className="spinner small" /> : <ChevronRight size={13} />}</button>)}</div>
-        <div className="sidebar-bottom"><div className="quiet-note"><Braces size={16} /><strong>从全景，深入源码</strong><p>每条关系都有出处。每次探索都能继续。</p></div><div className="connection"><span className="status-dot" />{settings.has_key ? 'AI 服务已配置' : 'AI 服务待配置'}<span>v0.1.0</span></div></div>
+        <div className="sidebar-bottom"><div className="quiet-note"><Braces size={16} /><strong>从全景，深入源码</strong><p>每条关系都有出处。每次探索都能继续。</p></div><div className="connection"><span className="status-dot" />{settings.has_key ? 'AI 服务已配置' : 'AI 服务待配置'}<span>v{appVersion}</span></div></div>
       </aside>
       <main className={`main ${project ? 'workspace-main' : ''}`}>
         {error && !modal && <div className="error-banner" role="alert"><AlertTriangle size={16} />{error}<button aria-label="关闭错误" onClick={() => setError('')}><X size={14} /></button></div>}

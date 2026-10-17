@@ -98,7 +98,7 @@ function scopeNames(children: Module[], modules: Module[]): string[] {
 
 function scopeSummary(children: Module[], modules: Module[]): string {
   const names = scopeNames(children, modules);
-  return `涵盖${names.slice(0, 3).join('、')}${names.length > 3 ? '等职责' : ''}。`;
+  return `阅读分组：涵盖${names.slice(0, 3).join('、')}${names.length > 3 ? '等职责' : ''}。`;
 }
 
 function scopeLabel(children: Module[], modules: Module[]): string {
@@ -122,9 +122,49 @@ function abstractBucket(child: Module): AbstractBucket | undefined {
 }
 
 /** Keep an expanded code domain readable by grouping crowded sibling domains. */
-function compactAbstractChildren(modules: Module[]): Module[] {
+type NavigationContext = ProjectDetail['analysis'];
+const navigationCache = new WeakMap<Module[], {signature:string;result:Module[]}>();
+
+/** Prefer confirmed collaboration, then nearby source paths; never hash-ID order. */
+function navigationPartitions(items:Module[], modules:Module[], context?:NavigationContext):Module[][] {
+  const sourceKey=(m:Module)=>`${[...m.code_paths].sort()[0] || ''}:${m.name}`;
+  const ordered=[...items].sort((a,b)=>sourceKey(a).localeCompare(sourceKey(b),'zh-CN') || a.id.localeCompare(b.id));
+  const weights=new Map<string,number>();
+  const key=(a:string,b:string)=>a<b ? `${a}\0${b}` : `${b}\0${a}`;
+  if(context) {
+    const owners=new Map<string,string>();
+    for(const module of items)for(const eid of moduleEntities(module,modules))owners.set(eid,module.id);
+    const callers=new Map(context.entities.map(e=>[e.scope_id,owners.get(e.id)]));
+    for(const call of context.calls) {
+      if(call.resolution!=='confirmed' || !call.target_id)continue;
+      const from=callers.get(call.caller_scope_id),to=owners.get(call.target_id);
+      if(from && to && from!==to)weights.set(key(from,to),(weights.get(key(from,to)) || 0)+1);
+    }
+  }
+  const groups=ordered.map(item=>[item]);
+  while(groups.length>ABSTRACT_CHILD_LIMIT && weights.size && groups.length<=128) {
+    let pair:[number,number]|undefined,best=0,size=Infinity;
+    for(let a=0;a<groups.length;a++)for(let b=a+1;b<groups.length;b++) {
+      const weight=groups[a].reduce((sum,one)=>sum+groups[b].reduce((s,two)=>s+(weights.get(key(one.id,two.id)) || 0),0),0);
+      const score=weight/Math.sqrt(groups[a].length*groups[b].length),combined=groups[a].length+groups[b].length;
+      if(score>best || (score===best && score>0 && combined<size)){best=score;pair=[a,b];size=combined;}
+    }
+    if(!pair)break;
+    groups[pair[0]].push(...groups[pair[1]]);groups.splice(pair[1],1);
+  }
+  // Disconnected items are navigation ranges ordered by source, not invented responsibilities.
+  if(groups.length>ABSTRACT_CHILD_LIMIT) {
+    const result:Module[][]=[];
+    const size=Math.ceil(ordered.length/ABSTRACT_CHILD_LIMIT);
+    for(let index=0;index<ordered.length;index+=size)result.push(ordered.slice(index,index+size));
+    return result;
+  }
+  return groups.sort((a,b)=>sourceKey(a[0]).localeCompare(sourceKey(b[0]),'zh-CN'));
+}
+
+function compactAbstractChildren(modules: Module[], context?:NavigationContext): Module[] {
   const result = modules.map(module => ({ ...module }));
-  const parents = result.filter(module => module.id.startsWith(ABSTRACT_PREFIX));
+  const parents = result.filter(module => result.some(child=>child.parent_id===module.id));
   for (const parent of parents) {
     const children = result.filter(module => module.parent_id === parent.id);
     if (children.length <= ABSTRACT_CHILD_LIMIT) continue;
@@ -139,7 +179,7 @@ function compactAbstractChildren(modules: Module[]): Module[] {
     const assignments = new Map<string, string>();
     const synthetic: Module[] = [];
     for (const [key, group] of groups) {
-      const domainId = `${parent.id}/_bucket/${key}`;
+      const domainId = `${parent.id.startsWith(ABSTRACT_PREFIX) ? parent.id : `${ABSTRACT_PREFIX}_module/${parent.id}`}/_bucket/${key}`;
       const addGroup = (items: Module[], id: string, parentId: string, name: string) => {
         if (items.length === 1) { assignments.set(items[0].id, parentId); return; }
         synthetic.push({ id, parent_id: parentId, name, summary: scopeSummary(items, result), entity_ids: [],
@@ -148,21 +188,11 @@ function compactAbstractChildren(modules: Module[]): Module[] {
           for (const item of items) assignments.set(item.id, id);
           return;
         }
-        const ordered = [...items].sort((a, b) => a.id.localeCompare(b.id));
-        const size = Math.ceil(ordered.length / ABSTRACT_CHILD_LIMIT);
-        for (let offset = 0; offset < ordered.length; offset += size) {
-          const part = ordered.slice(offset, offset + size);
-          addGroup(part, `${id}/scope-${offset}`, id, scopeLabel(part, result));
-        }
+        navigationPartitions(items,result,context).forEach((part,index)=>addGroup(part,`${id}/scope-${index}`,id,scopeLabel(part,result)));
       };
       // 只有一个同职责集合时，父级已经表达该范围，省去完全重复的一层。
       if (groups.size === 1) {
-        const ordered = [...group.children].sort((a, b) => a.id.localeCompare(b.id));
-        const size = Math.ceil(ordered.length / ABSTRACT_CHILD_LIMIT);
-        for (let offset = 0; offset < ordered.length; offset += size) {
-          const part = ordered.slice(offset, offset + size);
-          addGroup(part, `${domainId}/scope-${offset}`, parent.id, scopeLabel(part, result));
-        }
+        navigationPartitions(group.children,result,context).forEach((part,index)=>addGroup(part,`${domainId}/scope-${index}`,parent.id,scopeLabel(part,result)));
       } else addGroup(group.children, domainId, parent.id, group.bucket!.label);
     }
     const childIds = new Set(children.map(child => child.id));
@@ -181,9 +211,17 @@ function compactAbstractChildren(modules: Module[]): Module[] {
  * Build a deterministic path-based navigation tree for the overview only;
  * the original modules and their evidence remain unchanged underneath it.
  */
-export function abstractModules(modules: Module[]): Module[] {
+export function abstractModules(modules: Module[], context?:NavigationContext): Module[] {
   const roots = modules.filter(module => module.parent_id === null);
-  if (roots.length <= ABSTRACT_THRESHOLD) return modules;
+  const crowded = modules.some(parent=>modules.filter(child=>child.parent_id===parent.id).length>ABSTRACT_CHILD_LIMIT);
+  if (roots.length <= ABSTRACT_THRESHOLD && !crowded) return modules;
+  const signature=modules.map(m=>`${m.id}|${m.parent_id}|${m.name}|${m.summary}|${m.incomplete}|${m.entity_ids.join(',')}|${m.code_paths.join(',')}`).join('\n')
+    +(context?.calls.map(c=>`${c.id}|${c.resolution}|${c.caller_scope_id}|${c.target_id}`).join('\n') || '')
+    +(context?.entities.map(e=>`${e.id}|${e.scope_id}`).join('\n') || '');
+  const cached=navigationCache.get(modules);if(cached?.signature===signature)return cached.result;
+  if(roots.length<=ABSTRACT_THRESHOLD) {
+    const compact=compactAbstractChildren(modules,context);navigationCache.set(modules,{signature,result:compact});return compact;
+  }
   const paths = new Map(roots.map(module => [module.id, pathParts(module)]));
   const result: Module[] = [];
   const add = (bucket: Module[], prefix: string[], parentId: string | null) => {
@@ -230,7 +268,7 @@ export function abstractModules(modules: Module[]): Module[] {
   // Preserve nested model modules and make them children of their original roots.
   const rootIds = new Set(roots.map(module => module.id));
   result.push(...modules.filter(module => !rootIds.has(module.id)));
-  return compactAbstractChildren(result);
+  const compact=compactAbstractChildren(result,context);navigationCache.set(modules,{signature,result:compact});return compact;
 }
 
 export function aggregateState(values: AggregateState[]): AggregateState {
@@ -258,7 +296,7 @@ export function moduleLearningState(module: Module, project: ProjectDetail, modu
 export function projectGraph(project: ProjectDetail, focus: string | null, options: { expandedModuleId?: string | null; showOtherModules?: boolean } = {}): Projection {
   const sourceModules = project.architecture?.modules || [];
   // 函数层的同级关系沿用导航树，不能退回数百个原始根模块。
-  const modules = abstractModules(sourceModules);
+  const modules = abstractModules(sourceModules,project.analysis);
   const abstracted = modules !== sourceModules;
   const active = modules.find(module => module.id === focus);
   const children = modules.filter(module => module.parent_id === (focus || null));

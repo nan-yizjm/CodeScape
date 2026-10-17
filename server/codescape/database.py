@@ -9,7 +9,7 @@ from sqlalchemy import JSON, Column, Integer, MetaData, String, Table, create_en
 from .idempotency import redact_project_receipts
 from .learning import learning_units, module_learning_mapping
 from .migration import learning_mapping, module_mapping
-from .models import Analysis, Architecture
+from .models import Analysis, Architecture, Module
 from .storage_schema import migrate_database
 
 
@@ -191,8 +191,21 @@ class Database:
 
     def mark_purged(self, version_id: str, value: dict) -> None:
         with self.engine.begin() as connection:
+            pid = connection.execute(select(self.versions.c.project_id).where(self.versions.c.id == version_id)).scalar()
             connection.execute(self.versions.update().where(self.versions.c.id == version_id)
                                .values(status="purged", value=value))
+            connection.execute(self.workspace.delete().where(self.workspace.c.project_id == pid,
+                self.workspace.c.version_id == version_id, self.workspace.c.kind != 'note'))
+            # Keep the note body; obsolete historical copies no longer have a readable snapshot.
+            for row in connection.execute(select(self.workspace).where(self.workspace.c.project_id == pid,
+                    self.workspace.c.kind == 'note')).mappings().all():
+                record = dict(row['value'])
+                anchors = [item for item in record.get('previous_anchors', []) if item['version_id'] != version_id]
+                if anchors != record.get('previous_anchors', []):
+                    record['previous_anchors'] = anchors
+                    connection.execute(self.workspace.update().where(self.workspace.c.project_id == pid,
+                        self.workspace.c.version_id == row['version_id'], self.workspace.c.kind == 'note',
+                        self.workspace.c.key == row['key']).values(value=record))
 
     def version(self, project_id: str, version_id: str) -> dict | None:
         with self.engine.connect() as connection:
@@ -283,6 +296,9 @@ class Database:
             if not candidate["value"].get("prepared_output"):
                 raise ValueError("候选产物尚未安全保存，未发布。")
             value = candidate["value"]
+            from .workspace import document, migrate_workspace
+            migrate_workspace(connection, self.workspace, old,
+                              dict(value, id=project_id, version_id=version_id, architecture=architecture))
             mapping, report = learning_mapping(Analysis.model_validate(old["result"] or {}),
                                                Analysis.model_validate(value["result"]),
                 same_snapshot=bool(old["snapshot"].get('hash'))
@@ -290,6 +306,12 @@ class Database:
                 and old["snapshot"].get('scope_hash') == value["snapshot"].get('scope_hash'))
             old_architecture = Architecture.model_validate(old["architecture"]) if old["architecture"] else None
             new_architecture = Architecture.model_validate(architecture)
+            previous_edit = document(connection, self.workspace, project_id, old['version_id'], 'architecture', 'main')
+            following_edit = document(connection, self.workspace, project_id, version_id, 'architecture', 'main')
+            if old_architecture and previous_edit:
+                old_architecture.modules = [Module.model_validate(item) for item in previous_edit['history'][previous_edit['position']]]
+            if following_edit:
+                new_architecture.modules = [Module.model_validate(item) for item in following_edit['history'][following_edit['position']]]
             modules = module_mapping(old_architecture, new_architecture, mapping)
             module_map = module_learning_mapping(old_architecture, new_architecture,
                 Analysis.model_validate(old["result"] or {}), Analysis.model_validate(value["result"]),
@@ -337,8 +359,6 @@ class Database:
                         entity_id=mapping[row["entity_id"]], state=row["state"], revision=1))
             report.update(from_version_id=old["version_id"], to_version_id=version_id)
             value.update(architecture=architecture, migration_report=report)
-            from .workspace import migrate_workspace
-            migrate_workspace(connection, self.workspace, old, dict(value, id=project_id, version_id=version_id))
             connection.execute(self.versions.update().where(self.versions.c.id == version_id)
                                .values(status="published", value=value))
             connection.execute(self.projects.update().where(self.projects.c.id == project_id).values(

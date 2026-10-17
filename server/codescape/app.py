@@ -15,6 +15,7 @@ from pathlib import Path
 from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 
+from . import __version__
 from .ai_process import run_architecture
 from .analyzers import REPOSITORY, analyze, stable_id
 from .call_judgments import reconcile_judgments, validate_judgments
@@ -334,7 +335,7 @@ def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=
 
 
     app = FastAPI(
-        title="CodeScape 本地服务", version="0.1.0", lifespan=lifespan, docs_url=None, redoc_url=None
+        title="CodeScape 本地服务", version=__version__, lifespan=lifespan, docs_url=None, redoc_url=None
     )
     app.state.nonce = bootstrap_nonce
     app.state.root = root

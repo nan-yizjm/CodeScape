@@ -38,6 +38,8 @@ class NotePayload(Payload):
     anchor_id: str = Field(max_length=2048)
     text: str = Field(max_length=50000)
     expected_revision: int = Field(default=0, ge=0)
+    merge_target_id: str | None = None
+    merge_target_revision: int | None = Field(default=None, ge=0)
 
 
 class EditPayload(Payload):
@@ -58,6 +60,8 @@ class ViewPayload(Payload):
 
 def source_changes(project, remote=False):
     manifest = project['snapshot']
+    if manifest.get('scope', {}).get('matcher_version', 1) != 1:
+        return {'status': 'scope_changed', 'message': '扫描范围规则版本已变化，请先预览范围，再决定是否重分析。'}
     origin = manifest.get('origin', {'kind': 'local'})
     if origin['kind'] == 'git':
         if not remote:
@@ -94,8 +98,9 @@ def source_changes(project, remote=False):
                     continue
                 if any(part in OPTIONAL_DIRECTORIES for part in path.relative_to(source).parts[:-1]) and not matches_scope(relative, includes):
                     continue
-                # Files excluded by the original scanner remain excluded until a new scope preview.
-                if any(item['path'] == relative for item in manifest.get('excluded', [])):
+                if any(item.get('reason') == '默认排除目录或链接' and (
+                        relative == item['path'] or relative.startswith(item['path'].rstrip('/') + '/'))
+                        for item in manifest.get('excluded', [])):
                     continue
                 before = path.stat()
                 raw = path.read_bytes()
@@ -151,25 +156,37 @@ def register_workspace(app, service, get_project, public, envelope, cleanup, rec
             if file_id not in paths:
                 raise WorkspaceError('文件不属于该版本。', status=404)
             path = paths[file_id]
-            files = read_snapshot(service.snapshot_path(project), project['snapshot'])
+            try:
+                files = read_snapshot(service.snapshot_path(project), project['snapshot'])
+            except (OSError, ValueError):
+                raise WorkspaceError('源码快照读取或校验失败，请保留数据并检查磁盘；没有改读原目录。', 'SNAPSHOT_INVALID') from None
             return envelope({'path': path, 'text': files[path], 'version_id': vid,
                              'hash': project['snapshot']['files'][path]['hash']})
 
     @app.put('/api/v1/projects/{pid}/versions/{vid}/pin')
     def pin(pid: str, vid: str, body: PinPayload):
         with service.reads.read(pid, vid):
-            load(pid, vid)
+            project = get_project(pid)
+            if body.pinned:
+                load(pid, vid)
+            elif vid != project['version_id'] and not service.db.version(pid, vid):
+                raise WorkspaceError('版本不存在。', status=404)
             return envelope(service.write(pid, vid, 'retention', 'main',
                 {'pinned': body.pinned, 'delete_requested': False}, body.expected_revision))
 
     @app.delete('/api/v1/projects/{pid}/versions/{vid}')
     def delete_version(pid: str, vid: str, request: Request, expected_revision: int = 0):
-        project = load(pid, vid)
-        if not project.get('readonly'):
+        project = get_project(pid)
+        if project['version_id'] == vid:
             raise WorkspaceError('当前版本不能删除。')
+        version = service.db.version(pid, vid)
+        if not version or version['status'] not in {'published', 'retired'}:
+            raise WorkspaceError('历史版本不存在或已清理。', status=404)
         pref = service.doc(pid, vid, 'retention') or {}
         if pref.get('pinned'):
             raise WorkspaceError('请先取消固定，再删除历史版本。')
+        if vid in service.protected_versions(pid):
+            raise WorkspaceError('该版本包含待复核人工修改，请先在当前架构处理待复核项。', 'VERSION_REVIEW_REQUIRED')
         with service.reads.reclaim(pid, vid) as available:
             if not available:
                 raise WorkspaceError('该版本正在阅读或对比，请关闭后再删除。', 'VERSION_BUSY')
@@ -240,4 +257,10 @@ def register_workspace(app, service, get_project, public, envelope, cleanup, rec
 
     @app.get('/api/v1/projects/{pid}/changes')
     def changes(pid: str, remote: bool = False):
-        return envelope(source_changes(get_project(pid), remote))
+        project = get_project(pid)
+        result = source_changes(project, remote)
+        candidate = service.db.candidate(pid)
+        if candidate and candidate['value']['snapshot'].get('scope_hash') != project['snapshot'].get('scope_hash'):
+            result['scope_difference'] = True
+            result['message'] += ' 独立候选的扫描范围不同，当前提示仍按已发布范围检查。'
+        return envelope(result)

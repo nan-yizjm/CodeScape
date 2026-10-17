@@ -63,7 +63,7 @@ export function LearningTools({project,projects,onLocate,onRefresh,embedded=fals
     check();const timer=setInterval(check,60000);document.addEventListener('visibilitychange',check);
     return ()=>{current=false;clearInterval(timer);document.removeEventListener('visibilitychange',check);};
   },[project.id,project.version_id,project.readonly]);
-  const locate=(item:SearchResult)=> {setTool(null);onLocate(item);};
+  const locate=(item:SearchResult)=> {if(item.kind==='note' && item.status==='unlinked'){setTool('notes');return;}setTool(null);onLocate(item);};
   const titles={search:'搜索与快速定位',guide:'建议从哪里开始看',notes:'我的笔记',edit:'调整项目架构',history:'历史版本与变化',compare:'双项目对比学习'};
   return <>
     <div className="learning-tools" aria-label="学习辅助工具"><button onClick={()=>setTool('search')}><Search size={15}/>搜索<span className="shortcut-hint">Ctrl K</span></button>
@@ -100,19 +100,19 @@ function HistoryTools({project}: {project:ProjectDetail}) {
   const refresh=()=>api<HistoryVersion[]>(`/projects/${project.id}/versions`).then(items=>{setVersions(items);setBefore(current=>current || items.find(v=>v.id!==project.version_id)?.id || '');}).catch(e=>setError(e.message));
   useEffect(()=>{void refresh();},[project.id,project.version_id]);
   const pin=async(version:HistoryVersion)=> {try{await api(`/projects/${project.id}/versions/${version.id}/pin`,{pinned:!version.pinned,expected_revision:version.revision},'PUT');await refresh();}catch(e){setError((e as Error).message);}};
-  const remove=async(version:HistoryVersion)=> {try{await api(`/projects/${project.id}/versions/${version.id}?expected_revision=${version.revision}`,undefined,'DELETE');setDeleting(null);await refresh();}catch(e){setError((e as Error).message);}};
+  const remove=async(version:HistoryVersion)=> {try{await api(`/projects/${project.id}/versions/${version.id}?expected_revision=${version.revision}`,undefined,'DELETE');setDeleting(null);await refresh();}catch(e){setError((e as Error).message);await refresh();}};
   const view=(id:string)=> {const params=new URLSearchParams(location.search);params.set('project',project.id);params.set('version',id);location.assign('/?'+params);};
   const diff=async()=>{try{setDifference(await api(`/projects/${project.id}/compare?before=${before}&after=${after}`));setError('');}catch(e){setError((e as Error).message);}};
   const name=(version:HistoryVersion)=>`${version.current ? '当前' : new Date(version.created_at).toLocaleString('zh-CN')} · ${version.id.slice(0,8)}`;
-  return <div className="history-tools"><p className="tool-muted">最近五个成功版本（含当前），固定版本额外保留。历史快照只读，清理不删除笔记正文。</p>
+  return <div className="history-tools"><p className="tool-muted">最近五个成功版本（含当前），固定及含待复核修改的版本额外保留。历史快照只读，清理不删除笔记正文。空间按源码与版本记录估算，不含数据库页开销；共享数据可能重复计入。</p>
     {error && <p className="inline-error" role="alert">{error}</p>}
-    <div className="history-list">{versions.map(version=><article key={version.id}><div><strong>{name(version)}</strong><p>{version.file_count} 个文件 · {(version.bytes/1024/1024).toFixed(2)} MB{version.manual ? ' · 有人工调整记录' : ''}{version.pinned ? ' · 已固定' : ''}</p></div><div className="tool-row">
+    <div className="history-list">{versions.map(version=><article key={version.id}><div><strong>{name(version)}</strong><p>{version.file_count} 个文件 · 约 {(version.bytes/1024/1024).toFixed(2)} MB{version.manual ? ' · 有人工调整记录' : ''}{version.pinned ? ' · 已固定' : ''}</p></div><div className="tool-row">
       <button disabled={!version.available} onClick={()=>view(version.id)}>查看</button><button onClick={()=>void pin(version)}>{version.pinned ? '取消固定' : '固定'}</button>
-      {!version.current && <button disabled={version.pinned} onClick={()=>setDeleting(version.id)}>删除</button>}</div>
+      {version.protected_reason && <span className="tool-muted">{version.protected_reason}</span>}{!version.current && <button disabled={version.pinned || !!version.protected_reason} onClick={()=>setDeleting(version.id)}>删除</button>}</div>
       {deleting===version.id && <div className="delete-history-confirm"><p>删除这版分析及其历史源码快照？笔记正文保留，原始项目不受影响。</p><button onClick={()=>void remove(version)}>确认删除历史版本</button><button onClick={()=>setDeleting(null)}>取消</button></div>}
     </article>)}</div>
-    <h3>比较前后变化</h3><div className="tool-row"><label>之前<select value={before} onChange={e=>setBefore(e.target.value)}><option value="">选择版本</option>{versions.map(v=><option key={v.id} value={v.id}>{name(v)}</option>)}</select></label>
-      <label>之后<select value={after} onChange={e=>setAfter(e.target.value)}>{versions.map(v=><option key={v.id} value={v.id}>{name(v)}</option>)}</select></label></div>
+    <h3>比较前后变化</h3><div className="tool-row"><label>之前<select value={before} onChange={e=>{setBefore(e.target.value);setDifference(null);}}><option value="">选择版本</option>{versions.map(v=><option key={v.id} value={v.id}>{name(v)}</option>)}</select></label>
+      <label>之后<select value={after} onChange={e=>{setAfter(e.target.value);setDifference(null);}}>{versions.map(v=><option key={v.id} value={v.id}>{name(v)}</option>)}</select></label></div>
     <div className="tool-row"><button disabled={!before || before===after} onClick={()=>void diff()}>查看变化摘要</button><button disabled={!before || before===after} onClick={()=>openComparison(project.id,project.id,before,after)}>并排阅读这两版</button></div>
     {difference !== null && <Difference value={difference}/>}
   </div>;

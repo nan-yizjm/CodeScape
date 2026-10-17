@@ -25,6 +25,10 @@ def url(project):
     return f"/api/v1/projects/{project['id']}/versions/{project['version_id']}"
 
 
+def delete(client, path):
+    return client.delete(path, headers={'idempotency-key': str(uuid.uuid4())})
+
+
 def note_payload(project, **values):
     entity = next(e for e in project['analysis']['entities'] if e['visible'])
     return {'anchor_version': project['version_id'], 'anchor_kind': 'function', 'anchor_id': entity['id'],
@@ -60,6 +64,26 @@ def test_search_notes_guide_and_conflicts(workspace):
     assert guide['items'][0]['kind'] == 'overview'
     assert '不代表真实程序入口' in guide['message']
     assert all(item.get('location') for item in guide['items'][1:])
+
+
+def test_first_note_race_has_one_record_and_explicit_merge_keeps_both_texts(workspace):
+    client, service, project = workspace
+    path = f"/api/v1/projects/{project['id']}/notes"
+    first = client.put(path, json=note_payload(project, text='第一页面的内容')).json()['data']
+    collision = client.put(path, json=note_payload(project, text='第二页面的内容'))
+    assert collision.status_code == 409 and collision.json()['error']['code'] == 'NOTE_TARGET_EXISTS'
+    assert len(service.notes(project['id'])) == 1
+    entities = [e for e in project['analysis']['entities'] if e['visible']]
+    second = client.put(path, json=note_payload(project, anchor_id=entities[1]['id'], text='另一项笔记')).json()['data']
+    failed = client.put(path, json=note_payload(project, id=second['id'], text=second['text'], expected_revision=1,
+        merge_target_id=first['id'], merge_target_revision=0))
+    assert failed.status_code == 409
+    assert {n['text'] for n in service.notes(project['id'])} == {'第一页面的内容', '另一项笔记'}
+    merged = client.put(path, json=note_payload(project, id=second['id'], text=second['text'], expected_revision=1,
+        merge_target_id=first['id'], merge_target_revision=1))
+    assert merged.status_code == 200
+    assert '第一页面的内容' in merged.json()['data']['text'] and '另一项笔记' in merged.json()['data']['text']
+    assert len([n for n in service.notes(project['id']) if n['status'] == 'linked']) == 1
 
 
 def test_architecture_preview_apply_undo_redo_and_original_preserved(workspace):
@@ -128,9 +152,9 @@ def test_history_scoped_files_sessions_and_leases(workspace):
         assert client.get(old_url + '/workspaces/' + slot).json()['data']['focus_id'] == focus
     lease = {'view_id': str(uuid.uuid4())}
     assert client.post(old_url + '/lease', json=lease).status_code == 200
-    assert client.delete(old_url).status_code == 409
+    assert delete(client, old_url).status_code == 409
     client.post(old_url + '/lease', json={**lease, 'active': False})
-    assert client.delete(url(project)).status_code == 409
+    assert delete(client, url(project)).status_code == 409
     assert client.put(old_url + '/architecture', json={'action': 'restore'}).status_code == 409
 
 
@@ -144,9 +168,9 @@ def test_retention_five_pins_and_shared_snapshot_safety(workspace):
     assert service.db.version(project['id'], oldest)['status'] == 'retired'
     assert len(service.versions(project['id'])) == 6
     assert service.snapshot_path(service.db.get(project['id'])).is_dir()
-    assert client.delete(old_url).status_code == 409
+    assert delete(client, old_url).status_code == 409
     assert client.put(old_url + '/pin', json={'pinned': False, 'expected_revision': 1}).status_code == 200
-    assert client.delete(old_url + '?expected_revision=2').status_code == 200
+    assert delete(client, old_url + '?expected_revision=2').status_code == 200
     assert service.snapshot_path(service.db.get(project['id'])).is_dir()
 
 
@@ -224,3 +248,78 @@ def test_compare_implementation_membership_and_no_name_guessing(workspace):
     new['result']['entities'].append(copy.deepcopy(target))
     result = compare_versions(old, new)
     assert result['functions']['ambiguous'] and not result['functions']['changed']
+
+
+def test_migration_keeps_independent_workspaces_and_reliable_rename(workspace):
+    client, service, project = workspace
+    old = service.db.get(project['id'])
+    edited = copy.deepcopy(project['architecture']['modules'])
+    edited[0]['name'] = '我的阅读分工'
+    assert client.put(url(project) + '/architecture', json={'action':'apply','modules':edited}).status_code == 200
+    for slot, width in [('compare-left', 340), ('compare-right', 600)]:
+        assert client.put(url(project) + '/workspaces/' + slot, json={
+            'version_id':old['version_id'], 'panel_width':width}).status_code == 200
+    new = copy.deepcopy(old)
+    new['version_id'] = str(uuid.uuid4())
+    with service.db.engine.begin() as connection:
+        migrate_workspace(connection, service.db.workspace, old, new)
+    edit = service.doc(project['id'], new['version_id'], 'architecture')
+    assert edit['history'][edit['position']][0]['name'] == '我的阅读分工'
+    assert not edit['conflicts']
+    assert service.doc(project['id'], new['version_id'], 'session', 'compare-left')['panel_width'] == 340
+    assert service.doc(project['id'], new['version_id'], 'session', 'compare-right')['panel_width'] == 600
+    assert service.doc(project['id'], old['version_id'], 'session', 'compare-left')['version_id'] == old['version_id']
+
+
+def test_partial_migration_does_not_discard_reliable_text_edits(workspace):
+    client, service, project = workspace
+    old = service.db.get(project['id'])
+    edited = copy.deepcopy(project['architecture']['modules'])
+    edited[0]['name'] = '人工确认的职责名称'
+    client.put(url(project) + '/architecture', json={'action':'apply','modules':edited})
+    new = copy.deepcopy(old)
+    new['version_id'] = str(uuid.uuid4())
+    added = copy.deepcopy(next(e for e in new['result']['entities'] if e['visible']))
+    added.update(id='added-function', scope_id='added-scope', qualified_name='added', signature='def added()')
+    new['result']['entities'].append(added)
+    extra = copy.deepcopy(new['architecture']['modules'][0])
+    extra.update(id='new-area', name='新职责', entity_ids=[added['id']])
+    new['architecture']['modules'].append(extra)
+    with service.db.engine.begin() as connection:
+        migrate_workspace(connection, service.db.workspace, old, new)
+    edit = service.doc(project['id'], new['version_id'], 'architecture')
+    assert edit['history'][edit['position']][0]['name'] == '人工确认的职责名称'
+    assert edit['conflicts']
+
+
+def test_review_conflicts_protect_old_version_until_explicit_resolution(workspace):
+    client, service, project = workspace
+    ids = history(service, project, 7)
+    service.write(project['id'], project['version_id'], 'architecture', 'main',
+        {'history':[project['architecture']['modules']], 'position':0, 'events':[],
+         'conflicts':[{'from_version_id':ids[0], 'message':'待确认'}]}, 0)
+    client.app.state.cleanup_versions()
+    assert service.db.version(project['id'], ids[0])['status'] == 'retired'
+    old_url = url(project).replace(project['version_id'], ids[0])
+    response = delete(client, old_url)
+    assert response.status_code == 409 and response.json()['error']['code'] == 'VERSION_REVIEW_REQUIRED'
+    client.put(url(project) + '/architecture', json={'action':'restore', 'expected_revision':1})
+    client.app.state.cleanup_versions()
+    assert service.db.version(project['id'], ids[0])['status'] == 'purged'
+
+
+def test_history_cleanup_keeps_notes_but_removes_version_workspace_documents(workspace):
+    client, service, project = workspace
+    old = history(service, project)[0]
+    old_url = url(project).replace(project['version_id'], old)
+    service.write(project['id'], old, 'session', 'compare-left', {'version_id':old}, 0)
+    note = client.put(f"/api/v1/projects/{project['id']}/notes", json=note_payload(project)).json()['data']
+    assert delete(client, old_url).status_code == 200
+    assert service.doc(project['id'], old, 'session', 'compare-left') is None
+    assert service.notes(project['id'])[0]['text'] == note['text']
+
+
+def test_malformed_edit_and_workspace_are_client_errors(workspace):
+    client, _, project = workspace
+    assert client.post(url(project) + '/architecture/preview', json={'action':'apply','modules':[{'id':None}]}).status_code == 422
+    assert client.put(url(project) + '/workspaces/single', json={'version_id':project['version_id'], 'panel_width':-1}).status_code == 422
