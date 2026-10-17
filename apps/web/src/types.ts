@@ -24,7 +24,7 @@ export type Project = { id: string; name: string; source: string; created_at: st
   version_id: string; demo: boolean; error: string | null; function_count: number; file_count: number;
   progress: { mastered: number; total: number }; languages: string[]; diagnostic_count: number;
   has_architecture: boolean; analysis_progress?: { phase: string; completed: number; total: number; detail: string } | null };
-export type ProjectDetail = Project & { file_ids: Record<string, string>; analysis: { entities: Entity[]; calls: Call[];
+export type ProjectDetail = Project & WorkspaceDetail & { file_ids: Record<string, string>; analysis: { entities: Entity[]; calls: Call[];
   scopes: { id: string; kind: string; name: string; location: Location; parent_id?: string | null }[];
   diagnostics: { category: string; message: string; path: string | null; line: number | null }[];
   tools: Record<string, string> };
@@ -36,6 +36,15 @@ export type ProjectDetail = Project & { file_ids: Record<string, string>; analys
   migration_report?: { kept_count: number; reset_count: number; added_count: number; removed_count: number } | null;
   scope: { excluded: { path: string; reason: string }[]; snapshot_id: string; includes?: string[]; excludes?: string[] } };
 export type SourceFile = { path: string; text: string; version_id: string; hash: string };
+export type WorkspaceDetail = { readonly?: boolean; raw_architecture?: {modules:Module[];overview:Overview} | null;
+  manual_edit?: {revision:number; modified:boolean; can_undo:boolean; can_redo:boolean; conflicts:{from_version_id:string;message:string}[]} };
+export type LearningNote = {id:string;anchor_version:string;anchor_kind:'module'|'function';anchor_id:string;text:string;
+  revision:number;status:'linked'|'unlinked'|'merged';implementation_changed?:boolean};
+export type SearchResult = {kind:'module'|'function'|'file'|'note'|'overview'|'relation';id:string;title:string;text?:string;reason?:string;
+  version_id?:string;location?:Location;anchor_kind?:'module'|'function';anchor_id?:string;status?:string};
+export type HistoryVersion = {id:string;created_at:string;current:boolean;pinned:boolean;revision:number;available:boolean;
+  protected_reason?:string|null;
+  bytes:number;source_bytes:number;record_bytes:number;file_count:number;manual:boolean;origin:{kind:string;commit?:string}};
 export type Point = { x: number; y: number };
 export type Relation = { id: string; from: string; to: string; label: string; calls: Call[]; points?: Point[]; primaryReasons?: string[] };
 export type ScrollPosition = {top: number; left: number; line?: number};

@@ -11,7 +11,7 @@ export function OverviewPanel({ project, onUpdate, onExplore }: {
   const [error, setError] = useState('');
   const content = useRef<HTMLDivElement>(null);
   const overview = project.architecture!.overview;
-  const roots = useMemo(() => abstractModules(project.architecture!.modules).filter(module => !module.parent_id), [project.architecture]);
+  const roots = useMemo(() => abstractModules(project.architecture!.modules,project.analysis).filter(module => !module.parent_id), [project.architecture]);
   const incomplete = project.architecture!.modules.filter(module => module.incomplete).length;
   const legacyLong = !overview.synthesized && (overview.introduction.length > 160 || overview.principle.length > 240 || overview.capabilities.length > 5);
 

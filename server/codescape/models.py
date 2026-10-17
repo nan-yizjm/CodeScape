@@ -203,6 +203,7 @@ class NavigationOrigin(Contract):
 
 class SessionRequest(Contract):
     version_id: str
+    navigation_version: int = Field(default=1, ge=1, le=2)
     focus_id: str | None = None
     panel: None = None
     viewport: dict[str, SavedViewport] | None = Field(default=None, max_length=5000)

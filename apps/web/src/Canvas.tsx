@@ -21,7 +21,7 @@ function MapNode({ data }: NodeProps<Node<Data>>) {
     <button className="node-hit-area nodrag nopan" aria-label={node.kind === 'module' ? (node.canExpand ? `${node.expanded ? '收起' : '展开'}模块 ${node.label}` : `进入模块 ${node.label}`) : `阅读 ${node.label} 源码`} aria-expanded={node.canExpand ? node.expanded : undefined}
       onClick={event => { event.stopPropagation(); data.onOpen(node); }} />
     <Handle type="target" position={Position.Top} />
-    <div className="node-top"><span className="node-symbol"><Icon size={16} /></span><span className="node-kind">{node.kind === 'module' ? node.sibling ? '同级模块' : node.external ? '关联模块' : node.id.startsWith('__abstract__:') ? '功能分组' : '逻辑模块' : '函数'}</span>
+    <div className="node-top"><span className="node-symbol"><Icon size={16} /></span><span className="node-kind">{node.kind === 'module' ? node.sibling ? '同级模块' : node.external ? '关联模块' : node.id.startsWith('__abstract__:') ? '阅读分组' : '逻辑模块' : '函数'}</span>
       <button className="node-info nodrag nopan" aria-label={`查看 ${node.label} 详情`} onPointerDown={event => event.stopPropagation()} onClick={event => { event.stopPropagation(); event.nativeEvent.stopImmediatePropagation?.(); data.onInfo(node); }}><Info size={16} /></button></div>
     <div className="node-title" title={node.label}>{node.label}</div>
     {node.kind === 'module' && <p title={node.description}>{node.description}</p>}
@@ -107,8 +107,8 @@ function ReadingScale({ nodes, initialReading }: { nodes: ProjectionNode[]; init
   }}>阅读尺寸<ArrowUpRight size={13} /></button></Panel>;
 }
 
-export function Canvas({ projection, onNode, onInfo, onRelation, onLayout, onViewport, viewport, dependencyMode, onDependencyMode }: {
-  projection: Projection; onNode: (node: ProjectionNode) => void; onInfo: (node: ProjectionNode) => void;
+export function Canvas({ highlightId, projection, onNode, onInfo, onRelation, onLayout, onViewport, viewport, dependencyMode, onDependencyMode }: {
+  highlightId?: string; projection: Projection; onNode: (node: ProjectionNode) => void; onInfo: (node: ProjectionNode) => void;
   onRelation: (relation: Relation) => void; onLayout: (projection: Projection) => void;
   onViewport: (viewport: Viewport) => void; viewport?: Viewport;
   dependencyMode: 'primary' | 'all'; onDependencyMode: (mode: 'primary' | 'all') => void;
@@ -182,7 +182,7 @@ export function Canvas({ projection, onNode, onInfo, onRelation, onLayout, onVie
   const positionedById = new Map(positioned.map(node => [node.id, node]));
   const nodes: Node<Data>[] = positioned.map(node => {
     const parent = node.parentId ? positionedById.get(node.parentId) : undefined;
-    return { id: node.id, type: 'map', parentId: node.parentId, extent: node.parentId ? 'parent' : undefined,
+    return { id: node.id, type: 'map', selected: node.id === highlightId, parentId: node.parentId, extent: node.parentId ? 'parent' : undefined,
       position: { x: node.x - (parent?.x || 0), y: node.y - (parent?.y || 0) }, data: { node, onInfo, onOpen: onNode, onHover: setHovered, dimmed: !!preview && !neighbors.has(node.id), onInternal: node => {
         const relation = projection.relations.find(item => item.from === node.id && item.to === node.id); if (relation) onRelation(relation);
       } },

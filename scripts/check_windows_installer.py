@@ -12,6 +12,7 @@ import sys
 import time
 import uuid
 import winreg
+import zipfile
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
@@ -19,6 +20,7 @@ import httpx
 
 repository = Path(__file__).resolve().parents[1]
 registry_key = r"Software\Microsoft\Windows\CurrentVersion\Uninstall\{DEEF7805-92F7-4EAC-8171-67D647C72D35}_is1"
+test_identity = '{645885D2-9C6B-4DB4-A820-BEBFA2598B76}'
 
 
 def registered():
@@ -37,12 +39,29 @@ def changed_application_files(before, after):
 
 
 def main():
+    global registry_key
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--previous-build', type=Path, help='从应用自有已校验预发布目录安装后升级；不是跨正式版本验收')
     parser.add_argument('--report', type=Path, help='指定本轮报告位置，避免覆盖历史验收记录')
+    parser.add_argument('--isolated-identity', action='store_true', help='以独立安装身份重编译同一程序包，不触碰正式安装注册记录')
     args = parser.parse_args()
+    formal_key = registry_key
+
+    def registration(key):
+        try:
+            with winreg.OpenKey(winreg.HKEY_CURRENT_USER, key) as handle:
+                values = []
+                for index in range(winreg.QueryInfoKey(handle)[1]):
+                    values.append(winreg.EnumValue(handle, index))
+                return sorted(values)
+        except FileNotFoundError:
+            return None
+
+    formal_before = registration(formal_key)
+    if args.isolated_identity:
+        registry_key = formal_key.replace('{DEEF7805-92F7-4EAC-8171-67D647C72D35}', test_identity)
     if registered():
-        raise RuntimeError("已有正式安装记录，本验证不会覆盖用户的安装。")
+        raise RuntimeError("所选安装身份已有安装记录，本验证不会覆盖现有安装。")
     build = json.loads((repository / ".runtime/packaging/latest-build.json").read_text(encoding="utf-8"))
     setup = next(Path(build["directory"]).glob("*-Setup.exe"))
     assert hashlib.sha256(setup.read_bytes()).hexdigest() == build["artifacts"][setup.name]["sha256"]
@@ -58,6 +77,32 @@ def main():
         assert hashlib.sha256(initial_setup.read_bytes()).hexdigest() == previous['artifacts'][initial_setup.name]['sha256']
     root = repository / "output/windows-installer-validation" / str(uuid.uuid4())
     root.mkdir(parents=True)
+    production_setup = setup
+    if args.isolated_identity:
+        def compile_test(bundle, version, label):
+            output = root / label
+            output.mkdir()
+            with (root / (label + '-compile.log')).open('wb') as log:
+                result = subprocess.run([str(repository / '.runtime/packaging/inno/ISCC.exe'), '/Q',
+                    f'/DBuildVersion={version}', f'/DAppIdentity={"{" + test_identity}',
+                    f'/DBundleDir={bundle}', f'/DOutputDir={output}',
+                    f'/DPreflightExe={repository / ".runtime/packaging/preflight/CodeScapeDataCheck.exe"}',
+                    str(repository / 'packaging/CodeScape.iss')], stdout=log, stderr=log,
+                    creationflags=subprocess.CREATE_NO_WINDOW, timeout=300)
+            assert result.returncode == 0, f'{label} 测试身份编译失败'
+            return next(output.glob('*-Setup.exe'))
+
+        setup = compile_test(repository / '.runtime/packaging/dist/CodeScape', build['version'], 'current-test')
+        initial_setup = setup
+        if previous:
+            portable = next(previous_root.glob('*-Portable.zip'))
+            assert hashlib.sha256(portable.read_bytes()).hexdigest() == previous['artifacts'][portable.name]['sha256']
+            old_bundle = root / 'previous-bundle'
+            with zipfile.ZipFile(portable) as archive:
+                for name in archive.namelist():
+                    (old_bundle / name).resolve().relative_to(old_bundle.resolve())
+                archive.extractall(old_bundle)
+            initial_setup = compile_test(old_bundle / 'CodeScape', previous['version'], 'previous-test')
     installed = root / "installed"
     data = root / "data"
     environment = {key: value for key, value in os.environ.items() if key not in {"PYTHONPATH", "PYTHONHOME"}}
@@ -173,12 +218,18 @@ def main():
         run([str(installed / "unins000.exe"), "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART",
             f"/LOG={root / 'uninstall.log'}"], "卸载")
         assert not executable.exists() and not registered()
+        if args.isolated_identity:
+            assert registration(formal_key) == formal_before, '正式安装记录发生变化'
         assert (data / "app.db").is_file()
         snapshot_after = {str(path.relative_to(data)): hashlib.sha256(path.read_bytes()).hexdigest()
             for path in (data / "projects").rglob("*") if path.is_file()}
         assert snapshot_before == snapshot_after
         report = {"date": (datetime.now(UTC) + timedelta(hours=8)).date().isoformat(), "platform": platform.platform(), "build_id": build["build_id"],
             "setup_sha256": build["artifacts"][setup.name]["sha256"], "validation_root": str(root),
+            "production_setup_sha256": hashlib.sha256(production_setup.read_bytes()).hexdigest(),
+            "test_setup_sha256": hashlib.sha256(setup.read_bytes()).hexdigest(),
+            "isolated_installer_identity": args.isolated_identity,
+            "formal_registration_unchanged": registration(formal_key) == formal_before if args.isolated_identity else None,
             "first_install": "通过", "installed_files_match_manifest": True,
             'previous_build_id':initial_build_id,'upgraded_build_id':upgraded_build_id,
             'initial_program_sha256':initial_program_hash,'upgraded_program_sha256':upgraded_program_hash,

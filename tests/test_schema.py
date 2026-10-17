@@ -115,3 +115,28 @@ def test_schema_two_upgrade_creates_ledger_without_changing_existing_projects(tm
     from codescape.ledger import RequestLedger
     assert RequestLedger(upgraded).summary()["request_count"] == 0
     upgraded.engine.dispose()
+
+
+def test_schema_three_upgrade_preserves_learning_and_credentials_with_old_backup(tmp_path):
+    database = Database(tmp_path)
+    database.insert({'id':'owned', 'name':'升级前项目', 'source':'原目录不修改', 'created_at':'now',
+        'status':'ready', 'snapshot':{'files':{}}, 'version_id':'version', 'demo':0})
+    database.set_learning('owned', 'function', 'version', 'mastered', 0)
+    database.engine.dispose()
+    credentials = tmp_path / 'credentials/provider.dpapi'
+    credentials.parent.mkdir()
+    credentials.write_bytes(b'owned-encrypted-fixture-not-a-real-key')
+    with sqlite3.connect(tmp_path / 'app.db') as connection:
+        connection.execute('DROP TABLE workspace_documents')
+        connection.execute("UPDATE alembic_version SET version_num='cs_0003'")
+        connection.execute('PRAGMA user_version=3')
+    upgraded = Database(tmp_path)
+    assert upgraded.states('owned')['function']['state'] == 'mastered'
+    assert upgraded.get('owned')['name'] == '升级前项目'
+    assert credentials.read_bytes() == b'owned-encrypted-fixture-not-a-real-key'
+    backups = list((tmp_path / 'migration-backups').glob('*.sqlite'))
+    assert len(backups) == 1
+    with sqlite3.connect(backups[0]) as connection:
+        assert connection.execute('PRAGMA user_version').fetchone()[0] == 3
+        assert not connection.execute("SELECT name FROM sqlite_master WHERE name='workspace_documents'").fetchone()
+    upgraded.engine.dispose()

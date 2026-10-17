@@ -169,6 +169,8 @@ def test_publish_latest_learning_old_source_and_reclaim(tmp_path, monkeypatch):
         assert client.post(url + "/analyze", json={}).status_code == 200
         assert entered.wait(3)
         keep = next(entity for entity in old["analysis"]["entities"] if entity["name"] == "keep")
+        note = client.put(url + '/notes', json={'anchor_version':old['version_id'], 'anchor_kind':'function',
+            'anchor_id':keep['id'], 'text':'发布期间仍可保存的学习笔记', 'expected_revision':0}).json()['data']
         state = {"version_id": old["version_id"], "state": "mastered", "expected_revision": 0}
         assert client.put(url + "/learning/" + keep["id"], json=state).status_code == 200
         identity = str(uuid.uuid4())
@@ -200,7 +202,17 @@ def test_publish_latest_learning_old_source_and_reclaim(tmp_path, monkeypatch):
         client.post("/api/v1/clients/heartbeat", json={"client_id": identity,
             "version_leases": [{"project_id": new["id"], "version_id": new["version_id"]}]})
         app.state.cleanup_versions()
-        assert db.version(old["id"], old["version_id"])["status"] == "purged"
+        # 0.2.0保留最近五版；旧的临时读取接口仍过期，历史接口明确绑定快照。
+        assert db.version(old["id"], old["version_id"])["status"] == "retired"
+        history_url = f"{url}/versions/{old['version_id']}"
+        assert client.get(history_url).json()['data']['readonly']
+        migrated_note = next(item for item in client.get(url + '/notes').json()['data'] if item['id'] == note['id'])
+        current_keep = next(entity for entity in new['analysis']['entities'] if entity['name'] == 'keep')
+        assert migrated_note['anchor_id'] == current_keep['id'] and migrated_note['anchor_version'] == new['version_id']
+        assert migrated_note['text'] == note['text']
+        removed = client.delete(history_url, headers={'content-type':'application/json',
+            'idempotency-key':str(uuid.uuid4())})
+        assert removed.status_code == 200
         db.engine.dispose()
     with TestClient(create_app(root, "again")):
         pass

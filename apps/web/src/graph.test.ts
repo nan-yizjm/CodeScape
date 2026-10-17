@@ -22,6 +22,24 @@ function fixture(): ProjectDetail {
 }
 
 describe('基于证据生成图形', () => {
+  it('优先把有确认协作的模块归入同组，源码次序变化不改变组员且不丢调用',()=> {
+    const project=fixture();
+    const base=project.architecture!.modules[0],entity=project.analysis.entities[0],call=project.analysis.calls[0];
+    project.analysis.entities=Array.from({length:18},(_,i)=>({...entity,id:`e-${i}`,scope_id:`s-${i}`,qualified_name:`handler_${i}`}));
+    project.architecture!.modules=Array.from({length:18},(_,i)=>({...base,id:`leaf-${i}`,name:`处理职责${i}`,
+      entity_ids:[`e-${i}`],code_paths:[`apps/web/features/feature-${i}.tsx`]}));
+    project.analysis.calls=Array.from({length:12},(_,i)=>({...call,id:`c-${i}`,caller_scope_id:`s-${i}`,
+      target_id:`e-${i+6}`,resolution:'confirmed'}));
+    const grouped=abstractModules(project.architecture!.modules,project.analysis);
+    for(let i=0;i<6;i++) {
+      const parent=grouped.find(m=>m.id===`leaf-${i}`)!.parent_id;
+      expect(grouped.find(m=>m.id===`leaf-${i+6}`)!.parent_id).toBe(parent);
+      expect(grouped.find(m=>m.id===`leaf-${i+12}`)!.parent_id).toBe(parent);
+    }
+    const reversed=abstractModules([...project.architecture!.modules].reverse(),project.analysis);
+    for(let i=0;i<18;i++)expect(reversed.find(m=>m.id===`leaf-${i}`)?.parent_id).toBe(grouped.find(m=>m.id===`leaf-${i}`)?.parent_id);
+    expect(projectGraph(project,null).relations.flatMap(r=>r.calls)).toHaveLength(12);
+  });
   it('大图保留已有功能域名称和跨目录职责，去掉单模块目录包装后不丢失关系证据', () => {
     const project = fixture();
     const base = project.architecture!.modules[0];

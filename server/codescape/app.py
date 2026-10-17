@@ -15,6 +15,7 @@ from pathlib import Path
 from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 
+from . import __version__
 from .ai_process import run_architecture
 from .analyzers import REPOSITORY, analyze, stable_id
 from .call_judgments import reconcile_judgments, validate_judgments
@@ -53,6 +54,8 @@ from .reads import VersionReads
 from .security import data_root
 from .snapshots import create_snapshot, read_snapshot
 from .tasks import TaskQueue
+from .workspace import WorkspaceError, WorkspaceService
+from .workspace_api import register_workspace
 
 
 def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=None, architecture_runner=None) -> FastAPI:
@@ -73,6 +76,7 @@ def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=
     nonce_lock = threading.Lock()
     lifetime = ClientLifetime()
     reads = VersionReads()
+    workspace = WorkspaceService(root, database, reads)
     closing = False
     run_lock = asyncio.Lock()
     queue = TaskQueue(database, run_lock)
@@ -121,6 +125,8 @@ def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=
         return {"data": data, "meta": {"request_id": str(uuid.uuid4())}}
 
     def public(project: dict, full: bool = False):
+        original_architecture = project.get('architecture')
+        project = workspace.effective(project)
         analysis = Analysis.model_validate(project["result"]) if project["result"] else Analysis()
         visible = [entity for entity in analysis.entities if entity.visible]
         architecture = Architecture.model_validate(project["architecture"]) if project["architecture"] else None
@@ -135,7 +141,8 @@ def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=
                     entity.explanation_details = note.details
                     entity.explanation_evidence = [ref.model_dump() for ref in note.evidence]
         units = learning_units(analysis, architecture, project["snapshot"]["files"])
-        states = database.states(project["id"])
+        states = project.get('learning') if project.get('readonly') else database.states(project["id"])
+        states = states or {}
         total = len(units)
         mastered = sum(states.get(unit["id"], {}).get("state") == "mastered" for unit in units)
         response = {
@@ -159,7 +166,7 @@ def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=
             "delete_operation": database.delete_operation(project["id"]) if project.get("lifecycle", "active") != "active" else None,
         }
         if full:
-            candidate = database.candidate(project["id"])
+            candidate = None if project.get('readonly') else database.candidate(project["id"])
             published = database.version(project["id"], project["version_id"])
             consent_version = candidate["id"] if candidate else project["version_id"]
             consent_manifest = candidate["value"]["snapshot"] if candidate else project["snapshot"]
@@ -175,6 +182,9 @@ def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=
                         and grant.get("snapshot_hash") == consent_manifest["hash"]},
                     "analysis": analysis.model_dump(),
                     "architecture": project["architecture"],
+                    "raw_architecture": original_architecture,
+                    "manual_edit": project['manual_edit'],
+                    "readonly": project.get('readonly', False),
                     "file_ids": {
                         path: stable_id(project["version_id"], path) for path in project["snapshot"]["files"]
                     },
@@ -292,22 +302,29 @@ def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=
 
     def cleanup_versions():
         for version in database.reclaimable_versions():
+            if workspace.retain(version):
+                continue
             with reads.reclaim(version["project_id"], version["id"]) as available:
                 if available:
                     reclaim_version(version)
 
     def reclaim_version(version):
+        if workspace.retain(version):
+            return
         project = database.get(version["project_id"])
         if not project or project.get("lifecycle", "active") != "active" or project["version_id"] == version["id"]:
             return
         manifest = version["value"].get("snapshot")
-        if not manifest or project["snapshot"]["id"] == manifest["id"]:
+        if not manifest:
             return
         try:
             project_id, snapshot_id = str(uuid.UUID(project["id"])), str(uuid.UUID(manifest["id"]))
             boundary = root / "projects" / project_id
             target = boundary / "snapshots" / snapshot_id
-            if target.is_dir():
+            others = [item for item in workspace.versions(project_id) if item['id'] != version['id']]
+            shared = project['snapshot']['id'] == snapshot_id or any((database.version(project_id, item['id']) or {}).get('value', {}).get('snapshot', {}).get('id')
+                         == snapshot_id for item in others)
+            if target.is_dir() and not shared:
                 remove_staging(target, boundary)
             for name in [f"version-{version['id']}.json", f"checkpoint-{version['id']}.json"]:
                 (boundary / name).unlink(missing_ok=True)
@@ -318,11 +335,16 @@ def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=
 
 
     app = FastAPI(
-        title="CodeScape 本地服务", version="0.1.0", lifespan=lifespan, docs_url=None, redoc_url=None
+        title="CodeScape 本地服务", version=__version__, lifespan=lifespan, docs_url=None, redoc_url=None
     )
     app.state.nonce = bootstrap_nonce
     app.state.root = root
     app.state.reads = reads
+    app.state.workspace = workspace
+
+    @app.exception_handler(WorkspaceError)
+    async def workspace_error(request, error):
+        return JSONResponse({'error': {'code': error.code, 'message': str(error)}}, status_code=error.status)
     app.state.cleanup_versions = cleanup_versions
     app.state.issue_nonce = issue_nonce
     app.state.ready_event = threading.Event()
@@ -637,7 +659,7 @@ def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=
 
     @app.put("/api/v1/projects/{project_id}/learning/{entity_id}")
     async def learning(project_id: str, entity_id: str, body: LearningRequest):
-        project = get_project(project_id)
+        project = workspace.effective(get_project(project_id))
         if body.version_id != project["version_id"]:
             raise version_error(project, "学习状态版本已经改变，请刷新后重试本次操作。")
         result = Analysis.model_validate(project["result"] or {})
@@ -1030,6 +1052,8 @@ def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=
             usage_path = root / "projects" / project_id / "overview-usage.json"
             usage_path.write_text(json.dumps(usage), encoding="utf-8")
         return envelope(public(get_project(project_id), full=True))
+
+    register_workspace(app, workspace, get_project, public, envelope, cleanup_versions, reclaim_version)
 
     dist = REPOSITORY / "apps/web/dist"
 

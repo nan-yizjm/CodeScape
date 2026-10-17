@@ -6,7 +6,7 @@ export class ApiError extends Error {
 }
 
 export function protectedMutation(path: string, method: string) {
-  if (method === 'DELETE') return /^\/projects\/[^/]+$/.test(path);
+  if (method === 'DELETE') return /^\/projects\/[^/]+(?:\/versions\/[^/]+)?$/.test(path.split('?')[0]);
   if (method === 'PUT') return path === '/tasks/order';
   return method === 'POST' && /^\/(?:imports(?:\/preview)?|settings\/ai\/test|projects\/[^/]+\/(?:analyze|index|overview|reanalysis(?:\/preview)?)|tasks\/[^/]+\/(?:start|pause|cancel))$/.test(path);
 }

@@ -1,0 +1,106 @@
+{
+  "date": "2026-10-17",
+  "model_requests": 0,
+  "results": [
+    {
+      "scenario": "50-sparse",
+      "expected_functions": 50,
+      "nodes": 51,
+      "edges": 53,
+      "layout_ms": 49,
+      "first_paint_ms": 66,
+      "rendered_nodes": 51,
+      "rendered_edges": 53,
+      "render_mode": "全量挂载",
+      "baseline": false,
+      "max_main_thread_task_ms": 0,
+      "long_task_count": 0,
+      "fallback": null,
+      "model_requests": 0,
+      "boundary": "人工投影夹具；不代表真实模型判断质量。",
+      "svg_ms": 1,
+      "svg_bytes": 56228,
+      "viewport": {
+        "x": 697.3100501579045,
+        "y": 52.544677689021,
+        "zoom": 0.057588705182983466
+      },
+      "clicked": ""
+    },
+    {
+      "scenario": "200-dense",
+      "expected_functions": 200,
+      "nodes": 201,
+      "edges": 999,
+      "layout_ms": 600,
+      "first_paint_ms": 614,
+      "rendered_nodes": 3,
+      "rendered_edges": 17,
+      "render_mode": "仅挂载视口元素；数据与导出保留全量",
+      "baseline": false,
+      "max_main_thread_task_ms": 0,
+      "long_task_count": 0,
+      "fallback": null,
+      "model_requests": 0,
+      "boundary": "人工投影夹具；不代表真实模型判断质量。",
+      "svg_ms": 4,
+      "svg_bytes": 831087,
+      "viewport": {
+        "x": -25376.7,
+        "y": -134.9,
+        "zoom": 0.85
+      },
+      "clicked": ""
+    },
+    {
+      "scenario": "1000-sparse",
+      "expected_functions": 1000,
+      "nodes": 1001,
+      "edges": 1069,
+      "layout_ms": 373,
+      "first_paint_ms": 386,
+      "rendered_nodes": 6,
+      "rendered_edges": 7,
+      "render_mode": "仅挂载视口元素；数据与导出保留全量",
+      "baseline": false,
+      "max_main_thread_task_ms": 0,
+      "long_task_count": 0,
+      "fallback": null,
+      "model_requests": 0,
+      "boundary": "人工投影夹具；不代表真实模型判断质量。",
+      "svg_ms": 4,
+      "svg_bytes": 1138271,
+      "viewport": {
+        "x": -1741.6,
+        "y": -134.9,
+        "zoom": 0.85
+      },
+      "clicked": ""
+    },
+    {
+      "scenario": "1000-dense",
+      "expected_functions": 1000,
+      "nodes": 1001,
+      "edges": 5055,
+      "layout_ms": 2660,
+      "first_paint_ms": 2762,
+      "rendered_nodes": 3,
+      "rendered_edges": 15,
+      "render_mode": "仅挂载视口元素；数据与导出保留全量",
+      "baseline": false,
+      "max_main_thread_task_ms": 108,
+      "long_task_count": 3,
+      "fallback": null,
+      "model_requests": 0,
+      "boundary": "人工投影夹具；不代表真实模型判断质量。",
+      "svg_ms": 13,
+      "svg_bytes": 5000293,
+      "viewport": {
+        "x": -1275.3142857142866,
+        "y": -134.9,
+        "zoom": 0.85
+      },
+      "clicked": ""
+    }
+  ]
+}
