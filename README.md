@@ -2,7 +2,9 @@
 
 从语义模块进入函数图，再沿真实调用证据阅读只读源码，记录自己的学习状态。
 
-当前版本是 **v0.1.0 / P0 已通过用户验收**。用户于 2026-10-14 明确确认“P0通过验收”，36 项验收已闭环，其中 AC-29 基于既有开发复核及本次用户确认完成。第一版源码与制品保留在 [GitHub 留档版本 v0.1.0-p0.2](https://github.com/nan-yizjm/CodeScape/releases/tag/v0.1.0-p0.2)，验收确认见 [P0 用户验收记录](docs/reports/p0/P0用户验收确认.json)。完整需求见 [PRD](docs/CodeScape_PRD.md)，实施基线见 [开发设计](docs/CodeScape_Development_Design.md)，逐项状态见 [P0 验收追踪](docs/reports/p0/P0验收追踪.md)，实际证据见 [开发与验收记录](docs/reports/p0/开发与验收记录.md)。四个公开仓库的全范围评测未全部完成，干净 Windows 10/11 本轮门槛按 CHG-13 免除，已有范围与未实测条件如实保留。留档范围和制品校验见 [第一版版本说明](docs/releases/v0.1.0-p0.md)。
+当前版本是 **v0.1.1 / 新版界面与桌面入口**，功能基于已通过用户验收的 P0。[下载新版安装包与便携包](https://github.com/nan-yizjm/CodeScape/releases/tag/v0.1.1)，变化与使用说明见 [0.1.1 版本说明](docs/releases/v0.1.1.md)。安装时勾选“创建桌面快捷方式”，双击“CodeScape 源境”即可启动；升级保留项目和学习数据。
+
+用户于 2026-10-14 明确确认“P0通过验收”，36 项验收已闭环，其中 AC-29 基于既有开发复核及本次用户确认完成。第一版源码与制品保留在 [GitHub 留档版本 v0.1.0-p0.2](https://github.com/nan-yizjm/CodeScape/releases/tag/v0.1.0-p0.2)，验收确认见 [P0 用户验收记录](docs/reports/p0/P0用户验收确认.json)。完整需求见 [PRD](docs/CodeScape_PRD.md)，实施基线见 [开发设计](docs/CodeScape_Development_Design.md)，逐项状态见 [P0 验收追踪](docs/reports/p0/P0验收追踪.md)，实际证据见 [开发与验收记录](docs/reports/p0/开发与验收记录.md)。四个公开仓库的全范围评测未全部完成，干净 Windows 10/11 本轮门槛按 CHG-13 免除，已有范围与未实测条件如实保留。留档范围和制品校验见 [第一版版本说明](docs/releases/v0.1.0-p0.md)。
 
 完整P0代码与验收文档已通过 [PR #1](https://github.com/nan-yizjm/CodeScape/pull/1) 合入默认分支 `main`，阶段开发分支已删除；中文提交历史和第一版固定标签保留。收尾结果见 [P0阶段收尾](docs/reports/p0/P0阶段收尾.md)。
 
