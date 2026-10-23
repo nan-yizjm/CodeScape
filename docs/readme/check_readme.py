@@ -8,6 +8,7 @@ from urllib.parse import unquote, urlsplit
 ROOT = Path(__file__).resolve().parents[2]
 ASSETS = Path(__file__).parent / 'assets'
 SCREENSHOTS = {'workspace', 'source-evidence', 'search-notes', 'architecture-edit', 'compare', 'history-diff'}
+CURRENT_SCREENSHOTS = {'after-workspace-1440', 'after-workspace-dark-1440'}
 DIAGRAMS = {'system-architecture', 'analysis-pipeline', 'version-lifecycle'}
 
 
@@ -38,6 +39,10 @@ def main():
         raw = (ASSETS / f'{stem}.png').read_bytes()
         assert raw[:8] == b'\x89PNG\r\n\x1a\n'
         assert struct.unpack('>II', raw[16:24]) == (1600, 1060), stem
+    for stem in CURRENT_SCREENSHOTS:
+        raw = (ROOT / 'docs/reports/frontend/material-assets' / f'{stem}.png').read_bytes()
+        assert raw[:8] == b'\x89PNG\r\n\x1a\n'
+        assert struct.unpack('>II', raw[16:24]) == (1440, 1000), stem
     for stem in DIAGRAMS:
         path = ASSETS / f'{stem}.svg'
         root = ET.parse(path).getroot()
@@ -46,7 +51,7 @@ def main():
         assert root.attrib.get('viewBox') and root.attrib.get('aria-labelledby')
         assert not root.findall('.//' + ns + 'script') and not root.findall('.//' + ns + 'image')
         assert not re.search(r'https?://(?!www\.w3\.org/)', path.read_text(encoding='utf-8'))
-    print(f'检查通过：{checked}个本地引用，{toc_count}项目录锚点，6张PNG，3张可访问SVG。')
+    print(f'检查通过：{checked}个本地引用，{toc_count}项目录锚点，8张PNG（6张发布版、2张源码预览），3张可访问SVG。')
 
 
 if __name__ == '__main__':
