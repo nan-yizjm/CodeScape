@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, PrivateAttr, model_validator
 
 
 class Contract(BaseModel):
@@ -129,6 +129,7 @@ class PrimaryDependency(Contract):
 
 
 class Architecture(Contract):
+    _source_ranges: dict[str, tuple[int, int]] | None = PrivateAttr(default=None)
     modules: list[Module]
     overview: Overview
     explanations: list[FunctionExplanation] = Field(default_factory=list)

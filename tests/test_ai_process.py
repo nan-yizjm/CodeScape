@@ -7,6 +7,7 @@ from ctypes import wintypes
 
 import pytest
 from codescape.ai_process import run_architecture
+from codescape.checkpoints import dump_checkpoint, load_checkpoint
 from codescape.database import Database
 from codescape.ledger import RequestLedger, ai_scope
 from codescape.models import Analysis, Architecture, Overview
@@ -47,7 +48,9 @@ def test_real_worker_waits_for_durable_checkpoint_before_continuing(tmp_path, mo
     worker_adapter(monkeypatch, f'''
 async def fixed(self, analysis, files, *, on_progress, on_batch, completed_batches):
     assert files == {{"owned.py": "raise RuntimeError('这个源码只能读取')"}}
+    assert completed_batches[0]._source_ranges == {{"owned.py": (1, 1)}}
     value = Architecture.model_validate_json({document!r})
+    value._source_ranges = {{"owned.py": (1, 1)}}
     await on_progress(0, 1, "等待检查点")
     await on_batch(1, 1, value)
     assert (self.root / "durable-checkpoint.json").exists()
@@ -56,12 +59,18 @@ async def fixed(self, analysis, files, *, on_progress, on_batch, completed_batch
 ''')
     async def scenario():
         database, provider, options = arguments(tmp_path)
+        previous = ARCHITECTURE.model_copy(deep=True)
+        previous._source_ranges = {'owned.py': (1, 1)}
+        options['completed_batches'] = [previous]
         events = []
         async def progress(completed, total, detail):
             events.append(detail)
         async def batch(completed, total, architecture):
             assert (completed, total) == (1, 1)
-            (tmp_path / "durable-checkpoint.json").write_text(architecture.model_dump_json(), encoding="utf-8")
+            assert architecture._source_ranges == {'owned.py': (1, 1)}
+            (tmp_path / "durable-checkpoint.json").write_text(json.dumps(dump_checkpoint(architecture)), encoding="utf-8")
+            restored = load_checkpoint(json.loads((tmp_path / "durable-checkpoint.json").read_text(encoding='utf-8')))
+            assert restored._source_ranges == architecture._source_ranges
         result, usage = await run_architecture(provider, Analysis(), {"owned.py": "raise RuntimeError('这个源码只能读取')"},
             on_progress=progress, on_batch=batch, **options)
         assert result == ARCHITECTURE and usage == {"total_tokens": 0}

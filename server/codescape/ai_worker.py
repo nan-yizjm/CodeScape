@@ -6,9 +6,10 @@ import json
 import sys
 from pathlib import Path
 
+from .checkpoints import dump_checkpoint, load_checkpoint
 from .database import Database
 from .ledger import ai_scope
-from .models import Analysis, Architecture
+from .models import Analysis
 from .provider import Provider, ProviderError
 
 
@@ -23,7 +24,7 @@ async def run(payload):
     async def progress(completed, total, detail):
         emit("progress", completed=completed, total=total, detail=detail)
     async def batch(completed, total, architecture):
-        emit("batch", completed=completed, total=total, architecture=architecture.model_dump())
+        emit("batch", completed=completed, total=total, architecture=dump_checkpoint(architecture))
         # Do not send another paid request before the parent durably saves this unit.
         response = await asyncio.to_thread(sys.stdin.buffer.readline)
         if response != b'{"ack":"batch"}\n':
@@ -33,7 +34,7 @@ async def run(payload):
                       request_config=payload["request_config"]):
             result, usage = await provider.architecture(Analysis.model_validate(payload["analysis"]), payload["files"],
                 on_progress=progress, on_batch=batch,
-                completed_batches=[Architecture.model_validate(item) for item in payload["completed_batches"]])
+                completed_batches=[load_checkpoint(item) for item in payload["completed_batches"]])
         emit("complete", architecture=result.model_dump(), usage=usage)
     finally:
         database.engine.dispose()
