@@ -1,6 +1,7 @@
 import {useEffect, useRef, useState, type ReactNode} from 'react';
 import {BookOpen, GitCompareArrows, History, NotebookPen, Search, SlidersHorizontal, X} from 'lucide-react';
 import {api} from './api';
+import {Disclosure} from './InteractionPrimitives';
 import {ArchitectureEditor} from './ArchitectureEditor';
 import {NotesList} from './Notes';
 import type {HistoryVersion, Project, ProjectDetail, SearchResult} from './types';
@@ -15,7 +16,7 @@ export function ToolDialog({title,onClose,children}: {title:string;onClose:()=>v
   const ref=useRef<HTMLDivElement>(null), close=useRef(onClose);close.current=onClose;
   useEffect(()=> {
     const previous=document.activeElement;
-    const items=()=>[...ref.current!.querySelectorAll<HTMLElement>('button:not(:disabled),input:not(:disabled),textarea:not(:disabled),select:not(:disabled),[tabindex="0"]')].filter(e=>e.getClientRects().length);
+    const items=()=>[...ref.current!.querySelectorAll<HTMLElement>('button:not(:disabled),input:not(:disabled),textarea:not(:disabled),select:not(:disabled),[tabindex="0"]')].filter(e=>e.getClientRects().length && !e.closest('[inert]'));
     const frame=requestAnimationFrame(()=>{const preferred=ref.current?.querySelector<HTMLElement>('[data-autofocus]');(preferred || items()[0])?.focus();});
     const key=(e:KeyboardEvent)=> {
       if(e.key==='Escape'){e.preventDefault();e.stopImmediatePropagation();close.current();}
@@ -126,5 +127,5 @@ function HistoryTools({project}: {project:ProjectDetail}) {
 function Difference({value}: {value:unknown}) {
   const result=value as {functions:{added:{name:string}[];removed:{name:string}[];changed:{after:{name:string}}[];ambiguous:{name:string}[]};modules:{added_names:string[];removed_names:string[];membership_changes:{name:string;before:string;after:string}[]};dependencies:{from:string;to:string;before:number;after:number}[];manual:{before:boolean;after:boolean};limitations:string[]};
   const groups=[['新增函数',result.functions.added.map(e=>e.name)],['删除函数',result.functions.removed.map(e=>e.name)],['实现变化',result.functions.changed.map(e=>e.after.name)],['身份有歧义',result.functions.ambiguous.map(e=>e.name)],['新增模块名称',result.modules.added_names],['移除模块名称',result.modules.removed_names],['归属变化',result.modules.membership_changes.map(e=>`${e.name}：${e.before} → ${e.after}`)],['确认调用变化',result.dependencies.map(e=>`${e.from} → ${e.to}：${e.before} → ${e.after} 处`)]] as [string,string[]][];
-  return <div className="difference"><p>{result.manual.before || result.manual.after ? '此对比包含人工架构调整，模块变化不全由源码变化导致。' : '按源码身份与已确认关系比较。'}</p>{groups.map(([title,items])=><details key={title} open={items.length>0}><summary>{title} · {items.length}</summary>{items.length ? <ul>{items.map((item,i)=><li key={i}>{item}</li>)}</ul> : <p className="tool-muted">未发现</p>}</details>)}{result.limitations.map(text=><p className="tool-muted" key={text}>{text}</p>)}</div>;
+  return <div className="difference"><p>{result.manual.before || result.manual.after ? '此对比包含人工架构调整，模块变化不全由源码变化导致。' : '按源码身份与已确认关系比较。'}</p>{groups.map(([title,items])=><Disclosure key={title} defaultOpen={items.length>0} title={<>{title} · {items.length}</>}>{items.length ? <ul>{items.map((item,i)=><li key={i}>{item}</li>)}</ul> : <p className="tool-muted">未发现</p>}</Disclosure>)}{result.limitations.map(text=><p className="tool-muted" key={text}>{text}</p>)}</div>;
 }

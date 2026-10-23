@@ -1,0 +1,154 @@
+/* 仅调整材质与可读性。节点宽高、端口位置和依赖路由沿用原始图数据。 */
+.react-flow {
+  --graph-background: var(--graph-background-light);
+  --graph-surface: var(--graph-surface-light);
+  --graph-edge: var(--graph-edge-light);
+  --graph-internal-edge: var(--graph-internal-edge-light);
+  --graph-ink: var(--graph-ink-light);
+  --graph-muted: var(--graph-muted-light);
+  --graph-dot: var(--graph-dot-light);
+  --graph-chip: rgb(252 252 251 / .64);
+  --graph-panel: #fcfcfb;
+  --graph-success-bg: #e5eee8;
+  --graph-success-ink: #3b6550;
+  --graph-learning-bg: #f1eadb;
+  --graph-learning-ink: #765b2f;
+  --graph-shadow: 0 6px 24px rgb(38 40 36 / .035);
+  background: var(--graph-background);
+}
+.react-flow .map-node {
+  --node-bg: var(--node-bg-light);
+  --node-accent: var(--node-accent-light);
+  border: 0;
+  color: var(--graph-ink);
+  background: var(--node-bg);
+  box-shadow: var(--graph-shadow);
+  transition: opacity 180ms, box-shadow 180ms, background 180ms;
+}
+.react-flow .map-node:hover,
+.react-flow .map-node.is-expanded {
+  border: 0;
+  box-shadow: 0 8px 28px rgb(38 40 36 / .065);
+}
+.react-flow .map-node.function {
+  border: 0;
+  background: var(--graph-surface);
+  box-shadow: 0 3px 16px rgb(38 40 36 / .045);
+}
+.react-flow .map-node.external-node { border: 0; background: var(--node-bg); }
+.react-flow .node-symbol, .react-flow .node-info:hover,
+.react-flow .node-dependency:hover, .react-flow .node-dependency:focus-visible {
+  background: var(--graph-chip);
+}
+.react-flow .node-title { color: var(--graph-ink); font-weight: var(--weight-semibold); }
+.react-flow .function .node-title { font-weight: var(--weight-semibold); }
+.react-flow .map-node p, .react-flow .node-footer,
+.react-flow .function .node-kind, .react-flow .function .node-info { color: var(--graph-muted); }
+.react-flow .node-state { background: var(--graph-chip); color: var(--graph-muted); }
+.react-flow .state-mastered .node-state { background: var(--graph-success-bg); color: var(--graph-success-ink); }
+.react-flow .state-in_progress .node-state { background: var(--graph-learning-bg); color: var(--graph-learning-ink); }
+.react-flow .learning-dot { background: var(--graph-learning-ink); }
+.react-flow .react-flow__handle { border: 0; background: var(--node-accent); width: 5px; height: 5px; opacity: .45; }
+.react-flow .react-flow__edge:hover .react-flow__edge-path { stroke: var(--graph-ink) !important; }
+.react-flow .react-flow__controls {
+  background: var(--graph-panel);
+  border: 0;
+  border-radius: 8px;
+  box-shadow: var(--graph-shadow) !important;
+}
+.react-flow .react-flow__controls-button {
+  background: transparent !important;
+  color: var(--graph-muted);
+  border: 0 !important;
+}
+.react-flow .react-flow__controls-button:hover { background: var(--graph-background) !important; color: var(--graph-ink); }
+.react-flow .react-flow__attribution { color: var(--graph-muted) !important; }
+.react-flow .reading-scale, .react-flow .canvas-legend, .react-flow .graph-view-options,
+.react-flow .module-hover-preview, .react-flow .edge-evidence-label {
+  border: 0;
+  color: var(--graph-muted);
+  background: var(--graph-panel);
+  box-shadow: var(--graph-shadow);
+}
+.react-flow .reading-scale { border-radius: 8px; }
+.react-flow .module-hover-preview { border-radius: 16px; }
+.react-flow .module-hover-preview strong { color: var(--graph-ink); font-weight: var(--weight-semibold); }
+.react-flow .edge-evidence-label { color: var(--graph-muted); }
+.react-flow .graph-view-options select { color: var(--graph-ink); }
+.react-flow .graph-view-options select:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--graph-panel), 0 0 0 4px color-mix(in srgb, var(--graph-ink) 40%, transparent);
+}
+.react-flow .react-flow__node.selected .map-node,
+.react-flow .map-node:has(.node-hit-area:focus-visible) {
+  box-shadow: 0 0 0 2px var(--graph-surface), 0 0 0 4px var(--node-accent), var(--graph-shadow);
+}
+.source-reader {
+  --syntax-meta: #5e635b;
+  --syntax-keyword: #765782;
+  --syntax-number: #765d37;
+  --syntax-literal: #376853;
+  --syntax-string: #8c4f53;
+  --syntax-function: #3c5f83;
+  --syntax-variable: #52648a;
+  --syntax-type: #3d6971;
+  --syntax-comment: #636858;
+  --syntax-invalid: #a33f47;
+  --source-active-line: #eceee7;
+  --source-highlight: #e8eddf;
+}
+.source-reader .source-highlight { background: var(--source-highlight); border-radius: 2px; }
+.source-reader .cm-editor .cm-activeLineGutter { background: var(--source-active-line); color: var(--ink); }
+.source-reader .cm-editor .cm-scroller:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 2px var(--surface), inset 0 0 0 4px color-mix(in srgb, var(--ink) 35%, transparent);
+}
+.source-reader .cm-gutterElement { font-variant-numeric: tabular-nums; }
+.compare-panes { transition: none; }
+.compare-ratio input[type="range"] { accent-color: var(--ink); cursor: ew-resize; }
+
+@media (prefers-color-scheme: dark) {
+  .react-flow {
+    --graph-background: var(--graph-background-dark);
+    --graph-surface: var(--graph-surface-dark);
+    --graph-edge: var(--graph-edge-dark);
+    --graph-internal-edge: var(--graph-internal-edge-dark);
+    --graph-ink: var(--graph-ink-dark);
+    --graph-muted: var(--graph-muted-dark);
+    --graph-dot: var(--graph-dot-dark);
+    --graph-chip: rgb(252 252 251 / .035);
+    --graph-panel: #20201e;
+    --graph-success-bg: #24352b;
+    --graph-success-ink: #b1ceb9;
+    --graph-learning-bg: #352e21;
+    --graph-learning-ink: #dbc494;
+    --graph-shadow: 0 8px 28px rgb(11 11 10 / .16);
+  }
+  .react-flow .map-node { --node-bg: var(--node-bg-dark); --node-accent: var(--node-accent-dark); }
+  .react-flow .map-node:hover, .react-flow .map-node.is-expanded { box-shadow: 0 8px 28px rgb(11 11 10 / .22); }
+  .source-reader {
+    --syntax-meta: #b5b9af;
+    --syntax-keyword: #cfb0d9;
+    --syntax-number: #d9c197;
+    --syntax-literal: #a7c9b6;
+    --syntax-string: #d9afb0;
+    --syntax-function: #a7c0e0;
+    --syntax-variable: #b6c0dd;
+    --syntax-type: #a6c9ce;
+    --syntax-comment: #a2aa95;
+    --syntax-invalid: #f0a0a3;
+    --source-active-line: #292b25;
+    --source-highlight: #30372b;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .react-flow .map-node { transition: none; }
+}
+@media (forced-colors: active) {
+  .react-flow .graph-view-options select:focus-visible,
+  .source-reader .cm-editor .cm-scroller:focus-visible {
+    outline: 2px solid Highlight;
+    outline-offset: -2px;
+    box-shadow: none;
+  }
+}

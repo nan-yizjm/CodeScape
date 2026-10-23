@@ -10,6 +10,9 @@ import {LearningTools} from './LearningTools';
 import {NoteEditor} from './Notes';
 import {CompareWorkspace} from './CompareWorkspace';
 import { RequestUsage } from './RequestUsage';
+import { CopyButton, Disclosure, SoftReveal } from './InteractionPrimitives';
+import { sourceExcerpt } from './clipboardFeedback';
+import { DragHandle } from './DragHandle';
 import { ResourceBoundary } from './ResourceBoundary';
 import {panelKey, restorePanels, serializePanels, type SessionValue} from './exploration';
 import {useSessionSaver} from './useSessionSaver';
@@ -300,8 +303,8 @@ function Application() {
     const dialog = modalRef.current;
     const previous = document.activeElement;
     if (!dialog) return;
-    const focusable = () => [...dialog.querySelectorAll<HTMLElement>('button:not(:disabled), input:not(:disabled), textarea:not(:disabled), [tabindex="0"]')]
-      .filter(element => element.getClientRects().length > 0);
+    const focusable = () => [...dialog.querySelectorAll<HTMLElement>('button:not(:disabled), input:not(:disabled), textarea:not(:disabled), select:not(:disabled), a[href], [tabindex="0"]')]
+      .filter(element => !element.closest('[inert]') && element.getClientRects().length > 0);
     const frame = requestAnimationFrame(() => {
       if (!dialog.contains(document.activeElement)) focusable()[0]?.focus();
     });
@@ -515,22 +518,21 @@ function Application() {
   function interfaceEvidence(call: Call) {
     if (call.kind !== 'interface') return null;
     const references = (call.interface_evidence || []).slice(1,-1);
-    return <details><summary>接口绑定依据 · {references.length} 处</summary>{references.map((location,index)=><button key={index}
+    return <Disclosure title={<>接口绑定依据 · {references.length} 处</>}>{references.map((location,index)=><button key={index}
       onClick={() => { setSource(null); pushPanel({kind:'source',location}); }}><FileCode2 size={13} />
       {['Python 导入','注册入口','名称绑定'][index] || '源码依据'} · {location.path}:{location.start_line}<ArrowUpRightIcon />
-    </button>)}</details>;
+    </button>)}</Disclosure>;
   }
 
   function judgmentEvidence(call: Call) {
     if (!call.judgment_evidence?.length) return null;
     const key = `judgment:${call.id}`;
-    return <details className="judgment-evidence" open={!!expandedEvidence[key]} onToggle={event=>{
-      const open = event.currentTarget.open;
+    return <Disclosure className="judgment-evidence" open={!!expandedEvidence[key]} onOpenChange={open=>{
       setExpandedEvidence(current=>current[key]===open ? current : {...current,[key]:open});
-    }}><summary>AI 判断依据 · {call.judgment_evidence.length} 项</summary>{call.judgment_evidence.map((judgment,index)=><div key={index}>
+    }} title={<>AI 判断依据 · {call.judgment_evidence.length} 项</>}>{call.judgment_evidence.map((judgment,index)=><div key={index}>
       <p>{judgment.reason}</p><small>候选目标：{project?.analysis.entities.find(entity=>entity.id===judgment.target_id)?.qualified_name || '目标引用已失效'}</small>
       {judgment.evidence.map((ref,refIndex)=><button className="source-reference" key={refIndex} onClick={()=>{setSource(null);pushPanel({kind:'source',location:{...ref,start_byte:0,end_byte:0}});}}><FileCode2 size={13}/><span>{ref.path}<small>第 {ref.start_line}–{ref.end_line} 行</small></span></button>)}
-    </div>)}</details>;
+    </div>)}</Disclosure>;
   }
 
   async function retryAI() {
@@ -653,18 +655,12 @@ function Application() {
                 : <div className="empty-state"><span className="large-empty-icon"><Sparkles size={30} /></span><h3>{['indexing', 'queued'].includes(project.status) ? '正在建立静态源码索引' : project.status === 'failed' ? '静态索引未完成' : project.status === 'analyzing' ? '正在分批理解项目架构' : '源码已就绪，下一步理解架构'}</h3><p>{project.status === 'analyzing' ? `${analysisHint}${batchProgress?.total ? ` · 已完成 ${batchProgress.completed}/${batchProgress.total} 批` : ''}` : '静态索引不会被当作语义架构。授权后，AI 将基于当前快照归纳模块职责与整体工作原理；超大项目会自动拆成受控批次。'}</p>{project.status === 'indexed' && <button className="primary-button" onClick={() => { setError(''); setModal('consent'); }}><Sparkles size={15} />开始 AI 架构分析</button>}{project.status === 'failed' && <button className="primary-button" disabled={busy} onClick={() => void retryIndex()}>重试静态索引</button>}{project.status === 'paused' && <button className="primary-button" disabled={busy} onClick={() => void retryAI()}>{busy ? <span className="spinner" /> : <Sparkles size={15} />}重新开始分批分析</button>}{project.error && <p className="inline-error">{project.error}</p>}</div>}
               <div className="canvas-caption"><span>{isFunctions ? '点击函数阅读源码 · 点击连线查看证据' : projection.abstraction ? '点击代码域逐层展开 · 再次点击收起 · 信息按钮查看职责' : '点击父模块展开 · 再次点击收起 · 信息按钮查看职责'}</span><span>{projection.nodes.length} 节点 <span className="caption-dot">·</span> {projection.relations.filter(relation => relation.from !== relation.to).length} 条协作线{projection.relations.some(relation => relation.from === relation.to) ? ` · ${projection.relations.filter(relation => relation.from === relation.to).length} 个内部依赖` : ''}</span></div>
             </div>
-            {panel && <><div className="panel-resizer" onPointerDown={event => {
-              event.currentTarget.setPointerCapture(event.pointerId);
-              const begin = event.clientX, initial = width;
-              const move = (next: PointerEvent) => setWidth(Math.max(320, Math.min(650, initial + begin - next.clientX)));
-              const finish = () => { document.removeEventListener('pointermove', move); document.removeEventListener('pointerup', finish); };
-              document.addEventListener('pointermove', move); document.addEventListener('pointerup', finish);
-            }} /><aside className="detail-panel" style={{ width }}>
+            {panel && <><DragHandle width={width} onWidth={setWidth} /><aside id="workspace-detail-panel" className="detail-panel" style={{ width }}>
               <div className="panel-header"><div>{panel.kind === 'source' ? <FileCode2 size={17} /> : panel.kind === 'relation' ? <GitBranch size={17} /> : <Info size={17} />}<strong>{{ overview: '项目概览', module: '模块详情', function: '函数详情', relation: '关系证据', source: '源码阅读', diagnostics: '范围与局限' }[panel.kind]}</strong></div><div>{panels.length > 1 && <button className="tiny-icon" aria-label="返回之前的面板" onClick={() => setPanels(current => current.slice(0, -1))}><ArrowLeft size={16} /></button>}<button className="tiny-icon" aria-label="关闭辅助面板" onClick={() => setPanels(current => current.slice(0, -1))}><X size={17} /></button></div></div>
-              {panel.kind === 'source' ? <><div className="source-file-heading"><span>{panel.location.path}</span><small>L{panel.location.start_line}–{panel.location.end_line} · 只读快照</small></div>{source ? <ResourceBoundary title="源码阅读器暂时无法显示"><Suspense fallback={<div className="canvas-loading">正在准备源码阅读器…</div>}><SourceReader key={`${activePanelKey}:${session.epoch}`} file={source} location={panel.location} position={panel.scroll} onPosition={position=>panelScroll(activePanelKey,position)} /></Suspense></ResourceBoundary> : <div className="canvas-loading">正在读取匹配版本的源码…</div>}<div className="source-bottom"><ShieldCheck size={12} />原始仓库不会被修改</div></> : <div className="panel-content" tabIndex={0} role="region" aria-label="详情阅读区域" ref={panelContent} onScroll={event=>panelScroll(activePanelKey,{top:event.currentTarget.scrollTop,left:0})}>
+              {panel.kind === 'source' ? <><div className="source-file-heading"><span className="source-heading-path" title={panel.location.path}>{panel.location.path}</span><div className="source-heading-meta"><small>L{panel.location.start_line}–{panel.location.end_line} · 只读快照</small><CopyButton key={activePanelKey} label="复制片段" disabled={!source} text={source ? sourceExcerpt(source.text, panel.location.start_line, panel.location.end_line) : ''} /></div></div>{source ? <ResourceBoundary title="源码阅读器暂时无法显示"><Suspense fallback={<div className="canvas-loading">正在准备源码阅读器…</div>}><SourceReader key={`${activePanelKey}:${session.epoch}`} file={source} location={panel.location} position={panel.scroll} onPosition={position=>panelScroll(activePanelKey,position)} /></Suspense></ResourceBoundary> : <div className="canvas-loading">正在读取匹配版本的源码…</div>}<div className="source-bottom"><ShieldCheck size={12} />原始仓库不会被修改</div></> : <div className="panel-content" tabIndex={0} role="region" aria-label="详情阅读区域" ref={panelContent} onScroll={event=>panelScroll(activePanelKey,{top:event.currentTarget.scrollTop,left:0})}>
                 {panel.kind === 'overview' && project.architecture && <OverviewPanel key={project.id} project={project} onUpdate={updated => setProject(current => current?.id === updated.id ? updated : current)} onExplore={changeFocus} />}
                 {panel.kind === 'module' && <><div className="panel-kicker">逻辑模块</div><h2>{panel.module.name}</h2><p className="lead">{panel.module.summary}</p><div className="detail-stat-row"><span>{moduleEntities(panel.module, modules).length} 个函数</span><span>{stateLabels[moduleLearningState(panel.module, project, modules)]}</span></div><h3>真实代码范围</h3>{panel.module.code_paths.map(path => <button className="source-reference" key={path} onClick={() => filePanel(path)}><FileCode2 size={14} /><span>{path}</span><ExternalLink size={14} /></button>)}{project.learning_entities?.some(unit => unit.kind === 'module' && unit.source_id === panel.module.id) && <><h3>学习状态</h3><p>本模块以可读源码和职责作为学习内容。</p><div className="learning-buttons">{(['not_started', 'in_progress', 'mastered'] as const).map(state => { const id = project.learning_entities!.find(unit => unit.kind === 'module' && unit.source_id === panel.module.id)!.id; return <button key={state} className={(project.learning[id]?.state || 'not_started') === state ? 'selected' : ''} disabled={project.readonly} onClick={() => void learning({id}, state)}>{stateLabels[state]}</button>; })}</div></>}{moduleEntities(panel.module, modules).length > 0 && <h3>模块中的函数</h3>}{project.analysis.entities.filter(entity => moduleEntities(panel.module, modules).includes(entity.id)).map(entity => <button className="entity-row" key={entity.id} onClick={() => void sourcePanel(entity)}><Braces size={14} /><span>{entity.name}</span><ExternalLink size={12} /></button>)}{moduleEntities(panel.module, modules).length > 0 && <button className="secondary-button wide" onClick={() => changeFocus(panel.module.id)}>进入模块<ArrowRight size={15} /></button>}</>}
-                {panel.kind === 'function' && <><div className="panel-kicker">源码实体</div><h2 className="code-title">{panel.entity.name}</h2><pre className="signature">{panel.entity.signature}</pre><h3>功能说明</h3>{panel.entity.explanation ? <><p className="lead">{panel.entity.explanation}</p>{panel.entity.explanation_details && <p>{panel.entity.explanation_details}</p>}<p className="evidence-origin">AI 基于当前源码归纳，未执行验证。</p>{panel.entity.explanation_evidence?.map((ref,index)=><button key={index} className="source-reference" onClick={()=>void sourcePanel(panel.entity,{...ref,start_byte:0,end_byte:0})}><FileCode2 size={14}/><span>{ref.path}<small>第 {ref.start_line}–{ref.end_line} 行</small></span></button>)}</> : <p>解释未完成；以下提供真实静态信息与只读源码。</p>}<h3>源码位置</h3><button className="source-reference" onClick={() => void sourcePanel(panel.entity)}><FileCode2 size={15} /><span>{panel.entity.location.path}<small>第 {panel.entity.location.start_line}–{panel.entity.location.end_line} 行</small></span><ExternalLink size={14} /></button><h3>学习状态</h3><div className="learning-buttons">{(['not_started', 'in_progress', 'mastered'] as const).map(state => <button key={state} className={project.learning[panel.entity.id]?.state === state || !project.learning[panel.entity.id] && state === 'not_started' ? 'selected' : ''} disabled={project.readonly} onClick={() => void learning(panel.entity, state)}>{stateLabels[state]}</button>)}</div>{panel.entity.unresolved_count > 0 && <div className="diagnostic-box"><AlertTriangle size={16} /><p>此函数有 {panel.entity.unresolved_count} 处未解析或间接调用；画布没有绘制猜测边。</p></div>}<h3>相关解析信息</h3><p>语言：{panel.entity.language}</p><p>限定名：<code>{panel.entity.qualified_name}</code></p>{panel.entity.condition && <p>条件：{panel.entity.condition}</p>}</>}
+                {panel.kind === 'function' && <><div className="panel-kicker">源码实体</div><h2 className="code-title">{panel.entity.name}</h2><pre className="signature">{panel.entity.signature}</pre><div className="signature-actions"><CopyButton key={panel.entity.id} text={panel.entity.signature} label="复制签名" /></div><h3>功能说明</h3>{panel.entity.explanation ? <><p className="lead">{panel.entity.explanation}</p>{panel.entity.explanation_details && <p>{panel.entity.explanation_details}</p>}<p className="evidence-origin">AI 基于当前源码归纳，未执行验证。</p>{panel.entity.explanation_evidence?.map((ref,index)=><button key={index} className="source-reference" onClick={()=>void sourcePanel(panel.entity,{...ref,start_byte:0,end_byte:0})}><FileCode2 size={14}/><span>{ref.path}<small>第 {ref.start_line}–{ref.end_line} 行</small></span></button>)}</> : <p>解释未完成；以下提供真实静态信息与只读源码。</p>}<h3>源码位置</h3><button className="source-reference" onClick={() => void sourcePanel(panel.entity)}><FileCode2 size={15} /><span>{panel.entity.location.path}<small>第 {panel.entity.location.start_line}–{panel.entity.location.end_line} 行</small></span><ExternalLink size={14} /></button><h3>学习状态</h3><div className="learning-buttons">{(['not_started', 'in_progress', 'mastered'] as const).map(state => <button key={state} className={project.learning[panel.entity.id]?.state === state || !project.learning[panel.entity.id] && state === 'not_started' ? 'selected' : ''} disabled={project.readonly} onClick={() => void learning(panel.entity, state)}>{stateLabels[state]}</button>)}</div>{panel.entity.unresolved_count > 0 && <div className="diagnostic-box"><AlertTriangle size={16} /><p>此函数有 {panel.entity.unresolved_count} 处未解析或间接调用；画布没有绘制猜测边。</p></div>}<h3>相关解析信息</h3><p>语言：{panel.entity.language}</p><p>限定名：<code>{panel.entity.qualified_name}</code></p>{panel.entity.condition && <p>条件：{panel.entity.condition}</p>}</>}
                 {panel.kind === 'function' && <NoteEditor key={`function:${panel.entity.id}:${project.version_id}`} project={project} kind="function" anchor={panel.entity.id}/>}
               {panel.kind === 'module' && modules.some(m=>m.id === panel.module.id) && <NoteEditor key={`module:${panel.module.id}:${project.version_id}`} project={project} kind="module" anchor={panel.module.id}/>}
               {panel.kind === 'relation' && <><div className="panel-kicker">可追溯关系</div><h2>{panel.relation.from === panel.relation.to ? '代码域内部依赖' : panel.relation.calls.some(call=>call.kind==='interface') ? '源码中的接口协作' : '源码中的直接协作'}</h2><p className="lead">{panel.relation.from === panel.relation.to ? `当前代码域内聚合了 ${panel.relation.calls.length} 处已确认调用，展开后可查看具体模块与函数。` : `该关系由 ${panel.relation.calls.length} 项确认协作依据聚合。每条证据都与当前只读快照绑定。`}</p><div className="detail-stat-row"><span>静态确认 {panel.relation.calls.filter(call=>call.origin==='static').length}</span><span>AI 源码判断 {panel.relation.calls.filter(call=>call.origin==='ai_source_judgment').length}</span></div><div className="evidence-list">{(expandedEvidence[panel.relation.id] ? panel.relation.calls : panel.relation.calls.slice(0, 3)).map((call, index) => {
@@ -679,7 +675,7 @@ function Application() {
         </>}
       </main>
     </div>
-    {notice && <div className="toast" role="status"><Check size={16} />{notice}</div>}
+    {notice && <div className="toast" role="status"><Check size={16} aria-hidden="true" /><SoftReveal key={notice} text={notice} fresh /></div>}
     {modal && <div className="modal-backdrop" onClick={event => { if (event.target === event.currentTarget && !busy) setModal(null); }}><section ref={modalRef} className={`modal ${modal === 'tasks' ? 'task-modal' : ''}`} role="dialog" aria-modal="true" aria-label={{ import: '导入项目', settings: 'AI 服务设置', consent: '源码上传授权', tasks: '分析任务', delete: '永久删除学习项目' }[modal]}><div className="modal-heading"><span className="modal-icon">{modal === 'import' ? <FolderOpen size={22} /> : modal === 'settings' ? <Settings2 size={22} /> : modal === 'tasks' ? <ListOrdered size={22} /> : modal === 'delete' ? <Trash2 size={22}/> : <ShieldCheck size={22} />}</span><button className="tiny-icon" aria-label="关闭对话框" onClick={() => !busy && setModal(null)}><X size={19} /></button></div>{error && <div className="modal-error" role="alert"><AlertTriangle size={15} />{error}</div>}
       {modal === 'delete' && deletionTarget && <><h2>{deletionTarget.lifecycle === 'delete_failed' ? '重试删除学习项目' : '永久删除学习项目'}</h2><p>确认删除「{deletionTarget.name}」在 CodeScape 保存的分析结果、源码快照、学习进度、探索记录和关联任务。正在运行的该项目任务会被取消。</p><div className="privacy-note"><AlertTriangle size={17}/>此操作无法撤销。原始源码目录和其他学习项目不会被删除。</div><div className="modal-actions"><button className="secondary-button" disabled={busy} onClick={() => setModal(null)}>取消</button><button className="primary-button danger" disabled={busy} onClick={() => void deleteProject()}>{busy ? '正在提交…' : '确认永久删除'}</button></div></>}
       {modal === 'tasks' && <><h2>安排你的分析</h2><p>同时运行一个任务。完成后留在当前结果，下一项由你主动启动。</p>
@@ -698,7 +694,7 @@ function Application() {
           </article>;
         })}</div>
         {!analysisTasks.some(task => ['waiting', 'running', 'paused'].includes(task.status)) && <div className="task-empty"><Check size={22} /><strong>当前没有待执行任务</strong><span>从项目中启动分析，任务会出现在这里。</span></div>}
-        {analysisTasks.some(task => !['waiting', 'running', 'paused'].includes(task.status)) && <details className="task-history"><summary>已结束任务</summary>{analysisTasks.filter(task => !['waiting', 'running', 'paused'].includes(task.status)).map(task => <div key={task.id}><span>{task.project_name}<small>{task.kind === 'index' ? '静态索引' : task.kind === 'reanalysis' ? '重新分析' : 'AI 架构'}</small></span><span>{taskLabels[task.status]}</span></div>)}</details>}
+        {analysisTasks.some(task => !['waiting', 'running', 'paused'].includes(task.status)) && <Disclosure className="task-history" title="已结束任务">{analysisTasks.filter(task => !['waiting', 'running', 'paused'].includes(task.status)).map(task => <div key={task.id}><span>{task.project_name}<small>{task.kind === 'index' ? '静态索引' : task.kind === 'reanalysis' ? '重新分析' : 'AI 架构'}</small></span><span>{taskLabels[task.status]}</span></div>)}</Disclosure>}
         <div className="privacy-note"><Info size={15} />暂停保留有效检查点；取消结束本轮任务。已发送的云端请求仍可能产生用量。</div>
         <RequestUsage />
       </>}
@@ -715,8 +711,8 @@ function Application() {
         {importPreview && <section className="import-preview" aria-label="扫描范围预览"><div className="import-preview-summary"><strong>{importPreview.name}</strong><span>{importPreview.file_count} 个源码文件 · {(importPreview.size / 1024).toFixed(1)} KB</span></div>
           {importPreview.origin.commit && <p>默认分支 {importPreview.origin.default_branch}<br /><code title={importPreview.origin.commit}>Commit {importPreview.origin.commit.slice(0, 12)}</code></p>}
           {importPreview.file_count > 200 && <p className="import-hint">源码规模较大，AI 分析将分批进行；可以调整规则缩小范围。</p>}
-          <details><summary>纳入文件（{importPreview.file_count}）</summary><ul>{importPreview.files.map(path => <li key={path}>{path}</li>)}</ul></details>
-          <details><summary>排除项（{importPreview.excluded.length}）</summary><ul>{importPreview.excluded.map((item, index) => <li key={index}><code>{item.path}</code><span>{item.reason}</span></li>)}</ul></details>
+          <Disclosure title={<>纳入文件（{importPreview.file_count}）</>}><ul>{importPreview.files.map(path => <li key={path}>{path}</li>)}</ul></Disclosure>
+          <Disclosure title={<>排除项（{importPreview.excluded.length}）</>}><ul>{importPreview.excluded.map((item, index) => <li key={index}><code>{item.path}</code><span>{item.reason}</span></li>)}</ul></Disclosure>
           <p className="import-hint">导入使用本次扫描的快照。原目录之后发生变化不会替换它；改变范围后请重新扫描。</p>
         </section>}
         <div className="privacy-note"><ShieldCheck size={15} />只读取源码，不执行原项目。云端上传需确认接收端和范围。</div>
@@ -734,36 +730,36 @@ function LibraryArtwork() {
   return <div className="library-artwork" aria-hidden="true">
     <span className="artwork-coordinate top">图 01 / 代码的轮廓</span>
     <svg viewBox="0 0 400 280" fill="none">
-      <defs><pattern id="atlas-grid" width="20" height="20" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r=".6" fill="#d0d0d0" /></pattern></defs>
+      <defs><pattern id="atlas-grid" width="20" height="20" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r=".6" fill="var(--separator)" /></pattern></defs>
       <rect x="30" y="25" width="340" height="230" fill="url(#atlas-grid)" />
-      <path d="M30 40V25h15m310 0h15v15M30 240v15h15m310 0h15v-15" stroke="#b8b8b8" />
-      <path d="M127 58 274 91 314 184 233 228 86 195 46 102Z" stroke="#dedede" />
-      <path d="M147 78 254 102 287 175 229 207 107 179 74 109Z" stroke="#e6e6e6" />
-      <path className="artwork-route" d="M100 138H153M222 122H277V76h33M222 146H310M222 170H277v48h33" stroke="#696969" strokeWidth="1.2" />
+      <path d="M30 40V25h15m310 0h15v15M30 240v15h15m310 0h15v-15" stroke="var(--muted)" />
+      <path d="M127 58 274 91 314 184 233 228 86 195 46 102Z" stroke="var(--separator)" />
+      <path d="M147 78 254 102 287 175 229 207 107 179 74 109Z" stroke="var(--separator)" />
+      <path className="artwork-route" d="M100 138H153M222 122H277V76h33M222 146H310M222 170H277v48h33" stroke="var(--muted)" strokeWidth="1.2" />
       <g className="artwork-layer top">
-        <path d="m145 99 57-22 58 22-58 22-57-22Z" fill="#f1edff" stroke="#d9cff5" />
-        <path d="m169 99 33-12 34 12-34 12-33-12Z" stroke="#6f519f" />
+        <path d="m145 99 57-22 58 22-58 22-57-22Z" fill="var(--accent-soft)" />
+        <path d="m169 99 33-12 34 12-34 12-33-12Z" stroke="var(--accent)" />
       </g>
       <g className="artwork-layer bottom">
-        <path d="m145 180 57-22 58 22-58 22-57-22Z" fill="#edf2ff" stroke="#cbd7f5" />
-        <path d="m176 181 26 9 26-9" stroke="#405ea9" />
+        <path d="m145 180 57-22 58 22-58 22-57-22Z" fill="var(--info-soft)" />
+        <path d="m176 181 26 9 26-9" stroke="var(--info)" />
       </g>
-      <path d="m145 117 57-22 58 22v44l-58 22-57-22v-44Z" fill="#191919" />
-      <path d="m145 117 57 22 58-22m-58 22v44" stroke="#555" />
-      <path d="m171 143 13 5m-13 3 24 9m23-12 17-7m-17 15 11-4" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
-      <rect x="47" y="112" width="53" height="53" rx="7" fill="white" stroke="#d6d6d6" />
-      <path d="m61 127-5 5 5 5m23-10 5 5-5 5m-18 10h17m-17 6h10" stroke="#737373" strokeWidth="1.2" />
-      <rect x="310" y="63" width="40" height="27" rx="6" fill="#f1edff" stroke="#d9cff5" />
-      <path d="M321 74h18m-18 6h11" stroke="#6f519f" />
-      <rect x="310" y="133" width="40" height="27" rx="6" fill="#fff4e6" stroke="#efd8b6" />
-      <path d="m322 142 8 4-8 4m12 0h5" stroke="#96621f" />
-      <rect x="310" y="205" width="40" height="27" rx="6" fill="#edf2ff" stroke="#cbd7f5" />
-      <path d="M321 214h18m-18 6h11" stroke="#405ea9" />
-      <circle cx="127" cy="58" r="3" fill="#fafafa" stroke="#aaa" />
-      <circle cx="86" cy="195" r="3" fill="#fafafa" stroke="#aaa" />
-      <circle cx="274" cy="91" r="2" fill="#aaa" />
-      <circle cx="233" cy="228" r="2" fill="#aaa" />
-      <path d="M46 208v7m-3-3h6M356 107v7m-3-3h6" stroke="#999" />
+      <path d="m145 117 57-22 58 22v44l-58 22-57-22v-44Z" fill="var(--emphasis)" />
+      <path d="m145 117 57 22 58-22m-58 22v44" stroke="var(--muted)" />
+      <path d="m171 143 13 5m-13 3 24 9m23-12 17-7m-17 15 11-4" stroke="var(--on-emphasis)" strokeWidth="1.5" strokeLinecap="round" />
+      <rect x="47" y="112" width="53" height="53" rx="7" fill="var(--surface)" />
+      <path d="m61 127-5 5 5 5m23-10 5 5-5 5m-18 10h17m-17 6h10" stroke="var(--text)" strokeWidth="1.2" />
+      <rect x="310" y="63" width="40" height="27" rx="6" fill="var(--accent-soft)" />
+      <path d="M321 74h18m-18 6h11" stroke="var(--accent)" />
+      <rect x="310" y="133" width="40" height="27" rx="6" fill="var(--warning-soft)" />
+      <path d="m322 142 8 4-8 4m12 0h5" stroke="var(--warning)" />
+      <rect x="310" y="205" width="40" height="27" rx="6" fill="var(--info-soft)" />
+      <path d="M321 214h18m-18 6h11" stroke="var(--info)" />
+      <circle cx="127" cy="58" r="3" fill="var(--surface)" stroke="var(--muted)" />
+      <circle cx="86" cy="195" r="3" fill="var(--surface)" stroke="var(--muted)" />
+      <circle cx="274" cy="91" r="2" fill="var(--muted)" />
+      <circle cx="233" cy="228" r="2" fill="var(--muted)" />
+      <path d="M46 208v7m-3-3h6M356 107v7m-3-3h6" stroke="var(--muted)" />
     </svg>
     <span className="artwork-coordinate bottom">从一行源码，展开整个世界。</span>
   </div>;

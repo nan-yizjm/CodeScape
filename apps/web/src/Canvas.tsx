@@ -4,8 +4,11 @@ import { ReactFlow, ReactFlowProvider, Background, Controls, Handle, Position, B
 import ELK, { type ElkNode } from 'elkjs/lib/elk-api';
 import { Info, Check, Circle, ArrowUpRight, AlertTriangle, Boxes, Braces } from 'lucide-react';
 import type { Point, Projection, ProjectionNode, Relation } from './types';
-import { edgePath, graphTheme, nodePalette, relationLabelPoint } from './graph';
+import { edgePath, nodePalette, relationLabelPoint } from './graph';
+import { graphThemeVariables } from './palette';
 import { layoutCompound, layoutHierarchy, orthogonalOptions, readingViewport, verticalFallback } from './layout';
+import { springProgress } from './motion';
+import './canvas-material.css';
 
 type Data = { node: ProjectionNode; onInfo: (node: ProjectionNode) => void; onOpen: (node: ProjectionNode) => void; onInternal: (node: ProjectionNode) => void; onHover: (id: string | null) => void; dimmed: boolean } & Record<string, unknown>;
 const elk = new ELK({ workerFactory: () => new Worker(new URL('elkjs/lib/elk-worker.min.js', import.meta.url)) });
@@ -17,7 +20,7 @@ function MapNode({ data }: NodeProps<Node<Data>>) {
   const stateLabel = { not_started: '未开始', in_progress: '学习中', mastered: '已掌握', not_applicable: '不适用' }[node.state];
   return <div onMouseEnter={() => node.kind === 'module' && data.onHover(node.id)} onMouseLeave={() => data.onHover(null)}
     onFocusCapture={() => node.kind === 'module' && data.onHover(node.id)} onBlurCapture={event => {if (!event.currentTarget.contains(event.relatedTarget)) data.onHover(null);}}
-    className={`map-node ${node.kind} ${data.dimmed ? 'is-muted' : ''} ${node.container ? 'module-container' : ''} ${node.expanded ? 'is-expanded' : ''} ${node.external && node.kind === 'module' ? 'external-node' : ''} state-${node.state}`} style={{ width: node.width, height: node.height, '--node-bg': palette.background, '--node-border': palette.border, '--node-accent': palette.accent } as CSSProperties}>
+    className={`map-node ${node.kind} ${data.dimmed ? 'is-muted' : ''} ${node.container ? 'module-container' : ''} ${node.expanded ? 'is-expanded' : ''} ${node.external && node.kind === 'module' ? 'external-node' : ''} state-${node.state}`} style={{ width: node.width, height: node.height, '--node-bg-light': palette.background, '--node-bg-dark': palette.darkBackground, '--node-accent-light': palette.accent, '--node-accent-dark': palette.darkAccent } as CSSProperties}>
     <button className="node-hit-area nodrag nopan" aria-label={node.kind === 'module' ? (node.canExpand ? `${node.expanded ? '收起' : '展开'}模块 ${node.label}` : `进入模块 ${node.label}`) : `阅读 ${node.label} 源码`} aria-expanded={node.canExpand ? node.expanded : undefined}
       onClick={event => { event.stopPropagation(); data.onOpen(node); }} />
     <Handle type="target" position={Position.Top} />
@@ -40,8 +43,8 @@ function RoutedEdge(props: EdgeProps) {
   const path = edgePath(from, to, points);
   const labelPoint = relationLabelPoint(points);
   const dimmed = !!props.data?.dimmed;
-  return <><path d={path} fill="none" opacity={dimmed ? .12 : 1} stroke={graphTheme.background} strokeWidth={6} strokeLinecap="round" strokeLinejoin="round" pointerEvents="none" />
-    <BaseEdge id={props.id} path={path} markerEnd={props.markerEnd} style={{ stroke: internal ? graphTheme.internalEdge : graphTheme.edge, strokeWidth: internal ? 1.2 : 1.5, strokeLinecap: 'round', strokeLinejoin: 'round', strokeDasharray: internal ? '4 4' : undefined, opacity: dimmed ? .12 : internal ? .72 : .9 }} interactionWidth={12} />
+  return <><path d={path} fill="none" opacity={dimmed ? .12 : 1} stroke="var(--graph-background)" strokeWidth={6} strokeLinecap="round" strokeLinejoin="round" pointerEvents="none" />
+    <BaseEdge id={props.id} path={path} markerEnd={props.markerEnd} style={{ stroke: internal ? 'var(--graph-internal-edge)' : 'var(--graph-edge)', strokeWidth: internal ? 1.2 : 1.5, strokeLinecap: 'round', strokeLinejoin: 'round', strokeDasharray: internal ? '4 4' : undefined, opacity: dimmed ? .12 : internal ? .72 : .9 }} interactionWidth={12} />
     {labelPoint && from.kind === 'module' && to.kind === 'module' && <EdgeLabelRenderer><button
       className="edge-evidence-label nodrag nopan" aria-label={`查看 ${from.label} → ${to.label} 调用证据`}
       style={{opacity: dimmed ? .2 : 1, transform: `translate(-50%, -50%) translate(${labelPoint.x}px, ${labelPoint.y}px)`}}
@@ -51,6 +54,10 @@ function RoutedEdge(props: EdgeProps) {
 const nodeTypes = { map: MapNode };
 const edgeTypes = { routed: RoutedEdge };
 const fitOptions = { padding: { top: '56px', bottom: '44px', left: '32px', right: '32px' }, minZoom:.001, maxZoom: 1 } as const;
+// 指针平移由 React Flow 直接跟随；只有主动对齐视角使用过阻尼收敛，释放不追加惯性。
+const viewportEase = (progress: number) => springProgress(progress * .32, 1200, 80) / springProgress(.32, 1200, 80);
+const viewportTransition = () => ({ duration: matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 320,
+  ease: viewportEase, interpolate: 'linear' as const });
 
 function ReadingScale({ nodes, initialReading }: { nodes: ProjectionNode[]; initialReading: boolean }) {
   const { setViewport, getViewport, viewportInitialized } = useReactFlow();
@@ -91,7 +98,7 @@ function ReadingScale({ nodes, initialReading }: { nodes: ProjectionNode[]; init
         const minY = Math.min(...nodes.map(node => node.y)), maxY = Math.max(...nodes.map(node => node.y + node.height));
         const zoom = Math.max(.001, Math.min(1, Math.max(1, width - 64) / (maxX - minX), Math.max(1, height - 100) / (maxY - minY)));
         void setViewport({ x: width / 2 - (minX + maxX) / 2 * zoom, y: height / 2 + 6 - (minY + maxY) / 2 * zoom, zoom },
-          { duration: resized && !matchMedia('(prefers-reduced-motion: reduce)').matches ? 250 : 0 });
+          { ...viewportTransition(), duration: resized ? viewportTransition().duration : 0 });
       });
     });
     observer.observe(frame);
@@ -102,8 +109,7 @@ function ReadingScale({ nodes, initialReading }: { nodes: ProjectionNode[]; init
     if (!frame || !nodes.length) return;
     const value=readingViewport(nodes,frame.width);
     if(!value) return;
-    void setViewport(value,
-      { duration: matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 350 });
+    void setViewport(value, viewportTransition());
   }}>阅读尺寸<ArrowUpRight size={13} /></button></Panel>;
 }
 
@@ -199,17 +205,17 @@ export function Canvas({ highlightId, projection, onNode, onInfo, onRelation, on
     const byId = new Map(positioned.map(node => [node.id, node]));
     return (layout?.relations || []).filter(relation => relation.from !== relation.to || byId.get(relation.from)?.kind === 'function').map(relation => ({ id: relation.id, source: relation.from, target: relation.to,
       ariaLabel: `${byId.get(relation.from)?.label} → ${byId.get(relation.to)?.label}，查看调用证据`,
-      type: 'routed', markerEnd: { type: MarkerType.ArrowClosed, color: graphTheme.edge }, data: { from: byId.get(relation.from), to: byId.get(relation.to), points: relation.points, label: projection.relations.find(item=>item.id===relation.id)?.label || relation.label, dimmed: !!preview && relation.from !== preview.id && relation.to !== preview.id,
+      type: 'routed', markerEnd: { type: MarkerType.ArrowClosed, color: 'var(--graph-edge)' }, data: { from: byId.get(relation.from), to: byId.get(relation.to), points: relation.points, label: projection.relations.find(item=>item.id===relation.id)?.label || relation.label, dimmed: !!preview && relation.from !== preview.id && relation.to !== preview.id,
         open: () => onRelation(projection.relations.find(item => item.id === relation.id) || relation) } }));
   }, [positioned, layout, projection, onRelation, preview?.id]);
   if (!layout || layoutStructure !== structure) return <div className="canvas-loading"><span className="spinner" />正在组织架构布局…</div>;
-  return <ReactFlowProvider><ReactFlow key={structure} nodes={nodes} edges={edges} nodeTypes={nodeTypes} edgeTypes={edgeTypes}
+  return <ReactFlowProvider><ReactFlow key={structure} nodes={nodes} edges={edges} nodeTypes={nodeTypes} edgeTypes={edgeTypes} style={graphThemeVariables as CSSProperties}
     onNodeClick={(_, node) => onNode(node.data.node)} onEdgeClick={(_, edge) => { const relation = projection.relations.find(item => item.id === edge.id); if (relation) onRelation(relation); }}
     fitView={!viewport && nodes.length <= 200} defaultViewport={viewport} fitViewOptions={fitOptions}
     onlyRenderVisibleElements={nodes.length > 200}
     nodesDraggable={false} nodesConnectable={false} nodesFocusable={false} elementsSelectable={false} minZoom={.001} maxZoom={2}
-    onMoveEnd={(_, value) => onViewport(value)} deleteKeyCode={null} colorMode="light" ariaLabelConfig={{ 'controls.ariaLabel': '画布控制', 'controls.zoomIn.ariaLabel': '放大', 'controls.zoomOut.ariaLabel': '缩小', 'controls.fitView.ariaLabel': '适应画布' }}>
-    <Background color="#d7dee8" gap={22} size={.8} /><Controls showInteractive={false} fitViewOptions={fitOptions} />
+    onMoveEnd={(_, value) => onViewport(value)} deleteKeyCode={null} colorMode="system" ariaLabelConfig={{ 'controls.ariaLabel': '画布控制', 'controls.zoomIn.ariaLabel': '放大', 'controls.zoomOut.ariaLabel': '缩小', 'controls.fitView.ariaLabel': '适应画布' }}>
+    <Background color="var(--graph-dot)" gap={22} size={.8} /><Controls showInteractive={false} fitViewOptions={fitOptions} />
     <ReadingScale nodes={positioned} initialReading={!viewport && nodes.length>200} />
     <Panel position="top-left"><div className="graph-view-options">{projection.nodes.some(node => node.kind === 'function') ? <span>{projection.relations.some(relation => relation.label === '接口协作' || relation.label === '协作关系') ? '函数与接口关系' : '函数调用图'} · 全部确认关系</span> : <>
       <label htmlFor="dependency-mode">依赖</label><select id="dependency-mode" value={dependencyMode} onChange={event => onDependencyMode(event.target.value as 'primary' | 'all')}><option value="primary">主要协作</option><option value="all">全部确认依赖</option></select>
