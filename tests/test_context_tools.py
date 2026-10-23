@@ -154,6 +154,7 @@ def test_checkpoint_batch_merge_preserves_validated_other_file_evidence(tmp_path
         result.explanations = [FunctionExplanation(entity_id=entity.id, summary='返回数值。', details='返回固定数值。',
             evidence=[{'path': 'a.py', 'start_line': entity.location.start_line, 'end_line': entity.location.end_line},
                       {'path': 'constants.py', 'start_line': 1, 'end_line': 1}])]
+        result._source_ranges = {'a.py': (entity.location.start_line, entity.location.end_line)}
         parts.append(result)
     # 检查点原批次已校验补读；新规划将两批合并，不能丢弃原证据或扩张模块归属。
     saved = Provider(tmp_path)._align_completed_batches(parts,

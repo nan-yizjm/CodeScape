@@ -337,6 +337,64 @@ def test_source_feedback_contains_only_trusted_ids_and_numeric_ranges():
     assert identifier in allowed and 'allowed_entity_ids' in allowed and 'secret-input' not in allowed
 
 
+@pytest.mark.parametrize('problem', ['duplicate', 'outside_batch'])
+def test_explanation_repair_keeps_scope_validation_and_gives_actionable_feedback(tmp_path, monkeypatch, problem):
+    from codescape.analyzers import python_analysis
+    from codescape.models import Architecture, FunctionExplanation, Module, Overview
+    from codescape.provider import validate_architecture
+    files = {'owned.py': 'def first(): return 1\ndef second(): return 2\n'}
+    analysis = python_analysis(files, 'fixed')
+    first, second = analysis.entities
+    note = FunctionExplanation(entity_id=first.id, summary='返回常量。', details='固定响应样例。',
+        evidence=[{'path': 'owned.py', 'start_line': 1, 'end_line': 1}])
+    valid = Architecture(modules=[Module(id='m', name='常量', summary='提供数值。',
+        entity_ids=[first.id], code_paths=['owned.py'])], explanations=[note],
+        overview=Overview(introduction='人工样例。', principle='返回常量。', capabilities=['返回数值'], limitations=[]))
+    received = []
+    def handler(request):
+        received.append(json.loads(request.content))
+        reply = valid.model_copy(deep=True)
+        if len(received) == 1:
+            reply.explanations.append(note.model_copy(update={
+                'entity_id': first.id if problem == 'duplicate' else second.id}))
+        return httpx.Response(200, json=document(reply.model_dump_json()))
+    def checked(value):
+        architecture = Architecture.model_validate(value)
+        validate_architecture(architecture, analysis, set(files), {first.id})
+        return architecture
+    database, provider, ledger = configured(tmp_path, monkeypatch, handler)
+    result, _ = asyncio.run(provider.structured('schema', 'context', checked))
+    assert len(received) == 2 and result == valid
+    assert {item['status'] for item in ledger.summary()['records']} == {'failed', 'success'}
+    feedback = received[1]['messages'][0]['content']
+    assert '每个函数最多一条讲解' in feedback and '非本批讲解' in feedback
+    assert first.id in feedback and second.id not in feedback
+    database.engine.dispose()
+
+
+def test_code_read_repair_states_inclusive_limit_and_keeps_original_guard(tmp_path, monkeypatch):
+    from codescape.analyzers import python_analysis
+    from codescape.context_tools import ReadRequest, SnapshotTools
+    from codescape.provider import validation_feedback
+    files = {'owned.py': 'VALUE = 1\n' * 201}
+    reader = SnapshotTools(python_analysis(files, 'fixed'), files)
+    received = []
+    def handler(request):
+        received.append(json.loads(request.content))
+        reply = {'kind': 'code', 'reference': {'path': 'owned.py', 'start_line': 1,
+                 'end_line': 201 if len(received) == 1 else 200}}
+        return httpx.Response(200, json=document(json.dumps(reply)))
+    database, provider, _ = configured(tmp_path, monkeypatch, handler)
+    result, _ = asyncio.run(provider.structured('schema', 'context',
+        lambda value: reader.read([ReadRequest.model_validate(value)])))
+    assert len(received) == 2 and result[0]['end_line'] == 200
+    assert reader.read_ranges == {'owned.py': [(1, 200)]}
+    assert 'end_line - start_line + 1 最多200行' in received[1]['messages'][0]['content']
+    assert '20000字符' in validation_feedback(ValueError('补读片段超过保护上限'))
+    assert '80000字符' in validation_feedback(ValueError('补读总量超过保护上限'))
+    database.engine.dispose()
+
+
 def test_transport_and_repairs_never_exceed_six_sends(tmp_path, monkeypatch):
     calls = []
     def handler(request):

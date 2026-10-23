@@ -397,9 +397,11 @@ def test_ai_analysis_resumes_from_last_checkpoint(client, monkeypatch):
     async def fake_architecture(self, analysis, files, on_progress=None, on_batch=None, completed_batches=None):
         resumed_count = len(completed_batches or [])
         calls.append(resumed_count)
+        architecture._source_ranges = {path: (1, max(1, len(text.splitlines()))) for path, text in files.items()}
         if not resumed_count:
             await on_batch(1, 2, architecture)
             raise ProviderError("模拟第 1 批中断")
+        assert completed_batches[0]._source_ranges == architecture._source_ranges
         await on_batch(2, 2, architecture)
         return architecture, {"total_tokens": 2}
 
@@ -414,6 +416,22 @@ def test_ai_analysis_resumes_from_last_checkpoint(client, monkeypatch):
     assert current["status"] == "paused"
     checkpoint = client.app.state.root / "projects" / project["id"] / "architecture-checkpoint.json"
     assert checkpoint.exists()
+    saved = json.loads(checkpoint.read_text(encoding='utf-8'))
+    assert saved['batches'][0]['checkpoint_format'] == 1
+    assert saved['batches'][0]['source_ranges']
+    corrupt = json.loads(json.dumps(saved))
+    corrupt['batches'][0]['source_ranges'] = {'owned.py': [5, 1]}
+    checkpoint.write_text(json.dumps(corrupt), encoding='utf-8')
+    assert client.post(url + '/analyze', json={}).status_code == 200
+    deadline = time.monotonic() + 5
+    while time.monotonic() < deadline:
+        current = client.get(url).json()['data']
+        if current['status'] == 'paused' and '无法安全读取' in (current['error'] or ''):
+            break
+        time.sleep(0.05)
+    assert '无法安全读取' in current['error'] and calls == [0]
+    assert json.loads(checkpoint.read_text(encoding='utf-8')) == corrupt
+    checkpoint.write_text(json.dumps(saved), encoding='utf-8')
     assert client.post(url + "/analyze", json={}).status_code == 200
     deadline = time.monotonic() + 5
     while time.monotonic() < deadline:
@@ -506,10 +524,13 @@ def test_checkpoint_alignment_merges_dynamic_subbatches(tmp_path):
     overview = Overview(introduction="项目", capabilities=["能力"], principle="原理", limitations=[])
 
     def result(name, entities, path):
-        return Architecture(
+        value = Architecture(
             modules=[Module(id=name, name=name, summary="职责", entity_ids=[entity.id for entity in entities], code_paths=[path])],
             overview=overview,
         )
+        value._source_ranges = {path: (min(entity.location.start_line for entity in entities),
+                                      max(entity.location.end_line for entity in entities))}
+        return value
 
     batches = [
         ({"a.py": files["a.py"]}, {"a.py": (1, 2)}),

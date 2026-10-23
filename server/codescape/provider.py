@@ -137,6 +137,17 @@ def validation_feedback(error: ValueError) -> str:
     message = str(error)
     if message not in SAFE_VALIDATION_MESSAGES:
         return '模型结果不满足校验契约。'
+    read_repairs = {
+        '补读范围超过保护上限': ('code 补读的 start_line/end_line 必须位于已授权文件的实际行数内；'
+                       '每项 end_line - start_line + 1 最多200行。先缩小到需要的实现片段，'
+                       '不要猜测文件末行，不要重复提交原范围。'),
+        '补读片段超过保护上限': ('每项 code 补读最多20000字符；即使不足200行也可能超限。'
+                       '缩小为更短的必要片段，不要重复提交原范围。'),
+        '补读总量超过保护上限': ('全单元补读总量最多80000字符，包含元数据；已完成的补读计入累计用量。'
+                       '减少后续请求，只请求缺少的必要依据；依据仍不足时保留未完成，不猜测实现。'),
+    }
+    if message in read_repairs:
+        return message + '。修复要求：' + read_repairs[message]
     if isinstance(error, SourceContractError):
         details = {}
         if isinstance(error.identifier, str) and re.fullmatch(r'[a-f0-9-]{16,36}', error.identifier):
@@ -160,6 +171,13 @@ def validation_feedback(error: ValueError) -> str:
                                         '父模块 entity_ids 为空。只使用本批 entities 的原始ID，'
                                         '不要把候选目标、相关函数或补读实体加入本批归属集合。'
                                         '保留有依据的职责与讲解；不能用虚构实体填补缺口。')
+        if message == "讲解实体不唯一或不属于当前范围。":
+            details['repair_action'] = ('explanations 的 entity_id 只能使用本批 entities 中的原始ID，'
+                                        '每个函数最多一条讲解；同一函数的多段说明合入该条 details 和 evidence。'
+                                        '移除仅出现在 related_entities、candidate_entities 或补读中的非本批讲解，'
+                                        '相应源码确已提供时仍可作为补充依据，元数据不能替代源码；'
+                                        '不要为通过校验改换ID、虚构函数或扩大本批归属集合。'
+                                        '保留其余有效讲解及真实引用；无法可靠解释时保留未完成。')
         if message == "函数讲解缺少实现自身的依据":
             details['repair_action'] = ('为该 entity_or_call_id 提供至少一条 evidence，'
                                         'start_line 和 end_line 必须都落在 implementation_lines 内，'
@@ -780,7 +798,54 @@ class Provider:
                                                allow_merge=False)
         remaining = self._compact_batches(analysis, base[len(prefix):])
         small_prefix = self._align_completed_batches(completed_batches, remaining, analysis, set(files), files=files)
+        # 根据实际已完成范围重建动态拆分，避免把同一函数的前半误当完整实现。
+        # 旧检查点只在实体与文件集合可唯一识别子批时兼容恢复。
+        while completed_batches and len(small_prefix) < len(remaining):
+            index = len(small_prefix)
+            smaller = self._checkpoint_prefix_split(*remaining[index], completed_batches)
+            if not smaller:
+                smaller = self._split_batch(*remaining[index])
+                if len(smaller) != 2:
+                    break
+                identifiers = [self._context(analysis, source, ranges)[1] for source, ranges in smaller]
+                shared_paths = set(smaller[0][0]) & set(smaller[1][0])
+                if identifiers[0] & identifiers[1] or shared_paths and not all(identifiers):
+                    break
+            candidate = remaining[:index] + smaller + remaining[index + 1:]
+            restored = self._align_completed_batches(completed_batches, candidate, analysis, set(files), files=files)
+            if len(restored) <= len(small_prefix):
+                break
+            remaining, small_prefix = candidate, restored
         return base[:len(prefix)] + remaining, prefix + small_prefix
+
+    @staticmethod
+    def _checkpoint_prefix_split(batch_files, batch_ranges, completed_batches):
+        """只按已保存的连续前缀切分；不跳过未完成的文件或行。"""
+        for result in completed_batches:
+            saved = result._source_ranges
+            if not saved or not set(saved).issubset(batch_ranges):
+                continue
+            first_files, first_ranges, rest_files, rest_ranges = {}, {}, {}, {}
+            at_remainder, valid = False, True
+            for path, text in batch_files.items():
+                start, end = batch_ranges[path]
+                if path not in saved:
+                    at_remainder = True
+                    rest_files[path], rest_ranges[path] = text, (start, end)
+                    continue
+                saved_start, saved_end = saved[path]
+                if at_remainder or saved_start != start or saved_end > end:
+                    valid = False
+                    break
+                lines = text.splitlines(keepends=True) or ['']
+                length = saved_end - start + 1
+                first_files[path], first_ranges[path] = ''.join(lines[:length]), (start, saved_end)
+                if saved_end < end:
+                    at_remainder = True
+                    rest_files[path], rest_ranges[path] = ''.join(lines[length:]), (saved_end + 1, end)
+            if valid and first_files and rest_files:
+                return [(first_files, first_ranges), (rest_files, rest_ranges)]
+        return []
 
     async def _progress(self, callback: ProgressCallback | None, completed: int, total: int, detail: str) -> None:
         if callback:
@@ -914,20 +979,42 @@ class Provider:
         files: dict[str, str] | None = None,
         allow_merge: bool = True,
     ) -> list[Architecture]:
-        """按实体集合恢复检查点，避免动态拆批后仅按数量造成错位。"""
+        """按实际源码范围恢复，旧检查点仅兼容不可再拆的单文件单行单元。"""
         assigned_sets = [
             {entity_id for module in result.modules for entity_id in module.entity_ids}
             for result in completed_batches
         ]
+        try:
+            for result, assigned in zip(completed_batches, assigned_sets, strict=True):
+                ranges = result._source_ranges
+                if ranges is None:
+                    continue
+                if not isinstance(ranges, dict) or not ranges or any(
+                    not isinstance(path, str) or not isinstance(bounds, (tuple, list)) or len(bounds) != 2
+                    or any(type(line) is not int for line in bounds) or not 1 <= bounds[0] <= bounds[1]
+                    for path, bounds in ranges.items()
+                ):
+                    raise ValueError('检查点的源码范围无效。')
+                if files is not None:
+                    if any(path not in files or end > max(1, len(files[path].splitlines()))
+                           for path, (_, end) in ranges.items()):
+                        raise ValueError('检查点的源码范围超出当前快照。')
+                    source = {path: ''.join((files[path].splitlines(keepends=True) or [''])[start - 1:end])
+                              for path, (start, end) in ranges.items()}
+                    if self._context(analysis, source, ranges)[1] != assigned:
+                        raise ValueError('检查点的实体与实际源码范围不一致。')
+        except (TypeError, ValueError):
+            raise ProviderError('源码检查点的实际范围无效或与实体不一致，原记录保留；本次没有重新发送这些批次。') from None
         if files is not None:
-            source_ranges = {path: [(1, len(text.splitlines()))] for path, text in files.items()}
+            source_ranges = {path: [(1, max(1, len(text.splitlines())))] for path, text in files.items()}
             visible = {entity.id for entity in analysis.entities if entity.visible}
             call_ids = {call.id for call in analysis.calls}
             try:
                 for result, assigned in zip(completed_batches, assigned_sets, strict=True):
                     if not assigned.issubset(visible):
                         raise ValueError('旧检查点包含当前快照之外的实体。')
-                    validate_architecture(result, analysis, set(files), expected_entity_ids=assigned)
+                    validate_architecture(result, analysis, set(result._source_ranges or files),
+                                          expected_entity_ids=assigned, evidence_paths=set(files))
                     validate_explanations(result, analysis, assigned, files, source_ranges)
                     validate_judgments(result, analysis, call_ids, files, source_ranges)
                     validate_primary_dependencies(result, analysis, call_ids)
@@ -937,6 +1024,14 @@ class Provider:
                          for batch_files, batch_ranges in batches]
         candidates: list[list[int]] = [[] for _ in batches]
         for result_index, entity_ids in enumerate(assigned_sets):
+            saved_ranges = completed_batches[result_index]._source_ranges
+            if saved_ranges is not None:
+                matches = [batch_index for batch_index, (_, ranges) in enumerate(batches)
+                           if all(path in ranges and ranges[path][0] <= start <= end <= ranges[path][1]
+                                  for path, (start, end) in saved_ranges.items())]
+                if len(matches) == 1:
+                    candidates[matches[0]].append(result_index)
+                continue
             if not entity_ids:
                 # 仅有可读源码的模块也是真实完成单元；用唯一文件集合定位，不能按空集匹配所有批次。
                 paths = {path for module in completed_batches[result_index].modules for path in module.code_paths}
@@ -945,7 +1040,8 @@ class Provider:
                     if not paths or not paths.issubset(batch_files):
                         continue
                     expected = expected_sets[batch_index]
-                    if not expected:
+                    readable = set(batch_files).intersection(analysis.readable_paths)
+                    if not expected and readable.issubset(paths):
                         matches.append(batch_index)
                 if len(matches) == 1:
                     candidates[matches[0]].append(result_index)
@@ -960,22 +1056,54 @@ class Provider:
                 candidates[batch_index].append(result_index)
         aligned: list[Architecture] = []
         for batch_index, result_indices in enumerate(candidates):
-            batch_files, _ = batches[batch_index]
+            batch_files, batch_ranges = batches[batch_index]
             expected = expected_sets[batch_index]
             if not result_indices:
                 break
+            verified = [index for index in result_indices if completed_batches[index]._source_ranges is not None]
+            if verified:
+                # 新结果已覆盖的范围优先；旧的歧义记录不能使它再次失效。
+                result_indices = verified
             if not allow_merge and len(result_indices) != 1:
                 break
             group = [completed_batches[index] for index in result_indices]
             union = {entity_id for result in group for module in result.modules for entity_id in module.entity_ids}
             if union != expected:
                 break
-            aligned.append(
+            actual_ranges = [result._source_ranges for result in group]
+            if all(ranges is not None for ranges in actual_ranges):
+                complete = True
+                for path, (start, end) in batch_ranges.items():
+                    cursor = start
+                    for left, right in sorted(ranges[path] for ranges in actual_ranges if path in ranges):
+                        if left > cursor:
+                            break
+                        cursor = max(cursor, right + 1)
+                    if cursor <= end:
+                        complete = False
+                        break
+                if not complete:
+                    break
+            elif any(ranges is not None for ranges in actual_ranges):
+                # 不把无范围的旧结果用于填补新检查点未覆盖的行。
+                break
+            else:
+                paths = {path for result in group for module in result.modules for path in module.code_paths}
+                if paths != set(batch_files):
+                    break
+                if self._split_batch(batch_files, batch_ranges):
+                    # 旧实体/路径集合不能证明常量或配置行是否全部处理过，
+                    # 即使多个旧片段合起来已覆盖全部函数，也不能推定行覆盖。
+                    break
+            restored = (
                 group[0]
                 if len(group) == 1
                 else merge_architectures(group, len(group), analysis, set(batch_files), expected,
                                          evidence_paths=evidence_paths)
             )
+            if all(ranges is not None for ranges in actual_ranges):
+                restored._source_ranges = dict(batch_ranges)
+            aligned.append(restored)
         return aligned
 
     async def architecture(
@@ -1049,6 +1177,7 @@ class Provider:
                         continue
                     raise ProviderError("本批输出截断后的单次拆分仍未完成，已暂停并保留检查点。") from None
                 raise
+            architecture._source_ranges = dict(batch_ranges)
             results.append(architecture)
             for key, value in usage.items():
                 if isinstance(value, (int, float)):

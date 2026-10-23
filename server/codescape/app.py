@@ -19,6 +19,7 @@ from . import __version__
 from .ai_process import run_architecture
 from .analyzers import REPOSITORY, analyze, stable_id
 from .call_judgments import reconcile_judgments, validate_judgments
+from .checkpoints import dump_checkpoint, load_checkpoint
 from .context_tools import validate_explanations
 from .database import Database, now
 from .deletion import ProjectDeletion
@@ -823,11 +824,11 @@ def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=
                             and compatible_source_checkpoint(saved)
                             and saved.get('provider_config') == model_config
                         ):
-                            checkpoint = [Architecture.model_validate(item) for item in saved.get("batches", [])]
+                            checkpoint = [load_checkpoint(item) for item in saved.get("batches", [])]
                             if checkpoint:
                                 source_generations = checkpoint_source_generations(saved)
                     except (OSError, ValueError, TypeError):
-                        checkpoint = []
+                        raise ProviderError('源码检查点无法安全读取，原记录保留；请检查文件或取消旧任务后重新分析。') from None
                 if checkpoint:
                     database.analysis_progress(
                         project_id,
@@ -866,7 +867,7 @@ def create_app(root: Path | None = None, nonce: str | None = None, on_idle_exit=
                                 "source_pipeline_version": SOURCE_PIPELINE_VERSION,
                                 "source_generation_versions": sorted(saved_generations),
                                 "provider_config": model_config,
-                                "batches": [item.model_dump() for item in saved_batches],
+                                "batches": [dump_checkpoint(item) for item in saved_batches],
                             },
                             handle, ensure_ascii=False,
                         )

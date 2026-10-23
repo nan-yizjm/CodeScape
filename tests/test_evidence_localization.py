@@ -163,6 +163,7 @@ def test_existing_checkpoint_must_pass_strict_revalidation_and_is_not_silently_l
     architecture, analysis, files, _, _ = fixture()
     provider = Provider(tmp_path)
     batches = provider._plan_batches(analysis, files)
+    architecture._source_ranges = dict(batches[0][1])
     with pytest.raises(ProviderError, match='旧源码检查点未通过'):
         provider._align_completed_batches([architecture], batches, analysis, set(files), files=files)
     architecture.explanations[0].evidence[0].start_line = 2
