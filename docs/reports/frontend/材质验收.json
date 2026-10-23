@@ -1,0 +1,322 @@
+{
+  "date": "2026-10-23",
+  "branch": "codex/frontend-material-system",
+  "automated": {
+    "frontend_tests": 53,
+    "backend_tests": 497,
+    "typecheck": "通过",
+    "build": "通过",
+    "diff_check": "通过",
+    "existing_warnings": [
+      "SourceReader分块大于500kB",
+      "Starlette TestClient弃用提示"
+    ]
+  },
+  "model_requests": 0,
+  "normal_text_min_contrast": {
+    "light": 4.657535276794659,
+    "dark": 5.98150789384688
+  },
+  "screenshots": [
+    "before-library-1440.png",
+    "after-library-1440.png",
+    "before-workspace-1440.png",
+    "after-workspace-1440.png",
+    "after-workspace-dark-1440.png",
+    "after-source-390-short.png"
+  ],
+  "visual": {
+    "date": "2026-10-23",
+    "fixture": "新建隔离数据目录；两个人工预置项目与一版人工历史；没有真实用户数据或密钥",
+    "model_requests": 0,
+    "baseline_viewport": [
+      1440,
+      1000
+    ],
+    "baseline_screenshots": [
+      "before-library-1440.png",
+      "before-workspace-1440.png",
+      "before-details-1440.png",
+      "before-settings-1440.png"
+    ],
+    "responsive": {
+      "widths": [
+        320,
+        390,
+        800,
+        1200,
+        1440,
+        1920
+      ],
+      "pages": [
+        "项目库",
+        "工作区",
+        "AI服务设置"
+      ],
+      "document_horizontal_overflow": false,
+      "additional": [
+        "详情1440x1000",
+        "详情390x700"
+      ]
+    },
+    "computed_styles": {
+      "light_focus": {
+        "outline_style": "none",
+        "box_shadow": "inset 0 0 0 1px rgb(170,169,157), 0 0 0 3px rgba(36,36,34,.12)"
+      },
+      "dark_focus": {
+        "outline_style": "none",
+        "box_shadow": "inset 0 0 0 1px rgb(136,136,125), 0 0 0 3px rgba(236,236,232,.17)"
+      },
+      "font_weights_light_dark": [
+        [
+          400,
+          360
+        ],
+        [
+          500,
+          460
+        ],
+        [
+          600,
+          560
+        ],
+        [
+          650,
+          610
+        ],
+        [
+          700,
+          660
+        ]
+      ],
+      "inline_icon_alignment": "-1.75px at 14px font (-.125em)",
+      "numbers": "tabular-nums",
+      "paragraph": "text-wrap:pretty"
+    },
+    "visual_review": {
+      "desktop_light": "项目库、全景、详情、设置已目检；表面分层、层级、留白清晰",
+      "desktop_dark": "工作区、源码、设置已目检；实体背景完整，源码语法与高亮可辨",
+      "mobile": "320与390页面无文档横向溢出，设置弹窗可见保存入口"
+    },
+    "pending_findings": [],
+    "known_environment_event": "多个独立浏览器操作同一人工项目workspaces/single出现一次409保存冲突；服务准确检测了并发冲突，不是渲染错误",
+    "status": "通过；已修复短屏源码被压缩和统计标签孤字",
+    "resolved_findings": [
+      {
+        "issue": "390x700短屏源码区域被压为0px",
+        "details": "workspace chrome394px + tools79px；detail panel162px，source reader0px",
+        "reported_to": "root",
+        "screenshot": "after-source-390-short.png",
+        "resolution": "窄屏详情浮层覆盖工作区；320/390/800×700实测detail636px、source463.4px，笔记185px完整可达。"
+      },
+      {
+        "issue": "320宽统计标签末字孤立",
+        "details": "已识别函数被分为4+1字；建议text-wrap:balance",
+        "screenshot": "after-library-320.png",
+        "resolution": "统计标签text-wrap:balance，320宽已识别/函数3+2字，无末字孤立。"
+      }
+    ],
+    "short_viewports": {
+      "height": 700,
+      "document_horizontal_overflow": false,
+      "widths": [
+        320,
+        390,
+        800
+      ],
+      "panel_height": 636,
+      "source_height": 463.4,
+      "note_height": 185.1
+    },
+    "embedded_compare": {
+      "left_right_independent": true,
+      "document_horizontal_overflow": false,
+      "panel_top": 0,
+      "frame_height": 501,
+      "panel_height": 501.33,
+      "mobile_size": [
+        390,
+        700
+      ],
+      "source_height": 328.74
+    },
+    "long_text_zoom": {
+      "long_chinese_description": true,
+      "size": [
+        1440,
+        1000
+      ],
+      "scroll_width": 1425,
+      "modification": "仅临时浏览器DOM，不保存到项目；检查后恢复",
+      "viewport_width": 1440,
+      "document_horizontal_overflow": false,
+      "type": "CSS zoom 125%，非原生浏览器/操作系统缩放",
+      "long_chinese_title": true
+    },
+    "short_modal": {
+      "save_button_height": 40.83,
+      "save_button_top": 361.42,
+      "size": [
+        390,
+        500
+      ],
+      "modal_height": 476,
+      "scroll_height": 871,
+      "save_reachable": true
+    }
+  },
+  "core_flows": {
+    "date": "2026-10-23",
+    "checks": [
+      "展开模块与函数可达",
+      "同级模块恢复",
+      "收起回到项目全景并保留依赖",
+      "全屏展开",
+      "Esc退出全屏",
+      "搜索跨层定位并打开详情",
+      "笔记与学习状态刷新恢复",
+      "只读源码与目标行高亮",
+      "详情返回",
+      "架构编辑折叠内容可达",
+      "架构预览校验",
+      "版本历史可读",
+      "阅读指引可达",
+      "对比两侧层级互不影响",
+      "窄屏对比切换"
+    ],
+    "model_requests": 0
+  },
+  "interactions": {
+    "date": "2026-10-23",
+    "fixture": "隔离人工样例，无模型请求",
+    "browser": "Playwright Chromium / material-interactions / http://127.0.0.1:8157",
+    "results": [
+      {
+        "name": "复制签名与当前快照一致",
+        "passed": true
+      },
+      {
+        "name": "复制确认2.5s淡出并恢复",
+        "passed": true,
+        "fade_after_ms": 2512.7,
+        "idle_after_ms": 2682.4
+      },
+      {
+        "name": "复制失败不误报成功且原文仍在",
+        "passed": true
+      },
+      {
+        "name": "失败后可以重试",
+        "passed": true
+      },
+      {
+        "name": "复制源码片段包含目标函数",
+        "passed": true
+      },
+      {
+        "name": "折叠为0fr且隐藏内容inert",
+        "passed": true,
+        "height": 0,
+        "aria_hidden": true
+      },
+      {
+        "name": "Enter展开为Grid且内容可访问",
+        "passed": true,
+        "height": 103.375,
+        "inert": false
+      },
+      {
+        "name": "Space收起恢复inert及触发器焦点",
+        "passed": true,
+        "height": 0,
+        "inert": true
+      },
+      {
+        "name": "减少动画时折叠无过渡",
+        "passed": true,
+        "duration": "0s"
+      },
+      {
+        "name": "新到达反馈90ms逐字blur6到0",
+        "passed": true,
+        "duration": "0.09s",
+        "easing": "cubic-bezier(0.215, 0.61, 0.355, 1)",
+        "blur_from": "6px",
+        "blur_to": "0px"
+      },
+      {
+        "name": "减少动画下新反馈直接显示",
+        "passed": true
+      }
+    ],
+    "notes": [
+      "本轮使用SVG导出产生真实新到达通知，未触发模型或修改学习状态、笔记。",
+      "首次固定240ms等待在后台浏览器读取到未开始的过渡，改为等待真实Grid终态后通过。",
+      "重跑等待已有项目重新载入再操作层级，避免UI恢复与脚本选择同时发生。",
+      "多浏览器共用人工样例 single 工作区时出现一次 409 修订冲突，界面显示载入已保存记录，属于并发保护；验收后已关闭此独立会话。"
+    ],
+    "script": ".runtime/material-qa/interactions.cjs",
+    "screenshot": "output/playwright/material-system/after-interactions-1440.png"
+  },
+  "drag": {
+    "date": "2026-10-23",
+    "fixture": "隔离独立对比人工样例，无模型请求",
+    "browser": "Playwright Chromium / material-drag / http://127.0.0.1:8157",
+    "results": [
+      {
+        "name": "Home设置320px",
+        "passed": true
+      },
+      {
+        "name": "End设置650px",
+        "passed": true
+      },
+      {
+        "name": "右方向键直接收窄16px",
+        "passed": true
+      },
+      {
+        "name": "Shift+右方向键收窄40px",
+        "passed": true
+      },
+      {
+        "name": "握持反馈使用单调1200/80弹簧",
+        "passed": true,
+        "frames": 21,
+        "scale_from": 1,
+        "scale_to": 1.5
+      },
+      {
+        "name": "拖动内容宽度直接跟手",
+        "passed": true,
+        "initial_width": 594,
+        "pointer_delta": 90,
+        "final_width": 504
+      },
+      {
+        "name": "抬起后结束握持",
+        "passed": true
+      },
+      {
+        "name": "PointerCancel后不再修改宽度",
+        "passed": true
+      },
+      {
+        "name": "减少动画时握持直接进入目标状态",
+        "passed": true,
+        "animations": 0,
+        "transform": "matrix(1.5, 0, 0, 1, 0, 0)"
+      },
+      {
+        "name": "面板卸载移除拖拽入口",
+        "passed": true
+      }
+    ],
+    "script": ".runtime/material-qa/drag-handle.cjs",
+    "notes": [
+      "首次脚本取到同时存在的opacity过渡；改为检索transform关键帧后验证通过。",
+      "只操作独立人工样例的面板宽度，保留原320–650范围与工作区存储字段。"
+    ]
+  }
+}

@@ -1,0 +1,55 @@
+.disclosure { min-width: 0; }
+.disclosure > .disclosure-trigger {
+  display: flex; align-items: center; gap: 7px; width: 100%; padding: 10px 0;
+  color: var(--text); background: transparent; border: 0; text-align: left;
+  font-size: 12px; font-weight: var(--weight-medium, 500); cursor: pointer;
+}
+.disclosure-trigger > span { min-width: 0; overflow-wrap: anywhere; }
+.disclosure-trigger > svg { flex: 0 0 auto; transition: transform 200ms cubic-bezier(.215,.61,.355,1); }
+.disclosure[data-open="true"] > .disclosure-trigger > svg { transform: rotate(90deg); }
+.disclosure > .disclosure-grid { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 200ms cubic-bezier(.215,.61,.355,1); }
+.disclosure[data-open="true"] > .disclosure-grid { grid-template-rows: 1fr; }
+.disclosure-clip { min-height: 0; overflow: hidden; }
+.disclosure-content { padding: 2px 0 10px; }
+.disclosure-content > .disclosure { margin-top: 6px; }
+.overview-scope .disclosure p { font-size: 11px; line-height: 1.8; margin: 8px 0; }
+.import-preview .disclosure { margin-top: 10px; }
+.task-history .disclosure-content > div { display: flex; justify-content: space-between; gap: 12px; padding: 9px 0; }
+.task-history > .disclosure-grid { padding: 0; border: 0; gap: 0; }
+.request-usage > .disclosure-trigger { font-size: 14px; font-weight: var(--weight-semibold, 600); }
+.interaction-sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+.soft-reveal-character {
+  animation: character-arrive 90ms cubic-bezier(.215,.61,.355,1) both;
+  animation-delay: var(--reveal-delay); display: inline-block; white-space: pre;
+}
+@keyframes character-arrive { from { opacity: 0; filter: blur(6px); } to { opacity: 1; filter: blur(0); } }
+.copy-action { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 6px; min-width: 0; }
+.copy-action .copy-button {
+  display: grid; place-items: center; border: 0; border-radius: 8px; padding: 7px 9px;
+  background: var(--soft); color: var(--text); font-size: 11px; font-weight: var(--weight-medium, 500);
+  white-space: nowrap; cursor: pointer; min-height: 30px;
+}
+.copy-default, .copy-confirmation { grid-area: 1 / 1; display: inline-flex; align-items: center; gap: 5px; transition: opacity 160ms ease; }
+.copy-default.copy-hidden { opacity: 0; }
+.copy-confirmation { opacity: 0; pointer-events: none; }
+.copy-confirmation.copy-visible { opacity: 1; }
+.copy-confirmation.copy-fading { opacity: 0; }
+.copy-confirmation svg { transform-origin: center; }
+.copy-error { color: var(--danger); font-size: 11px; overflow-wrap: anywhere; max-width: 28em; }
+.detail-panel .source-file-heading { flex-wrap: wrap; row-gap: 7px; }
+.source-heading-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; justify-content: space-between; flex-basis: 100%; }
+.source-heading-path { overflow-wrap: anywhere; }
+.signature-actions { display: flex; justify-content: flex-end; margin: -4px 0 14px; }
+.panel-drag-handle { position: relative; user-select: none; }
+.panel-drag-grip {
+  position: absolute; top: 50%; left: 2px; margin-top: -18px; width: 2px; height: 36px;
+  border-radius: 2px; background: var(--muted); opacity: .55; transform: scaleX(1); transform-origin: center;
+  transition: opacity 180ms ease; pointer-events: none;
+}
+.panel-drag-handle:is(:hover, :focus-visible, [data-grabbed="true"]) .panel-drag-grip { opacity: 1; }
+.panel-drag-handle:focus-visible { outline: 0; box-shadow: inset 0 0 0 1px var(--focus-inner), 0 0 0 3px var(--focus-outer); z-index: 2; }
+@media (prefers-reduced-motion: reduce) {
+  .disclosure > .disclosure-grid, .disclosure-trigger > svg, .copy-default, .copy-confirmation { transition: none; }
+  .soft-reveal-character { animation: none; opacity: 1; filter: none; }
+  .panel-drag-grip { transition: none; }
+}

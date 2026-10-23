@@ -1,23 +1,6 @@
 import type { AggregateState, Module, Point, ProjectDetail, Projection, ProjectionNode, Relation } from './types';
-
-export const modulePalette = [
-  { background: '#eff4ff', border: '#c9d7f2', accent: '#385a98' },
-  { background: '#f4f0ff', border: '#d9cdf0', accent: '#6b4b98' },
-  { background: '#fff6e9', border: '#ecd5b4', accent: '#85571c' },
-  { background: '#edf7f2', border: '#c2dfd2', accent: '#28634c' },
-  { background: '#fff0f4', border: '#edccd7', accent: '#8f405e' },
-  { background: '#eef7fa', border: '#c5dfe8', accent: '#2f6478' },
-];
-
-// 画布与独立 SVG 使用同一组展示色，不影响关系或几何信息。
-export const graphTheme = {
-  background: '#f8fafc', edge: '#64748b', internalEdge: '#94a3b8',
-  ink: '#0f172a', muted: '#475569', nodeRadius: 16,
-};
-
-export function nodePalette(node: ProjectionNode) {
-  return modulePalette[(node.tone ?? 0) % modulePalette.length];
-}
+import { graphTheme, nodePalette } from './palette';
+export { graphTheme, nodePalette, modulePalette } from './palette';
 
 export function moduleEntities(module: Module, modules: Module[]): string[] {
   return [...new Set([...module.entity_ids, ...modules.filter(child => child.parent_id === module.id).flatMap(child => moduleEntities(child, modules))])];
@@ -518,7 +501,7 @@ export function exportSvg(projection: Projection, title: string): string {
     const path = edgePath(from, to, relation.points);
     const label = from.kind === 'module' && to.kind === 'module' ? relationLabelPoint(relation.points) : undefined;
     const internal = from.id === to.id;
-    return `<path d="${path}" fill="none" stroke="${graphTheme.background}" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/><path data-relation-id="${escapeXml(relation.id)}" d="${path}" fill="none" stroke="${internal ? graphTheme.internalEdge : graphTheme.edge}" stroke-width="${internal ? 1.2 : 1.5}" stroke-dasharray="${internal ? '4 4' : 'none'}" opacity="${internal ? .72 : .9}" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow)"/>${label ? `<rect x="${label.x - 27}" y="${label.y - 10}" width="54" height="20" rx="10" fill="#ffffff" stroke="#e2e8f0"/><text x="${label.x}" y="${label.y + 4}" text-anchor="middle" font-size="10" fill="${graphTheme.muted}">${escapeXml(relation.label || '调用协作')}</text>` : ''}`;
+    return `<path d="${path}" fill="none" stroke="${graphTheme.background}" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/><path data-relation-id="${escapeXml(relation.id)}" d="${path}" fill="none" stroke="${internal ? graphTheme.internalEdge : graphTheme.edge}" stroke-width="${internal ? 1.2 : 1.5}" stroke-dasharray="${internal ? '4 4' : 'none'}" opacity="${internal ? .72 : .9}" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow)"/>${label ? `<rect x="${label.x - 27}" y="${label.y - 10}" width="54" height="20" rx="10" fill="${graphTheme.surface}"/><text x="${label.x}" y="${label.y + 4}" text-anchor="middle" font-size="10" fill="${graphTheme.muted}">${escapeXml(relation.label || '调用协作')}</text>` : ''}`;
   }).join('');
   const textLines = (text: string, width: number, fontSize: number, limit: number): string[] => {
     const lines: string[] = []; let line = '', used = 0;
@@ -533,21 +516,21 @@ export function exportSvg(projection: Projection, title: string): string {
   };
   const shapes = nodes.map((node, index) => {
     const palette = nodePalette(node);
-    const color = node.kind === 'module' ? palette.background : '#ffffff';
+    const color = node.kind === 'module' ? palette.background : graphTheme.surface;
     const labelLines = textLines(node.label, node.width - 40, 16, 2);
     const descriptionY = 80 + Math.max(0, labelLines.length - 1) * 20;
     const textBottom = node.container ? 105 : node.height - 35;
     const description = textLines(node.description, node.width - 40, 13, Math.max(1, Math.floor((textBottom - descriptionY) / 20) + 1))
       .map((line, lineIndex) => `<tspan x="${node.x + 20}" dy="${lineIndex ? 20 : 0}">${escapeXml(line)}</tspan>`).join('');
     const label = labelLines.map((line, lineIndex) => `<tspan x="${node.x + 20}" dy="${lineIndex ? 20 : 0}">${escapeXml(line)}</tspan>`).join('');
-    return `<g data-node-id="${escapeXml(node.id)}"><title>${escapeXml(node.label)}</title><desc>${escapeXml(node.description)}</desc><defs><clipPath id="node-text-${index}"><rect x="${node.x + 20}" y="${node.y + 30}" width="${node.width - 40}" height="${textBottom - 25}"/></clipPath></defs><rect x="${node.x}" y="${node.y}" width="${node.width}" height="${node.height}" rx="${graphTheme.nodeRadius}" fill="${color}" stroke="${palette.border}"/>
+    return `<g data-node-id="${escapeXml(node.id)}"><title>${escapeXml(node.label)}</title><desc>${escapeXml(node.description)}</desc><defs><clipPath id="node-text-${index}"><rect x="${node.x + 20}" y="${node.y + 30}" width="${node.width - 40}" height="${textBottom - 25}"/></clipPath></defs><rect x="${node.x}" y="${node.y}" width="${node.width}" height="${node.height}" rx="${graphTheme.nodeRadius}" fill="${color}"/>
       <rect x="${node.x + 20}" y="${node.y + 19}" width="18" height="3" rx="1.5" fill="${palette.accent}"/>
       <text x="${node.x + 20}" y="${node.y + 52}" clip-path="url(#node-text-${index})" font-size="16" font-weight="600" fill="${graphTheme.ink}">${label}</text>
       <text x="${node.x + 20}" y="${node.y + descriptionY}" clip-path="url(#node-text-${index})" font-size="13" fill="${graphTheme.muted}">${description}</text>
       ${node.kind === 'module' && node.internalRelationCount ? `<text x="${node.x + 20}" y="${node.y + 132}" font-size="10" fill="${palette.accent}">内部依赖 ${node.internalRelationCount}</text>` : ''}
-      ${node.kind === 'function' && node.external ? `<text x="${node.x + 20}" y="${node.y + node.height - 15}" font-size="10" fill="#626b78">↗ 跨模块</text>` : ''}
-      <text x="${node.x + node.width - 20}" y="${node.y + (node.container ? 115 : node.height - 15)}" text-anchor="end" font-size="10" fill="#555555">${node.state === 'mastered' ? '已掌握' : node.state === 'in_progress' ? '学习中' : node.state === 'not_applicable' ? '不适用' : '未开始'}</text>
-      ${node.incomplete ? `<text x="${node.x + node.width - 22}" y="${node.y + 24}" fill="#9c6b32">!</text>` : ''}</g>`;
+      ${node.kind === 'function' && node.external ? `<text x="${node.x + 20}" y="${node.y + node.height - 15}" font-size="10" fill="${graphTheme.muted}">↗ 跨模块</text>` : ''}
+      <text x="${node.x + node.width - 20}" y="${node.y + (node.container ? 115 : node.height - 15)}" text-anchor="end" font-size="10" fill="${graphTheme.muted}">${node.state === 'mastered' ? '已掌握' : node.state === 'in_progress' ? '学习中' : node.state === 'not_applicable' ? '不适用' : '未开始'}</text>
+      ${node.incomplete ? `<text x="${node.x + node.width - 22}" y="${node.y + 24}" fill="${palette.accent}">!</text>` : ''}</g>`;
   }).join('');
   return `<?xml version="1.0" encoding="UTF-8"?><svg xmlns="http://www.w3.org/2000/svg" viewBox="${left} ${top} ${right - left} ${bottom - top}" role="img"><title>${escapeXml(title)}</title><defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 Z" fill="${graphTheme.edge}"/></marker></defs><rect x="${left}" y="${top}" width="${right - left}" height="${bottom - top}" fill="${graphTheme.background}"/><g font-family="Microsoft YaHei, PingFang SC, sans-serif">${shapes}${edges}</g></svg>`;
 }

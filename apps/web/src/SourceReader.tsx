@@ -1,11 +1,25 @@
 import { useEffect, useRef } from 'react';
 import { EditorState } from '@codemirror/state';
 import { EditorView, Decoration, lineNumbers, highlightActiveLineGutter } from '@codemirror/view';
-import { syntaxHighlighting, defaultHighlightStyle } from '@codemirror/language';
+import { syntaxHighlighting, defaultHighlightStyle, HighlightStyle } from '@codemirror/language';
 import { python } from '@codemirror/lang-python';
 import { cpp } from '@codemirror/lang-cpp';
 import { javascript } from '@codemirror/lang-javascript';
 import type { SourceFile, Location, ScrollPosition } from './types';
+import './canvas-material.css';
+
+// 复用 CodeMirror 已有语义标签，仅替换其固定浅色；CSS 切换外观不重建阅读位置。
+const syntaxColors: Record<string, string> = {
+  '#404740': 'var(--syntax-meta)', '#708': 'var(--syntax-keyword)', '#219': 'var(--syntax-number)',
+  '#164': 'var(--syntax-literal)', '#a11': 'var(--syntax-string)', '#e40': 'var(--syntax-string)',
+  '#00f': 'var(--syntax-function)', '#30a': 'var(--syntax-variable)', '#085': 'var(--syntax-type)',
+  '#167': 'var(--syntax-type)', '#256': 'var(--syntax-variable)', '#00c': 'var(--syntax-function)',
+  '#940': 'var(--syntax-comment)', '#f00': 'var(--syntax-invalid)',
+};
+const sourceHighlightStyle = HighlightStyle.define(defaultHighlightStyle.specs.map(spec => ({
+  ...spec, ...(spec.color ? { color: syntaxColors[String(spec.color)] || 'var(--ink)' } : {}),
+  ...(spec.fontWeight ? { fontWeight: 'var(--weight-bold)' } : {}),
+})));
 
 export function SourceReader({ file, location, position, onPosition }: { file: SourceFile; location: Location;
   position?: ScrollPosition; onPosition?: (position: ScrollPosition)=>void }) {
@@ -21,10 +35,11 @@ export function SourceReader({ file, location, position, onPosition }: { file: S
     const decoration = Decoration.set(end > start ? [Decoration.mark({ class: 'source-highlight' }).range(start, end)] : []);
     const view = new EditorView({ parent: element.current, state: EditorState.create({ doc: file.text, extensions: [
       EditorState.readOnly.of(true), EditorView.editable.of(false), lineNumbers(), highlightActiveLineGutter(),
-      syntaxHighlighting(defaultHighlightStyle), language, EditorView.decorations.of(decoration),
-      EditorView.theme({ '&': { height: '100%', fontSize: '13px', color: 'var(--ink)', backgroundColor: 'var(--surface)' }, '.cm-scroller': { overflow: 'auto', fontFamily: 'var(--font-code)', lineHeight: '1.8' },
-        '.cm-content': { padding: '16px 0' }, '.cm-gutters': { background: 'var(--soft)', borderRight: '1px solid var(--line)', color: 'var(--muted)' },
-        '.cm-line': { paddingLeft: '12px' }, '&.cm-focused': { outline: 'none' } }),
+      syntaxHighlighting(sourceHighlightStyle), language, EditorView.decorations.of(decoration),
+      EditorView.theme({ '&': { height: '100%', fontSize: '13px', fontWeight: 'var(--weight-regular)', color: 'var(--ink)', backgroundColor: 'var(--surface)' }, '.cm-scroller': { overflow: 'auto', fontFamily: 'var(--font-code)', lineHeight: '1.8', fontVariantNumeric: 'tabular-nums' },
+        '.cm-content': { padding: '16px 0' }, '.cm-gutters': { background: 'var(--soft)', borderRight: '0', color: 'var(--muted)' },
+        '.cm-line': { paddingLeft: '12px' }, '.cm-activeLineGutter': { color: 'var(--ink)', backgroundColor: 'var(--source-active-line)' },
+        '&.cm-focused': { outline: 'none' } }),
     ] }) });
     view.scrollDOM.tabIndex = 0;
     view.scrollDOM.setAttribute('role','region');

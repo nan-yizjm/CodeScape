@@ -1,0 +1,105 @@
+/* 材质语言：相邻中性表面以约 1–3% 明度区分，不靠装饰描边。 */
+:root {
+  color-scheme: light;
+  --font-ui: 'Segoe UI Variable', 'Segoe UI', 'Microsoft YaHei UI', 'Microsoft YaHei', sans-serif;
+  --font-code: 'Cascadia Code', Consolas, monospace;
+  --ink: #242422;
+  --text: #484843;
+  --muted: #6b6b65;
+  --soft: #f5f5f3;
+  --surface: #fcfcfb;
+  --chrome: #f8f8f6;
+  --surface-hover: #efefed;
+  --surface-pressed: #e8e8e5;
+  --canvas: #f2f2f0;
+  --emphasis: #242422;
+  --emphasis-hover: #383835;
+  --on-emphasis: #fcfcfb;
+  --line: transparent;
+  --line-strong: transparent;
+  --separator: #e7e7e3;
+  --focus: #73736a;
+  --focus-inner: #aaa99d;
+  --focus-outer: #2424221f;
+  --accent: #4d6358;
+  --accent-soft: #ecf2ee;
+  --info: #496080;
+  --info-soft: #edf0f5;
+  --warning: #805b26;
+  --warning-soft: #f7f1e6;
+  --danger: #9c424a;
+  --danger-soft: #f9edef;
+  --success: #39654f;
+  --success-soft: #eaf2ed;
+  --overlay: #24242242;
+  --glass: #fcfcfbef;
+  --shadow-xs: none;
+  --shadow-sm: 0 3px 12px #24242206;
+  --shadow-card: 0 4px 20px -8px #2424220a;
+  --shadow-glow: 0 12px 32px -12px #2424221a;
+  --shadow-floating: 0 18px 64px -20px #24242238;
+  --radius-button: 8px;
+  --radius-card: 16px;
+  --radius-modal: 20px;
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-heading: 650;
+  --weight-bold: 700;
+  --ease-out: cubic-bezier(.215, .61, .355, 1);
+  --duration: 180ms;
+  font-family: var(--font-ui);
+  font-size: 14px;
+  font-weight: var(--weight-regular);
+  font-variant-numeric: tabular-nums;
+  font-synthesis: none;
+  line-height: 1.5;
+  color: var(--ink);
+  background: var(--soft);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --ink: #ecece8;
+    --text: #c8c8c2;
+    --muted: #9d9d96;
+    --soft: #151515;
+    --surface: #1a1a19;
+    --chrome: #151515;
+    --surface-hover: #20201e;
+    --surface-pressed: #272724;
+    --canvas: #0b0b0a;
+    --emphasis: #e4e4df;
+    --emphasis-hover: #f3f3ee;
+    --on-emphasis: #20201e;
+    --separator: #30302d;
+    --focus: #b5b5ab;
+    --focus-inner: #88887d;
+    --focus-outer: #ecece82b;
+    --accent: #b3c6ba;
+    --accent-soft: #202a24;
+    --info: #b1c4e0;
+    --info-soft: #232933;
+    --warning: #dec28f;
+    --warning-soft: #30291e;
+    --danger: #edb1b5;
+    --danger-soft: #322326;
+    --success: #a9cfb7;
+    --success-soft: #202e26;
+    --overlay: #0b0b0a99;
+    --glass: #1a1a19ef;
+    --shadow-sm: 0 3px 12px #0b0b0a26;
+    --shadow-card: 0 4px 20px -8px #0b0b0a33;
+    --shadow-glow: 0 12px 32px -12px #0b0b0a66;
+    --shadow-floating: 0 18px 64px -20px #0b0b0acc;
+    /* 系统字体支持的范围内使用细分字重，避免白字显得过厚。 */
+    --weight-regular: 360;
+    --weight-medium: 460;
+    --weight-semibold: 560;
+    --weight-heading: 610;
+    --weight-bold: 660;
+  }
+}

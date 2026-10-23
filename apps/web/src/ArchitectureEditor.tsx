@@ -1,5 +1,6 @@
 import {useState} from 'react';
 import {api} from './api';
+import {Disclosure} from './InteractionPrimitives';
 import {abstractModules} from './graph';
 import type {Module, ProjectDetail} from './types';
 
@@ -55,12 +56,12 @@ export function ArchitectureEditor({project,onSaved}: {project:ProjectDetail;onS
     {current && <><label>模块名称<input maxLength={80} value={current.name} onChange={e=>update({name:e.target.value})}/></label>
       <label>职责说明<textarea maxLength={600} rows={3} value={current.summary} onChange={e=>update({summary:e.target.value})}/></label>
       <label>所属父模块<select value={current.parent_id || ''} onChange={e=>update({parent_id:e.target.value || null})}><option value="">项目顶层</option>{draft.filter(m=>m.id!==current.id && (!m.entity_ids.length || m.parent_id === current.id)).map(m=><option key={m.id} value={m.id}>{m.name}</option>)}</select></label>
-      {current.entity_ids.length>1 && <details><summary>拆分这个模块</summary><p>选择第一组函数，未选函数归入第二组。</p><div className="member-list">{current.entity_ids.map(id=><label key={id}><input type="checkbox" checked={members.includes(id)} onChange={e=>setMembers(e.target.checked ? [...members,id] : members.filter(n=>n!==id))}/>{project.analysis.entities.find(e=>e.id===id)?.qualified_name}</label>)}</div>
+      {current.entity_ids.length>1 && <Disclosure title="拆分这个模块"><p>选择第一组函数，未选函数归入第二组。</p><div className="member-list">{current.entity_ids.map(id=><label key={id}><input type="checkbox" checked={members.includes(id)} onChange={e=>setMembers(e.target.checked ? [...members,id] : members.filter(n=>n!==id))}/>{project.analysis.entities.find(e=>e.id===id)?.qualified_name}</label>)}</div>
         <label>第一组职责名称<input value={splitName} maxLength={80} onChange={e=>setSplitName(e.target.value)}/></label><label>第二组职责名称<input value={remainingName} maxLength={80} onChange={e=>setRemainingName(e.target.value)}/></label>
-        <button disabled={!members.length || members.length===current.entity_ids.length || !splitName.trim() || !remainingName.trim()} onClick={split}>加入拆分草稿</button></details>}
+        <button disabled={!members.length || members.length===current.entity_ids.length || !splitName.trim() || !remainingName.trim()} onClick={split}>加入拆分草稿</button></Disclosure>}
     </>}
-    <details><summary>合并同级模块</summary><div className="member-list">{leafs.map(m=><label key={m.id}><input type="checkbox" checked={mergeIds.includes(m.id)} onChange={e=>setMergeIds(e.target.checked ? [...mergeIds,m.id] : mergeIds.filter(id=>id!==m.id))}/>{m.name}</label>)}</div>
-      <label>合并后职责名称<input maxLength={80} value={mergeName} onChange={e=>setMergeName(e.target.value)}/></label><button disabled={mergeIds.length<2 || !mergeName.trim()} onClick={merge}>加入合并草稿</button></details>
+    <Disclosure title="合并同级模块"><div className="member-list">{leafs.map(m=><label key={m.id}><input type="checkbox" checked={mergeIds.includes(m.id)} onChange={e=>setMergeIds(e.target.checked ? [...mergeIds,m.id] : mergeIds.filter(id=>id!==m.id))}/>{m.name}</label>)}</div>
+      <label>合并后职责名称<input maxLength={80} value={mergeName} onChange={e=>setMergeName(e.target.value)}/></label><button disabled={mergeIds.length<2 || !mergeName.trim()} onClick={merge}>加入合并草稿</button></Disclosure>
     {error && <p className="inline-error" role="alert">{error}</p>}{preview && <div className="tool-success" role="status">预览校验通过：{preview.module_count} 个模块、{preview.function_count} 个函数；所有函数归属完整，保存后依赖按源码重新聚合。</div>}
     <div className="tool-actions"><button disabled={busy} onClick={()=>void run('apply')}>预览修改</button><button className="primary" disabled={busy || !preview} onClick={()=>void run('apply',true)}>保存架构调整</button></div>
   </div>;
